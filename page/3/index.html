@@ -177,6 +177,88 @@ var _hmt = _hmt || [];
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-numpy-array-memory" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/11/30/numpy-array-memory/">小谈 Numpy 数组占用内存空间问题</a>
+    </h1>
+  
+
+        
+        <a href="/2016/11/30/numpy-array-memory/" class="archive-article-date">
+  	<time datetime="2016-11-29T22:30:53.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-11-30</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>之前跟同学讨论过<code>numpy</code>数组的占用空间大小问题，但是今天给忘了，又重新试验了一下，主要是利用<code>sys</code>模块的<code>getsizeof</code>函数，使用的版本是 Python3.5。记录下来，以备后忘。</p>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Machine Learning</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Data Science</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Python</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/11/30/numpy-array-memory/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-tensorflow-mlp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -903,89 +985,9 @@ var _hmt = _hmt || [];
 
 
   
-    <article id="post-ubuntu-update-issue" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/08/22/ubuntu-update-issue/">Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁</a>
-    </h1>
-  
-
-        
-        <a href="/2016/08/22/ubuntu-update-issue/" class="archive-article-date">
-  	<time datetime="2016-08-22T03:44:58.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-08-22</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>我电脑装的是 Windows10 和 Ubuntu 双系统，最近一直在用ubuntu，昨天系统说有更新我就更新了，更新完说需要重启，我选了稍后启动，然后昨天晚上从实验室关机出来就没管了，结果今天早上开机选择 ubuntu 之后系统就进不去了，左上角光标一直闪，重启几次无果，于是上网查了查，解决方案如下：</p>
-<ol>
-<li>进入 Windows 系统，我的是 Windows10；</li>
-<li>打开 EasyBCD2.2，编辑引导项菜单，重新添加一个引导项，选择 Grub 2 和自动定位和自动加载，然后保存，原来的引导项可以删掉；</li>
-<li>重启选择刚刚添加的引导项就可以正常进入了。</li>
-</ol>
-<p>由于刚刚忘了截图，现在用的又是 ubuntu，所以不好意思没图了，过程不复杂。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Ubuntu</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/08/22/ubuntu-update-issue/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/4/">Next &raquo;</a>
     </nav>
   
 

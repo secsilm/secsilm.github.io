@@ -80,7 +80,9 @@ var _hmt = _hmt || [];
 		<nav class="header-menu">
 			<ul>
 			
-				<li><a href="/">主页</a></li>
+				<li><a href="/">HOME</a></li>
+	        
+				<li><a href="/archives">Archives</a></li>
 	        
 				<li><a href="http://blog.csdn.net/u010099080">CSDN</a></li>
 	        
@@ -136,6 +138,8 @@ var _hmt = _hmt || [];
 			
 				
 			
+				
+			
 			
 			
 			<nav class="header-nav">
@@ -149,12 +153,14 @@ var _hmt = _hmt || [];
 			</nav>
 
 			<nav class="header-menu js-header-menu">
-				<ul style="width: 50%">
+				<ul style="width: 70%">
 				
 				
-					<li style="width: 50%"><a href="/">主页</a></li>
+					<li style="width: 33.333333333333336%"><a href="/">HOME</a></li>
 		        
-					<li style="width: 50%"><a href="http://blog.csdn.net/u010099080">CSDN</a></li>
+					<li style="width: 33.333333333333336%"><a href="/archives">Archives</a></li>
+		        
+					<li style="width: 33.333333333333336%"><a href="http://blog.csdn.net/u010099080">CSDN</a></li>
 		        
 				</ul>
 			</nav>
@@ -552,6 +558,251 @@ var _hmt = _hmt || [];
 
 
   
+    <article id="post-tensorflow-1.0" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/02/16/tensorflow-1.0/">TensorFlow 1.0 发布</a>
+    </h1>
+  
+
+        
+        <a href="/2017/02/16/tensorflow-1.0/" class="archive-article-date">
+  	<time datetime="2017-02-16T02:46:55.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-02-16</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>前面写了 <a href="http://blog.csdn.net/u010099080/article/details/53418159" target="_blank" rel="noopener">TensorFlow 在Windows上的安装教程</a>，当时版本还是 0.12 。</p>
+<p>NOW</p>
+<p>首届 <a href="https://events.withgoogle.com/tensorflow-dev-summit/watch-the-videos/#content" target="_blank" rel="noopener">TensorFlow 开发者大会</a>（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，<strong>TensorFlow 1.0</strong> 版本发布。Google Research Blog 也于昨天在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html" target="_blank" rel="noopener">博客</a> 中公布了这一消息。</p>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">TensorFlow</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2017/02/16/tensorflow-1.0/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-tensorflow-cnn-no-tensorboard" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/12/28/tensorflow-cnn-no-tensorboard/">TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</a>
+    </h1>
+  
+
+        
+        <a href="/2016/12/28/tensorflow-cnn-no-tensorboard/" class="archive-article-date">
+  	<time datetime="2016-12-28T04:13:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-12-28</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="http://blog.csdn.net/u010099080/article/details/53234227" target="_blank" rel="noopener">前面</a> 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 <strong>46.98%</strong>。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。</p>
+<p>本文代码基于 <a href="https://www.tensorflow.org/tutorials/deep_cnn/" target="_blank" rel="noopener">TensorFlow 的官方文档</a> 做了些许修改，完整代码及结果图片可从 <a href="http://download.csdn.net/download/u010099080/9723302" target="_blank" rel="noopener">这里</a> 下载。</p>
+<p><a href="http://blog.csdn.net/u010099080/article/details/62882006" target="_blank" rel="noopener">这篇</a> 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。</p>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Machine Learning</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">TensorFlow</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Python</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/12/28/tensorflow-cnn-no-tensorboard/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-tensorboard-mnist-pca" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/12/10/tensorboard-mnist-pca/">在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</a>
+    </h1>
+  
+
+        
+        <a href="/2016/12/10/tensorboard-mnist-pca/" class="archive-article-date">
+  	<time datetime="2016-12-09T23:23:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p>Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. </p>
+</blockquote>
+<p>主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 <a href="https://my.oschina.net/gujianhan/blog/225241" target="_blank" rel="noopener">这里</a> 或者 <a href="https://en.wikipedia.org/wiki/Principal_component_analysis" target="_blank" rel="noopener">PCA 的维基百科页面</a>。</p>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Machine Learning</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">TensorFlow</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Python</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/12/10/tensorboard-mnist-pca/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-installing-tensorflow" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -626,9 +877,91 @@ var _hmt = _hmt || [];
 
 
   
+    <article id="post-numpy-array-memory" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/11/30/numpy-array-memory/">小谈 Numpy 数组占用内存空间问题</a>
+    </h1>
+  
+
+        
+        <a href="/2016/11/30/numpy-array-memory/" class="archive-article-date">
+  	<time datetime="2016-11-29T22:30:53.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-11-30</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>之前跟同学讨论过<code>numpy</code>数组的占用空间大小问题，但是今天给忘了，又重新试验了一下，主要是利用<code>sys</code>模块的<code>getsizeof</code>函数，使用的版本是 Python3.5。记录下来，以备后忘。</p>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Machine Learning</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">Data Science</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Python</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/11/30/numpy-array-memory/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
     </nav>
   
 
@@ -769,6 +1102,14 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">IDE</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">MATLAB</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">sklearn</a>
               </li>
             
             <div class="clearfix"></div>

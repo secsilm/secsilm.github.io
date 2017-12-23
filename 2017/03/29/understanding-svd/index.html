@@ -15,7 +15,7 @@
 <meta property="og:url" content="http://yoursite.com/2017/03/29/understanding-svd/index.html">
 <meta property="og:site_name" content="Alan Lee Space Station">
 <meta property="og:description" content="奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解">
-<meta property="og:updated_time" content="2017-12-23T00:22:03.000Z">
+<meta property="og:updated_time" content="2017-12-23T04:59:48.463Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="奇异值分解 SVD 的数学解释">
 <meta name="twitter:description" content="奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解">
@@ -35,6 +35,16 @@
   
 
   
+<script>
+var _hmt = _hmt || [];
+(function() {
+	var hm = document.createElement("script");
+	hm.src = "https://hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+	var s = document.getElementsByTagName("script")[0]; 
+	s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 
 </head>
 
@@ -184,7 +194,7 @@
 <p>也就是说 SVD 是线代中对于实数矩阵和复数矩阵的分解，将特征分解从 <em>半正定矩阵</em> 推广到任意 $ m\times n $ 矩阵。</p>
 <p><strong>注意：本篇文章内如未作说明矩阵均指实数矩阵。</strong></p>
 <p>假设有 $ m\times n $ 的矩阵 $A$ ，那么 SVD 就是要找到如下式的这么一个分解，将 $A$ 分解为 3 个矩阵的乘积：</p>
-<p>$$ A<em>{m \times n} = U</em>{m \times m}\Sigma<em>{m \times n} V^T</em>{n \times n} $$ </p>
+<p>$$ A_{m \times n} = U_{m \times m}\Sigma_{m \times n} V^T_{n \times n} $$ </p>
 <p>其中，$U$ 和 $V$ 都是<strong>正交矩阵</strong> （Orthogonal Matrix），在复数域内的话就是酉矩阵（Unitary Matrix），即 </p>
 <p>$$ U^TU = E_{m \times m}$$ </p>
 <p>$$ V^TV=E_{n \times n}$$</p>
@@ -209,25 +219,25 @@
 </ol>
 <hr>
 <h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>假设 </p>
-<p>$$ A = \begin{pmatrix} 2 &amp; 4 \ 1 &amp; 3 \ 0 &amp; 0 \ 0 &amp; 0 \ \end{pmatrix}$$ </p>
+<p>$$ A = \begin{pmatrix} 2 &amp; 4 \\ 1 &amp; 3 \\ 0 &amp; 0 \\ 0 &amp; 0 \\ \end{pmatrix}$$ </p>
 <p>那么可以计算得到 </p>
-<p>$$ AA^T = \begin{pmatrix} 20 &amp; 14 &amp; 0 &amp; 0 \ 14 &amp; 10 &amp; 0 &amp; 0 \ 0 &amp; 0 &amp; 0 &amp; 0 \ 0 &amp; 0 &amp; 0 &amp; 0 \ \end{pmatrix}$$ </p>
+<p>$$ AA^T = \begin{pmatrix} 20 &amp; 14 &amp; 0 &amp; 0 \\ 14 &amp; 10 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; 0 \\ \end{pmatrix}$$ </p>
 <p>接下来就是求这个矩阵的特征值和特征向量了 </p>
 <p>$$AA^T x = \lambda x$$ </p>
 <p>$$(AA^T - \lambda E)x = 0$$ </p>
 <p>要想该方程组有非零解（即非零特征值），那么系数矩阵 $ AA^T - \lambda E $ 的行列式必须为 0 </p>
-<p>$$ \begin{vmatrix} 20-\lambda &amp; 14 &amp; 0 &amp; 0 \ 14 &amp; 10-\lambda &amp; 0 &amp; 0 \ 0 &amp; 0 &amp; -\lambda &amp; 0 \ 0 &amp; 0 &amp; 0 &amp; -\lambda \ \end{vmatrix} = 0 $$ </p>
+<p>$$ \begin{vmatrix} 20-\lambda &amp; 14 &amp; 0 &amp; 0 \\ 14 &amp; 10-\lambda &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; -\lambda &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; -\lambda \\ \end{vmatrix} = 0 $$ </p>
 <p>求解这个行列式我就不再赘述了，这个直接使用行列式展开定理就可以了，可以得到 $\lambda_1 \approx 29.86606875，\lambda_2 \approx  0.13393125，\lambda_3 = \lambda_4 = 0$，有 4 个特征值，因为特征多项式 $ \vert AA^T - \lambda E \vert $ 是一个 4 次多项式。对应的单位化过的特征向量为</p>
-<p>$$\begin{pmatrix} 0.81741556 &amp; -0.57604844 &amp; 0 &amp; 0 \ 0.57604844 &amp; 0.81741556 &amp; 0 &amp; 0 \ 0 &amp; 0 &amp; 1 &amp; 0 \ 0 &amp; 0 &amp; 0 &amp; 1 \ \end{pmatrix}$$</p>
+<p>$$\begin{pmatrix} 0.81741556 &amp; -0.57604844 &amp; 0 &amp; 0 \\ 0.57604844 &amp; 0.81741556 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; 1 \\ \end{pmatrix}$$</p>
 <p>这就是矩阵 $U$ 了。</p>
 <p>同样的过程求解 $A^TA$ 的特征值和特征向量，求得 $\lambda_1 \approx 0.13393125，\lambda_2 \approx  29.86606875 $，将<strong>特征值降序排列后</strong>对应的单位化过的特征向量为</p>
-<p>$$\begin{pmatrix} 0.40455358 &amp; -0.9145143 \ 0.9145143 &amp; 0.40455358 \ \end{pmatrix}$$</p>
+<p>$$\begin{pmatrix} 0.40455358 &amp; -0.9145143 \\ 0.9145143 &amp; 0.40455358 \\ \end{pmatrix}$$</p>
 <p>这就是矩阵 $V$ 了。</p>
 <p>而矩阵 $\Sigma$ 根据上面说的为特征值的平方根构成的对角矩阵</p>
-<p>$$\begin{pmatrix} 5.4649857 &amp; 0 \ 0 &amp; 0.36596619 \ 0 &amp; 0 \ 0 &amp; 0 \ \end{pmatrix}$$</p>
+<p>$$\begin{pmatrix} 5.4649857 &amp; 0 \\ 0 &amp; 0.36596619 \\ 0 &amp; 0 \\ 0 &amp; 0 \\ \end{pmatrix}$$</p>
 <p>到此，SVD 分解就结束了，原来的矩阵 $A$ 就被分解成了 3 个矩阵的乘积。</p>
-<p>$$ A<em>{4 \times 2} = U</em>{4 \times 4}\Sigma<em>{4 \times 2} V^T</em>{2 \times 2} $$</p>
-<p>$$ \begin{pmatrix} 2 &amp; 4 \ 1 &amp; 3 \ 0 &amp; 0 \ 0 &amp; 0 \ \end{pmatrix} = \begin{pmatrix} 0.81741556 &amp; -0.57604844 &amp; 0 &amp; 0 \ 0.57604844 &amp; 0.81741556 &amp; 0 &amp; 0 \ 0 &amp; 0 &amp; 1 &amp; 0 \ 0 &amp; 0 &amp; 0 &amp; 1 \ \end{pmatrix} \begin{pmatrix} 5.4649857 &amp; 0 \ 0 &amp; 0.36596619 \ 0 &amp; 0 \ 0 &amp; 0 \ \end{pmatrix} \begin{pmatrix} 0.40455358 &amp; -0.9145143 \ 0.9145143 &amp; 0.40455358 \ \end{pmatrix} ^ T $$ </p>
+<p>$$ A_{4 \times 2} = U_{4 \times 4}\Sigma_{4 \times 2} V^T_{2 \times 2} $$</p>
+<p>$$ \begin{pmatrix} 2 &amp; 4 \\ 1 &amp; 3 \\ 0 &amp; 0 \\ 0 &amp; 0 \\ \end{pmatrix} = \begin{pmatrix} 0.81741556 &amp; -0.57604844 &amp; 0 &amp; 0 \\ 0.57604844 &amp; 0.81741556 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; 1 \\ \end{pmatrix} \begin{pmatrix} 5.4649857 &amp; 0 \\ 0 &amp; 0.36596619 \\ 0 &amp; 0 \\ 0 &amp; 0 \\ \end{pmatrix} \begin{pmatrix} 0.40455358 &amp; -0.9145143 \\ 0.9145143 &amp; 0.40455358 \\ \end{pmatrix} ^ T $$ </p>
 <hr>
 <h2 id="Numpy-实现"><a href="#Numpy-实现" class="headerlink" title="Numpy 实现"></a>Numpy 实现</h2><p>Python 中可以使用 numpy 包的 <code>linalg.svd()</code> 来求解 SVD。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line">A = np.array([[<span class="number">2</span>, <span class="number">4</span>], [<span class="number">1</span>, <span class="number">3</span>], [<span class="number">0</span>, <span class="number">0</span>], [<span class="number">0</span>, <span class="number">0</span>]])</span><br><span class="line">print(np.linalg.svd(A))</span><br></pre></td></tr></table></figure>

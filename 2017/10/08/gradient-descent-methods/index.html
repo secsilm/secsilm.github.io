@@ -22,7 +22,7 @@
 <meta property="og:image" content="http://ruder.io/content/images/2016/09/contours_evaluation_optimizers.gif">
 <meta property="og:image" content="https://www.sfu.ca/~ssurjano/beale.png">
 <meta property="og:image" content="http://ruder.io/content/images/2016/09/saddle_point_evaluation_optimizers.gif">
-<meta property="og:updated_time" content="2017-12-23T02:29:35.000Z">
+<meta property="og:updated_time" content="2017-12-23T04:54:22.559Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="梯度下降优化算法概述">
 <meta name="twitter:description" content="原文作者简介：Sebastian Ruder 是我非常喜欢的一个博客作者，是 NLP 方向的博士生，目前供职于一家做 NLP 相关服务的爱尔兰公司 AYLIEN，博客主要是写机器学习、NLP 和深度学习相关的文章。  本文原文是 An overview of gradient descent optimization algorithms，同时作者也在 arXiv 上发了一篇同样内容的 论文。">
@@ -43,6 +43,16 @@
   
 
   
+<script>
+var _hmt = _hmt || [];
+(function() {
+	var hm = document.createElement("script");
+	hm.src = "https://hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+	var s = document.getElementsByTagName("script")[0]; 
+	s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 
 </head>
 
@@ -276,34 +286,34 @@
 <p>使用 Adadelta 时我们甚至不需要指定一个默认的学习率，因为它已经不在更新规则中了。</p>
 <h3 id="RMSprop"><a href="#RMSprop" class="headerlink" title="RMSprop"></a>RMSprop</h3><p>RMSprop 是一种未发布的自适应学习率的方法，由 Geoff Hinton 在 <a href="http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf" target="_blank" rel="noopener">Lecture 6e of his Coursera Class</a> 中提出。</p>
 <p>RMSprop 和 Adadelta 在同一时间被独立地发明出来，都是为了解决 Adagrad 的学习率递减问题。事实上 RMSprop 与我们上面讨论过的 Adadelta 的第一个更新向量一模一样：</p>
-<p>$$<br>\begin{aligned}<br>E[g^2]_t &amp;= 0.9 E[g^2]_{t-1} + 0.1 g^2<em>t \\<br>\theta\</em>{t+1} &amp;= \theta_{t} - \dfrac{\eta}{\sqrt{E[g^2]_t + \epsilon}} g_{t}<br>\end{aligned}<br>$$</p>
+<p>$$<br>\begin{aligned}<br>E[g^2]_t &amp;= 0.9 E[g^2]_{t-1} + 0.1 g^2_t \\<br>\theta_{t+1} &amp;= \theta_t - \dfrac{\eta}{\sqrt{E[g^2]_t + \epsilon}} g_{t} \\<br>\end{aligned}<br>$$</p>
 <p>RMSprop 也是将学习率除以平方梯度的指数衰减平均值。Hinton 建议将 $\gamma$ 设为 0.9 ，默认学习率 $\eta$ 设为 0.001 。</p>
 <h3 id="Adam"><a href="#Adam" class="headerlink" title="Adam"></a>Adam</h3><p>Adaptive Moment Estimation (Adam) [15，<em>Adam: a Method for Stochastic Optimization</em>] 是另一种为每个参数计算自适应学习率的方法。除了像 Adadelta 和 RMSprop 一样存储历史平方梯度 $v_t$ 的指数衰减平均值外，Adam 也存储历史梯度 $m_t$ 的指数衰减平均值，类似于动量：</p>
-<p>$$<br>\begin{aligned}<br>m_t &amp;= \beta<em>1 m\</em>{t-1} + (1 - \beta_1) g_t \\<br>v_t &amp;= \beta<em>2 v\</em>{t-1} + (1 - \beta_2) g_t^2<br>\end{aligned}<br>$$</p>
+<p>$$<br>\begin{aligned}<br>m_t &amp;= \beta_1 m_{t-1} + (1 - \beta_1) g_t \\<br>v_t &amp;= \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 \\<br>\end{aligned}<br>$$</p>
 <p>其中 $m_t$ 和 $v_t$ 分别是梯度在第一时刻（平均值，the mean）和第二时刻（未中心化的方差，the uncentered variance）的估计值，也就是这个方法的名称。由于 $m_t$ 和 $v_t$ 用零向量初始化，Adam 的作者发现他们趋向于 0 ，特别是最开始的时候（<em>the initial time steps</em>）和衰减率很小的时候（即 $\beta_1$ 和 $\beta_2$ 接近于 1）。</p>
 <p>他们通过计算偏差纠正的（bias-corrected）的第一和第二时刻的估计值来抵消这个问题：</p>
 <p>$$<br>\begin{aligned}<br>\hat{m}_t &amp;= \dfrac{m_t}{1 - \beta^t_1} \\<br>\hat{v}_t &amp;= \dfrac{v_t}{1 - \beta^t_2}<br>\end{aligned}<br>$$</p>
 <p>然后他们使用这些公式来更新参数，就像 Adadelta 和 RMSprop 一样：</p>
 <p>$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$$</p>
 <p>作者建议 $\beta_1$ 的默认值为 0.9 ， $\beta_2$ 的默认值为 0.999 ，$\epsilon$ 的默认值为 $10^{-8}$ 。他们证明 Adam 在实践中非常有效，而且对比其他自适应学习率算法也有优势。</p>
-<h3 id="AdaMax"><a href="#AdaMax" class="headerlink" title="AdaMax"></a>AdaMax</h3><p>Adam 的更新规则中的 $v_t$ 成比例的缩放了梯度，正比于历史梯度的 $\ell<em>2$ 范数（通过 $v</em>{t-1}$ 项）和当前梯度 $|g_t|^2$（<em>译者注：此段话我非常不确定是这么翻译的，贴上原文：The $v_t$ factor in the Adam update rule scales the gradient inversely proportionally to the $\ell_2$ norm of the past gradients (via the vt−1vt−1 term) and current gradient $|g_t|^2$</em>）：</p>
+<h3 id="AdaMax"><a href="#AdaMax" class="headerlink" title="AdaMax"></a>AdaMax</h3><p>Adam 的更新规则中的 $v_t$ 成比例的缩放了梯度，正比于历史梯度的 $\ell_2$ 范数（通过 $v_{t-1}$ 项）和当前梯度 $|g_t|^2$（<em>译者注：此段话我非常不确定是这么翻译的，贴上原文：The $v_t$ factor in the Adam update rule scales the gradient inversely proportionally to the $\ell_2$ norm of the past gradients (via the vt−1vt−1 term) and current gradient $|g_t|^2$</em>）：</p>
 <p>$$v_t = \beta_2 v_{t-1} + (1 - \beta_2) |g_t|^2$$</p>
 <p>我们可以将此推广到 $\ell_p$ 范数。注意 Kingma 和 Ba 也将 $\beta_2$ 参数化为 $\beta_2^p$：</p>
-<p>$$v_t = \beta_2^p _{t-1} + (1 - \beta_2^p) |g_t|^p$$</p>
+<p>$$v_t = \beta_2^p v_{t-1} + (1 - \beta_2^p) |g_t|^p$$</p>
 <p>当 $p$ 非常大的时候通常会导致数值上的不稳定（<em>numerically unstable</em>），这也是实际中通常使用 $\ell_1$ 和 $\ell_2$ 的原因。然而，$\ell_\infty$ 通常也会比较稳定。因此，作者提出了 AdaMax（Kingma and Ba, 2015），显示了结合了 $\ell_\infty$ 的 $v_t$ 也能够收敛到下面的更稳定的值。为了避免与 Adam 混淆，我们使用 $u_t$ 来表示无限范数约束的 $v_t$（infinity norm-constrained）：</p>
 <p>$$<br>\begin{aligned}<br>u_t &amp;= \beta_2^\infty v_{t-1} + (1 - \beta_2^\infty) |g_t|^\infty\\<br>              &amp; = \max(\beta_2 \cdot v_{t-1}, |g_t|)<br>\end{aligned}<br>$$</p>
 <p>我们现在可以将此加进 Adam 的更新规则里，用 $u_t$ 代替 $\sqrt{\hat{v}_t} + \epsilon$，得到 AdaMax 的更新规则：</p>
-<p>$$\theta<em>{t+1} = \theta</em>{t} - \dfrac{\eta}{u_t} \hat{m}_t$$</p>
+<p>$$\theta_{t+1} = \theta_{t} - \dfrac{\eta}{u_t} \hat{m}_t$$</p>
 <p>注意到 $u_t$ 依赖于 <strong>max</strong> 操作，这不像 Adam 中的 $m_t$ 和 $v_t$ 那样容易趋向于 0（<em>bias towards zero</em>），这也是我们不需要为 $u_t$ 计算偏差纠正的原因。建议的默认值是 $\eta = 0.002$，$\beta_1 = 0.9$ 和 $\beta_2 = 0.999$ 。</p>
 <h3 id="Nadam"><a href="#Nadam" class="headerlink" title="Nadam"></a>Nadam</h3><p> 正如前面说的那样，Adam 可以看成 RMSprop 和动量的组合：RMSprop 贡献了历史平方梯度的指数衰减的平均值 $v_t$ ，而动量则负责历史梯度的指数衰减平均值 $m_t$ 。我们也看到 NAG 要优于普通的动量。</p>
 <p>Nadam（Nesterov-accelerated Adaptive Moment Estimation）[24，<em>Incorporating Nesterov Momentum into Adam</em>] 结合了 Adam 和 NAG 。为了将 NAG 融进 Adam 中，我们需要更改其中的动量项 $m_t$ 。</p>
 <p>首先，让我们使用当前的符号回顾一下动量更新规则：</p>
-<p>$$<br>\begin{aligned}<br>g_t &amp;= \nabla_{\theta_t}J(\theta_t)\<br>m_t &amp;= \gamma m_{t-1} + \eta g_t\<br>\theta_{t+1} &amp;= \theta_t - m_t<br>\end{aligned}<br>$$</p>
+<p>$$<br>\begin{aligned}<br>g_t &amp;= \nabla_{\theta_t}J(\theta_t)\\<br>m_t &amp;= \gamma m_{t-1} + \eta g_t\\<br>\theta_{t+1} &amp;= \theta_t - m_t<br>\end{aligned}<br>$$</p>
 <p>其中 $J$ 是我们的目标函数，$\gamma$ 是动量衰减项，$\eta$ 是我们的步长。将 $m_t$ 代入上面的第三个式子展开得到：</p>
-<p>$$\theta_{t+1} = \theta<em>t - ( \gamma m</em>{t-1} + \eta g_t)$$</p>
+<p>$$\theta_{t+1} = \theta_t - ( \gamma m_{t-1} + \eta g_t)$$</p>
 <p>这再次证明了动量更新涉及两个方向：先前动量向量的方向和当前梯度的方向。</p>
 <p>在计算梯度前通过动量更新参数，这使得 NAG 允许我们在梯度方向上执行一个更准确的步骤。因此我们只需更改 $g_t$ 来将 NAG 融进去：</p>
-<p>$$<br>\begin{aligned}<br>g_t &amp;= \nabla_{\theta_t}J(\theta_t - \gamma m_{t-1})\<br>m_t &amp;= \gamma m_{t-1} + \eta g_t\<br>\theta_{t+1} &amp;= \theta_t - m_t<br>\end{aligned}<br>$$</p>
+<p>$$<br>\begin{aligned}<br>g_t &amp;= \nabla_{\theta_t}J(\theta_t - \gamma m_{t-1})\\<br>m_t &amp;= \gamma m_{t-1} + \eta g_t\\<br>\theta_{t+1} &amp;= \theta_t - m_t<br>\end{aligned}<br>$$</p>
 <p>Dozat 提出按以下方式来修改 NAG ：与应用动量步骤两次不同的是 —— 一次用来更新梯度 $g<em>t$ 和 一次用来更新参数 $\theta\</em>{t+1}$ ，我们现在直接对当前参数应用一个「向前看的」（<em>look-ahead</em>）动量向量：</p>
 <p>$$<br>\begin{aligned}<br>g_t &amp;= \nabla_{\theta_t}J(\theta_t)\\<br>m_t &amp;= \gamma m_{t-1} + \eta g_t\\<br>\theta_{t+1} &amp;= \theta_t - (\gamma m_t + \eta g_t)<br>\end{aligned}<br>$$</p>
 <p>注意我们现在不再使用如上面展开的动量更新规则中的先前动量向量 $m_{t-1}$ ，而是使用当前动量向量 $m_t$ 来「向前看」。为了将 Nesterov 动量加进 Adam ，相似地我们可以用当前动量向量代替先前动量向量。首选，我们先回顾一下 Adam 的更新规则（注意我们不用修改 $\hat v_t$）：</p>
@@ -319,7 +329,7 @@
 <p>在图 5 中我们可以看到他们在损失曲面的等值线上（<a href="https://www.sfu.ca/~ssurjano/beale.html" target="_blank" rel="noopener">the Beale function</a>）随时间的变化趋势。注意到 Adadelta 、Adagrad 和 RMSprop 几乎立即开始在正确的方向下降并收敛速度几乎一样快，然而动量和 NAG 则「脱轨」了。不过由于 NAG 的「向前看」能力使其很快的纠正方向并朝着最小点前进。</p>
 <blockquote>
 <p><em>译者注：方便起见我把 Beale 函数的图像和解析式放在这里。</em></p>
-<p><img src="https://www.sfu.ca/~ssurjano/beale.png" alt="Beale Function"><br>$$f(\mathbf x) = (1.5-x_1+x_1x_2)^2 + (2.25-x_1+x_1x_2^2)^2 + (2.625-x_1+x_1+x_2^3)^2$$<br>通常来说该函数的定义域为 $x_i \in [-4.5, 4.5]$ ，其中 $i = 1, 2$ 。全局最小点为 $f(\mathbf{x^<em>}) = 0$ ，当 $\mathbf{x^</em>} = (3, 0.5)$ 时 。</p>
+<p><img src="https://www.sfu.ca/~ssurjano/beale.png" alt="Beale Function"><br>$$f(\mathbf x) = (1.5-x_1+x_1x_2)^2 + (2.25-x_1+x_1x_2^2)^2 + (2.625-x_1+x_1+x_2^3)^2$$<br>通常来说该函数的定义域为 $x_i \in [-4.5, 4.5]$ ，其中 $i = 1, 2$ 。全局最小点为 $f(\mathbf{x^*}) = 0$ ，当 $\mathbf{x^*} = (3, 0.5)$ 时 。</p>
 </blockquote>
 <p><img src="http://ruder.io/content/images/2016/09/saddle_point_evaluation_optimizers.gif" alt="SGD optimization on saddle point"><br><em>图 6：在鞍点处的 SGD 优化</em></p>
 <p>图 6 显示了在鞍点处的算法行为，即该点在一个方向斜率为正，其他方向斜率为负，正如我们之前提到的这对于 SGD 是一个难点。注意到 SGD 、动量和 NAG 很难打破对称性，尽管后两者最终逃离的鞍点，但是 Adagrad 、RMSprop 和 Adadelta 很快朝着斜率为负的方向前进了。</p>
@@ -343,7 +353,7 @@
 <p>Batch normalization [18，<em>Batch Normalization : Accelerating Deep Network Training by Reducing Internal Covariate Shift</em>] 重新为每一个 mini-batch 建立了这种正规化并且变化也会随着这个操作反向传播。通过在模型中加入正规化，我们可以使用更高的学习率而且不用太关心参数的初始化。Batch normalization 此外也扮演者正则化的角色，可以减少（甚至有些时候消除）Dropout 的需要.</p>
 <h3 id="Early-stopping"><a href="#Early-stopping" class="headerlink" title="Early stopping"></a>Early stopping</h3><p>根据 Geoff Hinton: “<em>Early stopping (is) beautiful free lunch</em>“（<a href="http://www.iro.umontreal.ca/~bengioy/talks/DL-Tutorial-NIPS2015.pdf" target="_blank" rel="noopener">NIPS 2015 Tutorial slides</a>，slide 63），你应该在训练时时刻监视着验证集误差，并且在你的验证集误差不再足够地降低时停止训练。</p>
 <h3 id="Gradient-noise"><a href="#Gradient-noise" class="headerlink" title="Gradient noise"></a>Gradient noise</h3><p>Neelakantan 等人 [21，<em>Adding Gradient Noise Improves Learning for Very Deep Network</em>] 在每次梯度更新时加上一个服从高斯分布 $N(0, \sigma_t^2)$ 的噪声：</p>
-<p>$$g<em>{t, i} = g</em>{t, i} + N(0, \sigma^2_t)$$</p>
+<p>$$g_{t, i} = g_{t, i} + N(0, \sigma^2_t)$$</p>
 <p>他们依照下面的公式更新（<em>anneal</em>）方差：</p>
 <p>$$\sigma^2_t = \dfrac{\eta}{(1 + t)^\gamma}$$</p>
 <p>他们表明添加这个噪声使得网络对较差的初始化更具有鲁棒性并且尤其对训练深度和复杂的网络很有帮助。他们怀疑添加的噪声使得模型有更多机会逃离和找到新的局部最优点，这在深度模型中很常见。</p>

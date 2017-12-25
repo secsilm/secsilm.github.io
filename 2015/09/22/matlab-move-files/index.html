@@ -214,7 +214,7 @@
 <p>matlab代码：</p>
 <figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">status=[];  <span class="comment">% 操作状态矩阵</span></span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span>=<span class="number">1</span>:<span class="number">13</span></span><br><span class="line">    dir_name=[<span class="string">'Python.Django视频教程-'</span> num2str(i)];  <span class="comment">% 获取各个子文件夹的名称</span></span><br><span class="line">    list=dir(dir_name);  <span class="comment">% list是一个结构体数组（struct array）</span></span><br><span class="line">    file=list(<span class="number">4</span>).name;  <span class="comment">% 所需文件在list的第4个元素，获取其文件名</span></span><br><span class="line">    source=[pwd <span class="string">'\' dir_name '</span>\<span class="string">' list(4).name];  % 由于源文件不在工作目录下，故需生成绝对路径</span></span><br><span class="line"><span class="string">    [SUCCESS,MESSAGE,MESSAGEID]=movefile(source,'</span>E:\个人资料\软件学习\Python\Django视频教程\<span class="string">');</span></span><br><span class="line"><span class="string">    status=[status,SUCCESS];</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">status</span></span><br></pre></td></tr></table></figure>
 <p>最后可以通过查看输出的操作状态矩阵status来判断是否操作成功，成功为1，失败为0。另外其中的pwd是一个函数，用于显示当前工作目录。</p>
-<p><strong>详细说下猪(zhu)脚(jue)——movefile函数</strong>，顾名思义就是“移动文件”，可以理解为我们日常的ctrl+x剪切，相应的还有copyfile、deletefile等等函数。我把movefile函数的帮助信息简单的翻译一下：<br>[SUCCESS,MESSAGE,MESSAGEID] = movefile(SOURCE,DESTINATION,MODE)，<strong>第一个输出项是SUCCESS</strong>，表示是否成功（1和0）；<strong>第二个输出项是MESSAGE</strong>，表示出错信息，如果出错就会显示否则为空；<strong>第三个输出项为MESSGAEID</strong>，是出错信息的标识。<strong>第一个输入项是SOURCE</strong>，是你要移动的文件名或者目录，如果文件不在工作目录下就需要写上绝对路径；<strong>第二个输入项是DESTINATION</strong>，是你要移动到哪，是一个目录或者文件，如果你要移动的是目录而DESTINATION不存在，movefile就会创建DESTINATION（作为目录创建）并且把你要移动的目录下的内容放到DESTINATION下，实际上（effectively）就是重命名SOURCE；如果你要移动的是单个文件而DESTINATION不是一个目录或者说不存在，那么movefile函数实际上就是重命名DESTINATION。<strong>第三个输入项是MODE</strong>，这一项可以不写，但是如果你写为’f’，那么movefile函数将会强制（force）将SOURCE移动到DESTINATION，即使DESTINATION是只写属性（read-only），并且如果SOURCE和DESTINATION都是单个文件（比如都是TXT文件或者word文档），那么将会用SOURCE里的内容强制覆盖DESTINATION的内容（是不是有点像Linux的root）。</p>
+<p><strong>详细说下猪(zhu)脚(jue)——movefile函数</strong>，顾名思义就是“移动文件”，可以理解为我们日常的ctrl+x剪切，相应的还有copyfile、deletefile等等函数。我把movefile函数的帮助信息简单的翻译一下：<br>[SUCCESS,MESSAGE,MESSAGEID] = movefile(SOURCE,DESTINATION,MODE)，<strong>第一个输出项是SUCCESS</strong>，表示是否成功（1和0）；<strong>第二个输出项是MESSAGE</strong>，表示出错信息，如果出错就会显示否则为空；<strong>第三个输出项为MESSGAEID</strong>，是出错信息的标识。<strong>第一个输入项是SOURCE</strong>，是你要移动的文件名或者目录，如果文件不在工作目录下就需要写上绝对路径；<strong>第二个输入项是DESTINATION</strong>，是你要移动到哪，是一个目录或者文件，如果你要移动的是目录而DESTINATION不存在，movefile就会创建DESTINATION（作为目录创建）并且把你要移动的目录下的内容放到DESTINATION下，实际上（effectively）就是重命名SOURCE；如果你要移动的是单个文件而DESTINATION不是一个目录或者说不存在，那么movefile函数实际上就是重命名DESTINATION。<strong>第三个输入项是MODE</strong>，这一项可以不写，但是如果你写为&#39;f&#39;，那么movefile函数将会强制（force）将SOURCE移动到DESTINATION，即使DESTINATION是只写属性（read-only），并且如果SOURCE和DESTINATION都是单个文件（比如都是TXT文件或者word文档），那么将会用SOURCE里的内容强制覆盖DESTINATION的内容（是不是有点像Linux的root）。</p>
 <p>另外有几点需要注意：movefile函数不能将文件自己移动到自己（废话~），也不能将多个文件移动到一个文件。<br>好了，关于movefile函数就先暂时写到这（hao）吧（lei）。</p>
 <p>折腾了几个小时才成型（是不是智商有点不够啦），主要是对matlab中的文件操作基本上还是第一次接触尝试，之前都是各种数学矩阵运算和GUI什么的，还在摸索中，尝试过程中错（bi）了（si）好（qiang）多（po）次（zheng）。。。。不过呢，觉得这个意义还是挺大的，如果不是13个文件夹而是50个甚至更多（对于我这种懒人来说13个够多了<del>~^_^</del>~），那意义就更明显了，能够大大提高我们的工作效率。</p>
 <p>今天就先到这吧，吃饭去……</p>
@@ -941,7 +941,28 @@
     
     
     
-    <div class="total-archive"> Total : 41 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-archive"> Total : 42 </div>
     
     <div class="post-archive">
     
@@ -950,6 +971,11 @@
     
     <div class="archive-year"> 2017 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/25</span><a class="archive-post-title" href= "/2017/12/25/export-csdn-blogs-to-md/" >批量导出 CSDN 博客为 Markdown 文件</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1179,6 +1205,8 @@
         <div class="sidebar-tags">
     <div class="sidebar-tags-name">
     
+        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
+    
         <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
@@ -1188,8 +1216,6 @@
         <span class="sidebar-tag-name"><a href= "#">Data Science</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">MATLAB</a></span>
-    
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">sklearn</a></span>
     
@@ -1241,23 +1267,8 @@ jsonContent:
     
     <!-- CNZZ统计  -->
     
-    </div>
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
-</body>
+    </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    </body>
 </html>
 
 

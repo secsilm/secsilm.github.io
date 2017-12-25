@@ -278,7 +278,7 @@ v\_t &= \gamma v\_{t-1} + \eta \nabla\_\theta J( \theta) \\\\
 v\_t &= \gamma v\_{t-1} + \eta \nabla\_\theta J( \theta - \gamma v\_{t-1} ) \\\\
 \\theta &= \theta - v\_t
 \\end{aligned}</script><p>我们仍然设置 $\gamma$ 为 0.9。动量法首先计算当前梯度（图 4 中的小蓝色向量）,然后在更新累积梯度（updated accumulated gradient）方向上大幅度的跳跃（图 4 中的大蓝色向量）。与此不同的是，NAG 首先在先前的累积梯度（previous accumulated gradient）方向上进行大幅度的跳跃（图 4 中的棕色向量），评估这个梯度并做一下修正（图 4 中的红色向量），这就构成一次完整的 NAG 更新（图 4 中的绿色向量）。这种预期更新防止我们进行的太快，也带来了更高的相应速度，这在一些任务中非常有效的提升了 RNN 的性能 [8，<em>Advances in Optimizing Recurrent Networks</em>] 。</p>
-<p><img src="http://ruder.io/content/images/2016/09/nesterov_update_vector.png" alt="Nesterov update"><br><em>图 4：Nesterov 更新，来自 <a href="http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf" target="_blank" rel="noopener">G. Hinton’s lecture 6c</a></em></p>
+<p><img src="http://ruder.io/content/images/2016/09/nesterov_update_vector.png" alt="Nesterov update"><br><em>图 4：Nesterov 更新，来自 <a href="http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf" target="_blank" rel="noopener">G. Hinton&#39;s lecture 6c</a></em></p>
 <p>可以在 <a href="">这里</a> 查看对 NAG 的另一种直观解释，此外 Ilya Sutskever 在他的博士论文中也给出了详细解释 [9，<em>Training Recurrent neural Networks</em>] 。</p>
 <p>现在我们已经能够依据误差函数的斜率来调整更新，并加快 SGD 的速度，此外我们也想根据每个参数的重要性来决定进行更大还是更小的更新。</p>
 <h3 id="Adagrad"><a href="#Adagrad" class="headerlink" title="Adagrad"></a>Adagrad</h3><p>Adagrad [3，<em>Adaptive Subgradient Methods for Online Learning and Stochastic Optimization</em>] 就是这样一种解决这个问题的基于梯度的优化算法：根据参数来调整学习率，对于不常见的参数给予更大的更新，而对于常见的给予更小的更新。因此，Adagrad 非常适用于稀疏数据。Dean 等人 [4，<em>Large Scale Distributed Deep Networks</em>] 发现 Adagrad 能够大幅提高 SGD 的鲁棒性，并在 Google 用其训练大规模神经网络，这其中就包括 <a href="http://www.wired.com/2012/06/google-x-neural-network/" target="_blank" rel="noopener">在 YouTube 中学习识别猫</a>。除此之外，Pennington 等人 [5，<em>Glove: Global Vectors for Word Representation</em>] 使用 Adagrad 来训练 GloVe 词嵌入，因为罕见的词汇需要比常见词更大的更新。</p>
@@ -395,7 +395,7 @@ m\_t &= \beta\_1 m\_{t-1} + (1 - \beta\_1) g\_t\\\\
 <p>Zaremba 和 Sutskever [17，<em>Learning to Execute</em>] 只能训练 LSTMs 来评估使用课程学习的简单程序，而且表明组合或者混合的方法要比单一方法更有效，通过增加难度来排序样本。</p>
 <h3 id="Batch-normalization"><a href="#Batch-normalization" class="headerlink" title="Batch normalization"></a>Batch normalization</h3><p>为方便学习，我们一般会正规化（<em>normalize</em>）参数的初始值，以 0 均值和单位方差来初始化。随着训练的进行和我们将参数更新到不同的程度，我们损失了这种正规化，导致训练速度变慢并且随着网络越来越深，这种影响被渐渐放大。</p>
 <p>Batch normalization [18，<em>Batch Normalization : Accelerating Deep Network Training by Reducing Internal Covariate Shift</em>] 重新为每一个 mini-batch 建立了这种正规化并且变化也会随着这个操作反向传播。通过在模型中加入正规化，我们可以使用更高的学习率而且不用太关心参数的初始化。Batch normalization 此外也扮演者正则化的角色，可以减少（甚至有些时候消除）Dropout 的需要.</p>
-<h3 id="Early-stopping"><a href="#Early-stopping" class="headerlink" title="Early stopping"></a>Early stopping</h3><p>根据 Geoff Hinton: “<em>Early stopping (is) beautiful free lunch</em>“（<a href="http://www.iro.umontreal.ca/~bengioy/talks/DL-Tutorial-NIPS2015.pdf" target="_blank" rel="noopener">NIPS 2015 Tutorial slides</a>，slide 63），你应该在训练时时刻监视着验证集误差，并且在你的验证集误差不再足够地降低时停止训练。</p>
+<h3 id="Early-stopping"><a href="#Early-stopping" class="headerlink" title="Early stopping"></a>Early stopping</h3><p>根据 Geoff Hinton: &quot;<em>Early stopping (is) beautiful free lunch</em>&quot;（<a href="http://www.iro.umontreal.ca/~bengioy/talks/DL-Tutorial-NIPS2015.pdf" target="_blank" rel="noopener">NIPS 2015 Tutorial slides</a>，slide 63），你应该在训练时时刻监视着验证集误差，并且在你的验证集误差不再足够地降低时停止训练。</p>
 <h3 id="Gradient-noise"><a href="#Gradient-noise" class="headerlink" title="Gradient noise"></a>Gradient noise</h3><p>Neelakantan 等人 [21，<em>Adding Gradient Noise Improves Learning for Very Deep Network</em>] 在每次梯度更新时加上一个服从高斯分布 $N(0, \sigma_t^2)$ 的噪声：</p>
 <script type="math/tex; mode=display">g\_{t, i} = g\_{t, i} + N(0, \sigma^2_t)</script><p>他们依照下面的公式更新（<em>anneal</em>）方差：</p>
 <script type="math/tex; mode=display">\sigma^2_t = \dfrac{\eta}{(1 + t)^\gamma}</script><p>他们表明添加这个噪声使得网络对较差的初始化更具有鲁棒性并且尤其对训练深度和复杂的网络很有帮助。他们怀疑添加的噪声使得模型有更多机会逃离和找到新的局部最优点，这在深度模型中很常见。</p>
@@ -1159,7 +1159,28 @@ m\_t &= \beta\_1 m\_{t-1} + (1 - \beta\_1) g\_t\\\\
     
     
     
-    <div class="total-archive"> Total : 41 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-archive"> Total : 42 </div>
     
     <div class="post-archive">
     
@@ -1168,6 +1189,11 @@ m\_t &= \beta\_1 m\_{t-1} + (1 - \beta\_1) g\_t\\\\
     
     <div class="archive-year"> 2017 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/25</span><a class="archive-post-title" href= "/2017/12/25/export-csdn-blogs-to-md/" >批量导出 CSDN 博客为 Markdown 文件</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1397,6 +1423,8 @@ m\_t &= \beta\_1 m\_{t-1} + (1 - \beta\_1) g\_t\\\\
         <div class="sidebar-tags">
     <div class="sidebar-tags-name">
     
+        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
+    
         <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
@@ -1406,8 +1434,6 @@ m\_t &= \beta\_1 m\_{t-1} + (1 - \beta\_1) g\_t\\\\
         <span class="sidebar-tag-name"><a href= "#">Data Science</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">MATLAB</a></span>
-    
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">sklearn</a></span>
     
@@ -1459,23 +1485,8 @@ jsonContent:
     
     <!-- CNZZ统计  -->
     
-    </div>
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
-</body>
+    </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    </body>
 </html>
 
 

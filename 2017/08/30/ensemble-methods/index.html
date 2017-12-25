@@ -224,7 +224,8 @@
 <p>大多数集成方法使用一个基学习算法来产生多个同质基学习器（homogeneous base learners），即相同类型的学习器，这就是同质集成（homogeneous ensembles）。</p>
 <p>也有一些方法使用的是异质学习器（heterogeneous learner），即不同类型的学习器，这就是异质集成（heterogeneous ensembles）。为了使集成方法能够比任何构成它的单独的方法更准确，基学习器必须尽可能的准确和多样。</p>
 <hr>
-<h2 id="Bagging"><a href="#Bagging" class="headerlink" title="Bagging"></a>Bagging</h2><p>Bagging 表示的是 Bootstrap AGGregatING。降低一个估计的方差的一个方法就是平均多个估计。例如，我们可以在一个数据集的不同子集上（有放回的随机选取）训练 $M$ 个不同的树然后计算结果的平均值： <script type="math/tex">f(x)=\frac{1}{M}\Sigma\_{m=1}^M f\_m(x)</script> bagging 使用<a href="https://en.wikipedia.org/wiki/Bootstrapping_(statistics" target="_blank" rel="noopener">自助抽样法</a>)（bootstrapping）来为每个基学习器获得一个数据集的子集。对于如何聚合多个基学习器的结果，bagging 在分类任务中使用投票，而在回归任务重使用平均。</p>
+<h2 id="Bagging"><a href="#Bagging" class="headerlink" title="Bagging"></a>Bagging</h2><p>Bagging 表示的是 Bootstrap AGGregatING。降低一个估计的方差的一个方法就是平均多个估计。例如，我们可以在一个数据集的不同子集上（有放回的随机选取）训练 $M$ 个不同的树然后计算结果的平均值：</p>
+<script type="math/tex; mode=display">f(x)=\frac{1}{M}\Sigma_{m=1}^M f_m(x)</script><p>bagging 使用<a href="https://en.wikipedia.org/wiki/Bootstrapping_(statistics" target="_blank" rel="noopener">自助抽样法</a>)（bootstrapping）来为每个基学习器获得一个数据集的子集。对于如何聚合多个基学习器的结果，bagging 在分类任务中使用投票，而在回归任务重使用平均。</p>
 <p>我们可以通过在 Iris 数据集上执行分类任务来学习 bagging。我们选择两种基学习器：决策树（decision tree）和 kNN 分类器。下图显示了基学习器在 Iris 上学习到的决策边界和他们 bagging 集成之后学习到的决策边界。</p>
 <ul>
 <li>决策树准确率：0.63（+/- 0.02）</li>
@@ -271,13 +272,15 @@
 <center><font color="gray">*AdaBoost*</font></center>
 
 <p>如上图所示，每一个基学习器由一个深度为 1 的决策树组成，因此当 n_est=1 时模型只是基于一个特征阈值将样本空间分为两部分。上图也显示了集成大小是如何提高测试准确率的以及训练样本和测试样本的学习曲线。</p>
-<p>梯度树提升（<strong>Gradient Tree Boosting</strong>）是 boosting 在任意可微分损失函数的一种推广，既可用于回归也可用于分类，同样是顺序生成基学习器。<script type="math/tex">F\_m(x)=F\_{m-1}(x)+\gamma\_mh\_m(x)</script> 每一步基于当前模型 $F_{m-1}(x)$ 来计算损失 $L$，并最小化 $L$ 来训练决策树 $h_m(x)$：<script type="math/tex">F\_m(x)=F\_{m-1}(x)+\text{argmin}\_h\Sigma\_{i=1}^n L(y\_i, F\_{m-1}(x\_i)+h(x_i))</script> 使用该算法进行回归和分类任务时不同在于损失函数。</p>
+<p>梯度树提升（<strong>Gradient Tree Boosting</strong>）是 boosting 在任意可微分损失函数的一种推广，既可用于回归也可用于分类，同样是顺序生成基学习器。</p>
+<script type="math/tex; mode=display">F_m(x)=F_{m-1}(x)+\gamma_mh_m(x)</script><p>每一步基于当前模型 $F_{m-1}(x)$ 来计算损失 $L$，并最小化 $L$ 来训练决策树 $h_m(x)$：</p>
+<script type="math/tex; mode=display">F_m(x)=F_{m-1}(x)+\text{argmin}_h\Sigma_{i=1}^n L(y_i, F_{m-1}(x_i)+h(x_i))</script><p>使用该算法进行回归和分类任务时不同在于损失函数。</p>
 <hr>
 <h2 id="Stacking"><a href="#Stacking" class="headerlink" title="Stacking"></a>Stacking</h2><p>Stacking 是一种通过元分类器（meta-classifier）或者元回归器（meta-regressor）来综合几个分类模型和回归模型的集成学习技术。基模型（base level model）基于整个数据集进行训练，然后元模型（meta-model）将基模型的输出作为特征来进行训练。( <em>译者注：个人觉得和 stacking-autoencoder 一个思想</em> )</p>
 <p>基模型通常由不同的学习算法组成，因此 stacking 集成通常是异构的。下面的算法总结了 stacking ：</p>
 <blockquote>
 <ol>
-<li>输入：训练样本 $D=\{x<em>i, y_i\}\</em>{i=1}^{m}$</li>
+<li>输入：训练样本 $D=\{x_i, y_i\}_{i=1}^{m}$</li>
 <li>输出：集成分类器 $H$</li>
 <li><em>Step 1：学习基分类器</em></li>
 <li>for $t=1$ to $T$</li>
@@ -285,7 +288,7 @@
 <li>end for</li>
 <li><em>Step 2：构建新数据</em></li>
 <li>for $i=1$ to $m$</li>
-<li>$D_h={x_i^{&#39;}, y_i}$，其中 $x_i^{&#39;}={h_1(x_i), \ldots, h_T(x_i)}$</li>
+<li>$D_h=\{x_i^{&#39;}, y_i\}$，其中 $x_i^{&#39;}=\{h_1(x_i), \ldots, h_T(x_i)\}$</li>
 <li>end for</li>
 <li><em>Step 3：学习元分类器</em></li>
 <li>基于 $D_h$ 训练 $H$</li>

@@ -224,7 +224,7 @@
 <p>也就是说 SVD 是线代中对于实数矩阵和复数矩阵的分解，将特征分解从 <em>半正定矩阵</em> 推广到任意 $ m\times n $ 矩阵。</p>
 <p><strong>注意：本篇文章内如未作说明矩阵均指实数矩阵。</strong></p>
 <p>假设有 $ m\times n $ 的矩阵 $A$ ，那么 SVD 就是要找到如下式的这么一个分解，将 $A$ 分解为 3 个矩阵的乘积：</p>
-<script type="math/tex; mode=display">A\_{m \times n} = U\_{m \times m}\Sigma\_{m \times n} V^T_{n \times n}</script><p>其中，$U$ 和 $V$ 都是<strong>正交矩阵</strong> （Orthogonal Matrix），在复数域内的话就是酉矩阵（Unitary Matrix），即 </p>
+<script type="math/tex; mode=display">A_{m \times n} = U_{m \times m}\Sigma_{m \times n} V^T_{n \times n}</script><p>其中，$U$ 和 $V$ 都是<strong>正交矩阵</strong> （Orthogonal Matrix），在复数域内的话就是酉矩阵（Unitary Matrix），即 </p>
 <script type="math/tex; mode=display">U^TU = E_{m \times m}</script><script type="math/tex; mode=display">V^TV=E_{n \times n}</script><p> 换句话说，就是说 $U$ 的转置等于 $U$ 的逆，$V$ 的转置等于 $V$ 的逆：</p>
 <script type="math/tex; mode=display">U^T = U^{-1}</script><script type="math/tex; mode=display">V^T = V^{-1}</script><p>而 $ \Sigma $ 就是一个非负实对角矩阵。</p>
 <p>那么 $U$ 和 $V$ 以及 $ \Sigma $ 是如何构成的呢？</p>
@@ -360,6 +360,11 @@
         <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">Theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">archer</a></span>
     </div>
     <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        </span>
+    </div>
     
 </footer>
     </div>
@@ -1277,6 +1282,8 @@ jsonContent:
     }
 </script>
     <!-- 不蒜子  -->
+    
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     
     <!-- CNZZ统计  -->
     

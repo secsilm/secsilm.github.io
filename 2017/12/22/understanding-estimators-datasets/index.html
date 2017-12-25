@@ -215,7 +215,6 @@
 <li><p>Estimators：这是模型的核心部分，而 Estimators 的核心部分则是一个 <code>model_fn</code> 函数（后面会细讲），你在这个函数中定义你的模型架构，输入是特征和标签，输出是一个定义好的 estimator。</p>
 </li>
 </ul>
-<a id="more"></a>
 <p><img src="https://i.imgur.com/CSw2x5g.png" alt="tensorflow architecture"><br><em>TensorFlow 架构，图自 <a href="https://developers.googleblog.com/2017/09/introducing-tensorflow-datasets.html" target="_blank" rel="noopener">Google Developers Blog</a></em></p>
 <p>实际上这两个特性并不是第一次引入，只不过之前是放在 <code>tf.contrib</code> 里，而这次是引入到了 TensorFlow 核心组件中，意味着可以在生产环境中使用。我 6 月份的时候也写过一篇<a href="http://blog.csdn.net/u010099080/article/details/72824899" target="_blank" rel="noopener">博文</a>简单说了下 <code>tf.contrib.learn.DNNRegressor</code> 的使用，实际上这就是 Estimators 内置的一个模型（estimator）。这两个都是高层 API，也就是说为了创建一个模型你不用再写一些很底层的代码（比如定义权重偏置项），可以像 scikit-learn 和 Keras 那样很轻松的几行代码创建一个模型，便于快速实现。</p>
 <p>本篇博文就是试图将这两个高层 API 结合起来，使用 TensorFlow 的数据格式 TFRecords 来实现一个在 <a href="https://www.cs.toronto.edu/~kriz/cifar.html" target="_blank" rel="noopener">CIFAR-10</a> 数据集上的 CNN 模型。完整代码可在<a href="">我的 GitHub</a> 上找到。</p>
@@ -230,7 +229,7 @@
 <li><a href="https://pan.baidu.com/s/1dFew7SH" target="_blank" rel="noopener">TensorBoard</a>（1.45 GB），密码：<code>6885</code></li>
 </ul>
 <h2 id="模型架构"><a href="#模型架构" class="headerlink" title="模型架构"></a>模型架构</h2><p>为了让大家对模型架构先有个清晰地了解，我先把 TensorBoard （不熟悉 TensorBoard 的话可以参考<a href="http://blog.csdn.net/u010099080/article/details/77426577" target="_blank" rel="noopener">这里</a>）中显示的模型架构图贴出来（数据集我也就不介绍了，这是个很常用的数据集，如有不熟悉的可以参看<a href="http://blog.csdn.net/u010099080/article/details/53906810#%E6%95%B0%E6%8D%AE%E9%9B%86" target="_blank" rel="noopener">这里</a>）：</p>
-<p><img src="https://i.imgur.com/D1Qz5it.png" alt="cnn model"><br><em>模型架构</em></p>
+<p><img src="https://i.imgur.com/D1Qz5it.png" alt="cnn model"><em>模型架构</em></p>
 <p>可以看到两层卷积层，两层池化层，两层 BN 层，一层 dropout，三层全连接层（<code>DENSE</code>）。</p>
 <h2 id="读取数据集"><a href="#读取数据集" class="headerlink" title="读取数据集"></a>读取数据集</h2><p>在给模型「喂」数据的时候，我们的流程大概是这样的：</p>
 <ol>
@@ -399,6 +398,11 @@
         <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">Theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">archer</a></span>
     </div>
     <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        </span>
+    </div>
     
 </footer>
     </div>
@@ -1316,6 +1320,8 @@ jsonContent:
     }
 </script>
     <!-- 不蒜子  -->
+    
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     
     <!-- CNZZ统计  -->
     

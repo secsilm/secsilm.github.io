@@ -208,13 +208,13 @@
         <div class="container container-unloaded">
             <main class="main post-page">
     <article class="article-entry">
-        <p>前面写了 <a href="http://blog.csdn.net/u010099080/article/details/53418159" target="_blank" rel="noopener">TensorFlow 在Windows上的安装教程</a>，当时版本还是 0.12 。</p>
+        <p>前面写了 <a href="https://secsilm.github.io/2016/12/01/installing-tensorflow/" target="_blank" rel="noopener">TensorFlow 在Windows上的安装教程</a>，当时版本还是 0.12 。</p>
 <p>NOW</p>
 <p>首届 <a href="https://events.withgoogle.com/tensorflow-dev-summit/watch-the-videos/#content" target="_blank" rel="noopener">TensorFlow 开发者大会</a>（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，<strong>TensorFlow 1.0</strong> 版本发布。Google Research Blog 也于昨天在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html" target="_blank" rel="noopener">博客</a> 中公布了这一消息。</p>
 <a id="more"></a>
 <p><img src="http://img.blog.csdn.net/20170216155804609?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></p>
 <hr>
-<h1 id="改动"><a href="#改动" class="headerlink" title="改动"></a>改动</h1><p>这一版本的改动还是比较大的，很多旧的 API 都已经不再使用。在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html" target="_blank" rel="noopener">博客</a> 中可以看到 1.0 版本更快、更灵活、更稳定（production-ready） 。TensorFlow 1.0 版本保证 Python API 的稳定性，即使以后添加新的特性也不用担心会破坏现有代码。</p>
+<h2 id="改动"><a href="#改动" class="headerlink" title="改动"></a>改动</h2><p>这一版本的改动还是比较大的，很多旧的 API 都已经不再使用。在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html" target="_blank" rel="noopener">博客</a> 中可以看到 1.0 版本更快、更灵活、更稳定（production-ready） 。TensorFlow 1.0 版本保证 Python API 的稳定性，即使以后添加新的特性也不用担心会破坏现有代码。</p>
 <p>博客中提到的其他新版本两点（<em>为避免翻译造成的偏差，我就直接引用原文了</em>）：</p>
 <ul>
 <li>Python APIs have been changed to resemble NumPy more closely. For this and other backwards-incompatible changes made to support API stability going forward, please use our handy <a href="https://tensorflow.org/install/migration" target="_blank" rel="noopener">migration guide</a> and <a href="https://github.com/tensorflow/tensorflow/tree/r1.0/tensorflow/tools/compatibility" target="_blank" rel="noopener">conversion script</a>.</li>
@@ -226,15 +226,18 @@
 <li><a href="https://www.tensorflow.org/install" target="_blank" rel="noopener">Installation</a> improvements: Python 3 docker images have been added, and TensorFlow’s pip packages are now PyPI compliant. This means TensorFlow can now be installed with a simple invocation of <code>pip install tensorflow</code>.</li>
 </ul>
 <hr>
-<h1 id="升级"><a href="#升级" class="headerlink" title="升级"></a>升级</h1><p>升级很简单（在这里感谢一下为简化 TensorFlow 安装过程的工程师们），就是一行语句，这也是安装命令：</p>
-<p>对于 GPU 版本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip3 install --upgrade tensorflow-gpu</span><br></pre></td></tr></table></figure></p>
-<p>对于 CPU 版本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip3 install --upgrade tensorflow</span><br></pre></td></tr></table></figure></p>
+<h2 id="升级"><a href="#升级" class="headerlink" title="升级"></a>升级</h2><p>升级很简单（在这里感谢一下为简化 TensorFlow 安装过程的工程师们），就是一行语句，这也是安装命令：</p>
+<p>对于 GPU 版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip3 install --upgrade tensorflow-gpu</span><br></pre></td></tr></table></figure>
+<p>对于 CPU 版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip3 install --upgrade tensorflow</span><br></pre></td></tr></table></figure>
 <p><img src="http://img.blog.csdn.net/20170216162553891?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="升级过程"><br><em>右键在新标签页打开图片可查看大图</em></p>
 <p>输入完回车就开始升级过程，会下载并卸载重装一些必要的包，时间长短视网速而定。</p>
 <hr>
-<h1 id="更新你的旧代码"><a href="#更新你的旧代码" class="headerlink" title="更新你的旧代码"></a>更新你的旧代码</h1><p>有两种方法更新你的代码，一种就是我上面提到的用脚本自动升级，另一种就是手动更改，具体可以参考 <a href="https://www.tensorflow.org/install/migration" target="_blank" rel="noopener">这里</a> 。</p>
-<h2 id="使用脚本"><a href="#使用脚本" class="headerlink" title="使用脚本"></a>使用脚本</h2><p>由于版本改动较大，TensorFlow 甚至出了一个 <code>tf_upgrade.py</code> 脚本来帮助你更新代码，从 <a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/compatibility/tf_upgrade.py" target="_blank" rel="noopener">这里</a> 获取这份代码，或者点击 <a href="http://download.csdn.net/detail/u010099080/9756279" target="_blank" rel="noopener">这里</a> 直接下载。</p>
-<p>对于更新单个文件，可以使用下面的命令：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --infile InputFile --outfile OutputFile</span><br></pre></td></tr></table></figure></p>
+<h2 id="更新你的旧代码"><a href="#更新你的旧代码" class="headerlink" title="更新你的旧代码"></a>更新你的旧代码</h2><p>有两种方法更新你的代码，一种就是我上面提到的用脚本自动升级，另一种就是手动更改，具体可以参考 <a href="https://www.tensorflow.org/install/migration" target="_blank" rel="noopener">这里</a> 。</p>
+<h3 id="使用脚本"><a href="#使用脚本" class="headerlink" title="使用脚本"></a>使用脚本</h3><p>由于版本改动较大，TensorFlow 甚至出了一个 <code>tf_upgrade.py</code> 脚本来帮助你更新代码，从 <a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/compatibility/tf_upgrade.py" target="_blank" rel="noopener">这里</a> 获取这份代码，或者点击 <a href="http://download.csdn.net/detail/u010099080/9756279" target="_blank" rel="noopener">这里</a> 直接下载。</p>
+<p>对于更新单个文件，可以使用下面的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --infile InputFile --outfile OutputFile</span><br></pre></td></tr></table></figure>
 <p>其中 <code>InputFile</code> 和 <code>OutputFile</code> 分别为你的旧代码和新代码，根据你的文件名做相应的替换。例如我的旧代码是 <code>test.py</code>，将要生成的新代码是 <code>test_1.0.py</code>，则：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --infile test.py --outfile test_1.0.py</span><br></pre></td></tr></table></figure>
 <p>同时，<code>tf_upgrade.py</code> 会生成一个名为 <code>report.txt</code> 的文件，该文件记录了对旧文件做的所有改动，同时也给出了可能需要你手动更改的建议。</p>
@@ -242,9 +245,9 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --intree InputDir --outtree OutputDir</span><br></pre></td></tr></table></figure>
 <p>例如，我的 programs 位于 <code>/home/user/cool</code> 目录，新的生成的文件我想放到 <code>/home/user/cool_1.0</code> 里，则</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --intree /home/user/cool --outtree /home/user/cool_1.0</span><br></pre></td></tr></table></figure>
-<h2 id="手动更改"><a href="#手动更改" class="headerlink" title="手动更改"></a>手动更改</h2><p>除了使用脚本自动更新外，还可以使用手动替换的方式。需要替换的东西有很多，我就不一一列举了，大家可以参考 <a href="https://www.tensorflow.org/install/migration" target="_blank" rel="noopener">官网</a> 。</p>
+<h3 id="手动更改"><a href="#手动更改" class="headerlink" title="手动更改"></a>手动更改</h3><p>除了使用脚本自动更新外，还可以使用手动替换的方式。需要替换的东西有很多，我就不一一列举了，大家可以参考 <a href="https://www.tensorflow.org/install/migration" target="_blank" rel="noopener">官网</a> 。</p>
 <hr>
-<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
     </article>
     <!-- 前后页  -->
     <ul class="post-pager">
@@ -360,7 +363,7 @@
         <div class="toc-catalog">
             <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
         </div>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#改动"><span class="toc-number">1.</span> <span class="toc-text">改动</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#升级"><span class="toc-number">2.</span> <span class="toc-text">升级</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#更新你的旧代码"><span class="toc-number">3.</span> <span class="toc-text">更新你的旧代码</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#使用脚本"><span class="toc-number">3.1.</span> <span class="toc-text">使用脚本</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#手动更改"><span class="toc-number">3.2.</span> <span class="toc-text">手动更改</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-number">4.</span> <span class="toc-text">END</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#改动"><span class="toc-number">1.</span> <span class="toc-text">改动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#升级"><span class="toc-number">2.</span> <span class="toc-text">升级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更新你的旧代码"><span class="toc-number">3.</span> <span class="toc-text">更新你的旧代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#使用脚本"><span class="toc-number">3.1.</span> <span class="toc-text">使用脚本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#手动更改"><span class="toc-number">3.2.</span> <span class="toc-text">手动更改</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-number">4.</span> <span class="toc-text">END</span></a></li></ol>
     </div>
     
     <div class="back-top">&#xe639;</div>

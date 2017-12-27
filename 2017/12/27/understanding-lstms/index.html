@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
     <title>
         
-        About Me · Lee&#39;s Space Station
+        理解 LSTM 网络 · Lee&#39;s Space Station
         
     </title>
     <link rel="icon" href= /avatar/Bastion_cute.png>
@@ -78,7 +78,7 @@
     
 </head>
     
-        <body class="about-body">
+        <body class="post-body">
     
     
 <!-- hexo-inject:begin --><!-- hexo-inject:end --><header class="header">
@@ -86,6 +86,15 @@
     <div class="read-progress"></div>
     <div class="header-sidebar-menu">&#xe775;</div>
     <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/" >Lee&#39;s Space Station</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">理解 LSTM 网络</a>
+            </div>
+    </div>
     
     <a class="home-link" href=/>Lee's Space Station</a>
 </header>
@@ -95,23 +104,41 @@
     <!-- 主页  -->
     
     
+    <!-- 404页  -->
             
-    <div class="site-intro-img" style="background-image: url(/assets/ironman-1.jpg)"></div>
+    <div class="site-intro-img" style="background-image: url(/assets/hanamura-3.jpg)"></div>
     <div class="site-intro-placeholder"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
             <!-- 主页  -->
             
-            About Me
+            理解 LSTM 网络
+            <!-- 404 -->
             
         </h1>
         <!-- 副标题 -->
         <p class="intro-subtitle">
             <!-- 主页副标题  -->
             
+            
+            <!-- 404 -->
+            
         </p>
         <!-- 文章页meta -->
+        
+            <!-- 文章页标签  -->
+            
+                <div class= post-intro-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+</div>
+            
+            <div class="post-intro-meta">
+                <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                <span class="post-intro-time">2017/12/27</span>
+            </div>
         
     </div>
 </div>
@@ -179,20 +206,64 @@
             }
         </script>
         <div class="container container-unloaded">
-            <!-- 不可以删除，否则会调用post的layout  -->
-<main class="main about-page">
+            <main class="main post-page">
     <article class="article-entry">
-        <iframe width="640" height="360" src="https://www.youtube.com/embed/_mkiGMtbrPM?ecver=1" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>
+        <h1 id="Understanding-LSTM-Networks"><a href="#Understanding-LSTM-Networks" class="headerlink" title="Understanding LSTM Networks"></a><a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks</a></h1><blockquote>
+<p>译者注：本文原文为 Christopher Olah 于 2015 年发表在自己<a href="http://colah.github.io/" target="_blank" rel="noopener">博客</a>上的经典文章：<a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks -- colah&#39;s blog</a>。本人水平有限，如有错误欢迎指出。</p>
+</blockquote>
+<h2 id="Recurrent-Neural-Networks"><a href="#Recurrent-Neural-Networks" class="headerlink" title="Recurrent Neural Networks"></a>Recurrent Neural Networks</h2><p>人们不会每一秒都从头开始思考。当你阅读这篇文章的时候，你根据前面的单词来理解后面的单词。你不会扔掉他们然后重新开始思考。你的思考具有持续性。</p>
+<p>传统的神经网络做不到这一点，而且这似乎是一个主要缺点。例如，想象一下你想要对一个电影中每一帧所发生的事件类型进行分类，而传统神经网络却不能够利用先前的事情来推理后来的事情。</p>
+<p>Recurrent Neural Networks（<em>以下简称 RNN</em>）解决了这个问题，他们在网络内部有循环，可以让信息具有持续性。</p>
+<p><img src="https://i.imgur.com/A8appFv.png" alt="Recurrent Neural Networks have loops."></p>
+<center><font color="gray">RNN 中有循环</font></center>
 
-<center>😊</center>
-<center>Hello，你好</center>
-<center>我是 李亚军</center>
-<center>Machine Learning 和 Data Science 爱好者</center>
-<center>😜 Pythonista 🤣</center>
-<center>欢迎你来到我的网络空间站</center>
-<center>😊</center>
 
     </article>
+    <!-- 前后页  -->
+    <ul class="post-pager">
+        
+        
+            <li class="previous">
+                <a href= "/2017/12/25/export-csdn-blogs-to-md/" title= 批量导出 CSDN 博客为 Markdown 文件 >
+                    <span>Previous Post</span>
+                    <span>批量导出 CSDN 博客为 Markdown 文件</span>
+                </a>
+            </li>
+        
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    <div id="disqus_thread"></div>
+    <script>
+        /**
+    *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+    *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+        
+        var disqus_config = function () {
+        this.page.url = "http://yoursite.com/2017/12/27/understanding-lstms/";  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = "理解 LSTM 网络"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+        
+        (function () { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://secsilm.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+    
+    <!--PC版-->
+
+    <!--PC版-->
+
+
+    
 </main>
             <!-- profile -->
             
@@ -250,6 +321,13 @@
 </footer>
     </div>
     <!-- toc -->
+    
+    <div class="toc-wrapper">
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Understanding-LSTM-Networks"><span class="toc-number">1.</span> <span class="toc-text">Understanding LSTM Networks</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Recurrent-Neural-Networks"><span class="toc-number">1.1.</span> <span class="toc-text">Recurrent Neural Networks</span></a></li></ol></li></ol>
+    </div>
     
     <div class="back-top">&#xe639;</div>
     <div class="sidebar">

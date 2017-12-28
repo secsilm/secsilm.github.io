@@ -106,7 +106,7 @@
     
     <!-- 404页  -->
             
-    <div class="site-intro-img" style="background-image: url(/assets/hanamura-3.jpg)"></div>
+    <div class="site-intro-img" style="background-image: url(https://i.imgur.com/NSng4cv.png)"></div>
     <div class="site-intro-placeholder"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
@@ -132,6 +132,8 @@
                 <div class= post-intro-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Translation>Translation</a>
     
 </div>
             
@@ -208,15 +210,52 @@
         <div class="container container-unloaded">
             <main class="main post-page">
     <article class="article-entry">
-        <h1 id="Understanding-LSTM-Networks"><a href="#Understanding-LSTM-Networks" class="headerlink" title="Understanding LSTM Networks"></a><a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks</a></h1><blockquote>
-<p>译者注：本文原文为 Christopher Olah 于 2015 年发表在自己<a href="http://colah.github.io/" target="_blank" rel="noopener">博客</a>上的经典文章：<a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks -- colah&#39;s blog</a>。本人水平有限，如有错误欢迎指出。</p>
+        <blockquote>
+<p>译者注：</p>
+<ul>
+<li>本文原文为 Christopher Olah 于 2015 年发表在自己<a href="http://colah.github.io/" target="_blank" rel="noopener">博客</a>上的经典文章：<a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks -- colah&#39;s blog</a>。</li>
+<li>文中括号或者引用块中的 <em>斜体字</em> 为对应的英文原文或者我自己注释的话（会标明 <em>译者注</em>），否则为原文中本来就有的话。</li>
+<li>本人水平有限，如有错误欢迎指出。</li>
+</ul>
 </blockquote>
 <h2 id="Recurrent-Neural-Networks"><a href="#Recurrent-Neural-Networks" class="headerlink" title="Recurrent Neural Networks"></a>Recurrent Neural Networks</h2><p>人们不会每一秒都从头开始思考。当你阅读这篇文章的时候，你根据前面的单词来理解后面的单词。你不会扔掉他们然后重新开始思考。你的思考具有持续性。</p>
 <p>传统的神经网络做不到这一点，而且这似乎是一个主要缺点。例如，想象一下你想要对一个电影中每一帧所发生的事件类型进行分类，而传统神经网络却不能够利用先前的事情来推理后来的事情。</p>
 <p>Recurrent Neural Networks（<em>以下简称 RNN</em>）解决了这个问题，他们在网络内部有循环，可以让信息具有持续性。</p>
-<p><img src="https://i.imgur.com/A8appFv.png" alt="Recurrent Neural Networks have loops."></p>
+<p><img src="https://i.imgur.com/A8appFv.png" height="180" alt="Recurrent Neural Networks have loops." )=""></p>
 <center><font color="gray">RNN 中有循环</font></center>
 
+<p>上图是神经网络的一部分，其中 $A$ 观察输入 $x_t$ 并输出一个值 $h_t$，循环使得信息可以从网络中的一步传递到下一步。</p>
+<p>这些循环使得 RNN 看起来有些神秘。然而如果你再进一步想想，就会发现他们与普通的神经网络并不是完全不同。一个 RNN 可以被想成是对同一个网络的多次复制，每次都把信息传递给下一个。考虑一下如果我们把循环展开（<em>unroll</em>）会发生什么：</p>
+<p><img src="https://i.imgur.com/0Wik9NF.png" alt="rnn-unrolled"></p>
+<center><font color="gray">一个展开的 RNN</font></center>
+
+<p>这种链状性质表明 RNN 与序列（<em>sequences</em>）和列表（<em>lists</em>）密切相关，在处理这种数据时他们是很自然的神经网络架构。</p>
+<p>而且他们也确实在被使用！过去几年中，RNN 被应用于一系列的任务并取得了令人难以置信的成功：语音识别，语言模型，翻译，看图说话（<em>image captioning</em>）等等。你可以阅读 Andrej Karpathy 的精彩博文 —— <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/" target="_blank" rel="noopener">The Unreasonable Effectiveness of Recurrent Neural Networks</a> 来了解通过 RNN 可以取得的惊人成绩。他们真的很棒。</p>
+<p>这些成功的基础是使用 LSTMs，一种非常特别地 RNN，在许多任务中要比标准版本好。几乎所有基于 RNN 的令人激动的成绩都是通过他们获得的。这篇文章讨论的就是这些 LSTMs。</p>
+<h2 id="The-Problem-of-Long-Term-Dependencies"><a href="#The-Problem-of-Long-Term-Dependencies" class="headerlink" title="The Problem of Long-Term Dependencies"></a>The Problem of Long-Term Dependencies</h2><p>RNNs 其中一个有吸引力的地方是能够将以前的信息和现在的任务联系起来，例如使用视频中的前几帧信息可能会对当前帧的理解有帮助。如果 RNNs 能够做到这些，那么他们就是非常有用的。但是他们能吗？这不一定。</p>
+<p>有时，我们可能只需要最近的信息来完成当前任务。例如，考虑一个试图基于前面的词来预测下一个词的语言模型，如果我们试图预测 “the clouds are in the <em>sky</em>” 这句话中的最后一个词，那么我们就不需要更多的信息，很明显下一个词就是 sky。在这种情况下，相关信息和需要的地方（<em>the place that it&#39;s needed</em>）之间的差距很小，那么这时候 RNNs 就可以学习到使用过去的信息。（<em>译者注：也就是短期依赖</em>）</p>
+<p><img src="https://i.imgur.com/HAvvUQV.png" height="180)"></p>
+<p>但是也有其他情况是我们需要更多信息的。考虑我们需要预测 “I grew up in France... I speak fluent <em>French</em>” 这句话中的最后一个词。最近的信息表明这个词应该是一个语言的名字，但是如果我们想要知道哪个语言，那么我们需要结合更前面的 France 这个背景。这时相关信息和需要的点（<em>the point where it is needed</em>）之间的差距就会变得非常大。</p>
+<p>然而不幸的是，随着这个差距的增大，RNNs 越来越难以学习使用以前的信息。</p>
+<p><img src="https://i.imgur.com/Whfo6UB.png" height="180)"></p>
+<p>理论上来说，RNNs 完全可以处理这种“长期依赖”（<em>long-term dependencies</em>）。一个人可以很仔细的选择参数来解决这种形式的小问题（<em>toy problems</em>）。不过实际上，RNNs 似乎并不能学习到这种长期依赖。<a href="http://people.idsia.ch/~juergen/SeppHochreiter1991ThesisAdvisorSchmidhuber.pdf" target="_blank" rel="noopener">Hochreiter (1991) [German]</a> 和 <a href="http://www-dsi.ing.unifi.it/~paolo/ps/tnn-94-gradient.pdf" target="_blank" rel="noopener">Bengio, et al. (1994)</a> 曾经深入探讨了这个问题，发现了一些相当根本的原因。</p>
+<p>幸运的是，LSTMs 并没有这个问题！</p>
+<h2 id="LSTM-Networks"><a href="#LSTM-Networks" class="headerlink" title="LSTM Networks"></a>LSTM Networks</h2><p>长短期记忆网络 —— 通常简称为“LSTMs” —— 是一种特别的 RNN，能够学习到长期依赖。LSTMs 由 <a href="http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97_lstm.pdf" target="_blank" rel="noopener">Hochreiter &amp; Schmidhuber (1997)</a> 提出，其后有很多人都对其进行了改善和推广<sup><a href="#fn_1" id="reffn_1">1</a></sup>。LSTMs 在许多任务上效果都非常好，现在也被广泛使用。</p>
+<p>LSTMs 就是被设计用来避免长期依赖问题的。记住长时间的信息实际上是他们的默认行为，而不需要可以去这样做！</p>
+<p>所有的 RNN 都是在将一个神经网络的模块重复好多次并链式连接起来。在标准的 RNNs 中，这个被重复的模块是一个非常简单的结构，例如一个单层的 tanh 层。</p>
+<p><img src="https://i.imgur.com/KfFor4n.png" height="180)"></p>
+<center><font color="gray">标准 RNN 中的重复模块都含有一层</font></center>
+
+<p>LSTMs 也有这样一个链式结构，但是那个重复模块的结构是不一样的。与仅有一个单层神经网络不同的是，LSTMs 有 4 层，以一种非常特殊的方式连接起来。</p>
+<p><img src="https://i.imgur.com/UydD8qN.png" height="180)"></p>
+<center><font color="gray">LSTMs 中的重复模块含有 4 层</font></center>
+
+<p>不要担心这里面的细节。稍后我们将会逐步深入这个 LSTMs 图。现在，我们先来熟悉下我们将要使用的符号：</p>
+<p><img src="https://i.imgur.com/CbUDJll.png" alt=""></p>
+<p>上图中，每一条线都表示一个向量从一个输出节点传到其他节点作为输入。粉色圆圈表示的是 pointwise 操作，例如向量加法，而黄色举行表示的是可学习的神经网络层。线合在一起表示连接（<em>concatenation</em>），线分叉表示其内容被复制成多份并且这些复制品流向不同的方向。</p>
+<h2 id="The-Core-Idea-Behind-LSTMs"><a href="#The-Core-Idea-Behind-LSTMs" class="headerlink" title="The Core Idea Behind LSTMs"></a>The Core Idea Behind LSTMs</h2><blockquote id="fn_1">
+<sup>1</sup>. 除了原作者，许多人都对现在的 LSTM 做出了贡献。 一个不完整名单：Felix Gers，Fred Cummins，Santiago Fernandez，Justin Bayer，Daan Wierstra，Julian Togelius，Faustino Gomez，Matteo Gagliolo，和 <a href="https://scholar.google.com/citations?user=DaFHynwAAAAJ&amp;hl=en" target="_blank" rel="noopener">Alex Graves</a>。<a href="#reffn_1" title="Jump back to footnote [1] in the text."> &#8617;</a>
+</blockquote>
 
     </article>
     <!-- 前后页  -->
@@ -326,7 +365,7 @@
         <div class="toc-catalog">
             <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
         </div>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Understanding-LSTM-Networks"><span class="toc-number">1.</span> <span class="toc-text">Understanding LSTM Networks</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Recurrent-Neural-Networks"><span class="toc-number">1.1.</span> <span class="toc-text">Recurrent Neural Networks</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Recurrent-Neural-Networks"><span class="toc-number">1.</span> <span class="toc-text">Recurrent Neural Networks</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The-Problem-of-Long-Term-Dependencies"><span class="toc-number">2.</span> <span class="toc-text">The Problem of Long-Term Dependencies</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LSTM-Networks"><span class="toc-number">3.</span> <span class="toc-text">LSTM Networks</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The-Core-Idea-Behind-LSTMs"><span class="toc-number">4.</span> <span class="toc-text">The Core Idea Behind LSTMs</span></a></li></ol>
     </div>
     
     <div class="back-top">&#xe639;</div>

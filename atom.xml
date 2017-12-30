@@ -5,9 +5,9 @@
   <subtitle>Always Learning</subtitle>
   <link href="/atom.xml" rel="self"/>
   
-  <link href="http://yoursite.com/"/>
+  <link href="https://secsilm.github.io/"/>
   <updated>2017-12-29T12:37:51.845Z</updated>
-  <id>http://yoursite.com/</id>
+  <id>https://secsilm.github.io/</id>
   
   <author>
     <name>Alan Lee</name>
@@ -18,8 +18,8 @@
   
   <entry>
     <title>理解 LSTM 网络</title>
-    <link href="http://yoursite.com/2017/12/29/understanding-lstms/"/>
-    <id>http://yoursite.com/2017/12/29/understanding-lstms/</id>
+    <link href="https://secsilm.github.io/2017/12/29/understanding-lstms/"/>
+    <id>https://secsilm.github.io/2017/12/29/understanding-lstms/</id>
     <published>2017-12-29T10:58:00.000Z</published>
     <updated>2017-12-29T12:37:51.845Z</updated>
     
@@ -38,16 +38,16 @@
     </summary>
     
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-      <category term="Translation" scheme="http://yoursite.com/tags/Translation/"/>
+      <category term="Translation" scheme="https://secsilm.github.io/tags/Translation/"/>
     
   </entry>
   
   <entry>
     <title>批量导出 CSDN 博客为 Markdown 文件</title>
-    <link href="http://yoursite.com/2017/12/25/export-csdn-blogs-to-md/"/>
-    <id>http://yoursite.com/2017/12/25/export-csdn-blogs-to-md/</id>
+    <link href="https://secsilm.github.io/2017/12/25/export-csdn-blogs-to-md/"/>
+    <id>https://secsilm.github.io/2017/12/25/export-csdn-blogs-to-md/</id>
     <published>2017-12-25T01:27:18.000Z</published>
     <updated>2017-12-25T04:02:17.276Z</updated>
     
@@ -63,14 +63,14 @@
     </summary>
     
     
-      <category term="Python" scheme="http://yoursite.com/tags/Python/"/>
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
   </entry>
   
   <entry>
     <title>理解 Estimators 和 Datasets</title>
-    <link href="http://yoursite.com/2017/12/22/understanding-estimators-datasets/"/>
-    <id>http://yoursite.com/2017/12/22/understanding-estimators-datasets/</id>
+    <link href="https://secsilm.github.io/2017/12/22/understanding-estimators-datasets/"/>
+    <id>https://secsilm.github.io/2017/12/22/understanding-estimators-datasets/</id>
     <published>2017-12-22T10:30:15.000Z</published>
     <updated>2017-12-24T15:08:35.711Z</updated>
     
@@ -86,14 +86,14 @@
     </summary>
     
     
-      <category term="TensorFlow" scheme="http://yoursite.com/tags/TensorFlow/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   
   <entry>
     <title>Windows 10 资源管理器黑色风格</title>
-    <link href="http://yoursite.com/2017/10/26/windows10-dark-theme/"/>
-    <id>http://yoursite.com/2017/10/26/windows10-dark-theme/</id>
+    <link href="https://secsilm.github.io/2017/10/26/windows10-dark-theme/"/>
+    <id>https://secsilm.github.io/2017/10/26/windows10-dark-theme/</id>
     <published>2017-10-26T14:47:00.000Z</published>
     <updated>2017-12-24T12:53:19.643Z</updated>
     
@@ -112,14 +112,14 @@
     </summary>
     
     
-      <category term="Windows" scheme="http://yoursite.com/tags/Windows/"/>
+      <category term="Windows" scheme="https://secsilm.github.io/tags/Windows/"/>
     
   </entry>
   
   <entry>
     <title>梯度下降优化算法概述</title>
-    <link href="http://yoursite.com/2017/10/08/gradient-descent-methods/"/>
-    <id>http://yoursite.com/2017/10/08/gradient-descent-methods/</id>
+    <link href="https://secsilm.github.io/2017/10/08/gradient-descent-methods/"/>
+    <id>https://secsilm.github.io/2017/10/08/gradient-descent-methods/</id>
     <published>2017-10-08T13:41:00.000Z</published>
     <updated>2017-12-23T04:54:22.559Z</updated>
     
@@ -142,16 +142,16 @@
     </summary>
     
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-      <category term="Translation" scheme="http://yoursite.com/tags/Translation/"/>
+      <category term="Translation" scheme="https://secsilm.github.io/tags/Translation/"/>
     
   </entry>
   
   <entry>
     <title>使用集成学习提升机器学习算法性能</title>
-    <link href="http://yoursite.com/2017/08/30/ensemble-methods/"/>
-    <id>http://yoursite.com/2017/08/30/ensemble-methods/</id>
+    <link href="https://secsilm.github.io/2017/08/30/ensemble-methods/"/>
+    <id>https://secsilm.github.io/2017/08/30/ensemble-methods/</id>
     <published>2017-08-30T10:47:00.000Z</published>
     <updated>2017-12-25T13:02:14.934Z</updated>
     
@@ -166,16 +166,16 @@
     </summary>
     
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-      <category term="Translation" scheme="http://yoursite.com/tags/Translation/"/>
+      <category term="Translation" scheme="https://secsilm.github.io/tags/Translation/"/>
     
   </entry>
   
   <entry>
     <title>理解 TensorBoard</title>
-    <link href="http://yoursite.com/2017/08/20/understanding-tensorboard/"/>
-    <id>http://yoursite.com/2017/08/20/understanding-tensorboard/</id>
+    <link href="https://secsilm.github.io/2017/08/20/understanding-tensorboard/"/>
+    <id>https://secsilm.github.io/2017/08/20/understanding-tensorboard/</id>
     <published>2017-08-20T02:01:00.000Z</published>
     <updated>2017-12-26T15:22:34.117Z</updated>
     
@@ -188,14 +188,14 @@
     </summary>
     
     
-      <category term="TensorFlow" scheme="http://yoursite.com/tags/TensorFlow/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   
   <entry>
     <title>Numpy 中的 shuffle VS permutation</title>
-    <link href="http://yoursite.com/2017/06/17/numpy-shuffle-permutation/"/>
-    <id>http://yoursite.com/2017/06/17/numpy-shuffle-permutation/</id>
+    <link href="https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/"/>
+    <id>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</id>
     <published>2017-06-17T15:28:00.000Z</published>
     <updated>2017-12-23T00:22:03.000Z</updated>
     
@@ -208,14 +208,14 @@
     </summary>
     
     
-      <category term="Python" scheme="http://yoursite.com/tags/Python/"/>
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
   </entry>
   
   <entry>
     <title>TensorFlow DNNRegressor 的简单使用</title>
-    <link href="http://yoursite.com/2017/06/02/tensorflow-DNNRegressor/"/>
-    <id>http://yoursite.com/2017/06/02/tensorflow-DNNRegressor/</id>
+    <link href="https://secsilm.github.io/2017/06/02/tensorflow-DNNRegressor/"/>
+    <id>https://secsilm.github.io/2017/06/02/tensorflow-DNNRegressor/</id>
     <published>2017-06-02T14:03:00.000Z</published>
     <updated>2017-12-26T02:07:47.750Z</updated>
     
@@ -228,16 +228,16 @@
     </summary>
     
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-      <category term="TensorFlow" scheme="http://yoursite.com/tags/TensorFlow/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   
   <entry>
     <title>XGBoost 在 Windows 10 和 Ubuntu 上的安装</title>
-    <link href="http://yoursite.com/2017/05/18/installing-xgboost/"/>
-    <id>http://yoursite.com/2017/05/18/installing-xgboost/</id>
+    <link href="https://secsilm.github.io/2017/05/18/installing-xgboost/"/>
+    <id>https://secsilm.github.io/2017/05/18/installing-xgboost/</id>
     <published>2017-05-18T02:58:00.000Z</published>
     <updated>2017-12-23T00:22:03.000Z</updated>
     
@@ -250,16 +250,16 @@
     </summary>
     
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-      <category term="Data Science" scheme="http://yoursite.com/tags/Data-Science/"/>
+      <category term="Data Science" scheme="https://secsilm.github.io/tags/Data-Science/"/>
     
   </entry>
   
   <entry>
     <title>Python 自动生成命令行工具 - fire 简介</title>
-    <link href="http://yoursite.com/2017/04/22/python-fire/"/>
-    <id>http://yoursite.com/2017/04/22/python-fire/</id>
+    <link href="https://secsilm.github.io/2017/04/22/python-fire/"/>
+    <id>https://secsilm.github.io/2017/04/22/python-fire/</id>
     <published>2017-04-22T02:16:00.000Z</published>
     <updated>2017-12-23T00:22:03.000Z</updated>
     
@@ -272,14 +272,14 @@
     </summary>
     
     
-      <category term="Python" scheme="http://yoursite.com/tags/Python/"/>
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
   </entry>
   
   <entry>
     <title>奇异值分解 SVD 的数学解释</title>
-    <link href="http://yoursite.com/2017/03/29/understanding-svd/"/>
-    <id>http://yoursite.com/2017/03/29/understanding-svd/</id>
+    <link href="https://secsilm.github.io/2017/03/29/understanding-svd/"/>
+    <id>https://secsilm.github.io/2017/03/29/understanding-svd/</id>
     <published>2017-03-29T04:33:00.000Z</published>
     <updated>2017-12-25T01:22:10.817Z</updated>
     
@@ -292,14 +292,14 @@
     </summary>
     
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
   </entry>
   
   <entry>
     <title>使用 Python 统计字符串中英文、空格、数字、标点个数</title>
-    <link href="http://yoursite.com/2017/03/25/python-string-count/"/>
-    <id>http://yoursite.com/2017/03/25/python-string-count/</id>
+    <link href="https://secsilm.github.io/2017/03/25/python-string-count/"/>
+    <id>https://secsilm.github.io/2017/03/25/python-string-count/</id>
     <published>2017-03-25T14:01:00.000Z</published>
     <updated>2017-12-23T00:21:16.000Z</updated>
     
@@ -313,14 +313,14 @@
     </summary>
     
     
-      <category term="Python" scheme="http://yoursite.com/tags/Python/"/>
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
   </entry>
   
   <entry>
     <title>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</title>
-    <link href="http://yoursite.com/2017/03/17/tensorflow-cnn-tensorboard/"/>
-    <id>http://yoursite.com/2017/03/17/tensorflow-cnn-tensorboard/</id>
+    <link href="https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/"/>
+    <id>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</id>
     <published>2017-03-17T02:57:00.000Z</published>
     <updated>2017-12-23T00:22:03.000Z</updated>
     
@@ -333,16 +333,16 @@
     </summary>
     
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-      <category term="TensorFlow" scheme="http://yoursite.com/tags/TensorFlow/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   
   <entry>
     <title>使用 tree 命令格式化输出目录结构</title>
-    <link href="http://yoursite.com/2017/03/15/using-tree/"/>
-    <id>http://yoursite.com/2017/03/15/using-tree/</id>
+    <link href="https://secsilm.github.io/2017/03/15/using-tree/"/>
+    <id>https://secsilm.github.io/2017/03/15/using-tree/</id>
     <published>2017-03-15T04:45:00.000Z</published>
     <updated>2017-12-23T00:18:42.000Z</updated>
     
@@ -355,16 +355,16 @@
     </summary>
     
     
-      <category term="Ubuntu" scheme="http://yoursite.com/tags/Ubuntu/"/>
+      <category term="Ubuntu" scheme="https://secsilm.github.io/tags/Ubuntu/"/>
     
-      <category term="Windows" scheme="http://yoursite.com/tags/Windows/"/>
+      <category term="Windows" scheme="https://secsilm.github.io/tags/Windows/"/>
     
   </entry>
   
   <entry>
     <title>VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法</title>
-    <link href="http://yoursite.com/2017/03/11/vscode-pdf-error/"/>
-    <id>http://yoursite.com/2017/03/11/vscode-pdf-error/</id>
+    <link href="https://secsilm.github.io/2017/03/11/vscode-pdf-error/"/>
+    <id>https://secsilm.github.io/2017/03/11/vscode-pdf-error/</id>
     <published>2017-03-11T01:53:00.000Z</published>
     <updated>2017-12-23T00:21:49.000Z</updated>
     
@@ -379,14 +379,14 @@
     </summary>
     
     
-      <category term="IDE" scheme="http://yoursite.com/tags/IDE/"/>
+      <category term="IDE" scheme="https://secsilm.github.io/tags/IDE/"/>
     
   </entry>
   
   <entry>
     <title>Numpy 中的 copy 问题详解</title>
-    <link href="http://yoursite.com/2017/03/01/numpy-copy/"/>
-    <id>http://yoursite.com/2017/03/01/numpy-copy/</id>
+    <link href="https://secsilm.github.io/2017/03/01/numpy-copy/"/>
+    <id>https://secsilm.github.io/2017/03/01/numpy-copy/</id>
     <published>2017-03-01T08:54:00.000Z</published>
     <updated>2017-12-23T00:21:15.000Z</updated>
     
@@ -399,14 +399,14 @@
     </summary>
     
     
-      <category term="Python" scheme="http://yoursite.com/tags/Python/"/>
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
   </entry>
   
   <entry>
     <title>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</title>
-    <link href="http://yoursite.com/2017/02/26/tensorflow-cudnn-version/"/>
-    <id>http://yoursite.com/2017/02/26/tensorflow-cudnn-version/</id>
+    <link href="https://secsilm.github.io/2017/02/26/tensorflow-cudnn-version/"/>
+    <id>https://secsilm.github.io/2017/02/26/tensorflow-cudnn-version/</id>
     <published>2017-02-26T03:45:44.000Z</published>
     <updated>2017-12-23T08:25:49.381Z</updated>
     
@@ -420,16 +420,16 @@
     </summary>
     
     
-      <category term="Python" scheme="http://yoursite.com/tags/Python/"/>
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
-      <category term="TensorFlow" scheme="http://yoursite.com/tags/TensorFlow/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   
   <entry>
     <title>TensorFlow 1.0 发布</title>
-    <link href="http://yoursite.com/2017/02/16/tensorflow-1.0/"/>
-    <id>http://yoursite.com/2017/02/16/tensorflow-1.0/</id>
+    <link href="https://secsilm.github.io/2017/02/16/tensorflow-1.0/"/>
+    <id>https://secsilm.github.io/2017/02/16/tensorflow-1.0/</id>
     <published>2017-02-16T02:46:55.000Z</published>
     <updated>2017-12-25T16:35:07.546Z</updated>
     
@@ -444,14 +444,14 @@
     </summary>
     
     
-      <category term="TensorFlow" scheme="http://yoursite.com/tags/TensorFlow/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   
   <entry>
     <title>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</title>
-    <link href="http://yoursite.com/2016/12/28/tensorflow-cnn-no-tensorboard/"/>
-    <id>http://yoursite.com/2016/12/28/tensorflow-cnn-no-tensorboard/</id>
+    <link href="https://secsilm.github.io/2016/12/28/tensorflow-cnn-no-tensorboard/"/>
+    <id>https://secsilm.github.io/2016/12/28/tensorflow-cnn-no-tensorboard/</id>
     <published>2016-12-28T04:13:13.000Z</published>
     <updated>2017-12-23T07:54:47.445Z</updated>
     
@@ -466,11 +466,11 @@
     </summary>
     
     
-      <category term="Python" scheme="http://yoursite.com/tags/Python/"/>
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
-      <category term="Machine Learning" scheme="http://yoursite.com/tags/Machine-Learning/"/>
+      <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-      <category term="TensorFlow" scheme="http://yoursite.com/tags/TensorFlow/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   

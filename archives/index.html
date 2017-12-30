@@ -178,6 +178,37 @@
     
     
         <article class="index-post">
+            <a class="content-show-full" href = "/2017/12/30/google-sitemap/" >
+                    <h2 class="abstract-title">
+                        
+                        <span>Google sitemap 不允许的网址的解决办法</span>
+                    </h2>
+                <div class="abstract-content">
+                    问题这段时间搭建好自己的博客后，想要让别人可以在 Google 中找到我的文章，于是就得添加 sitemap，怎么生成 sitemap 的相关文章有很多，我在这里就不赘述了。我在npm install hexo-generator-sitemap --save装了插件后，确实生成了sitemap.xml文件，但是提交到 Google Search Console 的时候就出错了：不允许的网址（忘了截图）。
+解决网上搜了好多文章，千篇一律，一个偶然的机会我仔细看了下我生成的sitemap.xml文件，结果发现：
+
+可以看到地址都是错的，都是yoursite.com开头，这很明显不是我的网址...
+                </div>
+            </a>
+            <div class="abstract-post-meta">
+                <!-- tags  -->
+                
+                <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = hexo>hexo</a>
+    
+</div>
+                
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/12/30</span>
+                </div>
+            </div>
+        </article>
+    
+    
+    
+        <article class="index-post">
             <a class="content-show-full" href = "/2017/12/29/understanding-lstms/" >
                     <h2 class="abstract-title">
                         
@@ -496,39 +527,6 @@ tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高�
                 <!-- date  -->
                 <div class="abstract-date">
                     <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/06/02</span>
-                </div>
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="content-show-full" href = "/2017/05/18/installing-xgboost/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
-                    </h2>
-                <div class="abstract-content">
-                    关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。
-
-
-Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我的机器上没有成功，pip 同样不成功。有兴趣的话可以参考官网和 2016 年的...
-                </div>
-            </a>
-            <div class="abstract-post-meta">
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = Data Science>Data Science</a>
-    
-</div>
-                
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/05/18</span>
                 </div>
             </div>
         </article>
@@ -1244,38 +1242,7 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <div class="total-archive"> Total : 43 </div>
+    <div class="total-archive"> Total : 44 </div>
     
     <div class="post-archive">
     
@@ -1284,6 +1251,11 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
     
     <div class="archive-year"> 2017 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/30</span><a class="archive-post-title" href= "/2017/12/30/google-sitemap/" >Google sitemap 不允许的网址的解决办法</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1523,11 +1495,13 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
         <div class="sidebar-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
-    
         <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">hexo</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">TensorFlow</a></span>
     

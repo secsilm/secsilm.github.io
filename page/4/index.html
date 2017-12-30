@@ -191,6 +191,46 @@
     
     
         <article class="index-post">
+            <a class="content-show-full" href = "/2016/10/22/tensorflow-linear-regression/" >
+                    <h2 class="abstract-title">
+                        
+                        <span>TensorFlow 中的线性回归</span>
+                    </h2>
+                <div class="abstract-content">
+                    前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。
+
+
+训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice(售价)两个变量来分别作为自变量和因变量，处理后样本个数为1140个，也就是说全部训练数据是一个11402的矩阵，部分数据如下所示：
+训练部分数据*
+
+模型本次使用的是线性回归模型 y=Wx+b 其中$W$为权重，$b$为偏置。具体地，$x$ 即为LotArea，$y$ 即为SalePrice。
+
+...
+                </div>
+            </a>
+            <div class="abstract-post-meta">
+                <!-- tags  -->
+                
+                <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+    
+</div>
+                
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/10/22</span>
+                </div>
+            </div>
+        </article>
+    
+    
+    
+        <article class="index-post">
             <a class="content-show-full" href = "/2016/10/16/python-email/" >
                     <h2 class="abstract-title">
                         
@@ -325,7 +365,7 @@ TensorFlow™ is an open source software library for numerical computation using
 
 此外，获取当前日期：dt.date.today()
 
-OK, it&#39;s really short~~~
+OK, it’s really short~~~
 
                 </div>
             </a>
@@ -366,9 +406,9 @@ OK, it&#39;s really short~~~
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-href = Data Science>Data Science</a>
     
@@ -513,42 +553,6 @@ mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学�
                 <!-- date  -->
                 <div class="abstract-date">
                     <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/01/11</span>
-                </div>
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="content-show-full" href = "/2015/12/21/matlab-fitlm/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>使用 MATLAB 的 fitlm 函数进行线性回归</span>
-                    </h2>
-                <div class="abstract-content">
-                    今天在做《数理统计》关于线性回归的作业，本来用R已经做出来了，但是由于最近使用matlab很多，所以也想看看用matlab怎么做。
-
-matlab中有很多函数可以做各种各样的回归，也有cftool工具箱可以可视化的做回归，很方便。这里选用fitlm做回归，由于多元回归和一元回归基本思想是差不多的，操作也只是参数个数的问题，所以这里用一元线性回归做例子，记录下来以备后用。
-数据选用R中的自带数据：cars数据集，是一个关于汽车速度和距离的数据，50*2的矩阵。
-  
-采用一元线性回归模型进行回归，公式这里就不说了，dist为因变量，speed为自变量。代码来了：
-1234567cleard...
-                </div>
-            </a>
-            <div class="abstract-post-meta">
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = MATLAB>MATLAB</a>
-    
-</div>
-                
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2015/12/21</span>
                 </div>
             </div>
         </article>
@@ -1328,38 +1332,7 @@ matlab中有很多函数可以做各种各样的回归，也有cftool工具箱�
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <div class="total-archive"> Total : 43 </div>
+    <div class="total-archive"> Total : 44 </div>
     
     <div class="post-archive">
     
@@ -1368,6 +1341,11 @@ matlab中有很多函数可以做各种各样的回归，也有cftool工具箱�
     
     <div class="archive-year"> 2017 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/30</span><a class="archive-post-title" href= "/2017/12/30/google-sitemap/" >Google sitemap 不允许的网址的解决办法</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1607,11 +1585,13 @@ matlab中有很多函数可以做各种各样的回归，也有cftool工具箱�
         <div class="sidebar-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
-    
         <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">hexo</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">TensorFlow</a></span>
     

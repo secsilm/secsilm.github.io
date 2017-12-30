@@ -178,6 +178,48 @@
     
     
         <article class="index-post">
+            <a class="content-show-full" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
+                    <h2 class="abstract-title">
+                        
+                        <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
+                    </h2>
+                <div class="abstract-content">
+                    前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
+本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
+这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。
+
+
+更新这里我会列出对本文的更新。
+
+2017年3月17日：增加实现 TensorBoard 的文章的链接。
+
+
+...
+                </div>
+            </a>
+            <div class="abstract-post-meta">
+                <!-- tags  -->
+                
+                <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+    
+</div>
+                
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/12/28</span>
+                </div>
+            </div>
+        </article>
+    
+    
+    
+        <article class="index-post">
             <a class="content-show-full" href = "/2016/12/10/tensorboard-mnist-pca/" >
                     <h2 class="abstract-title">
                         
@@ -195,9 +237,9 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
     
@@ -270,9 +312,9 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-href = Data Science>Data Science</a>
     
@@ -311,9 +353,9 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
     
@@ -343,9 +385,9 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
     
@@ -427,9 +469,9 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
     
@@ -463,9 +505,9 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-href = sklearn>sklearn</a>
     
@@ -513,46 +555,6 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 <!-- date  -->
                 <div class="abstract-date">
                     <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/10/24</span>
-                </div>
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="content-show-full" href = "/2016/10/22/tensorflow-linear-regression/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的线性回归</span>
-                    </h2>
-                <div class="abstract-content">
-                    前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。
-
-
-训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice(售价)两个变量来分别作为自变量和因变量，处理后样本个数为1140个，也就是说全部训练数据是一个11402的矩阵，部分数据如下所示：
-训练部分数据*
-
-模型本次使用的是线性回归模型 y=Wx+b 其中$W$为权重，$b$为偏置。具体地，$x$ 即为LotArea，$y$ 即为SalePrice。
-
-...
-                </div>
-            </a>
-            <div class="abstract-post-meta">
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
-    
-</div>
-                
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/10/22</span>
                 </div>
             </div>
         </article>
@@ -1268,38 +1270,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <div class="total-archive"> Total : 43 </div>
+    <div class="total-archive"> Total : 44 </div>
     
     <div class="post-archive">
     
@@ -1308,6 +1279,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     <div class="archive-year"> 2017 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/30</span><a class="archive-post-title" href= "/2017/12/30/google-sitemap/" >Google sitemap 不允许的网址的解决办法</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1547,11 +1523,13 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
         <div class="sidebar-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
-    
         <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">hexo</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">TensorFlow</a></span>
     

@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2017/12/30/google-sitemap/</loc>
+    
+    <lastmod>2017-12-30T04:33:12.966Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2017/12/29/understanding-lstms/</loc>
     
     <lastmod>2017-12-29T12:37:51.845Z</lastmod>
@@ -261,7 +268,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
+    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
@@ -275,7 +282,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
+    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

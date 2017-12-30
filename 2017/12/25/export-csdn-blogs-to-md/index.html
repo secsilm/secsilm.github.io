@@ -235,7 +235,7 @@
 <p>最后由于我是要导入到 hexo 站点中，所以需要加 Front-matter，所以在获取到文章内容后，需要先把定义好的 Front-matter 加到文章内容里，一起写入文件：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> hexo:</span><br><span class="line">hexo_str = <span class="string">'---\ntitle: &#123;title&#125;\ndate: &#123;date&#125;\ntags:\n---\n\n'</span>.format(</span><br><span class="line">    title=title, date=data[<span class="string">'data'</span>][<span class="string">'create'</span>])</span><br><span class="line"><span class="comment"># Windows 下文件名中的非法字符</span></span><br><span class="line">forbidden = [<span class="string">'\\'</span>, <span class="string">'/'</span>, <span class="string">':'</span>, <span class="string">'*'</span>, <span class="string">'?'</span>, <span class="string">'"'</span>, <span class="string">'&lt;'</span>, <span class="string">'&gt;'</span>, <span class="string">'|'</span>]</span><br><span class="line"><span class="comment"># 如果文章名含有非法字符，那么使用其 id 作为 md 文件名</span></span><br><span class="line"><span class="keyword">if</span> any([c <span class="keyword">in</span> repr(title) <span class="keyword">for</span> c <span class="keyword">in</span> forbidden]):</span><br><span class="line">    <span class="keyword">with</span> open(os.path.join(md_dir, article_id + <span class="string">'.md'</span>), <span class="string">'w'</span>, encoding=<span class="string">'utf8'</span>) <span class="keyword">as</span> f:</span><br><span class="line">        f.write(hexo_str + data[<span class="string">'data'</span>][<span class="string">'markdowncontent'</span>])</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    <span class="keyword">with</span> open(os.path.join(md_dir, title + <span class="string">'.md'</span>), <span class="string">'w'</span>, encoding=<span class="string">'utf8'</span>) <span class="keyword">as</span> f:</span><br><span class="line">        f.write(hexo_str + data[<span class="string">'data'</span>][<span class="string">'markdowncontent'</span>])</span><br></pre></td></tr></table></figure>
 <p>至于如何通过文章列表获取文章 id，这个比较简单，我就不赘述了，大家可以直接看源码。</p>
-<h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>程序使用<code>fire</code>来从命令行接收参数，如何使用<code>fire</code>请参考 <a href="https://secsilm.github.io/2017/04/22/python-fire/#%E6%9B%B4%E6%96%B0" target="_blank" rel="noopener">Python 自动生成命令行工具 - fire 简介 · Lee&#39;s Space Station</a>。我们可以使用如下命令来查看帮助：</p>
+<h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>程序使用<code>fire</code>来从命令行接收参数，如何使用<code>fire</code>请参考 <a href="https://secsilm.github.io/2017/04/22/python-fire/#%E6%9B%B4%E6%96%B0">Python 自动生成命令行工具 - fire 简介 · Lee’s Space Station</a>。我们可以使用如下命令来查看帮助：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python csdn2md.py -- --<span class="built_in">help</span></span><br></pre></td></tr></table></figure>
 <p>输出：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Type:        <span class="keyword">function</span></span><br><span class="line">String form: &lt;<span class="keyword">function</span> to_md_files at 0x000001CACC8C5E18&gt;</span><br><span class="line">File:        d:\chromedownload\mdfiles\csdn2md.py</span><br><span class="line">Line:        47</span><br><span class="line">Docstring:   导出为 Markdown 文件。</span><br><span class="line"></span><br><span class="line">Args:</span><br><span class="line">    total_pages: 博客文章在摘要模式下的总页数</span><br><span class="line">    filename: 含有 cookies 字符串的 txt 文件名</span><br><span class="line">    start: 从 start 页开始导出 (default: &#123;1&#125;)</span><br><span class="line">    stop: 到 stop 页停止 (default: &#123;None&#125;)</span><br><span class="line">    hexo: 是否添加 hexo 文章头部字符串（default: &#123;True&#125;）</span><br><span class="line">    md_dir: md 文件导出目录，默认为当前目录（default: .）</span><br><span class="line"></span><br><span class="line">Usage:       csdn2md.py USERNAME TOTAL_PAGES COOKIE_FILE [START] [STOP] [HEXO] [MD_DIR]</span><br><span class="line">             csdn2md.py --username USERNAME --total-pages TOTAL_PAGES --cookie-file COOKIE_FILE [--start START] [--stop STOP] [--hexo HEXO] [--md-dir MD_DIR]</span><br></pre></td></tr></table></figure>
@@ -1014,38 +1014,7 @@
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <div class="total-archive"> Total : 43 </div>
+    <div class="total-archive"> Total : 44 </div>
     
     <div class="post-archive">
     
@@ -1054,6 +1023,11 @@
     
     <div class="archive-year"> 2017 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/30</span><a class="archive-post-title" href= "/2017/12/30/google-sitemap/" >Google sitemap 不允许的网址的解决办法</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1293,11 +1267,13 @@
         <div class="sidebar-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
-    
         <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">hexo</a></span>
+    
+        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
     
         <span class="sidebar-tag-name"><a href= "#">TensorFlow</a></span>
     

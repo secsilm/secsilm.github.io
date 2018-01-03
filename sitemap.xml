@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2018/01/03/neteasemusic-year-report-2017/</loc>
+    
+    <lastmod>2018-01-03T11:06:31.546Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2017/12/30/google-sitemap/</loc>
     
     <lastmod>2017-12-30T05:34:11.667Z</lastmod>
@@ -261,7 +268,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
+    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
@@ -282,7 +289,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
+    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

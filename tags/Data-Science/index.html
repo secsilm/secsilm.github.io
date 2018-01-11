@@ -24,7 +24,7 @@
             width: 100%;
             height: 50vh;
             overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.8);
+            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
         }
         .site-intro-placeholder {
             position: absolute;
@@ -47,7 +47,7 @@
         }
     }
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171218 />
+    <link rel="stylesheet" href = /css/style.css?v=20171227 />
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
     
     <script src="/scripts/main.js" defer></script>
@@ -77,6 +77,7 @@
     </script>
     
 </head>
+
     
     
 <header class="header">
@@ -178,11 +179,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/05/18/installing-xgboost/" >
+                
+                    <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
+            </a>
             <a class="content-show-full" href = "/2017/05/18/installing-xgboost/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
-                    </h2>
                 <div class="abstract-content">
                     关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。
 
@@ -211,11 +212,11 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/30/numpy-array-memory/" >
+                
+                    <span>小谈 Numpy 数组占用内存空间问题</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/30/numpy-array-memory/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>小谈 Numpy 数组占用内存空间问题</span>
-                    </h2>
                 <div class="abstract-content">
                     之前跟同学讨论过numpy数组的占用空间大小问题，但是今天给忘了，又重新试验了一下，主要是利用sys模块的getsizeof函数，使用的版本是 Python3.5。记录下来，以备后忘。
 
@@ -251,11 +252,11 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/03/pandas-apply/" >
+                
+                    <span>Pandas 中的 apply 函数使用示例</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/03/pandas-apply/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Pandas 中的 apply 函数使用示例</span>
-                    </h2>
                 <div class="abstract-content">
                     apply 是 pandas 库的一个很重要的函数，多和 groupby 函数一起用，也可以直接用于 DataFrame 和 Series 对象。主要用于数据聚合运算，可以很方便的对分组进行现有的运算和自定义的运算。
 
@@ -297,11 +298,11 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/10/24/plt-save/" >
+                
+                    <span>解决使用 plt.savefig 保存图片时一片空白</span>
+            </a>
             <a class="content-show-full" href = "/2016/10/24/plt-save/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>解决使用 plt.savefig 保存图片时一片空白</span>
-                    </h2>
                 <div class="abstract-content">
                     更新这里我会列出对本文的更新。
 
@@ -336,11 +337,11 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/06/27/python-strptime/" >
+                
+                    <span>Python 中 strptime 的简单使用</span>
+            </a>
             <a class="content-show-full" href = "/2016/06/27/python-strptime/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Python 中 strptime 的简单使用</span>
-                    </h2>
                 <div class="abstract-content">
                     strptime是python datetime库中的函数，用于将一个日期字符串转成datetime日期格式便于后期处理，使用格式为datetime.strptime(date_string, format)，其中date_string 就是要转成日期的字符串，format 根据date_string 不同而不同，format 有以下格式：
 
@@ -374,11 +375,11 @@ OK, it’s really short~~~
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/04/03/python-numpy/" >
+                
+                    <span>Python NumPy 基础</span>
+            </a>
             <a class="content-show-full" href = "/2016/04/03/python-numpy/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Python NumPy 基础</span>
-                    </h2>
                 <div class="abstract-content">
                     前言这两天读完《利用Python进行数据分析》 这本书的第4章：NumPy 基础：数组和矢量计算 后，在进行下一步阅读高级应用前，先整理本章内容，做个笔记备查，也好加深印象。在往下看前请确保你已经安装了NumPy 库，并且已经使用 import numpy as np 加载numpy库。如果 还没有安装，那么可以在cmd（windows下）中使用 pip install numpy 命令安装，ubuntu下也可以使用 sudo apt-get install python-numpy 命令安装。
 
@@ -457,7 +458,7 @@ OK, it’s really short~~~
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     

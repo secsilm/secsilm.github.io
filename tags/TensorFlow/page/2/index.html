@@ -24,7 +24,7 @@
             width: 100%;
             height: 50vh;
             overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.8);
+            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
         }
         .site-intro-placeholder {
             position: absolute;
@@ -47,7 +47,7 @@
         }
     }
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171218 />
+    <link rel="stylesheet" href = /css/style.css?v=20171227 />
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
     
     <script src="/scripts/main.js" defer></script>
@@ -77,6 +77,7 @@
     </script>
     
 </head>
+
     
     
 <header class="header">
@@ -178,11 +179,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/06/tensorflow-logistic-regression/" >
+                
+                    <span>TensorFlow 中的 Logistic Regression</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/06/tensorflow-logistic-regression/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的 Logistic Regression</span>
-                    </h2>
                 <div class="abstract-content">
                     前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(\theta)=-\frac{1}{m}\sum_{i=1}^m\left[y^{(i)}logh_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)}))\right]其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了...
                 </div>
@@ -210,11 +211,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/10/29/tensorflow-hyperparams/" >
+                
+                    <span>学习率、迭代次数和初始化方式对模型准确率的影响</span>
+            </a>
             <a class="content-show-full" href = "/2016/10/29/tensorflow-hyperparams/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>学习率、迭代次数和初始化方式对模型准确率的影响</span>
-                    </h2>
                 <div class="abstract-content">
                     想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？
 我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。
@@ -248,11 +249,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/10/22/tensorflow-linear-regression/" >
+                
+                    <span>TensorFlow 中的线性回归</span>
+            </a>
             <a class="content-show-full" href = "/2016/10/22/tensorflow-linear-regression/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的线性回归</span>
-                    </h2>
                 <div class="abstract-content">
                     前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。
 
@@ -288,11 +289,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/08/27/ubuntu-installing-tensorflow/" >
+                
+                    <span>Ubuntu 14.04 64 位安装 Google 的 TensorFlow</span>
+            </a>
             <a class="content-show-full" href = "/2016/08/27/ubuntu-installing-tensorflow/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Ubuntu 14.04 64 位安装 Google 的 TensorFlow</span>
-                    </h2>
                 <div class="abstract-content">
                     今天来说一下机器学习库 TensorFlow 的在 Ubuntu14.04 64位下的安装。
 
@@ -389,7 +390,7 @@ TensorFlow™ is an open source software library for numerical computation using
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     

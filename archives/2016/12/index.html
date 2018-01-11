@@ -24,7 +24,7 @@
             width: 100%;
             height: 50vh;
             overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.8);
+            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
         }
         .site-intro-placeholder {
             position: absolute;
@@ -47,7 +47,7 @@
         }
     }
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171218 />
+    <link rel="stylesheet" href = /css/style.css?v=20171227 />
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
     
     <script src="/scripts/main.js" defer></script>
@@ -77,6 +77,7 @@
     </script>
     
 </head>
+
     
     
 <header class="header">
@@ -178,11 +179,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
+                
+                    <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
-                    </h2>
                 <div class="abstract-content">
                     前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
 本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
@@ -220,11 +221,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/10/tensorboard-mnist-pca/" >
+                
+                    <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/10/tensorboard-mnist-pca/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
-                    </h2>
                 <div class="abstract-content">
                     
 Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. 
@@ -255,11 +256,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/01/installing-tensorflow/" >
+                
+                    <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/01/installing-tensorflow/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
-                    </h2>
                 <div class="abstract-content">
                     之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对Windows的支持，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。
 
@@ -339,7 +340,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     

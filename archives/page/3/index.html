@@ -24,7 +24,7 @@
             width: 100%;
             height: 50vh;
             overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.8);
+            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
         }
         .site-intro-placeholder {
             position: absolute;
@@ -47,7 +47,7 @@
         }
     }
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171218 />
+    <link rel="stylesheet" href = /css/style.css?v=20171227 />
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
     
     <script src="/scripts/main.js" defer></script>
@@ -77,6 +77,7 @@
     </script>
     
 </head>
+
     
     
 <header class="header">
@@ -178,11 +179,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/02/16/tensorflow-1.0/" >
+                
+                    <span>TensorFlow 1.0 发布</span>
+            </a>
             <a class="content-show-full" href = "/2017/02/16/tensorflow-1.0/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 1.0 发布</span>
-                    </h2>
                 <div class="abstract-content">
                     前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
 NOW
@@ -212,11 +213,11 @@ NOW
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
+                
+                    <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
-                    </h2>
                 <div class="abstract-content">
                     前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
 本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
@@ -254,11 +255,11 @@ NOW
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/10/tensorboard-mnist-pca/" >
+                
+                    <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/10/tensorboard-mnist-pca/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
-                    </h2>
                 <div class="abstract-content">
                     
 Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. 
@@ -289,11 +290,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/01/installing-tensorflow/" >
+                
+                    <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/01/installing-tensorflow/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
-                    </h2>
                 <div class="abstract-content">
                     之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对Windows的支持，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。
 
@@ -324,11 +325,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/30/numpy-array-memory/" >
+                
+                    <span>小谈 Numpy 数组占用内存空间问题</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/30/numpy-array-memory/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>小谈 Numpy 数组占用内存空间问题</span>
-                    </h2>
                 <div class="abstract-content">
                     之前跟同学讨论过numpy数组的占用空间大小问题，但是今天给忘了，又重新试验了一下，主要是利用sys模块的getsizeof函数，使用的版本是 Python3.5。记录下来，以备后忘。
 
@@ -364,11 +365,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/19/tensorflow-mlp/" >
+                
+                    <span>TensorFlow 中的多层感知器（MLP）</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/19/tensorflow-mlp/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的多层感知器（MLP）</span>
-                    </h2>
                 <div class="abstract-content">
                     前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
 本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。
@@ -405,11 +406,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/06/tensorflow-logistic-regression/" >
+                
+                    <span>TensorFlow 中的 Logistic Regression</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/06/tensorflow-logistic-regression/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的 Logistic Regression</span>
-                    </h2>
                 <div class="abstract-content">
                     前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(\theta)=-\frac{1}{m}\sum_{i=1}^m\left[y^{(i)}logh_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)}))\right]其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了...
                 </div>
@@ -437,11 +438,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/03/pandas-apply/" >
+                
+                    <span>Pandas 中的 apply 函数使用示例</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/03/pandas-apply/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Pandas 中的 apply 函数使用示例</span>
-                    </h2>
                 <div class="abstract-content">
                     apply 是 pandas 库的一个很重要的函数，多和 groupby 函数一起用，也可以直接用于 DataFrame 和 Series 对象。主要用于数据聚合运算，可以很方便的对分组进行现有的运算和自定义的运算。
 
@@ -483,11 +484,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/10/29/tensorflow-hyperparams/" >
+                
+                    <span>学习率、迭代次数和初始化方式对模型准确率的影响</span>
+            </a>
             <a class="content-show-full" href = "/2016/10/29/tensorflow-hyperparams/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>学习率、迭代次数和初始化方式对模型准确率的影响</span>
-                    </h2>
                 <div class="abstract-content">
                     想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？
 我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。
@@ -521,11 +522,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
+                
+                    <span>sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</span>
+            </a>
             <a class="content-show-full" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</span>
-                    </h2>
                 <div class="abstract-content">
                     使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。
 好尴尬，折腾了一会，终于弄明白了，记录下来，以说明自己too young。
@@ -610,7 +611,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     

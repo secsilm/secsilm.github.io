@@ -24,7 +24,7 @@
             width: 100%;
             height: 50vh;
             overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.8);
+            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
         }
         .site-intro-placeholder {
             position: absolute;
@@ -47,7 +47,7 @@
         }
     }
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171218 />
+    <link rel="stylesheet" href = /css/style.css?v=20171227 />
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
     
     <script src="/scripts/main.js" defer></script>
@@ -77,6 +77,7 @@
     </script>
     
 </head>
+
     
     
 <header class="header">
@@ -178,11 +179,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/12/22/understanding-estimators-datasets/" >
+                
+                    <span>理解 Estimators 和 Datasets</span>
+            </a>
             <a class="content-show-full" href = "/2017/12/22/understanding-estimators-datasets/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>理解 Estimators 和 Datasets</span>
-                    </h2>
                 <div class="abstract-content">
                     Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：
 
@@ -210,11 +211,11 @@ Estimators：这是模型的核心部分，而 Estimators 的核心部分则是�
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/08/20/understanding-tensorboard/" >
+                
+                    <span>理解 TensorBoard</span>
+            </a>
             <a class="content-show-full" href = "/2017/08/20/understanding-tensorboard/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>理解 TensorBoard</span>
-                    </h2>
                 <div class="abstract-content">
                     TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小...
                 </div>
@@ -238,11 +239,11 @@ Estimators：这是模型的核心部分，而 Estimators 的核心部分则是�
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/06/02/tensorflow-DNNRegressor/" >
+                
+                    <span>TensorFlow DNNRegressor 的简单使用</span>
+            </a>
             <a class="content-show-full" href = "/2017/06/02/tensorflow-DNNRegressor/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow DNNRegressor 的简单使用</span>
-                    </h2>
                 <div class="abstract-content">
                     tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。 下载。
 
@@ -270,11 +271,11 @@ tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高�
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
+                
+                    <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
+            </a>
             <a class="content-show-full" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
-                    </h2>
                 <div class="abstract-content">
                     前面 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 这里 下载。
 
@@ -304,11 +305,11 @@ To make it easier to understand, debug, and optimize TensorFlow programs, we’v
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/02/26/tensorflow-cudnn-version/" >
+                
+                    <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
+            </a>
             <a class="content-show-full" href = "/2017/02/26/tensorflow-cudnn-version/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
-                    </h2>
                 <div class="abstract-content">
                     由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……
@@ -341,11 +342,11 @@ CUDA：Cuda compila...
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/02/16/tensorflow-1.0/" >
+                
+                    <span>TensorFlow 1.0 发布</span>
+            </a>
             <a class="content-show-full" href = "/2017/02/16/tensorflow-1.0/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 1.0 发布</span>
-                    </h2>
                 <div class="abstract-content">
                     前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
 NOW
@@ -375,11 +376,11 @@ NOW
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
+                
+                    <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
-                    </h2>
                 <div class="abstract-content">
                     前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
 本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
@@ -417,11 +418,11 @@ NOW
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/10/tensorboard-mnist-pca/" >
+                
+                    <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/10/tensorboard-mnist-pca/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
-                    </h2>
                 <div class="abstract-content">
                     
 Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. 
@@ -452,11 +453,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/12/01/installing-tensorflow/" >
+                
+                    <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
+            </a>
             <a class="content-show-full" href = "/2016/12/01/installing-tensorflow/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
-                    </h2>
                 <div class="abstract-content">
                     之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对Windows的支持，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。
 
@@ -487,11 +488,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/11/19/tensorflow-mlp/" >
+                
+                    <span>TensorFlow 中的多层感知器（MLP）</span>
+            </a>
             <a class="content-show-full" href = "/2016/11/19/tensorflow-mlp/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 中的多层感知器（MLP）</span>
-                    </h2>
                 <div class="abstract-content">
                     前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
 本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。
@@ -581,7 +582,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     

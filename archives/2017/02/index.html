@@ -24,7 +24,7 @@
             width: 100%;
             height: 50vh;
             overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.8);
+            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
         }
         .site-intro-placeholder {
             position: absolute;
@@ -47,7 +47,7 @@
         }
     }
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171218 />
+    <link rel="stylesheet" href = /css/style.css?v=20171227 />
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
     
     <script src="/scripts/main.js" defer></script>
@@ -77,6 +77,7 @@
     </script>
     
 </head>
+
     
     
 <header class="header">
@@ -178,11 +179,11 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/02/26/tensorflow-cudnn-version/" >
+                
+                    <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
+            </a>
             <a class="content-show-full" href = "/2017/02/26/tensorflow-cudnn-version/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
-                    </h2>
                 <div class="abstract-content">
                     由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……
@@ -215,11 +216,11 @@ CUDA：Cuda compila...
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/02/16/tensorflow-1.0/" >
+                
+                    <span>TensorFlow 1.0 发布</span>
+            </a>
             <a class="content-show-full" href = "/2017/02/16/tensorflow-1.0/" >
-                    <h2 class="abstract-title">
-                        
-                        <span>TensorFlow 1.0 发布</span>
-                    </h2>
                 <div class="abstract-content">
                     前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
 NOW
@@ -298,7 +299,7 @@ NOW
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">Welcome, No. <span id="busuanzi_value_site_pv"></span> visitor.
+        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     

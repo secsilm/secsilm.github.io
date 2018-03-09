@@ -179,6 +179,42 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
+                
+                    <span>sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</span>
+            </a>
+            <a class="content-show-full" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
+                <div class="abstract-content">
+                    使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。
+好尴尬，折腾了一会，终于弄明白了，记录下来，以说明自己too young。
+
+正文我们使用 sklearn 官方的一个例子来作为说明，源码可以从这里下载，下面我截取其中一小段并做了一些修改：
+123456789101112131415import numpy as npimpo...
+                </div>
+            </a>
+            <div class="abstract-post-meta">
+                <!-- tags  -->
+                
+                <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = sklearn>sklearn</a>
+    
+</div>
+                
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/10/26</span>
+                </div>
+            </div>
+        </article>
+    
+    
+    
+        <article class="index-post">
             <a class="abstract-title" href = "/2016/10/24/plt-save/" >
                 
                     <span>解决使用 plt.savefig 保存图片时一片空白</span>
@@ -513,40 +549,6 @@ OK, it’s really short~~~
                 <!-- date  -->
                 <div class="abstract-date">
                     <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/01/18</span>
-                </div>
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/01/11/matlab-mat2cell/" >
-                
-                    <span>MATLAB 矩阵分块函数 mat2cell 及 cellfun 函数</span>
-            </a>
-            <a class="content-show-full" href = "/2016/01/11/matlab-mat2cell/" >
-                <div class="abstract-content">
-                    为了清理桌面上的 words, so do this!
-
-在做一个项目的时候，接触到了这个函数，瞬间感觉好有用，遂记录之。（好像有点废话……）
-mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学的语言讲就是矩阵分块。其意义和用法可以用 matlab 的帮助文档说清楚：
-
-而 cellfun 函数就是对每一个块做相同的操作，例如求和、求均值等等，用这个函数就避免了写 for 循环了，也算是 matlab 向量化运算的一个例子。下面用一个例子说明之。
-123456% 生成一个 10*5 的随机矩阵，矩阵取值在 0 到 50 内的整数matrix = randi(5...
-                </div>
-            </a>
-            <div class="abstract-post-meta">
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = MATLAB>MATLAB</a>
-    
-</div>
-                
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/01/11</span>
                 </div>
             </div>
         </article>
@@ -1303,7 +1305,28 @@ mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学�
     
     
     
-    <div class="total-archive"> Total : 45 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-archive"> Total : 46 </div>
     
     <div class="post-archive">
     
@@ -1312,6 +1335,11 @@ mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学�
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/09</span><a class="archive-post-title" href= "/2018/03/09/using-https-namecheap-hexo/" >使用 CloudFlare 为 hexo 博客实现 HTTPS</a>
+        </li>
     
     
         <li class="archive-post-item">

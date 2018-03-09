@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
     <title>
         
-        Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁 · Lee&#39;s Space Station
+        使用 CloudFlare 为 hexo 博客实现 HTTPS · Lee&#39;s Space Station
         
     </title>
     <link rel="icon" href= /avatar/Bastion_cute.png>
@@ -93,7 +93,7 @@
                 <a href="/" >Lee&#39;s Space Station</a>
             </div>
             <div class="post-title">
-                <a href="#" class="post-name">Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁</a>
+                <a href="#" class="post-name">使用 CloudFlare 为 hexo 博客实现 HTTPS</a>
             </div>
     </div>
     
@@ -114,7 +114,7 @@
         <h1 class="intro-title">
             <!-- 主页  -->
             
-            Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁
+            使用 CloudFlare 为 hexo 博客实现 HTTPS
             <!-- 404 -->
             
         </h1>
@@ -132,14 +132,14 @@
             
                 <div class= post-intro-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Ubuntu>Ubuntu</a>
+        <a class="post-tag" href="javascript:void(0);" data-href = hexo>hexo</a>
     
 </div>
             
             <script>window._bd_share_config = { "common": { "bdSnsKey": {}, "bdText": "", "bdMini": "2", "bdMiniList": false, "bdPic": "", "bdStyle": "1", "bdSize": "16" }, "share": {} }; with (document) 0[(getElementsByTagName('head')[0] || body).appendChild(createElement('script')).src = "/static/api/js/share.js"];</script>
             <div class="post-intro-meta">
                 <span class="post-intro-calander iconfont-archer">&#xe676;</span>
-                <span class="post-intro-time">2016/08/22</span>
+                <span class="post-intro-time">2018/03/09</span>
                 <span id="busuanzi_container_page_pv" class="busuanzi-pv">
                     <span class="iconfont-archer">&#xe604;</span>
                     <span id="busuanzi_value_page_pv"></span>
@@ -222,30 +222,60 @@
         <div class="container container-unloaded">
             <main class="main post-page">
     <article class="article-entry">
-        <p>我电脑装的是 Windows10 和 Ubuntu 双系统，最近一直在用ubuntu，昨天系统说有更新我就更新了，更新完说需要重启，我选了稍后启动，然后昨天晚上从实验室关机出来就没管了，结果今天早上开机选择 ubuntu 之后系统就进不去了，左上角光标一直闪，重启几次无果，于是上网查了查，解决方案如下：</p>
+        <p>过了个年，好久没更博客了，忙着各种事。</p>
+<p>博客地址之前一直都是默认的 secsilm.github.io，一直想换个自己的域名，正巧看到 <a href="https://namebeta.com/" target="_blank" rel="noopener">NameBeta</a> 上好几个域名都好便宜，就准备买个搞搞，最后挑中了 <code>alanlee.fun</code> 这个域名。</p>
+<p>把自己的博客域名换成自己买的域名并实现 HTTPS（GitHub Pages 不支持自定义域名 HTTPS），大概需要这么几个步骤（以在 <a href="https://www.namecheap.com/" target="_blank" rel="noopener">namecheap</a> 上购买域名为例）：</p>
 <ol>
-<li>进入 Windows 系统，我的是 Windows10；</li>
-<li>打开 EasyBCD2.2，编辑引导项菜单，重新添加一个引导项，选择 Grub 2 和自动定位和自动加载，然后保存，原来的引导项可以删掉；</li>
-<li>重启选择刚刚添加的引导项就可以正常进入了。</li>
+<li>在 namecheap 购买自己心仪的域名</li>
+<li>更新 GitHub 仓库</li>
+<li>CloudFlare 端 DNS 配置</li>
+<li>namecheap 端更改 nameservers</li>
+<li>CloudFlare 端设置使用 HTTPS</li>
 </ol>
-<p>由于刚刚忘了截图，现在用的又是 ubuntu，所以不好意思没图了，过程不复杂。</p>
+<p>第一步购买域名我就不赘述了，只是需要注意的是付款不支持支付宝，支持 PayPal。</p>
+<p>以下假设已经购买到 <code>alanlee.fun</code> 这个域名。</p>
+<h2 id="更新-GitHub-仓库"><a href="#更新-GitHub-仓库" class="headerlink" title="更新 GitHub 仓库"></a>更新 GitHub 仓库</h2><p>在你的 hexo 博客<strong>本地</strong>根目录中的 <code>source</code> 目录下增加一个 <a href="https://en.wikipedia.org/wiki/CNAME_record" target="_blank" rel="noopener"><code>CNAME</code> 文件</a>（无后缀名），里面写上购买的域名，本文中即 <code>alanlee.fun</code>：</p>
+<p><img src="https://i.imgur.com/q5k9tYD.png" alt="cname"></p>
+<p>然后把更新部署到 GitHub 上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo d -g</span><br></pre></td></tr></table></figure>
+<p>此时你应该可以在 GitHub 上看到 <code>CNAME</code> 文件了，并且在你的仓库设置中也可以看到你的自定义域名也已经加上了，此时访问 <code>alanlee.fun</code> 应该可以进入博客了，但是此时网址栏是没有「小绿锁」的（HTTPS），要想让这个「小绿锁」出现，我们需要使用 <a href="https://www.cloudflare.com/" target="_blank" rel="noopener">CloudFlare</a> 的服务。</p>
+<p><img src="https://i.imgur.com/ilN6DSD.png" alt="cname-github"></p>
+<p><img src="https://i.imgur.com/ZKHOZxa.png" alt="settings"></p>
+<h2 id="CloudFlare-端-DNS-配置"><a href="#CloudFlare-端-DNS-配置" class="headerlink" title="CloudFlare 端 DNS 配置"></a>CloudFlare 端 DNS 配置</h2><p>首先你需要注册一个 CloudFlare 账号并把自己的域名添加上去，这个过程很简单，我就不赘述了。注册完登陆之后，点击下图中的 <code>DNS</code> 选项卡，另一个 <code>Page Rules</code>  是我们一会儿要用到的。</p>
+<p><img src="https://i.imgur.com/xPpJM44.png" alt=""></p>
+<p>然后如下图一样添加两条记录，<code>Value</code> 处都写自己原来的博客地址，即是 <code>your-github-username.github.com</code> 这样的形式，例如我的 <code>secsilm.github.com</code>：</p>
+<p><img src="https://i.imgur.com/a2lz085.png" alt=""></p>
+<p>按理说我们下一步要在 <code>Page Rules</code> 那设置让我们的域名使用 HTTPS 链接，但是你如果现在就这么做的话你就会发现你设置不了。这是因为你必须在域名提供商那把 nameservers 设为 CloudFlare 的 DNS 才能使用他的 HTTPS 服务，所以我们现在得去 namecheap 那设置一下 nameservers，否则在 CloudFlare 上 <code>Overview</code> 处你的域名会显示未激活状态，而不是下面的 active 状态：</p>
+<p><img src="https://i.imgur.com/4kCLOCM.png" alt=""></p>
+<h2 id="namecheap-端更改-nameservers"><a href="#namecheap-端更改-nameservers" class="headerlink" title="namecheap 端更改 nameservers"></a>namecheap 端更改 nameservers</h2><p>登录进 namecheap，点击右上角 <code>Account</code> → <code>Domain List</code>，在 <code>NAMESERVERS</code> 处选择 <code>Custom DNS</code>，然后填上 CloudFlare 的nameservers（可以在 CloudFlare 上 <code>Overview</code> 选项卡页面找到）：</p>
+<p><img src="https://i.imgur.com/2yZ7ZKs.png" alt=""></p>
+<p>至此，namecheap 端的更改就结束了。</p>
+<h2 id="CloudFlare-端设置使用-HTTPS"><a href="#CloudFlare-端设置使用-HTTPS" class="headerlink" title="CloudFlare 端设置使用 HTTPS"></a>CloudFlare 端设置使用 HTTPS</h2><p>现在就只需要在 <code>Page Rules</code> 选项卡页面创建几个 page rules 就行了，免费用户最多创建 3 个：</p>
+<p>第一个 👇：<br><img src="https://i.imgur.com/zNcNL0y.png" alt="rule1"></p>
+<p>第二个 👇，可选，让所有非 WWW 的链接安全地转到带 WWW 的链接：<br><img src="https://i.imgur.com/QlYf80u.png" alt="rule2"></p>
+<p>第三个 👇，可选，这会在 CloudFlare 的 CDN 中缓存你的静态页面：<br><img src="https://i.imgur.com/Roo2Uk0.png" alt="rule3"></p>
+<p>至此，<a href="https://alanlee.fun/" target="_blank" rel="noopener"><code>alanlee.fun</code></a> 已经可以安全的访问了，「小绿锁」已经出现了：</p>
+<p><img src="https://i.imgur.com/rfMJBdS.jpg" alt="alanlee.fun"></p>
+<h1 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h1><p>其实这种方法并不是百分百的 HTTPS 链接，你的博客和 CloudFlare 之间还是 HTTP 链接，浏览器和 CloudFlare 之间则是 HTTPS 链接，引用 CloudFlare 官方说明：</p>
+<blockquote>
+<p>Firstly a word on security. If you are deploying a JavaScript app which communicates with remote APIs, be sure not to use this for sensitive data submissions. As <a href="https://help.github.com/articles/what-are-github-pages/" target="_blank" rel="noopener">GitHub themselves put it</a>: “GitHub Pages sites shouldn’t be used for sensitive transactions like sending passwords or credit card numbers.” Also bear in mind your website source files are publicly accessible in a Git repository, so be extra careful about what you put there.  </p>
+<p>There are some things we can’t do; GitHub Pages doesn’t let us set custom headers, which unfortunately means we can’t do HTTP/2 Server Push right now.</p>
+</blockquote>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
+<li><a href="https://blog.cloudflare.com/secure-and-fast-github-pages-with-cloudflare/" target="_blank" rel="noopener">Secure and fast GitHub Pages with CloudFlare</a></li>
+<li><a href="https://madao.science/useful_tools/Hexo-6-%E4%BD%BF%E7%94%A8Cloudflare%E5%85%8D%E8%B4%B9HTTPS.html" target="_blank" rel="noopener">Hexo-6-使用Cloudflare免费HTTPS | Madao No More</a></li>
+<li><a href="https://steffan.cn/2017/03/22/use-cloudflare-to-implement-HTTPS-for-GithubPages-with-custom-domain-names/" target="_blank" rel="noopener">使用Cloudflare为自定义域名的GithubPages实现HTTPS化 | Steffan’s Blog</a></li>
+</ul>
 
     </article>
     <!-- 前后页  -->
     <ul class="post-pager">
         
-            <li class="next">
-                <a href= "/2016/08/27/ubuntu-installing-tensorflow/" title= Ubuntu 14.04 64 位安装 Google 的 TensorFlow >
-                    <span>Next Post</span>
-                    <span>Ubuntu 14.04 64 位安装 Google 的 TensorFlow</span>
-                </a>
-            </li>
-        
         
             <li class="previous">
-                <a href= "/2016/06/27/python-strptime/" title= Python 中 strptime 的简单使用 >
+                <a href= "/2018/01/03/neteasemusic-year-report-2017/" title= 我的网易云音乐 2017 年度听歌报告 >
                     <span>Previous Post</span>
-                    <span>Python 中 strptime 的简单使用</span>
+                    <span>我的网易云音乐 2017 年度听歌报告</span>
                 </a>
             </li>
         
@@ -262,8 +292,8 @@
     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
         
         var disqus_config = function () {
-        this.page.url = "https://secsilm.github.io/2016/08/22/ubuntu-update-issue/";  // Replace PAGE_URL with your page's canonical URL variable
-        this.page.identifier = "Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        this.page.url = "https://secsilm.github.io/2018/03/09/using-https-namecheap-hexo/";  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = "使用 CloudFlare 为 hexo 博客实现 HTTPS"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
         };
         
         (function () { // DON'T EDIT BELOW THIS LINE
@@ -346,7 +376,7 @@
         <div class="toc-catalog">
             <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
         </div>
-        
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#更新-GitHub-仓库"><span class="toc-number">1.</span> <span class="toc-text">更新 GitHub 仓库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CloudFlare-端-DNS-配置"><span class="toc-number">2.</span> <span class="toc-text">CloudFlare 端 DNS 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#namecheap-端更改-nameservers"><span class="toc-number">3.</span> <span class="toc-text">namecheap 端更改 nameservers</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CloudFlare-端设置使用-HTTPS"><span class="toc-number">4.</span> <span class="toc-text">CloudFlare 端设置使用 HTTPS</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#缺点"><span class="toc-number"></span> <span class="toc-text">缺点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-number">1.</span> <span class="toc-text">References</span></a></li></ol>
     </div>
     
     <div class="back-top">&#xe639;</div>

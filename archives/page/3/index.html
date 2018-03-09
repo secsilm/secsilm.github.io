@@ -179,6 +179,43 @@
     
     
         <article class="index-post">
+            <a class="abstract-title" href = "/2017/02/26/tensorflow-cudnn-version/" >
+                
+                    <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
+            </a>
+            <a class="content-show-full" href = "/2017/02/26/tensorflow-cudnn-version/" >
+                <div class="abstract-content">
+                    由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
+但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……
+
+
+运行环境运行环境是首要前提 。
+
+OS：Windows 10 家庭中文版
+CUDA：Cuda compila...
+                </div>
+            </a>
+            <div class="abstract-post-meta">
+                <!-- tags  -->
+                
+                <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+    
+</div>
+                
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/02/26</span>
+                </div>
+            </div>
+        </article>
+    
+    
+    
+        <article class="index-post">
             <a class="abstract-title" href = "/2017/02/16/tensorflow-1.0/" >
                 
                     <span>TensorFlow 1.0 发布</span>
@@ -515,42 +552,6 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 <!-- date  -->
                 <div class="abstract-date">
                     <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/10/29</span>
-                </div>
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
-                
-                    <span>sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</span>
-            </a>
-            <a class="content-show-full" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
-                <div class="abstract-content">
-                    使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。
-好尴尬，折腾了一会，终于弄明白了，记录下来，以说明自己too young。
-
-正文我们使用 sklearn 官方的一个例子来作为说明，源码可以从这里下载，下面我截取其中一小段并做了一些修改：
-123456789101112131415import numpy as npimpo...
-                </div>
-            </a>
-            <div class="abstract-post-meta">
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-href = sklearn>sklearn</a>
-    
-</div>
-                
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/10/26</span>
                 </div>
             </div>
         </article>
@@ -1307,7 +1308,28 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
     
-    <div class="total-archive"> Total : 45 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-archive"> Total : 46 </div>
     
     <div class="post-archive">
     
@@ -1316,6 +1338,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/09</span><a class="archive-post-title" href= "/2018/03/09/using-https-namecheap-hexo/" >使用 CloudFlare 为 hexo 博客实现 HTTPS</a>
+        </li>
     
     
         <li class="archive-post-item">

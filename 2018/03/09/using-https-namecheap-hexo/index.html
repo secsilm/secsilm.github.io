@@ -256,7 +256,7 @@
 <p>第三个 👇，可选，这会在 CloudFlare 的 CDN 中缓存你的静态页面：<br><img src="https://i.imgur.com/Roo2Uk0.png" alt="rule3"></p>
 <p>至此，<a href="https://alanlee.fun/" target="_blank" rel="noopener"><code>alanlee.fun</code></a> 已经可以安全的访问了，「小绿锁」已经出现了：</p>
 <p><img src="https://i.imgur.com/rfMJBdS.jpg" alt="alanlee.fun"></p>
-<h1 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h1><p>其实这种方法并不是百分百的 HTTPS 链接，你的博客和 CloudFlare 之间还是 HTTP 链接，浏览器和 CloudFlare 之间则是 HTTPS 链接，引用 CloudFlare 官方说明：</p>
+<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><p>其实这种方法并不是百分百的 HTTPS 链接，你的博客和 CloudFlare 之间还是 HTTP 链接，浏览器和 CloudFlare 之间则是 HTTPS 链接，引用 CloudFlare 官方说明：</p>
 <blockquote>
 <p>Firstly a word on security. If you are deploying a JavaScript app which communicates with remote APIs, be sure not to use this for sensitive data submissions. As <a href="https://help.github.com/articles/what-are-github-pages/" target="_blank" rel="noopener">GitHub themselves put it</a>: “GitHub Pages sites shouldn’t be used for sensitive transactions like sending passwords or credit card numbers.” Also bear in mind your website source files are publicly accessible in a Git repository, so be extra careful about what you put there.  </p>
 <p>There are some things we can’t do; GitHub Pages doesn’t let us set custom headers, which unfortunately means we can’t do HTTP/2 Server Push right now.</p>
@@ -266,7 +266,7 @@
 <li><a href="https://madao.science/useful_tools/Hexo-6-%E4%BD%BF%E7%94%A8Cloudflare%E5%85%8D%E8%B4%B9HTTPS.html" target="_blank" rel="noopener">Hexo-6-使用Cloudflare免费HTTPS | Madao No More</a></li>
 <li><a href="https://steffan.cn/2017/03/22/use-cloudflare-to-implement-HTTPS-for-GithubPages-with-custom-domain-names/" target="_blank" rel="noopener">使用Cloudflare为自定义域名的GithubPages实现HTTPS化 | Steffan’s Blog</a></li>
 </ul>
-
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
     </article>
     <!-- 前后页  -->
     <ul class="post-pager">
@@ -376,7 +376,7 @@
         <div class="toc-catalog">
             <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
         </div>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#更新-GitHub-仓库"><span class="toc-number">1.</span> <span class="toc-text">更新 GitHub 仓库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CloudFlare-端-DNS-配置"><span class="toc-number">2.</span> <span class="toc-text">CloudFlare 端 DNS 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#namecheap-端更改-nameservers"><span class="toc-number">3.</span> <span class="toc-text">namecheap 端更改 nameservers</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CloudFlare-端设置使用-HTTPS"><span class="toc-number">4.</span> <span class="toc-text">CloudFlare 端设置使用 HTTPS</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#缺点"><span class="toc-number"></span> <span class="toc-text">缺点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-number">1.</span> <span class="toc-text">References</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#更新-GitHub-仓库"><span class="toc-number">1.</span> <span class="toc-text">更新 GitHub 仓库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CloudFlare-端-DNS-配置"><span class="toc-number">2.</span> <span class="toc-text">CloudFlare 端 DNS 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#namecheap-端更改-nameservers"><span class="toc-number">3.</span> <span class="toc-text">namecheap 端更改 nameservers</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CloudFlare-端设置使用-HTTPS"><span class="toc-number">4.</span> <span class="toc-text">CloudFlare 端设置使用 HTTPS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#缺点"><span class="toc-number">5.</span> <span class="toc-text">缺点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-number">6.</span> <span class="toc-text">References</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-number">7.</span> <span class="toc-text">END</span></a></li></ol>
     </div>
     
     <div class="back-top">&#xe639;</div>

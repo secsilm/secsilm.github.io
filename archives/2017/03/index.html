@@ -325,12 +325,7 @@
                     <span>奇异值分解 SVD 的数学解释</span>
             </a>
             <div class="abstract-content">
-                奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解，这个方法在机器学习的一些算法里占有重要地位。
-
-
-相关概念参考自维基百科。
-
-正交矩阵：若一个方阵其行与列皆为正交的单位向量，则该矩阵为正交矩阵，且该矩阵的转置和其逆相等。两个向量正交的意思是...
+                奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR d...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -362,7 +357,7 @@
 
 问题在网上无意间看到这么一个题目：统计一个字符串中的中英文、空格、数字、标点符号个数。正好再熟悉一下 Python 中字符串相关方法，所以来做一下。
 
-代码1234567891011121314151617181920212223242526272829303132333435# coding: utf-8import stringfrom collections import namedtupledef str_count(s):    '''找出字符串中的中英文、空格、数字、标点符号个...
+代码1234567891011121314...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -392,7 +387,7 @@
 
 
 什么是 TensorBoard
-To make it easier to understand, debug, and optimize TensorFlow programs, we’ve included a suite of visualization tools called TensorBoard. You can use TensorBoard to visualize your TensorFlow gra...
+To make it easier to understand, debug, and op...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -423,15 +418,7 @@ To make it easier to understand, debug, and optimize TensorFlow programs, we’v
                 今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 tree 的命令，Windows 和 Linux 都有这个命令。
 
 
-Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 Windows 7 和 8 上也是可以用的。用法如下：
-1tree [Drive:[[Path] [/F] [/A]
-其中
-
-/F 表示不仅输出文件夹，也输出文件名。默认是只输出文件夹的名字。
-/A 表示使用另一种方式来绘制目录树。
-
-例如：
-仅列出目录1tree D:\MasterFiles\MachineLearning...
+Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 Windows 7 和 8...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -459,13 +446,7 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
                     <span>VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法</span>
             </a>
             <div class="abstract-content">
-                问题VSCode 是微软推出的一款开源的代码编辑器，从 sublime text 转过来后感觉还不错，昨天在用他写 Markdown 文件时想着直接导出 PDF 文件（之前都是用 Markdown Pad 2），找到一个叫 Markdown PDF 的插件，安装之后在 Markdown 文件里右键选择 Convert Markdown to PDF 后报如下错误：
-
-就是 ERROR: phantomjs binary does not exist ，在后面那个目录找不到这个文件。
-
-
-解决错误信息已经说得很明确，既然他找不到那个文件，那我们就把那个文件放到那个目录下就好了。
-文件可以去...
+                问题VSCode 是微软推出的一款开源的代码编辑器，从 sublime text 转过来后感觉还不错，昨天在用他写 Markdown 文件时想着直接导出 PDF 文件（之前都是用 Markdown Pad 2），找到一个叫 Markdown PDF 的插件，安装之后在 Markdown 文件里...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -495,7 +476,7 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
 
 
 正文numpy关于copy有三种情况，完全不复制、视图（view）或者叫浅复制（shadow copy）和深复制（deep copy）。
-而 b = a[:] 这种形式就属于第二种，即视图，这本质上是一种切片操作（slicing），所有的切片操作返回的都是视图。具体来说，b = a[:]会创建一个新的对象 b（所以 id(b) 和id(a) 返回的结果是不一样的），但是 b 的数据完全来自于a，和 a 保持完全一致，换句话说，b的数据完...
+而...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

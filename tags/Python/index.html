@@ -325,8 +325,7 @@
                     <span>批量导出 CSDN 博客为 Markdown 文件</span>
             </a>
             <div class="abstract-content">
-                CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞
-内容为王，站搭起来了，就需要内容来充实。但是我的文章都在 CSDN 上，手动一篇一篇导过来太慢，而且 hexo 的文章需要在头部添加 Front-matter，所以这样一来工作量就更大了，...
+                CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -354,11 +353,7 @@
             <div class="abstract-content">
                 有时候我们会有随机打乱一个数组的需求，例如训练时随机打乱样本，我们可以使用 numpy.random.shuffle() 或者 numpy.random.permutation() 来完成。这两者非常相似，实现的功能是一样的，那么他们到底有什么区别？
 
-本文代码及图片可以在 我的GitHub 找到。
-
-参数区别以下 numpy.random.shuffle() 简称 shuffle，numpy.random.permutation() 简称 permutation。
-
-shuffle 的参数只能是 array_like，而 permutation 除了 array_like 还可以是 i...
+本文代码及图片可以在 我的GitHub ...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -384,14 +379,7 @@ shuffle 的参数只能是 array_like，而 permutation 除了 array_like 还可
                     <span>Python 自动生成命令行工具 - fire 简介</span>
             </a>
             <div class="abstract-content">
-                Python 中用于生成命令行接口（Command Line Interfaces, CLIs）的工具已经有一些了，例如已经成为 Python 标准库的 argparse 和第三方的 click ，这些都是很不错的工具。但是这些工具为 Python 程序生成 CLIs 的时候稍显麻烦，需要增加的地方比较多，过程稍显繁琐。今天介绍的这个工具，几乎可以不改变原始代码就可以生成 CLIs，是 Google 于 今年（2017 年）3 月 2 日宣布在 GitHub 上开源的。
-
-
-文中的三个程序文件可以在 这里 打包下载。
-
-更新这里我会列出对本文的更新。
-
-2017 年 10 月 18 日：...
+                Python 中用于生成命令行接口（Command Line Interfaces, CLIs）的工具已经有一些了，例如已经成为 Python 标准库的 argparse 和第三方的 click ，这些都是很不错的工具。但是这些工具为 Python 程序生成 CLIs 的时候稍显麻烦，需要增加...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -423,7 +411,7 @@ shuffle 的参数只能是 array_like，而 permutation 除了 array_like 还可
 
 问题在网上无意间看到这么一个题目：统计一个字符串中的中英文、空格、数字、标点符号个数。正好再熟悉一下 Python 中字符串相关方法，所以来做一下。
 
-代码1234567891011121314151617181920212223242526272829303132333435# coding: utf-8import stringfrom collections import namedtupledef str_count(s):    '''找出字符串中的中英文、空格、数字、标点符号个...
+代码1234567891011121314...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -453,7 +441,7 @@ shuffle 的参数只能是 array_like，而 permutation 除了 array_like 还可
 
 
 正文numpy关于copy有三种情况，完全不复制、视图（view）或者叫浅复制（shadow copy）和深复制（deep copy）。
-而 b = a[:] 这种形式就属于第二种，即视图，这本质上是一种切片操作（slicing），所有的切片操作返回的都是视图。具体来说，b = a[:]会创建一个新的对象 b（所以 id(b) 和id(a) 返回的结果是不一样的），但是 b 的数据完全来自于a，和 a 保持完全一致，换句话说，b的数据完...
+而...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -479,14 +467,7 @@ shuffle 的参数只能是 array_like，而 permutation 除了 array_like 还可
                     <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
             </a>
             <div class="abstract-content">
-                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
-但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……
-
-
-运行环境运行环境是首要前提 。
-
-OS：Windows 10 家庭中文版
-CUDA：Cuda compila...
+                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：m...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -515,16 +496,7 @@ CUDA：Cuda compila...
             </a>
             <div class="abstract-content">
                 前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
-本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
-这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。
-
-
-更新这里我会列出对本文的更新。
-
-2017年3月17日：增加实现 TensorBoard 的文章的链接。
-
-
-...
+本文代码基于 TensorFlow 的官方文档 做了些许修改，完...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -555,9 +527,7 @@ CUDA：Cuda compila...
             </a>
             <div class="abstract-content">
                 
-Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. 
-
-主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现...
+Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly ...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -592,10 +562,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
 
 问题
 一个空的numpy数组对象占用多大空间。
-一个int32、int64、float32、float64数占用多大空间。
-
-
-代码1234567891011121314151617181920212223242526272829303132333435363738import numpy as npimport sys# 32位整型ai32 = np.array([], dtype=np.int32...
+一个int32、int64、float32、float6...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -626,15 +593,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
             </a>
             <div class="abstract-content">
                 前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
-本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。
-
-
-原理
-多层感知器（Multilayer Perceptron,缩写MLP）是一种前向结构的人工神经网络，映射一组输入向量到一组输出向量。MLP是感知器的推广，克服了感知器不能对线性不可分数据进行识别的弱点。
-
-关于 MLP 的原理我就不再赘述，我用下面的一个图来简单说明下：
-
-如上图，实际上...
+本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

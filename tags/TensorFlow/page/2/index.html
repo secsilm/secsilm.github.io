@@ -325,7 +325,7 @@
                     <span>TensorFlow 中的 Logistic Regression</span>
             </a>
             <div class="abstract-content">
-                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(\theta)=-\frac{1}{m}\sum_{i=1}^m\left[y^{(i)}logh_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)}))\right]其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了...
+                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -359,9 +359,7 @@
 我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。
 
 
-本文所说的 准确率 均指 测试准确率。
-
-代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374...
+本文所说的 准确率 均指...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -394,12 +392,7 @@
                 前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。
 
 
-训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice(售价)两个变量来分别作为自变量和因变量，处理后样本个数为1140个，也就是说全部训练数据是一个11402的矩阵，部分数据如下所示：
-训练部分数据*
-
-模型本次使用的是线性回归模型 y=Wx+b 其中$W$为权重，$b$为偏置。具体地，$x$ 即为LotArea，$y$ 即为SalePrice。
-
-...
+训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -443,11 +436,7 @@
 
 
 
-什么是 TensorFlow关于什么是 TensorFlow ，这里引用一下 官网 的介绍：
-
-TensorFlow™ is an open source software library for numerical computation using data flow graphs. 
-
-简单来说，就是机器学习（Machine Learning）的一个开...
+什么是 TensorFlow关于什么是 TensorFlow...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

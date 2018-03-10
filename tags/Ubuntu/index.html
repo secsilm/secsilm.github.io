@@ -328,15 +328,7 @@
                 今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 tree 的命令，Windows 和 Linux 都有这个命令。
 
 
-Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 Windows 7 和 8 上也是可以用的。用法如下：
-1tree [Drive:[[Path] [/F] [/A]
-其中
-
-/F 表示不仅输出文件夹，也输出文件名。默认是只输出文件夹的名字。
-/A 表示使用另一种方式来绘制目录树。
-
-例如：
-仅列出目录1tree D:\MasterFiles\MachineLearning...
+Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 Windows 7 和 8...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -378,11 +370,7 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
 
 
 
-什么是 TensorFlow关于什么是 TensorFlow ，这里引用一下 官网 的介绍：
-
-TensorFlow™ is an open source software library for numerical computation using data flow graphs. 
-
-简单来说，就是机器学习（Machine Learning）的一个开...
+什么是 TensorFlow关于什么是 TensorFlow...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -410,13 +398,7 @@ TensorFlow™ is an open source software library for numerical computation using
                     <span>Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁</span>
             </a>
             <div class="abstract-content">
-                我电脑装的是 Windows10 和 Ubuntu 双系统，最近一直在用ubuntu，昨天系统说有更新我就更新了，更新完说需要重启，我选了稍后启动，然后昨天晚上从实验室关机出来就没管了，结果今天早上开机选择 ubuntu 之后系统就进不去了，左上角光标一直闪，重启几次无果，于是上网查了查，解决方案如下：
-
-进入 Windows 系统，我的是 Windows10；
-打开 EasyBCD2.2，编辑引导项菜单，重新添加一个引导项，选择 Grub 2 和自动定位和自动加载，然后保存，原来的引导项可以删掉；
-重启选择刚刚添加的引导项就可以正常进入了。
-
-由于刚刚忘了截图，现在用的又是 ubunt...
+                我电脑装的是 Windows10 和 Ubuntu 双系统，最近一直在用ubuntu，昨天系统说有更新我就更新了，更新完说需要重启，我选了稍后启动，然后昨天晚上从实验室关机出来就没管了，结果今天早上开机选择 ubuntu 之后系统就进不去了，左上角光标一直闪，重启几次无果，于是上网查了查，解决...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -442,12 +424,7 @@ TensorFlow™ is an open source software library for numerical computation using
                     <span>Ubuntu14.04 gnome3 下 gedit 首选项消失时如何修改 gedit 主题</span>
             </a>
             <div class="abstract-content">
-                一些前期题外话前天装双系统的时候忘记选择引导设备什么的导致硬盘被格式化(T_T)，接着不甘心装完win10后再装ubuntu，这次吸取了教训，不过在引导的时候出现了问题，使用easyBCD设置启动项重启进入ubuntu后出现Grub error: unknown filesystem ，网上逛了好一会才发现可能是我双硬盘的原因导致ubuntu找不到自己的引导文件，反而是找到了 windows 的 NTFS 文件系统，ubuntu 当然不认识这货了，所以需要自己手动告诉他引导文件在哪。
-
-过程如下：
-
-使用 ls 命令查看当前所有分区；
-如果你还记得你当初安装的时候 /boot 挂载点的号...
+                一些前期题外话前天装双系统的时候忘记选择引导设备什么的导致硬盘被格式化(T_T)，接着不甘心装完win10后再装ubuntu，这次吸取了教训，不过在引导的时候出现了问题，使用easyBCD设置启动项重启进入ubuntu后出现Grub error: unknown filesystem ，网上逛...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

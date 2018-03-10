@@ -330,10 +330,7 @@
 
 问题
 一个空的numpy数组对象占用多大空间。
-一个int32、int64、float32、float64数占用多大空间。
-
-
-代码1234567891011121314151617181920212223242526272829303132333435363738import numpy as npimport sys# 32位整型ai32 = np.array([], dtype=np.int32...
+一个int32、int64、float32、float6...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -364,15 +361,7 @@
             </a>
             <div class="abstract-content">
                 前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
-本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。
-
-
-原理
-多层感知器（Multilayer Perceptron,缩写MLP）是一种前向结构的人工神经网络，映射一组输入向量到一组输出向量。MLP是感知器的推广，克服了感知器不能对线性不可分数据进行识别的弱点。
-
-关于 MLP 的原理我就不再赘述，我用下面的一个图来简单说明下：
-
-如上图，实际上...
+本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -402,7 +391,7 @@
                     <span>TensorFlow 中的 Logistic Regression</span>
             </a>
             <div class="abstract-content">
-                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(\theta)=-\frac{1}{m}\sum_{i=1}^m\left[y^{(i)}logh_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)}))\right]其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了...
+                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -436,19 +425,7 @@
 
 
 
-数据集使用的数据集是美国人口普查的数据，可以从这里下载，里面包含了CSV数据文件和PDF说明文件，说明文件里解释了每个变量的意义。
-数据大致是这个样子：
-
-*美国人口普查数据*
-
-
-问题
-以每个州人口最多的 3 个县的人口总和为这个州人口的衡量标准，哪 3 个州人口最多？
-在 2010 年至 2015 年间人口变化幅度最大的是哪个县？
-
-
-分析
-先按州分组，再对每个州...
+数据集使用的数据集是美国人口普查的数据，可以从这里下载，里面包含了CS...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

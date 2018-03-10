@@ -328,10 +328,7 @@
                 1如果给出一个平行六面体（甚至其他多面体）的各个顶点坐标，如何画出这个平行六面体。
 
 在网上找了找方法，可以参考这篇博客 matlab中patch函数详解。然后我具体查看了 Multifaceted Patches 帮助，记录下来以备后查。
-绘制主要就是利用 patch 函数，patch 的一般调用格式为patch(X,Y,C)（二维）和patch(X,Y,Z,C)（三维）。这里主要看三维情况下。X，Y，Z分别是各个点的 X 坐标，Y 坐标和 Z 坐标，C 是颜色参数。假设我们有一个立方体如下图所示，
-那么对应于这个立方体的XYZ参数就是下图所示，
-
-可以看出，XYZ都是一个4*6的矩阵...
+绘制主要就是利用 patch 函数，patch 的一...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -360,10 +357,7 @@
                 为了清理桌面上的 words, so do this!
 
 在做一个项目的时候，接触到了这个函数，瞬间感觉好有用，遂记录之。（好像有点废话……）
-mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学的语言讲就是矩阵分块。其意义和用法可以用 matlab 的帮助文档说清楚：
-
-而 cellfun 函数就是对每一个块做相同的操作，例如求和、求均值等等，用这个函数就避免了写 for 循环了，也算是 matlab 向量化运算的一个例子。下面用一个例子说明之。
-123456% 生成一个 10*5 的随机矩阵，矩阵取值在 0 到 50 内的整数matrix = randi(5...
+mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学的语言讲就是矩阵分块。其意义和用法可以用 matlab 的帮助文档说清楚...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -391,10 +385,7 @@ mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学�
             <div class="abstract-content">
                 在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：
 
-布里斯托尔大学人工智能教授，拥有20多年的机器学习教研经验。在高度结构化的数据挖掘以及通过ROC分析来评估和改进机器学习模型方面，Flach是国际领先的研究人员。他还是Machine Learning期刊总编。曾担任2009年ACM知识发现与数据挖掘国际会议、2012年欧洲机器学习与数据挖掘国际会议的程序委员会共同主席。另著有Simply Logical：Intelligent Reasoning by Example。
-
-
-这是他的个人主页Pe...
+布里斯托尔大学人工智能教授，拥有20多年的机器学习教研经验。在高度结构化的数据挖掘以及通过ROC分析来评估和改进机器学习模型方面，Flach是国际领先...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

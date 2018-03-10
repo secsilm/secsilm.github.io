@@ -327,9 +327,7 @@
             <div class="abstract-content">
                 Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：
 
-Datasets：创建一个输入管道（input pipelines）来为你的模型读取数据，在这个 pipelines 中你可以做一些数据预处理，尽量都使用 TensorFlow 自己的函数，即 tf 开头的函数（比如 tf.reshape），这样可以提高程序执行效率。
-
-Estimators：这是模型的核心部分，而 Estimators 的核心部分则是一个 ...
+Datasets：创建一个输入管道（input pipeli...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -355,7 +353,7 @@ Estimators：这是模型的核心部分，而 Estimators 的核心部分则是�
                     <span>理解 TensorBoard</span>
             </a>
             <div class="abstract-content">
-                TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小...
+                TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - Tens...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -381,9 +379,7 @@ Estimators：这是模型的核心部分，而 Estimators 的核心部分则是�
                     <span>TensorFlow DNNRegressor 的简单使用</span>
             </a>
             <div class="abstract-content">
-                tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。 下载。
-
-tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高级 API 模块，让用户可以更方便的配置、训练和评估...
+                tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRe...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -415,7 +411,7 @@ tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高�
 
 
 什么是 TensorBoard
-To make it easier to understand, debug, and optimize TensorFlow programs, we’ve included a suite of visualization tools called TensorBoard. You can use TensorBoard to visualize your TensorFlow gra...
+To make it easier to understand, debug, and op...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -443,14 +439,7 @@ To make it easier to understand, debug, and optimize TensorFlow programs, we’v
                     <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
             </a>
             <div class="abstract-content">
-                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
-但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……
-
-
-运行环境运行环境是首要前提 。
-
-OS：Windows 10 家庭中文版
-CUDA：Cuda compila...
+                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：m...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -480,11 +469,7 @@ CUDA：Cuda compila...
             <div class="abstract-content">
                 前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
 NOW
-首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Google Research Blog 也于昨天在 博客 中公布了这一消息。
-
-
-
-改动这一版本的改动还是比较大的，很多旧的 API 都已经不再使用。在 博客 中可以看到 1.0 版本更快、更灵活、更稳定（production-ready） 。TensorFlow 1.0 版本保证 Python API ...
+首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Goog...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -511,16 +496,7 @@ NOW
             </a>
             <div class="abstract-content">
                 前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
-本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
-这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。
-
-
-更新这里我会列出对本文的更新。
-
-2017年3月17日：增加实现 TensorBoard 的文章的链接。
-
-
-...
+本文代码基于 TensorFlow 的官方文档 做了些许修改，完...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -551,9 +527,7 @@ NOW
             </a>
             <div class="abstract-content">
                 
-Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. 
-
-主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现...
+Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly ...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -583,14 +557,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                     <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
             </a>
             <div class="abstract-content">
-                之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对Windows的支持，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。
-
-
-
-更新这里我会列出对本文的更新。
-
-2017 年 3 月 1 日：cuDNN 版本从 5.0 升级到 5.1 版本，更新 cuda 和 cudnn 下载地址。
-2017 年 3 月 20 ...
+                之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -617,15 +584,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
             </a>
             <div class="abstract-content">
                 前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
-本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。
-
-
-原理
-多层感知器（Multilayer Perceptron,缩写MLP）是一种前向结构的人工神经网络，映射一组输入向量到一组输出向量。MLP是感知器的推广，克服了感知器不能对线性不可分数据进行识别的弱点。
-
-关于 MLP 的原理我就不再赘述，我用下面的一个图来简单说明下：
-
-如上图，实际上...
+本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

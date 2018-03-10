@@ -325,10 +325,7 @@
                     <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
             </a>
             <div class="abstract-content">
-                关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。
-
-
-Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我的机器上没有成功，pip 同样不成功。有兴趣的话可以参考官网和 2016 年的...
+                关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -361,10 +358,7 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
 
 问题
 一个空的numpy数组对象占用多大空间。
-一个int32、int64、float32、float64数占用多大空间。
-
-
-代码1234567891011121314151617181920212223242526272829303132333435363738import numpy as npimport sys# 32位整型ai32 = np.array([], dtype=np.int32...
+一个int32、int64、float32、float6...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -398,19 +392,7 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
 
 
 
-数据集使用的数据集是美国人口普查的数据，可以从这里下载，里面包含了CSV数据文件和PDF说明文件，说明文件里解释了每个变量的意义。
-数据大致是这个样子：
-
-*美国人口普查数据*
-
-
-问题
-以每个州人口最多的 3 个县的人口总和为这个州人口的衡量标准，哪 3 个州人口最多？
-在 2010 年至 2015 年间人口变化幅度最大的是哪个县？
-
-
-分析
-先按州分组，再对每个州...
+数据集使用的数据集是美国人口普查的数据，可以从这里下载，里面包含了CS...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -445,9 +427,7 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
 
 
 问题当使用如下代码保存使用 plt.savefig 保存生成的图片时，结果打开生成的图片却是一片空白。
-123456import matplotlib.pyplot as plt""" 一些画图代码 """plt.show()plt.savefig("filename.png")
-
-原因其实产生这个现象的原因很简单：在 plt.show() 后调用了 plt.savefig() ，在 plt.show() 后实际上已经创建了一个新的空白的图片（坐标轴），这时候你再 plt.savefig()...
+123456import matplotlib.pyplot as plt""" 一些画图代...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -475,15 +455,7 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
                     <span>Python 中 strptime 的简单使用</span>
             </a>
             <div class="abstract-content">
-                strptime是python datetime库中的函数，用于将一个日期字符串转成datetime日期格式便于后期处理，使用格式为datetime.strptime(date_string, format)，其中date_string 就是要转成日期的字符串，format 根据date_string 不同而不同，format 有以下格式：
-
-
-下面举个简单的例子，计算两个日期的差
-
-此外，获取当前日期：dt.date.today()
-
-OK, it’s really short~~~
-
+                strptime是python datetime库中的函数，用于将一个日期字符串转成datetime日期格式便于后期处理，使用格式为datetime.strptime(date_string, format)，其中date_string 就是要转成日期的字符串，format 根据date_st...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -511,9 +483,7 @@ OK, it’s really short~~~
                     <span>Python NumPy 基础</span>
             </a>
             <div class="abstract-content">
-                前言这两天读完《利用Python进行数据分析》 这本书的第4章：NumPy 基础：数组和矢量计算 后，在进行下一步阅读高级应用前，先整理本章内容，做个笔记备查，也好加深印象。在往下看前请确保你已经安装了NumPy 库，并且已经使用 import numpy as np 加载numpy库。如果 还没有安装，那么可以在cmd（windows下）中使用 pip install numpy 命令安装，ubuntu下也可以使用 sudo apt-get install python-numpy 命令安装。
-
-题外话：python的数据格式让我这种熟练了matlab的用户感觉好不习惯。&gt;_&l...
+                前言这两天读完《利用Python进行数据分析》 这本书的第4章：NumPy 基础：数组和矢量计算 后，在进行下一步阅读高级应用前，先整理本章内容，做个笔记备查，也好加深印象。在往下看前请确保你已经安装了NumPy 库，并且已经使用 import numpy as np 加载numpy库。如果 ...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

@@ -325,14 +325,7 @@
                     <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
             </a>
             <div class="abstract-content">
-                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
-但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……
-
-
-运行环境运行环境是首要前提 。
-
-OS：Windows 10 家庭中文版
-CUDA：Cuda compila...
+                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：m...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -362,11 +355,7 @@ CUDA：Cuda compila...
             <div class="abstract-content">
                 前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
 NOW
-首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Google Research Blog 也于昨天在 博客 中公布了这一消息。
-
-
-
-改动这一版本的改动还是比较大的，很多旧的 API 都已经不再使用。在 博客 中可以看到 1.0 版本更快、更灵活、更稳定（production-ready） 。TensorFlow 1.0 版本保证 Python API ...
+首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Goog...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -393,16 +382,7 @@ NOW
             </a>
             <div class="abstract-content">
                 前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
-本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
-这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。
-
-
-更新这里我会列出对本文的更新。
-
-2017年3月17日：增加实现 TensorBoard 的文章的链接。
-
-
-...
+本文代码基于 TensorFlow 的官方文档 做了些许修改，完...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -433,9 +413,7 @@ NOW
             </a>
             <div class="abstract-content">
                 
-Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. 
-
-主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现...
+Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly ...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -465,14 +443,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                     <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
             </a>
             <div class="abstract-content">
-                之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对Windows的支持，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。
-
-
-
-更新这里我会列出对本文的更新。
-
-2017 年 3 月 1 日：cuDNN 版本从 5.0 升级到 5.1 版本，更新 cuda 和 cudnn 下载地址。
-2017 年 3 月 20 ...
+                之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -503,10 +474,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
 
 问题
 一个空的numpy数组对象占用多大空间。
-一个int32、int64、float32、float64数占用多大空间。
-
-
-代码1234567891011121314151617181920212223242526272829303132333435363738import numpy as npimport sys# 32位整型ai32 = np.array([], dtype=np.int32...
+一个int32、int64、float32、float6...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -537,15 +505,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
             </a>
             <div class="abstract-content">
                 前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
-本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。
-
-
-原理
-多层感知器（Multilayer Perceptron,缩写MLP）是一种前向结构的人工神经网络，映射一组输入向量到一组输出向量。MLP是感知器的推广，克服了感知器不能对线性不可分数据进行识别的弱点。
-
-关于 MLP 的原理我就不再赘述，我用下面的一个图来简单说明下：
-
-如上图，实际上...
+本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -575,7 +535,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                     <span>TensorFlow 中的 Logistic Regression</span>
             </a>
             <div class="abstract-content">
-                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(\theta)=-\frac{1}{m}\sum_{i=1}^m\left[y^{(i)}logh_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)}))\right]其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了...
+                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -609,19 +569,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
 
 
 
-数据集使用的数据集是美国人口普查的数据，可以从这里下载，里面包含了CSV数据文件和PDF说明文件，说明文件里解释了每个变量的意义。
-数据大致是这个样子：
-
-*美国人口普查数据*
-
-
-问题
-以每个州人口最多的 3 个县的人口总和为这个州人口的衡量标准，哪 3 个州人口最多？
-在 2010 年至 2015 年间人口变化幅度最大的是哪个县？
-
-
-分析
-先按州分组，再对每个州...
+数据集使用的数据集是美国人口普查的数据，可以从这里下载，里面包含了CS...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -653,9 +601,7 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
 我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。
 
 
-本文所说的 准确率 均指 测试准确率。
-
-代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374...
+本文所说的 准确率 均指...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

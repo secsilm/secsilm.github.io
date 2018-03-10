@@ -329,9 +329,7 @@
 我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。
 
 
-本文所说的 准确率 均指 测试准确率。
-
-代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374...
+本文所说的 准确率 均指...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -361,11 +359,7 @@
                     <span>sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</span>
             </a>
             <div class="abstract-content">
-                使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。
-好尴尬，折腾了一会，终于弄明白了，记录下来，以说明自己too young。
-
-正文我们使用 sklearn 官方的一个例子来作为说明，源码可以从这里下载，下面我截取其中一小段并做了一些修改：
-123456789101112131415import numpy as npimpo...
+                使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -402,9 +396,7 @@
 
 
 问题当使用如下代码保存使用 plt.savefig 保存生成的图片时，结果打开生成的图片却是一片空白。
-123456import matplotlib.pyplot as plt""" 一些画图代码 """plt.show()plt.savefig("filename.png")
-
-原因其实产生这个现象的原因很简单：在 plt.show() 后调用了 plt.savefig() ，在 plt.show() 后实际上已经创建了一个新的空白的图片（坐标轴），这时候你再 plt.savefig()...
+123456import matplotlib.pyplot as plt""" 一些画图代...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -435,12 +427,7 @@
                 前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。
 
 
-训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice(售价)两个变量来分别作为自变量和因变量，处理后样本个数为1140个，也就是说全部训练数据是一个11402的矩阵，部分数据如下所示：
-训练部分数据*
-
-模型本次使用的是线性回归模型 y=Wx+b 其中$W$为权重，$b$为偏置。具体地，$x$ 即为LotArea，$y$ 即为SalePrice。
-
-...
+训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -476,12 +463,7 @@
 
 使用的库这个程序涉及两个库：smtplib 和 email。
 这两个库都是 Python 自带的，所以不需要额外的下载安装，此外，这次使用的 Python 版本为 2.7。
-思路步骤总体思路很简单，就像我们平常上网是通过HTTP协议一样，我们发送邮件是通过SMTP（Simple Mail Transfer Protocol，简单邮件传输协议）来传输的，而现在我们需要做的就是
-
-设置好SMTP服务器地址
-告诉服务器我们的邮箱地址和密码
-设置要发送的邮件内容，例如发送者地址，接收者地址，邮件主题，邮件正文，附件等
-将设置好的邮件内...
+思路步骤总体思路很简单，就像我们平常上网是通过HTTP协议...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->

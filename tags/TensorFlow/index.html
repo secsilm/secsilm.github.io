@@ -1,44 +1,58 @@
 <!DOCTYPE html>
 <html>
-    <head>
+    <!-- title -->
+
+
+
+
+
+<head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
-    <title>
-        
-        Lee&#39;s Space Station
-        
-    </title>
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <!-- TODO: 在font-face加载完毕后改变字体  -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/webfont/1.6.28/webfontloader.js"></script>
-    <!-- 提前加载place holder  -->
+    <title>Lee&#39;s Space Station</title>
     <style type="text/css">
-        @font-face {
-            font-family: 'Oswald-Regular';
-            src: url(/font/Oswald-Regular.ttf);
-        }
-    </style>
-    <style type="text/css">
-        .site-intro {
-            position: relative;
-            width: 100%;
-            height: 50vh;
-            overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
-        }
-        .site-intro-placeholder {
-            position: absolute;
-            z-index: -2;
-            top: 0;
-            left: 0px;
-            width: calc(100% + 300px);
-            height: 100%;
-            background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
-            background-position: center center;
-            transform: translate3d(-226px, 0, 0);
-            animation: gradient-move 2.5s ease-out 0s 1;
-        }
-        @keyframes gradient-move {
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+        box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.7);
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s 1;
+    }
+
+    @keyframes gradient-move {
         0% {
             transform: translate3d(-226px, 0, 0);
         }
@@ -46,10 +60,189 @@
             transform: translate3d(0, 0, 0);
         }
     }
+
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171227 />
+
+    <link rel="preload" href= /css/style.css?v=20180304 as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180304 media="(max-width: 980px)"/>
+    <link rel="icon" href= /avatar/Bastion_cute.png>
+    <script>
+  // load webfont-loader async, and add callback function
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+  
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
+        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
+      if (postIntroTags) {
+        postIntroTags.classList.add('post-fade-in');
+      }
+      if (postIntroMeat) {
+        postIntroMeat.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+</script>
+    <script>
+        (function (w) {
+            "use strict";
+            // rel=preload support test
+            if (!w.loadCSS) {
+                w.loadCSS = function () { };
+            }
+            // define on the loadCSS obj
+            var rp = loadCSS.relpreload = {};
+            // rel=preload feature support test
+            // runs once and returns a function for compat purposes
+            rp.support = (function () {
+                var ret;
+                try {
+                    ret = w.document.createElement("link").relList.supports("preload");
+                } catch (e) {
+                    ret = false;
+                }
+                return function () {
+                    return ret;
+                };
+            })();
+
+            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+            // then change that media back to its intended value on load
+            rp.bindMediaToggle = function (link) {
+                // remember existing media attr for ultimate state, or default to 'all'
+                var finalMedia = link.media || "all";
+
+                function enableStylesheet() {
+                    link.media = finalMedia;
+                }
+
+                // bind load handlers to enable media
+                if (link.addEventListener) {
+                    link.addEventListener("load", enableStylesheet);
+                } else if (link.attachEvent) {
+                    link.attachEvent("onload", enableStylesheet);
+                }
+
+                // Set rel and non-applicable media type to start an async request
+                // note: timeout allows this to happen async to let rendering continue in IE
+                setTimeout(function () {
+                    link.rel = "stylesheet";
+                    link.media = "only x";
+                });
+                // also enable media after 3 seconds,
+                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+                setTimeout(enableStylesheet, 3000);
+            };
+
+            // loop through link elements in DOM
+            rp.poly = function () {
+                // double check this to prevent external calls from running
+                if (rp.support()) {
+                    return;
+                }
+                var links = w.document.getElementsByTagName("link");
+                for (var i = 0; i < links.length; i++) {
+                    var link = links[i];
+                    // qualify links to those with rel=preload and as=style attrs
+                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
+                        // prevent rerunning on link
+                        link.setAttribute("data-loadcss", true);
+                        // bind listeners to toggle media back
+                        rp.bindMediaToggle(link);
+                    }
+                }
+            };
+
+            // if unsupported, run the polyfill
+            if (!rp.support()) {
+                // run once at least
+                rp.poly();
+
+                // rerun poly on an interval until onload
+                var run = w.setInterval(rp.poly, 500);
+                if (w.addEventListener) {
+                    w.addEventListener("load", function () {
+                        rp.poly();
+                        w.clearInterval(run);
+                    });
+                } else if (w.attachEvent) {
+                    w.attachEvent("onload", function () {
+                        rp.poly();
+                        w.clearInterval(run);
+                    });
+                }
+            }
+            // commonjs
+            if (typeof exports !== "undefined") {
+                exports.loadCSS = loadCSS;
+            }
+            else {
+                w.loadCSS = loadCSS;
+            }
+        }(typeof global !== "undefined" ? global : this));
+    </script>
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    
     <script src="/scripts/main.js" defer></script>
     <!-- 百度统计  -->
     
@@ -89,7 +282,16 @@
     <a class="home-link" href=/>Lee's Space Station</a>
 </header>
     <div class="wrapper">
-        <div class="site-intro">
+        <div class="site-intro" style=
+
+
+
+
+
+
+
+
+>
     
     <!-- 主页  -->
             
@@ -111,68 +313,7 @@
     </div>
 </div>
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
-        <script>
-            var browser = {
-                    versions: function () {
-                        var u = window.navigator.userAgent;
-                        return {
-                            userAgent: u,
-                            trident: u.indexOf('Trident') > -1, //IE内核
-                            presto: u.indexOf('Presto') > -1, //opera内核
-                            webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
-                            gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
-                            mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
-                            ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
-                            android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
-                            iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
-                            iPad: u.indexOf('iPad') > -1, //是否为iPad
-                            webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
-                            weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
-                            uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
-                        };
-                    }()
-                }
 
-            function fontLoaded(){
-                console.log('font loaded');
-                if (document.getElementsByClassName('site-intro-meta')) {
-                    document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
-                    document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-                    var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-                        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-                        if (postIntroTags) {
-                            postIntroTags.classList.add('post-fade-in');
-                        }
-                        if (postIntroMeat) {
-                            postIntroMeat.classList.add('post-fade-in');
-                        }
-                    }
-                }
-                
-            console.log("userAgent:" + browser.versions.userAgent);
-            // UC不支持跨域，所以直接显示
-            if (browser.versions.uc) {
-                console.log("UCBrowser");
-                fontLoaded();
-            } else {
-                WebFont.load({
-                    custom: {
-                        families: ['Oswald-Regular']
-                    },
-                    loading: function () {  //所有字体开始加载
-                        // console.log('loading');
-                    },
-                    active: function () {  //所有字体已渲染
-                        fontLoaded();
-                    },
-                    inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
-                        console.log('inactive: timeout');
-                        fontLoaded();
-                    },
-                    timeout: 7000 // Set the timeout to two seconds
-                });
-            }
-        </script>
         <div class="container container-unloaded">
             <main class="main index-page">
     
@@ -183,28 +324,26 @@
                 
                     <span>理解 Estimators 和 Datasets</span>
             </a>
-            <a class="content-show-full" href = "/2017/12/22/understanding-estimators-datasets/" >
-                <div class="abstract-content">
-                    Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：
+            <div class="abstract-content">
+                Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：
 
 Datasets：创建一个输入管道（input pipelines）来为你的模型读取数据，在这个 pipelines 中你可以做一些数据预处理，尽量都使用 TensorFlow 自己的函数，即 tf 开头的函数（比如 tf.reshape），这样可以提高程序执行效率。
 
 Estimators：这是模型的核心部分，而 Estimators 的核心部分则是一个 ...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/22</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/12/22</span>
-                </div>
             </div>
         </article>
     
@@ -215,24 +354,22 @@ Estimators：这是模型的核心部分，而 Estimators 的核心部分则是�
                 
                     <span>理解 TensorBoard</span>
             </a>
-            <a class="content-show-full" href = "/2017/08/20/understanding-tensorboard/" >
-                <div class="abstract-content">
-                    TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小...
-                </div>
-            </a>
+            <div class="abstract-content">
+                TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小...
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/08/20</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/08/20</span>
-                </div>
             </div>
         </article>
     
@@ -243,28 +380,26 @@ Estimators：这是模型的核心部分，而 Estimators 的核心部分则是�
                 
                     <span>TensorFlow DNNRegressor 的简单使用</span>
             </a>
-            <a class="content-show-full" href = "/2017/06/02/tensorflow-DNNRegressor/" >
-                <div class="abstract-content">
-                    tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。 下载。
+            <div class="abstract-content">
+                tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。 下载。
 
 tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高级 API 模块，让用户可以更方便的配置、训练和评估...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/06/02</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/06/02</span>
-                </div>
             </div>
         </article>
     
@@ -275,30 +410,28 @@ tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高�
                 
                     <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
             </a>
-            <a class="content-show-full" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
-                <div class="abstract-content">
-                    前面 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 这里 下载。
+            <div class="abstract-content">
+                前面 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 这里 下载。
 
 
 什么是 TensorBoard
 To make it easier to understand, debug, and optimize TensorFlow programs, we’ve included a suite of visualization tools called TensorBoard. You can use TensorBoard to visualize your TensorFlow gra...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/17</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/03/17</span>
-                </div>
             </div>
         </article>
     
@@ -309,9 +442,8 @@ To make it easier to understand, debug, and optimize TensorFlow programs, we’v
                 
                     <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
             </a>
-            <a class="content-show-full" href = "/2017/02/26/tensorflow-cudnn-version/" >
-                <div class="abstract-content">
-                    由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
+            <div class="abstract-content">
+                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。
 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……
 
 
@@ -319,23 +451,22 @@ To make it easier to understand, debug, and optimize TensorFlow programs, we’v
 
 OS：Windows 10 家庭中文版
 CUDA：Cuda compila...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/02/26</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/02/26</span>
-                </div>
             </div>
         </article>
     
@@ -346,30 +477,28 @@ CUDA：Cuda compila...
                 
                     <span>TensorFlow 1.0 发布</span>
             </a>
-            <a class="content-show-full" href = "/2017/02/16/tensorflow-1.0/" >
-                <div class="abstract-content">
-                    前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
+            <div class="abstract-content">
+                前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
 NOW
 首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Google Research Blog 也于昨天在 博客 中公布了这一消息。
 
 
 
 改动这一版本的改动还是比较大的，很多旧的 API 都已经不再使用。在 博客 中可以看到 1.0 版本更快、更灵活、更稳定（production-ready） 。TensorFlow 1.0 版本保证 Python API ...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/02/16</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/02/16</span>
-                </div>
             </div>
         </article>
     
@@ -380,9 +509,8 @@ NOW
                 
                     <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
             </a>
-            <a class="content-show-full" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
-                <div class="abstract-content">
-                    前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
+            <div class="abstract-content">
+                前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
 本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。
 这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。
 
@@ -393,25 +521,24 @@ NOW
 
 
 ...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/28</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/12/28</span>
-                </div>
             </div>
         </article>
     
@@ -422,31 +549,29 @@ NOW
                 
                     <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
             </a>
-            <a class="content-show-full" href = "/2016/12/10/tensorboard-mnist-pca/" >
-                <div class="abstract-content">
-                    
+            <div class="abstract-content">
+                
 Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. 
 
 主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/10</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/12/10</span>
-                </div>
             </div>
         </article>
     
@@ -457,9 +582,8 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                     <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
             </a>
-            <a class="content-show-full" href = "/2016/12/01/installing-tensorflow/" >
-                <div class="abstract-content">
-                    之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对Windows的支持，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。
+            <div class="abstract-content">
+                之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对Windows的支持，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。
 
 
 
@@ -467,21 +591,20 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
 
 2017 年 3 月 1 日：cuDNN 版本从 5.0 升级到 5.1 版本，更新 cuda 和 cudnn 下载地址。
 2017 年 3 月 20 ...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/01</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/12/01</span>
-                </div>
             </div>
         </article>
     
@@ -492,9 +615,8 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
                 
                     <span>TensorFlow 中的多层感知器（MLP）</span>
             </a>
-            <a class="content-show-full" href = "/2016/11/19/tensorflow-mlp/" >
-                <div class="abstract-content">
-                    前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
+            <div class="abstract-content">
+                前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
 本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。
 
 
@@ -504,32 +626,31 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
 关于 MLP 的原理我就不再赘述，我用下面的一个图来简单说明下：
 
 如上图，实际上...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/19</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2016/11/19</span>
-                </div>
             </div>
         </article>
     
     <!-- paginator  -->
     
     <nav class="page-nav">
-        <span class="page-number current">1</span><a class="page-number" href="/tags/TensorFlow/page/2/">2</a><a class="extend next" rel="next" href="/tags/TensorFlow/page/2/">#NEXT</a>
+        <span class="page-number current">1</span><a class="page-number" href="/tags/TensorFlow/page/2/">2</a><a class="extend next" rel="next" href="/tags/TensorFlow/page/2/">NEXT &#62;</a>
     </nav>
     
 </main>
@@ -550,25 +671,42 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
         
             
-                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title="github"></a>
+                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title=github></a>
             
         
     
         
             
-                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title="twitter"></a>
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/example_qr.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+            
+                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title=twitter></a>
             
         
     
         
             
-                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title="instagram"></a>
+                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title=instagram></a>
             
         
     
         
             
-                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title="rss"></a>
+                <a href="https://www.v2ex.com/member/secsilm" class="iconfont-archer v2ex" target="_blank" title=v2ex></a>
+            
+        
+    
+        
+            
+                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title=rss></a>
             
         
     
@@ -577,12 +715,12 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     <!-- powered by Hexo  -->
     <div class="copyright">
-        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">Theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">archer</a></span>
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
     </div>
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
+        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     
@@ -590,65 +728,16 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     </div>
     <!-- toc -->
     
-    <div class="back-top">&#xe639;</div>
-    <div class="sidebar">
-    <div class="sidebar-header sidebar-header-show-archive">
-        <div class="sidebar-category">
-            <span class="sidebar-archive-link"><span class="iconfont-archer">&#xe67d;</span>Archive</span>
-            <span class="sidebar-tags-link"><span class="iconfont-archer">&#xe610;</span>Tag</span>
-        </div>
-    </div>
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
     <div class="sidebar-content sidebar-content-show-archive">
-          <div class="sidebar-archive">
+          <div class="sidebar-panel-archives">
     <!-- 在ejs中将archive按照时间排序 -->
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -1568,34 +1657,35 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     </div>
   </div>
-        <div class="sidebar-tags">
+        <div class="sidebar-panel-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
+        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
+        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
     
-        <span class="sidebar-tag-name"><a href= "#">hexo</a></span>
+        <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
+        <span class="sidebar-tag-name" data-tags="Python"><span class="iconfont-archer">&#xe606;</span>Python</span>
     
-        <span class="sidebar-tag-name"><a href= "#">TensorFlow</a></span>
+        <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Data Science</a></span>
+        <span class="sidebar-tag-name" data-tags="MATLAB"><span class="iconfont-archer">&#xe606;</span>MATLAB</span>
     
-        <span class="sidebar-tag-name"><a href= "#">MATLAB</a></span>
+        <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Living</a></span>
+        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
     
-        <span class="sidebar-tag-name"><a href= "#">sklearn</a></span>
+        <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Ubuntu</a></span>
+        <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
     
-        <span class="sidebar-tag-name"><a href= "#">IDE</a></span>
+        <span class="sidebar-tag-name" data-tags="IDE"><span class="iconfont-archer">&#xe606;</span>IDE</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Windows</a></span>
+        <span class="sidebar-tag-name" data-tags="Windows"><span class="iconfont-archer">&#xe606;</span>Windows</span>
     
     </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
     <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
     缺失模块。<br/>
     1、请确保node版本大于6.2<br/>
@@ -1619,25 +1709,35 @@ jsonContent:
     link: false
     permalink: false
     excerpt: false
-    categories: false
+    categories: true
     tags: true</pre>
     </div> 
-    <div class="sidebar-tag-list"></div>
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
 </div>
     </div>
 </div> 
     <script>
-    var jsInfo = {
-        root: '/'
+    var siteMeta = {
+        root: '/',
+        author: 'Alan Lee'
     }
 </script>
-    <!-- 不蒜子  -->
+    <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     
-    <!-- CNZZ统计  -->
+    <!-- CNZZ  -->
     
     </div>
+    <!-- async load share.js -->
+    
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

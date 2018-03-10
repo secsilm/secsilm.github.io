@@ -1,44 +1,58 @@
 <!DOCTYPE html>
 <html>
-    <head>
+    <!-- title -->
+
+
+
+
+
+<head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
-    <title>
-        
-        Lee&#39;s Space Station
-        
-    </title>
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <!-- TODO: 在font-face加载完毕后改变字体  -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/webfont/1.6.28/webfontloader.js"></script>
-    <!-- 提前加载place holder  -->
+    <title>Lee&#39;s Space Station</title>
     <style type="text/css">
-        @font-face {
-            font-family: 'Oswald-Regular';
-            src: url(/font/Oswald-Regular.ttf);
-        }
-    </style>
-    <style type="text/css">
-        .site-intro {
-            position: relative;
-            width: 100%;
-            height: 50vh;
-            overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
-        }
-        .site-intro-placeholder {
-            position: absolute;
-            z-index: -2;
-            top: 0;
-            left: 0px;
-            width: calc(100% + 300px);
-            height: 100%;
-            background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
-            background-position: center center;
-            transform: translate3d(-226px, 0, 0);
-            animation: gradient-move 2.5s ease-out 0s 1;
-        }
-        @keyframes gradient-move {
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+        box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.7);
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s 1;
+    }
+
+    @keyframes gradient-move {
         0% {
             transform: translate3d(-226px, 0, 0);
         }
@@ -46,10 +60,189 @@
             transform: translate3d(0, 0, 0);
         }
     }
+
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171227 />
+
+    <link rel="preload" href= /css/style.css?v=20180304 as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180304 media="(max-width: 980px)"/>
+    <link rel="icon" href= /avatar/Bastion_cute.png>
+    <script>
+  // load webfont-loader async, and add callback function
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+  
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
+        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
+      if (postIntroTags) {
+        postIntroTags.classList.add('post-fade-in');
+      }
+      if (postIntroMeat) {
+        postIntroMeat.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+</script>
+    <script>
+        (function (w) {
+            "use strict";
+            // rel=preload support test
+            if (!w.loadCSS) {
+                w.loadCSS = function () { };
+            }
+            // define on the loadCSS obj
+            var rp = loadCSS.relpreload = {};
+            // rel=preload feature support test
+            // runs once and returns a function for compat purposes
+            rp.support = (function () {
+                var ret;
+                try {
+                    ret = w.document.createElement("link").relList.supports("preload");
+                } catch (e) {
+                    ret = false;
+                }
+                return function () {
+                    return ret;
+                };
+            })();
+
+            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+            // then change that media back to its intended value on load
+            rp.bindMediaToggle = function (link) {
+                // remember existing media attr for ultimate state, or default to 'all'
+                var finalMedia = link.media || "all";
+
+                function enableStylesheet() {
+                    link.media = finalMedia;
+                }
+
+                // bind load handlers to enable media
+                if (link.addEventListener) {
+                    link.addEventListener("load", enableStylesheet);
+                } else if (link.attachEvent) {
+                    link.attachEvent("onload", enableStylesheet);
+                }
+
+                // Set rel and non-applicable media type to start an async request
+                // note: timeout allows this to happen async to let rendering continue in IE
+                setTimeout(function () {
+                    link.rel = "stylesheet";
+                    link.media = "only x";
+                });
+                // also enable media after 3 seconds,
+                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+                setTimeout(enableStylesheet, 3000);
+            };
+
+            // loop through link elements in DOM
+            rp.poly = function () {
+                // double check this to prevent external calls from running
+                if (rp.support()) {
+                    return;
+                }
+                var links = w.document.getElementsByTagName("link");
+                for (var i = 0; i < links.length; i++) {
+                    var link = links[i];
+                    // qualify links to those with rel=preload and as=style attrs
+                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
+                        // prevent rerunning on link
+                        link.setAttribute("data-loadcss", true);
+                        // bind listeners to toggle media back
+                        rp.bindMediaToggle(link);
+                    }
+                }
+            };
+
+            // if unsupported, run the polyfill
+            if (!rp.support()) {
+                // run once at least
+                rp.poly();
+
+                // rerun poly on an interval until onload
+                var run = w.setInterval(rp.poly, 500);
+                if (w.addEventListener) {
+                    w.addEventListener("load", function () {
+                        rp.poly();
+                        w.clearInterval(run);
+                    });
+                } else if (w.attachEvent) {
+                    w.attachEvent("onload", function () {
+                        rp.poly();
+                        w.clearInterval(run);
+                    });
+                }
+            }
+            // commonjs
+            if (typeof exports !== "undefined") {
+                exports.loadCSS = loadCSS;
+            }
+            else {
+                w.loadCSS = loadCSS;
+            }
+        }(typeof global !== "undefined" ? global : this));
+    </script>
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    
     <script src="/scripts/main.js" defer></script>
     <!-- 百度统计  -->
     
@@ -89,7 +282,16 @@
     <a class="home-link" href=/>Lee's Space Station</a>
 </header>
     <div class="wrapper">
-        <div class="site-intro">
+        <div class="site-intro" style=
+
+
+
+
+
+
+
+
+>
     
     <!-- 主页  -->
             
@@ -111,68 +313,7 @@
     </div>
 </div>
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
-        <script>
-            var browser = {
-                    versions: function () {
-                        var u = window.navigator.userAgent;
-                        return {
-                            userAgent: u,
-                            trident: u.indexOf('Trident') > -1, //IE内核
-                            presto: u.indexOf('Presto') > -1, //opera内核
-                            webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
-                            gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
-                            mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
-                            ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
-                            android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
-                            iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
-                            iPad: u.indexOf('iPad') > -1, //是否为iPad
-                            webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
-                            weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
-                            uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
-                        };
-                    }()
-                }
 
-            function fontLoaded(){
-                console.log('font loaded');
-                if (document.getElementsByClassName('site-intro-meta')) {
-                    document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
-                    document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-                    var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-                        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-                        if (postIntroTags) {
-                            postIntroTags.classList.add('post-fade-in');
-                        }
-                        if (postIntroMeat) {
-                            postIntroMeat.classList.add('post-fade-in');
-                        }
-                    }
-                }
-                
-            console.log("userAgent:" + browser.versions.userAgent);
-            // UC不支持跨域，所以直接显示
-            if (browser.versions.uc) {
-                console.log("UCBrowser");
-                fontLoaded();
-            } else {
-                WebFont.load({
-                    custom: {
-                        families: ['Oswald-Regular']
-                    },
-                    loading: function () {  //所有字体开始加载
-                        // console.log('loading');
-                    },
-                    active: function () {  //所有字体已渲染
-                        fontLoaded();
-                    },
-                    inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
-                        console.log('inactive: timeout');
-                        fontLoaded();
-                    },
-                    timeout: 7000 // Set the timeout to two seconds
-                });
-            }
-        </script>
         <div class="container container-unloaded">
             <main class="main index-page">
     
@@ -183,9 +324,8 @@
                 
                     <span>使用 CloudFlare 为 hexo 博客实现 HTTPS</span>
             </a>
-            <a class="content-show-full" href = "/2018/03/09/using-https-namecheap-hexo/" >
-                <div class="abstract-content">
-                    过了个年，好久没更博客了，忙着各种事。
+            <div class="abstract-content">
+                过了个年，好久没更博客了，忙着各种事。
 博客地址之前一直都是默认的 secsilm.github.io，一直想换个自己的域名，正巧看到 NameBeta 上好几个域名都好便宜，就准备买个搞搞，最后挑中了 alanlee.fun 这个域名。
 把自己的博客域名换成自己买的域名并实现 HTTPS（GitHub Pages 不支持自定义域名 HTTPS），大概需要这么几个步骤（以在 namecheap 上购买域名为例）：
 
@@ -194,21 +334,20 @@
 CloudFlare 端 DNS 配置
 namecheap 端更改 nameservers
 CloudF...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/09</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = hexo>hexo</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = hexo>hexo</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2018/03/09</span>
-                </div>
             </div>
         </article>
     
@@ -219,9 +358,8 @@ CloudF...
                 
                     <span>我的网易云音乐 2017 年度听歌报告</span>
             </a>
-            <a class="content-show-full" href = "/2018/01/03/neteasemusic-year-report-2017/" >
-                <div class="abstract-content">
-                    又是一年，最近网易云音乐推出了年度听歌报告，来看看我的报告吧，也是记录下来和以后做个比较 😄
+            <div class="abstract-content">
+                又是一年，最近网易云音乐推出了年度听歌报告，来看看我的报告吧，也是记录下来和以后做个比较 😄
 温暖同行
 报告首页，「网易云音乐陪你温暖同行」，我的 IDsecsilm，确实音乐是我的陪伴，以前每次晚上睡不着的时候都会听歌，但是最近发现越听越睡不着……
 1550
@@ -230,21 +368,20 @@ CloudF...
 听歌量是指累计播放的歌曲数量而非播放次数，并且实际播放时间过短的歌曲将不纳入计算，每天最多计算300首。
 
 说实话这个听歌量对于我这个老用户来说应该不小了，毕竟我大部分时间还是听我自己收集的创建的歌单（温故而知新，总是想记住旋律与歌曲...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/01/03</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Living>Living</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Living>Living</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2018/01/03</span>
-                </div>
             </div>
         </article>
     
@@ -255,28 +392,26 @@ CloudF...
                 
                     <span>Google sitemap 不允许的网址的解决办法</span>
             </a>
-            <a class="content-show-full" href = "/2017/12/30/google-sitemap/" >
-                <div class="abstract-content">
-                    问题这段时间搭建好自己的博客后，想要让别人可以在 Google 中找到我的文章，于是就得添加 sitemap，怎么生成 sitemap 的相关文章有很多，我在这里就不赘述了。我在npm install hexo-generator-sitemap --save装了插件后，确实生成了sitemap.xml文件，但是提交到 Google Search Console 的时候就出错了：不允许的网址（忘了截图）。
+            <div class="abstract-content">
+                问题这段时间搭建好自己的博客后，想要让别人可以在 Google 中找到我的文章，于是就得添加 sitemap，怎么生成 sitemap 的相关文章有很多，我在这里就不赘述了。我在npm install hexo-generator-sitemap --save装了插件后，确实生成了sitemap.xml文件，但是提交到 Google Search Console 的时候就出错了：不允许的网址（忘了截图）。
 
 Note：本文方法只是许多解决方法中的一个，造成这个问题的原因也不止一个（见完整错误列表），因此本文方法可能并不能解决你的问题，仅供参考。
 
 解决网上搜了好多文章，千篇一律，一个偶然...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/30</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = hexo>hexo</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = hexo>hexo</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/12/30</span>
-                </div>
             </div>
         </article>
     
@@ -287,9 +422,8 @@ Note：本文方法只是许多解决方法中的一个，造成这个问题的�
                 
                     <span>理解 LSTM 网络</span>
             </a>
-            <a class="content-show-full" href = "/2017/12/29/understanding-lstms/" >
-                <div class="abstract-content">
-                    
+            <div class="abstract-content">
+                
 译者注：
 
 本文原文为 Christopher Olah 于 2015 年发表在自己博客上的经典文章：Understanding LSTM Networks — colah’s blog。
@@ -299,23 +433,22 @@ Note：本文方法只是许多解决方法中的一个，造成这个问题的�
 
 
 Recurrent Neural Networks人们不会每一秒都从头开始思考。当你阅读这篇文章的时候，你根据前面的单词来理解后面的单词。你不会扔掉他们然后重新开始思...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/29</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Translation>Translation</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Translation>Translation</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/12/29</span>
-                </div>
             </div>
         </article>
     
@@ -326,25 +459,23 @@ Recurrent Neural Networks人们不会每一秒都从头开始思考。当你阅�
                 
                     <span>批量导出 CSDN 博客为 Markdown 文件</span>
             </a>
-            <a class="content-show-full" href = "/2017/12/25/export-csdn-blogs-to-md/" >
-                <div class="abstract-content">
-                    CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞
+            <div class="abstract-content">
+                CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞
 内容为王，站搭起来了，就需要内容来充实。但是我的文章都在 CSDN 上，手动一篇一篇导过来太慢，而且 hexo 的文章需要在头部添加 Front-matter，所以这样一来工作量就更大了，...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/25</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/12/25</span>
-                </div>
             </div>
         </article>
     
@@ -355,28 +486,26 @@ Recurrent Neural Networks人们不会每一秒都从头开始思考。当你阅�
                 
                     <span>理解 Estimators 和 Datasets</span>
             </a>
-            <a class="content-show-full" href = "/2017/12/22/understanding-estimators-datasets/" >
-                <div class="abstract-content">
-                    Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：
+            <div class="abstract-content">
+                Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：
 
 Datasets：创建一个输入管道（input pipelines）来为你的模型读取数据，在这个 pipelines 中你可以做一些数据预处理，尽量都使用 TensorFlow 自己的函数，即 tf 开头的函数（比如 tf.reshape），这样可以提高程序执行效率。
 
 Estimators：这是模型的核心部分，而 Estimators 的核心部分则是一个 ...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/22</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/12/22</span>
-                </div>
             </div>
         </article>
     
@@ -387,9 +516,8 @@ Estimators：这是模型的核心部分，而 Estimators 的核心部分则是�
                 
                     <span>Windows 10 资源管理器黑色风格</span>
             </a>
-            <a class="content-show-full" href = "/2017/10/26/windows10-dark-theme/" >
-                <div class="abstract-content">
-                    今天来水一篇，说说我前几天某天上午初步实现了我一直想弄的东西：Windows 10 资源管理器黑色风格，用了几天，整体上感觉还不错，当然也有点小瑕疵，我会在后面说。
+            <div class="abstract-content">
+                今天来水一篇，说说我前几天某天上午初步实现了我一直想弄的东西：Windows 10 资源管理器黑色风格，用了几天，整体上感觉还不错，当然也有点小瑕疵，我会在后面说。
 
 所有图可右键在新标签页打开查看大图。
 
@@ -423,21 +551,20 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
 好了，看到这里你还想弄的话，那就接着往下看吧。
 
 安...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/10/26</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Windows>Windows</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Windows>Windows</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/10/26</span>
-                </div>
             </div>
         </article>
     
@@ -448,32 +575,30 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
                 
                     <span>梯度下降优化算法概述</span>
             </a>
-            <a class="content-show-full" href = "/2017/10/08/gradient-descent-methods/" >
-                <div class="abstract-content">
-                    
+            <div class="abstract-content">
+                
 原文作者简介：Sebastian Ruder 是我非常喜欢的一个博客作者，是 NLP 方向的博士生，目前供职于一家做 NLP 相关服务的爱尔兰公司 AYLIEN，博客主要是写机器学习、NLP 和深度学习相关的文章。
 
 本文原文是 An overview of gradient descent optimization algorithms，同时作者也在 arXiv 上发了一篇同样内容的 论文。
 本文结合了两者来翻译，但是阅读原文我个人建议读博客中的，感觉体验更好点。
 文中括号中或者引用块中的 斜体字 为对应的英文原文或者我自己注释的话（会标明 译者注），否则为原文中本来就有的话。
 为方...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/10/08</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Translation>Translation</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Translation>Translation</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/10/08</span>
-                </div>
             </div>
         </article>
     
@@ -484,30 +609,28 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
                 
                     <span>使用集成学习提升机器学习算法性能</span>
             </a>
-            <a class="content-show-full" href = "/2017/08/30/ensemble-methods/" >
-                <div class="abstract-content">
-                    
+            <div class="abstract-content">
+                
 译者注：这篇文章是对 PythonWeekly 推荐的一篇讲集成模型的文章的翻译，原文为 Ensemble Learning to Improve Machine Learning Results，由 Vadim Smolyakov 于 2017 年 8 月 22 日发表在 Medium 上，Vadim Smolyakov 是一名 MIT 的研究生。水平有限，如有错误，欢迎评论区或者邮件或者私信指出。建议阅读英文原文。
 
 
 集成学习（Ensemble Learning）通过联合几个模型来帮助提高机器学习结果。与单一模型相比，这种方法可以很好地提升模型的预测性能。这也是为什么集成模型在很...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/08/30</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Translation>Translation</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Translation>Translation</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/08/30</span>
-                </div>
             </div>
         </article>
     
@@ -518,31 +641,29 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
                 
                     <span>理解 TensorBoard</span>
             </a>
-            <a class="content-show-full" href = "/2017/08/20/understanding-tensorboard/" >
-                <div class="abstract-content">
-                    TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小...
-                </div>
-            </a>
+            <div class="abstract-content">
+                TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小...
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/08/20</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/08/20</span>
-                </div>
             </div>
         </article>
     
     <!-- paginator  -->
     
     <nav class="page-nav">
-        <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="page-number" href="/archives/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/archives/page/5/">5</a><a class="extend next" rel="next" href="/archives/page/2/">#NEXT</a>
+        <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="page-number" href="/archives/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/archives/page/5/">5</a><a class="extend next" rel="next" href="/archives/page/2/">NEXT &#62;</a>
     </nav>
     
 </main>
@@ -563,25 +684,42 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
     
         
             
-                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title="github"></a>
+                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title=github></a>
             
         
     
         
             
-                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title="twitter"></a>
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/example_qr.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+            
+                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title=twitter></a>
             
         
     
         
             
-                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title="instagram"></a>
+                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title=instagram></a>
             
         
     
         
             
-                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title="rss"></a>
+                <a href="https://www.v2ex.com/member/secsilm" class="iconfont-archer v2ex" target="_blank" title=v2ex></a>
+            
+        
+    
+        
+            
+                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title=rss></a>
             
         
     
@@ -590,12 +728,12 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
     
     <!-- powered by Hexo  -->
     <div class="copyright">
-        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">Theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">archer</a></span>
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
     </div>
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
+        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     
@@ -603,65 +741,16 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
     </div>
     <!-- toc -->
     
-    <div class="back-top">&#xe639;</div>
-    <div class="sidebar">
-    <div class="sidebar-header sidebar-header-show-archive">
-        <div class="sidebar-category">
-            <span class="sidebar-archive-link"><span class="iconfont-archer">&#xe67d;</span>Archive</span>
-            <span class="sidebar-tags-link"><span class="iconfont-archer">&#xe610;</span>Tag</span>
-        </div>
-    </div>
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
     <div class="sidebar-content sidebar-content-show-archive">
-          <div class="sidebar-archive">
+          <div class="sidebar-panel-archives">
     <!-- 在ejs中将archive按照时间排序 -->
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -1581,34 +1670,35 @@ WARNING! 操作风险很大，存在不稳定因素，请三思后行，出了�
     
     </div>
   </div>
-        <div class="sidebar-tags">
+        <div class="sidebar-panel-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
+        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
+        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
     
-        <span class="sidebar-tag-name"><a href= "#">hexo</a></span>
+        <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
+        <span class="sidebar-tag-name" data-tags="Python"><span class="iconfont-archer">&#xe606;</span>Python</span>
     
-        <span class="sidebar-tag-name"><a href= "#">TensorFlow</a></span>
+        <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Data Science</a></span>
+        <span class="sidebar-tag-name" data-tags="MATLAB"><span class="iconfont-archer">&#xe606;</span>MATLAB</span>
     
-        <span class="sidebar-tag-name"><a href= "#">MATLAB</a></span>
+        <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Living</a></span>
+        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
     
-        <span class="sidebar-tag-name"><a href= "#">sklearn</a></span>
+        <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Ubuntu</a></span>
+        <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
     
-        <span class="sidebar-tag-name"><a href= "#">IDE</a></span>
+        <span class="sidebar-tag-name" data-tags="IDE"><span class="iconfont-archer">&#xe606;</span>IDE</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Windows</a></span>
+        <span class="sidebar-tag-name" data-tags="Windows"><span class="iconfont-archer">&#xe606;</span>Windows</span>
     
     </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
     <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
     缺失模块。<br/>
     1、请确保node版本大于6.2<br/>
@@ -1632,25 +1722,35 @@ jsonContent:
     link: false
     permalink: false
     excerpt: false
-    categories: false
+    categories: true
     tags: true</pre>
     </div> 
-    <div class="sidebar-tag-list"></div>
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
 </div>
     </div>
 </div> 
     <script>
-    var jsInfo = {
-        root: '/'
+    var siteMeta = {
+        root: '/',
+        author: 'Alan Lee'
     }
 </script>
-    <!-- 不蒜子  -->
+    <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     
-    <!-- CNZZ统计  -->
+    <!-- CNZZ  -->
     
     </div>
+    <!-- async load share.js -->
+    
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

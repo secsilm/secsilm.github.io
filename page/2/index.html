@@ -1,44 +1,58 @@
 <!DOCTYPE html>
 <html>
-    <head>
+    <!-- title -->
+
+
+
+
+
+<head>
     <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
-    <title>
-        
-        Lee&#39;s Space Station
-        
-    </title>
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <!-- TODO: 在font-face加载完毕后改变字体  -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/webfont/1.6.28/webfontloader.js"></script>
-    <!-- 提前加载place holder  -->
+    <title>Lee&#39;s Space Station</title>
     <style type="text/css">
-        @font-face {
-            font-family: 'Oswald-Regular';
-            src: url(/font/Oswald-Regular.ttf);
-        }
-    </style>
-    <style type="text/css">
-        .site-intro {
-            position: relative;
-            width: 100%;
-            height: 50vh;
-            overflow: hidden;
-            box-shadow: -0.1rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
-        }
-        .site-intro-placeholder {
-            position: absolute;
-            z-index: -2;
-            top: 0;
-            left: 0px;
-            width: calc(100% + 300px);
-            height: 100%;
-            background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
-            background-position: center center;
-            transform: translate3d(-226px, 0, 0);
-            animation: gradient-move 2.5s ease-out 0s 1;
-        }
-        @keyframes gradient-move {
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+        box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.7);
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s 1;
+    }
+
+    @keyframes gradient-move {
         0% {
             transform: translate3d(-226px, 0, 0);
         }
@@ -46,10 +60,189 @@
             transform: translate3d(0, 0, 0);
         }
     }
+
 </style>
-    <link rel="stylesheet" href = /css/style.css?v=20171227 />
+
+    <link rel="preload" href= /css/style.css?v=20180304 as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180304 media="(max-width: 980px)"/>
+    <link rel="icon" href= /avatar/Bastion_cute.png>
+    <script>
+  // load webfont-loader async, and add callback function
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+  
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
+        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
+      if (postIntroTags) {
+        postIntroTags.classList.add('post-fade-in');
+      }
+      if (postIntroMeat) {
+        postIntroMeat.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+</script>
+    <script>
+        (function (w) {
+            "use strict";
+            // rel=preload support test
+            if (!w.loadCSS) {
+                w.loadCSS = function () { };
+            }
+            // define on the loadCSS obj
+            var rp = loadCSS.relpreload = {};
+            // rel=preload feature support test
+            // runs once and returns a function for compat purposes
+            rp.support = (function () {
+                var ret;
+                try {
+                    ret = w.document.createElement("link").relList.supports("preload");
+                } catch (e) {
+                    ret = false;
+                }
+                return function () {
+                    return ret;
+                };
+            })();
+
+            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+            // then change that media back to its intended value on load
+            rp.bindMediaToggle = function (link) {
+                // remember existing media attr for ultimate state, or default to 'all'
+                var finalMedia = link.media || "all";
+
+                function enableStylesheet() {
+                    link.media = finalMedia;
+                }
+
+                // bind load handlers to enable media
+                if (link.addEventListener) {
+                    link.addEventListener("load", enableStylesheet);
+                } else if (link.attachEvent) {
+                    link.attachEvent("onload", enableStylesheet);
+                }
+
+                // Set rel and non-applicable media type to start an async request
+                // note: timeout allows this to happen async to let rendering continue in IE
+                setTimeout(function () {
+                    link.rel = "stylesheet";
+                    link.media = "only x";
+                });
+                // also enable media after 3 seconds,
+                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+                setTimeout(enableStylesheet, 3000);
+            };
+
+            // loop through link elements in DOM
+            rp.poly = function () {
+                // double check this to prevent external calls from running
+                if (rp.support()) {
+                    return;
+                }
+                var links = w.document.getElementsByTagName("link");
+                for (var i = 0; i < links.length; i++) {
+                    var link = links[i];
+                    // qualify links to those with rel=preload and as=style attrs
+                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
+                        // prevent rerunning on link
+                        link.setAttribute("data-loadcss", true);
+                        // bind listeners to toggle media back
+                        rp.bindMediaToggle(link);
+                    }
+                }
+            };
+
+            // if unsupported, run the polyfill
+            if (!rp.support()) {
+                // run once at least
+                rp.poly();
+
+                // rerun poly on an interval until onload
+                var run = w.setInterval(rp.poly, 500);
+                if (w.addEventListener) {
+                    w.addEventListener("load", function () {
+                        rp.poly();
+                        w.clearInterval(run);
+                    });
+                } else if (w.attachEvent) {
+                    w.attachEvent("onload", function () {
+                        rp.poly();
+                        w.clearInterval(run);
+                    });
+                }
+            }
+            // commonjs
+            if (typeof exports !== "undefined") {
+                exports.loadCSS = loadCSS;
+            }
+            else {
+                w.loadCSS = loadCSS;
+            }
+        }(typeof global !== "undefined" ? global : this));
+    </script>
     <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    
     <script src="/scripts/main.js" defer></script>
     <!-- 百度统计  -->
     
@@ -91,7 +284,16 @@
     <a class="home-link" href=/>Lee's Space Station</a>
 </header>
     <div class="wrapper">
-        <div class="site-intro">
+        <div class="site-intro" style=
+
+
+
+
+
+
+height:50vh;
+
+>
     
     <!-- 主页  -->
     
@@ -124,68 +326,7 @@
     </div>
 </div>
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
-        <script>
-            var browser = {
-                    versions: function () {
-                        var u = window.navigator.userAgent;
-                        return {
-                            userAgent: u,
-                            trident: u.indexOf('Trident') > -1, //IE内核
-                            presto: u.indexOf('Presto') > -1, //opera内核
-                            webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
-                            gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
-                            mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
-                            ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
-                            android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
-                            iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
-                            iPad: u.indexOf('iPad') > -1, //是否为iPad
-                            webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
-                            weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
-                            uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
-                        };
-                    }()
-                }
 
-            function fontLoaded(){
-                console.log('font loaded');
-                if (document.getElementsByClassName('site-intro-meta')) {
-                    document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
-                    document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-                    var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-                        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-                        if (postIntroTags) {
-                            postIntroTags.classList.add('post-fade-in');
-                        }
-                        if (postIntroMeat) {
-                            postIntroMeat.classList.add('post-fade-in');
-                        }
-                    }
-                }
-                
-            console.log("userAgent:" + browser.versions.userAgent);
-            // UC不支持跨域，所以直接显示
-            if (browser.versions.uc) {
-                console.log("UCBrowser");
-                fontLoaded();
-            } else {
-                WebFont.load({
-                    custom: {
-                        families: ['Oswald-Regular']
-                    },
-                    loading: function () {  //所有字体开始加载
-                        // console.log('loading');
-                    },
-                    active: function () {  //所有字体已渲染
-                        fontLoaded();
-                    },
-                    inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
-                        console.log('inactive: timeout');
-                        fontLoaded();
-                    },
-                    timeout: 7000 // Set the timeout to two seconds
-                });
-            }
-        </script>
         <div class="container container-unloaded">
             <main class="main index-page">
     
@@ -196,30 +337,28 @@
                 
                     <span>Numpy 中的 shuffle VS permutation</span>
             </a>
-            <a class="content-show-full" href = "/2017/06/17/numpy-shuffle-permutation/" >
-                <div class="abstract-content">
-                    有时候我们会有随机打乱一个数组的需求，例如训练时随机打乱样本，我们可以使用 numpy.random.shuffle() 或者 numpy.random.permutation() 来完成。这两者非常相似，实现的功能是一样的，那么他们到底有什么区别？
+            <div class="abstract-content">
+                有时候我们会有随机打乱一个数组的需求，例如训练时随机打乱样本，我们可以使用 numpy.random.shuffle() 或者 numpy.random.permutation() 来完成。这两者非常相似，实现的功能是一样的，那么他们到底有什么区别？
 
 本文代码及图片可以在 我的GitHub 找到。
 
 参数区别以下 numpy.random.shuffle() 简称 shuffle，numpy.random.permutation() 简称 permutation。
 
 shuffle 的参数只能是 array_like，而 permutation 除了 array_like 还可以是 i...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/06/17</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/06/17</span>
-                </div>
             </div>
         </article>
     
@@ -230,28 +369,26 @@ shuffle 的参数只能是 array_like，而 permutation 除了 array_like 还可
                 
                     <span>TensorFlow DNNRegressor 的简单使用</span>
             </a>
-            <a class="content-show-full" href = "/2017/06/02/tensorflow-DNNRegressor/" >
-                <div class="abstract-content">
-                    tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。 下载。
+            <div class="abstract-content">
+                tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。 下载。
 
 tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高级 API 模块，让用户可以更方便的配置、训练和评估...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/06/02</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/06/02</span>
-                </div>
             </div>
         </article>
     
@@ -262,29 +399,27 @@ tf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高�
                 
                     <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
             </a>
-            <a class="content-show-full" href = "/2017/05/18/installing-xgboost/" >
-                <div class="abstract-content">
-                    关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。
+            <div class="abstract-content">
+                关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。
 
 
 Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我的机器上没有成功，pip 同样不成功。有兴趣的话可以参考官网和 2016 年的...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/05/18</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Data Science>Data Science</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Data Science>Data Science</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/05/18</span>
-                </div>
             </div>
         </article>
     
@@ -295,9 +430,8 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
                 
                     <span>Python 自动生成命令行工具 - fire 简介</span>
             </a>
-            <a class="content-show-full" href = "/2017/04/22/python-fire/" >
-                <div class="abstract-content">
-                    Python 中用于生成命令行接口（Command Line Interfaces, CLIs）的工具已经有一些了，例如已经成为 Python 标准库的 argparse 和第三方的 click ，这些都是很不错的工具。但是这些工具为 Python 程序生成 CLIs 的时候稍显麻烦，需要增加的地方比较多，过程稍显繁琐。今天介绍的这个工具，几乎可以不改变原始代码就可以生成 CLIs，是 Google 于 今年（2017 年）3 月 2 日宣布在 GitHub 上开源的。
+            <div class="abstract-content">
+                Python 中用于生成命令行接口（Command Line Interfaces, CLIs）的工具已经有一些了，例如已经成为 Python 标准库的 argparse 和第三方的 click ，这些都是很不错的工具。但是这些工具为 Python 程序生成 CLIs 的时候稍显麻烦，需要增加的地方比较多，过程稍显繁琐。今天介绍的这个工具，几乎可以不改变原始代码就可以生成 CLIs，是 Google 于 今年（2017 年）3 月 2 日宣布在 GitHub 上开源的。
 
 
 文中的三个程序文件可以在 这里 打包下载。
@@ -305,21 +439,20 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
 更新这里我会列出对本文的更新。
 
 2017 年 10 月 18 日：...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/04/22</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/04/22</span>
-                </div>
             </div>
         </article>
     
@@ -330,29 +463,27 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
                 
                     <span>奇异值分解 SVD 的数学解释</span>
             </a>
-            <a class="content-show-full" href = "/2017/03/29/understanding-svd/" >
-                <div class="abstract-content">
-                    奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解，这个方法在机器学习的一些算法里占有重要地位。
+            <div class="abstract-content">
+                奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解，这个方法在机器学习的一些算法里占有重要地位。
 
 
 相关概念参考自维基百科。
 
 正交矩阵：若一个方阵其行与列皆为正交的单位向量，则该矩阵为正交矩阵，且该矩阵的转置和其逆相等。两个向量正交的意思是...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/29</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/03/29</span>
-                </div>
             </div>
         </article>
     
@@ -363,30 +494,28 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
                 
                     <span>使用 Python 统计字符串中英文、空格、数字、标点个数</span>
             </a>
-            <a class="content-show-full" href = "/2017/03/25/python-string-count/" >
-                <div class="abstract-content">
-                    题外话：今天打酱油的做了网易数据挖掘工程师的在线笔试题，被打击了。
+            <div class="abstract-content">
+                题外话：今天打酱油的做了网易数据挖掘工程师的在线笔试题，被打击了。
 本文代码可在 这里 下载。
 
 
 问题在网上无意间看到这么一个题目：统计一个字符串中的中英文、空格、数字、标点符号个数。正好再熟悉一下 Python 中字符串相关方法，所以来做一下。
 
 代码1234567891011121314151617181920212223242526272829303132333435# coding: utf-8import stringfrom collections import namedtupledef str_count(s):    '''找出字符串中的中英文、空格、数字、标点符号个...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/25</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/03/25</span>
-                </div>
             </div>
         </article>
     
@@ -397,30 +526,28 @@ Windows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我�
                 
                     <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
             </a>
-            <a class="content-show-full" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
-                <div class="abstract-content">
-                    前面 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 这里 下载。
+            <div class="abstract-content">
+                前面 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 这里 下载。
 
 
 什么是 TensorBoard
 To make it easier to understand, debug, and optimize TensorFlow programs, we’ve included a suite of visualization tools called TensorBoard. You can use TensorBoard to visualize your TensorFlow gra...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/17</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Machine Learning>Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Machine Learning>Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = TensorFlow>TensorFlow</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = TensorFlow>TensorFlow</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/03/17</span>
-                </div>
             </div>
         </article>
     
@@ -431,9 +558,8 @@ To make it easier to understand, debug, and optimize TensorFlow programs, we’v
                 
                     <span>使用 tree 命令格式化输出目录结构</span>
             </a>
-            <a class="content-show-full" href = "/2017/03/15/using-tree/" >
-                <div class="abstract-content">
-                    今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 tree 的命令，Windows 和 Linux 都有这个命令。
+            <div class="abstract-content">
+                今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 tree 的命令，Windows 和 Linux 都有这个命令。
 
 
 Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 Windows 7 和 8 上也是可以用的。用法如下：
@@ -445,23 +571,22 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
 
 例如：
 仅列出目录1tree D:\MasterFiles\MachineLearning...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/15</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Ubuntu>Ubuntu</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Ubuntu>Ubuntu</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Windows>Windows</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Windows>Windows</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/03/15</span>
-                </div>
             </div>
         </article>
     
@@ -472,30 +597,28 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
                 
                     <span>VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法</span>
             </a>
-            <a class="content-show-full" href = "/2017/03/11/vscode-pdf-error/" >
-                <div class="abstract-content">
-                    问题VSCode 是微软推出的一款开源的代码编辑器，从 sublime text 转过来后感觉还不错，昨天在用他写 Markdown 文件时想着直接导出 PDF 文件（之前都是用 Markdown Pad 2），找到一个叫 Markdown PDF 的插件，安装之后在 Markdown 文件里右键选择 Convert Markdown to PDF 后报如下错误：
+            <div class="abstract-content">
+                问题VSCode 是微软推出的一款开源的代码编辑器，从 sublime text 转过来后感觉还不错，昨天在用他写 Markdown 文件时想着直接导出 PDF 文件（之前都是用 Markdown Pad 2），找到一个叫 Markdown PDF 的插件，安装之后在 Markdown 文件里右键选择 Convert Markdown to PDF 后报如下错误：
 
 就是 ERROR: phantomjs binary does not exist ，在后面那个目录找不到这个文件。
 
 
 解决错误信息已经说得很明确，既然他找不到那个文件，那我们就把那个文件放到那个目录下就好了。
 文件可以去...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/11</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = IDE>IDE</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = IDE>IDE</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/03/11</span>
-                </div>
             </div>
         </article>
     
@@ -506,35 +629,33 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
                 
                     <span>Numpy 中的 copy 问题详解</span>
             </a>
-            <a class="content-show-full" href = "/2017/03/01/numpy-copy/" >
-                <div class="abstract-content">
-                    这篇文章本是我在 segmentfault 上的一个回答，但是越来越觉得有必要单独拿出来，毕竟这个问题挺常见的。具体可参看 numpy 官方文档 。
+            <div class="abstract-content">
+                这篇文章本是我在 segmentfault 上的一个回答，但是越来越觉得有必要单独拿出来，毕竟这个问题挺常见的。具体可参看 numpy 官方文档 。
 
 
 正文numpy关于copy有三种情况，完全不复制、视图（view）或者叫浅复制（shadow copy）和深复制（deep copy）。
 而 b = a[:] 这种形式就属于第二种，即视图，这本质上是一种切片操作（slicing），所有的切片操作返回的都是视图。具体来说，b = a[:]会创建一个新的对象 b（所以 id(b) 和id(a) 返回的结果是不一样的），但是 b 的数据完全来自于a，和 a 保持完全一致，换句话说，b的数据完...
-                </div>
-            </a>
+            </div>
             <div class="abstract-post-meta">
+                <!-- date  -->
+                <div class="abstract-date">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/01</span>
+                </div>
                 <!-- tags  -->
                 
                 <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-href = Python>Python</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = Python>Python</a>
     
 </div>
                 
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer"></span><span class="abstract-time">2017/03/01</span>
-                </div>
             </div>
         </article>
     
     <!-- paginator  -->
     
     <nav class="page-nav">
-        <a class="extend prev" rel="prev" href="/">#PREV</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/">#NEXT</a>
+        <a class="extend prev" rel="prev" href="/">&#60; PREV</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/">NEXT &#62;</a>
     </nav>
     
 </main>
@@ -560,25 +681,42 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
     
         
             
-                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title="github"></a>
+                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title=github></a>
             
         
     
         
             
-                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title="twitter"></a>
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/example_qr.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+            
+                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title=twitter></a>
             
         
     
         
             
-                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title="instagram"></a>
+                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title=instagram></a>
             
         
     
         
             
-                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title="rss"></a>
+                <a href="https://www.v2ex.com/member/secsilm" class="iconfont-archer v2ex" target="_blank" title=v2ex></a>
+            
+        
+    
+        
+            
+                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title=rss></a>
             
         
     
@@ -589,17 +727,17 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
         <div class="friends">
             <div>FRIENDS</div>
             
-                <span>
-                    <a href= http://blog.csdn.net/u010099080 target="_black">MyCSDN</a>
-                </span>
+                
+                    <span>
+                        <a href= http://blog.csdn.net/u010099080 target="_black">MyCSDN</a>
+                    </span>
+                
             
         </div>
     
     
         <div class="about-me">
-            <div>
-                <a href = "/about" >ABOUT ME</a>
-            </div>
+            <a href = "/about" >ABOUT ME</a>
         </div>
     
 </div>
@@ -619,25 +757,42 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
     
         
             
-                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title="github"></a>
+                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title=github></a>
             
         
     
         
             
-                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title="twitter"></a>
+                <span class="iconfont-archer wechat" title=wechat>
+                  
+                  <img class="profile-qr" src="/assets/example_qr.png" />
+                </span>
+            
+        
+    
+        
+    
+        
+            
+                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title=twitter></a>
             
         
     
         
             
-                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title="instagram"></a>
+                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title=instagram></a>
             
         
     
         
             
-                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title="rss"></a>
+                <a href="https://www.v2ex.com/member/secsilm" class="iconfont-archer v2ex" target="_blank" title=v2ex></a>
+            
+        
+    
+        
+            
+                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title=rss></a>
             
         
     
@@ -646,12 +801,12 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
     
     <!-- powered by Hexo  -->
     <div class="copyright">
-        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">Theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">archer</a></span>
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
     </div>
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">VISITOR VOLUME: <span id="busuanzi_value_site_pv"></span>
+        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
         </span>
     </div>
     
@@ -659,65 +814,16 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
     </div>
     <!-- toc -->
     
-    <div class="back-top">&#xe639;</div>
-    <div class="sidebar">
-    <div class="sidebar-header sidebar-header-show-archive">
-        <div class="sidebar-category">
-            <span class="sidebar-archive-link"><span class="iconfont-archer">&#xe67d;</span>Archive</span>
-            <span class="sidebar-tags-link"><span class="iconfont-archer">&#xe610;</span>Tag</span>
-        </div>
-    </div>
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
     <div class="sidebar-content sidebar-content-show-archive">
-          <div class="sidebar-archive">
+          <div class="sidebar-panel-archives">
     <!-- 在ejs中将archive按照时间排序 -->
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -1637,34 +1743,35 @@ Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 W
     
     </div>
   </div>
-        <div class="sidebar-tags">
+        <div class="sidebar-panel-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name"><a href= "#">Machine Learning</a></span>
+        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Translation</a></span>
+        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
     
-        <span class="sidebar-tag-name"><a href= "#">hexo</a></span>
+        <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Python</a></span>
+        <span class="sidebar-tag-name" data-tags="Python"><span class="iconfont-archer">&#xe606;</span>Python</span>
     
-        <span class="sidebar-tag-name"><a href= "#">TensorFlow</a></span>
+        <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Data Science</a></span>
+        <span class="sidebar-tag-name" data-tags="MATLAB"><span class="iconfont-archer">&#xe606;</span>MATLAB</span>
     
-        <span class="sidebar-tag-name"><a href= "#">MATLAB</a></span>
+        <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Living</a></span>
+        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
     
-        <span class="sidebar-tag-name"><a href= "#">sklearn</a></span>
+        <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Ubuntu</a></span>
+        <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
     
-        <span class="sidebar-tag-name"><a href= "#">IDE</a></span>
+        <span class="sidebar-tag-name" data-tags="IDE"><span class="iconfont-archer">&#xe606;</span>IDE</span>
     
-        <span class="sidebar-tag-name"><a href= "#">Windows</a></span>
+        <span class="sidebar-tag-name" data-tags="Windows"><span class="iconfont-archer">&#xe606;</span>Windows</span>
     
     </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
     <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
     缺失模块。<br/>
     1、请确保node版本大于6.2<br/>
@@ -1688,25 +1795,35 @@ jsonContent:
     link: false
     permalink: false
     excerpt: false
-    categories: false
+    categories: true
     tags: true</pre>
     </div> 
-    <div class="sidebar-tag-list"></div>
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
 </div>
     </div>
 </div> 
     <script>
-    var jsInfo = {
-        root: '/'
+    var siteMeta = {
+        root: '/',
+        author: 'Alan Lee'
     }
 </script>
-    <!-- 不蒜子  -->
+    <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     
-    <!-- CNZZ统计  -->
+    <!-- CNZZ  -->
     
     </div>
+    <!-- async load share.js -->
+    
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

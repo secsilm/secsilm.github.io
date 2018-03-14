@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2018/03/14/stephen-hawking/</loc>
+    
+    <lastmod>2018-03-14T07:04:35.171Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2018/03/09/using-https-namecheap-hexo/</loc>
     
     <lastmod>2018-03-12T13:57:58.016Z</lastmod>
@@ -282,6 +289,13 @@
   </url>
   
   <url>
+    <loc>https://secsilm.github.io/2017/04/22/python-fire/</loc>
+    
+    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
@@ -290,13 +304,6 @@
   
   <url>
     <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
-    
-    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://secsilm.github.io/2017/04/22/python-fire/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

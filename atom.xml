@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://secsilm.github.io/"/>
-  <updated>2018-03-12T13:57:58.016Z</updated>
+  <updated>2018-03-14T07:04:35.171Z</updated>
   <id>https://secsilm.github.io/</id>
   
   <author>
@@ -15,6 +15,29 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>曾经我也有一位 Stephen Hawking</title>
+    <link href="https://secsilm.github.io/2018/03/14/stephen-hawking/"/>
+    <id>https://secsilm.github.io/2018/03/14/stephen-hawking/</id>
+    <published>2018-03-14T05:28:27.000Z</published>
+    <updated>2018-03-14T07:04:35.171Z</updated>
+    
+    <content type="html"><![CDATA[<p>今天去河西找我老师说论文和签字，结束后就去等校车，本以为 12 点半的校车结果我们 11 点 50 到的时候校车已经停在那了，于是上车找到座位坐下，没多少人，看到手机即刻有个 Breaking News 的通知：据卫报等多家英媒报道，史蒂芬·霍金逝世，享年 76 岁。</p><p><img src="https://i.imgur.com/5idgZ2l.png" alt="jike"></p><p>感觉先是震惊，不敢相信，然后是不信，遂去 Twitter 上看了看，果然。</p><p>眼泪要流出来，因为他是我目前的生命中的一个重要精神依赖和偶像，由于一些特殊原因，我总是可以在他身上找到我要的坚持。</p><p>车马上要开了，我看手机容易晕车，于是迅速打开网易云音乐，戴上耳机，点了一首生活大爆炸主题曲 <a href="http://music.163.com/#/song?id=2193514" target="_blank" rel="noopener">The Big Bang Theory Theme</a> 和一首纯钢琴版本。</p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=27510197&auto=0&height=66"></iframe><p>钢琴是深沉的。原本欢快活泼的音乐，现在听起来是那么悲伤。我在朋友圈说：依稀记得电影中你年轻的模样，宇宙为你荡漾。是啊，宇宙为你荡漾……</p><p>记得不久前又看了一遍的的<a href="https://zh.wikipedia.org/zh-cn/%E6%84%9B%E7%9A%84%E8%90%AC%E7%89%A9%E8%AB%96" target="_blank" rel="noopener">《万物理论》</a>，依稀还记得电影中他青涩年轻的模样，恋爱的单纯，脑力的非同寻常。</p><p>从河西到泰达，一个小时的车程，原本会在车上睡觉的我，看着窗外想了一路，想的太多，很多次眼泪差些出来，但是到现在写的时候，我却写不出来。可能，在路上，更适合怀念和忧伤。</p><p>曾经，我也有一位 Stephen Hawking。他是我父亲。现在，他们都不在了。我父亲也是一位伟大的人，也曾与命运抗争，也曾战胜命运。</p><p>满肚子的话，现在写不下去了，原来自己不如父亲那样坚强。</p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;今天去河西找我老师说论文和签字，结束后就去等校车，本以为 12 点半的校车结果我们 11 点 50 到的时候校车已经停在那了，于是上车找到座位坐下，没多少人，看到手机即刻有个 Breaking News 的通知：据卫报等多家英媒报道，史蒂芬·霍金逝世，享年 76 岁。&lt;/p
+      
+    
+    </summary>
+    
+    
+      <category term="Living" scheme="https://secsilm.github.io/tags/Living/"/>
+    
+  </entry>
   
   <entry>
     <title>使用 CloudFlare 为 hexo 博客实现 HTTPS</title>
@@ -451,26 +474,6 @@
     
     
       <category term="IDE" scheme="https://secsilm.github.io/tags/IDE/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Numpy 中的 copy 问题详解</title>
-    <link href="https://secsilm.github.io/2017/03/01/numpy-copy/"/>
-    <id>https://secsilm.github.io/2017/03/01/numpy-copy/</id>
-    <published>2017-03-01T08:54:00.000Z</published>
-    <updated>2017-12-23T00:21:15.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>这篇文章本是我在 <a href="https://segmentfault.com/q/1010000008271935/a-1020000008284346" target="_blank" rel="noopener">segmentfault</a> 上的一个回答，但是越来越觉得有必要单独拿出来，毕竟这个问题挺常见的。具体可参看 <a href="https://docs.scipy.org/doc/numpy-dev/user/quickstart.html#copies-and-views" target="_blank" rel="noopener"><code>numpy</code> 官方文档</a> 。</p><a id="more"></a><hr><h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><p><code>numpy</code>关于<code>copy</code>有三种情况，<strong>完全不复制</strong>、<strong>视图（<code>view</code>）</strong>或者叫浅复制（<code>shadow copy</code>）和<strong>深复制</strong>（<code>deep copy</code>）。</p><p>而 <code>b = a[:]</code> 这种形式就属于第二种，即<strong>视图</strong>，这本质上是一种切片操作（<code>slicing</code>），所有的切片操作返回的都是视图。具体来说，<code>b = a[:]</code>会创建一个新的对象 <code>b</code>（所以 <code>id(b)</code> 和<code>id(a)</code> 返回的结果是不一样的），但是 <code>b</code> 的数据完全来自于<code>a</code>，和 <code>a</code> 保持完全一致，换句话说，<strong><code>b</code>的数据完全由<code>a</code>保管</strong>，他们两个的数据变化是一致的，可以看下面的示例:<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">a = np.arange(<span class="number">4</span>)  <span class="comment"># array([0, 1, 2, 3])</span></span><br><span class="line">b = a[:]  <span class="comment"># array([0, 1, 2, 3])</span></span><br><span class="line"></span><br><span class="line">b.flags.owndata  <span class="comment"># 返回 False，b 并不保管数据</span></span><br><span class="line">a.flags.owndata  <span class="comment"># 返回 True，数据由 a 保管</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 改变 a 同时也影响到 b</span></span><br><span class="line">a[<span class="number">-1</span>] = <span class="number">10</span>  <span class="comment"># array([0, 1, 2, 10])</span></span><br><span class="line">b  <span class="comment">#  array([0, 1, 2, 10])</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 改变 b 同时也影响到 a</span></span><br><span class="line">b[<span class="number">0</span>] = <span class="number">10</span>  <span class="comment"># array([10, 1, 2, 10])</span></span><br><span class="line">a  <span class="comment"># array([10, 1, 2, 10])</span></span><br></pre></td></tr></table></figure></p><p><code>b = a</code> 和 <code>b = a[:]</code> 的差别就在于后者会创建新的对象，前者不会。两种方式都会导致 <code>a</code> 和 <code>b</code> 的数据相互影响。</p><p>要想不让 <code>a</code> 的改动影响到 <code>b</code>，可以使用深复制：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unique_b = a.copy()</span><br></pre></td></tr></table></figure></p><hr><h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;这篇文章本是我在 &lt;a href=&quot;https://segmentfault.com/q/1010000008271935/a-1020000008284346&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;segmentfault&lt;/a&gt; 上的一个回答，但是越来越觉得有必要单独拿出来，毕竟这个问题挺常见的。具体可参看 &lt;a href=&quot;https://docs.scipy.org/doc/numpy-dev/user/quickstart.html#copies-and-views&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;code&gt;numpy&lt;/code&gt; 官方文档&lt;/a&gt; 。&lt;/p&gt;
-    
-    </summary>
-    
-    
-      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
     
   </entry>
   

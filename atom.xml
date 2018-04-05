@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://secsilm.github.io/"/>
-  <updated>2018-03-15T12:12:43.091Z</updated>
+  <updated>2018-04-05T12:41:34.033Z</updated>
   <id>https://secsilm.github.io/</id>
   
   <author>
@@ -15,6 +15,29 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>使用 zipfile 解压含有中文文件名的 zip 文件</title>
+    <link href="https://secsilm.github.io/2018/04/05/unzip-chinese/"/>
+    <id>https://secsilm.github.io/2018/04/05/unzip-chinese/</id>
+    <published>2018-04-05T10:51:23.000Z</published>
+    <updated>2018-04-05T12:41:34.033Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>在使用 Python 内置标准库 <a href="https://docs.python.org/3/library/zipfile.html" target="_blank" rel="noopener">zipfile</a> 解压文件时，如果压缩文件中有的文件含有中文，那么解压后就会发现文件名中的中文部分是乱码。例如我分别新建三个 txt 文件：<code>文件1.txt</code>，<code>文件2.txt</code> 和 <code>文件3.txt</code>，然后将这三个文件压缩到一个名为 <code>文件.zip</code> 的压缩文件中。然后我们使用下面的代码来解压：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> zipfile</span><br><span class="line"><span class="keyword">with</span> zipfile.ZipFile(<span class="string">'文件.zip'</span>, <span class="string">'r'</span>) <span class="keyword">as</span> f:</span><br><span class="line">    f.extractall()</span><br></pre></td></tr></table></figure><p>解压的结果如图所示，中文已成乱码：<br><img src="https://i.imgur.com/0Q6cdCe.png" alt="解压结果"></p><h2 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h2><p>原因很简单，<code>zipfile</code> 会将所有文件名用 <code>CP437</code> 来编码，官方说明如下：</p><blockquote><p>There is no official file name encoding for ZIP files. If you have unicode file names, you must convert them to byte strings in your desired encoding before passing them to write(). WinZip interprets all file names as encoded in CP437, also known as DOS Latin.</p></blockquote><h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>知道文件名用的编码后，就可以使用对应的编码来解码了。也就是先用 <code>CP437</code> 编码 encode 成 bytes，再以 <code>gbk</code> 格式解码成中文 string。</p><p>有两种解决方案，两种方案都是使用 <code>extract</code> 方法而不是 <code>extractall</code>方法，都是对压缩文件内的文件名进行遍历，逐个解压。</p><blockquote><p>Python 版本为 <code>3.6.4 |Anaconda custom (64-bit)| (default, Jan 16 2018, 10:22:32) [MSC v.1900 64 bit (AMD64)]</code>。</p></blockquote><h3 id="方案-1"><a href="#方案-1" class="headerlink" title="方案 1"></a>方案 1</h3><p>第一种方案的思路是：</p><ol><li>将文件名正确解码，并用解码后的文件名创建一个新文件。</li><li>打开原文件，即文件名乱码的文件。</li><li>将原文件中的内容写入到新文件中。</li></ol><p>对应的代码如下：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> shutil</span><br><span class="line"><span class="keyword">import</span> zipfile</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> zipfile.ZipFile(<span class="string">'文件.zip'</span>, <span class="string">'r'</span>) <span class="keyword">as</span> zf:</span><br><span class="line">    <span class="keyword">for</span> fn <span class="keyword">in</span> zf.namelist():</span><br><span class="line">        right_fn = fn.encode(<span class="string">'cp437'</span>).decode(<span class="string">'gbk'</span>)  <span class="comment"># 将文件名正确编码</span></span><br><span class="line">        <span class="keyword">with</span> open(right_fn, <span class="string">'wb'</span>) <span class="keyword">as</span> output_file:  <span class="comment"># 创建并打开新文件</span></span><br><span class="line">            <span class="keyword">with</span> zf.open(fn, <span class="string">'r'</span>) <span class="keyword">as</span> origin_file:  <span class="comment"># 打开原文件</span></span><br><span class="line">                shutil.copyfileobj(origin_file, output_file)  <span class="comment"># 将原文件内容复制到新文件</span></span><br></pre></td></tr></table></figure><h3 id="方案-2"><a href="#方案-2" class="headerlink" title="方案 2"></a>方案 2</h3><p>第二种方案思路就比较简单了：</p><ol><li>正常解压文件。</li><li>使用正确的文件名重命名解压的文件。</li></ol><p>对应的代码如下，这里使用了 <a href="https://docs.python.org/3/library/pathlib.html" target="_blank" rel="noopener">pathlib</a> 库，强烈推荐该库！</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</span><br><span class="line"><span class="keyword">import</span> zipfile</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> zipfile.ZipFile(<span class="string">'文件.zip'</span>, <span class="string">'r'</span>) <span class="keyword">as</span> f:</span><br><span class="line">    <span class="keyword">for</span> fn <span class="keyword">in</span> f.namelist():</span><br><span class="line">        extracted_path = Path(f.extract(fn))</span><br><span class="line">        extracted_path.rename(fn.encode(<span class="string">'cp437'</span>).decode(<span class="string">'gbk'</span>))</span><br></pre></td></tr></table></figure><h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;问题&quot;&gt;&lt;a href=&quot;#问题&quot; class=&quot;headerlink&quot; title=&quot;问题&quot;&gt;&lt;/a&gt;问题&lt;/h2&gt;&lt;p&gt;在使用 Python 内置标准库 &lt;a href=&quot;https://docs.python.org/3/library/zipfile.ht
+      
+    
+    </summary>
+    
+    
+      <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
+    
+  </entry>
   
   <entry>
     <title>嵌入 bokeh 绘图到 hexo 博客中</title>
@@ -36,9 +59,9 @@
     </summary>
     
     
-      <category term="hexo" scheme="https://secsilm.github.io/tags/hexo/"/>
-    
       <category term="Python" scheme="https://secsilm.github.io/tags/Python/"/>
+    
+      <category term="hexo" scheme="https://secsilm.github.io/tags/hexo/"/>
     
       <category term="Data Science" scheme="https://secsilm.github.io/tags/Data-Science/"/>
     
@@ -351,9 +374,9 @@
     </summary>
     
     
-      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
-    
       <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
+    
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   
@@ -456,31 +479,9 @@
     </summary>
     
     
-      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
-    
       <category term="Machine Learning" scheme="https://secsilm.github.io/tags/Machine-Learning/"/>
     
-  </entry>
-  
-  <entry>
-    <title>使用 tree 命令格式化输出目录结构</title>
-    <link href="https://secsilm.github.io/2017/03/15/using-tree/"/>
-    <id>https://secsilm.github.io/2017/03/15/using-tree/</id>
-    <published>2017-03-15T04:45:00.000Z</published>
-    <updated>2017-12-23T00:18:42.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 <code>tree</code> 的命令，Windows 和 Linux 都有这个命令。</p><a id="more"></a><hr><h1 id="Windows-10"><a href="#Windows-10" class="headerlink" title="Windows 10"></a>Windows 10</h1><p>我是在 Windows 10 上用的，不过根据 <a href="http://www.computerhope.com/treehlp.htm" target="_blank" rel="noopener">这篇文章</a> 应该在 Windows 7 和 8 上也是可以用的。用法如下：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tree [Drive:[[Path] [/F] [/A]</span><br></pre></td></tr></table></figure><p>其中</p><ul><li><code>/F</code> 表示不仅输出文件夹，也输出文件名。默认是只输出文件夹的名字。</li><li><code>/A</code> 表示使用另一种方式来绘制目录树。</li></ul><p>例如：</p><p>仅列出目录<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tree D:\MasterFiles\MachineLearning\TensorFlow\TensorFlow-Examples\MyCode\cifar10-TensorFlow-tensorboard</span><br></pre></td></tr></table></figure></p><p><img src="http://img.blog.csdn.net/20170315123020407?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="仅列出目录"></p><hr><p>另一种方式输出<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tree D:\MasterFiles\MachineLearning\TensorFlow\TensorFlow-Examples\MyCode\cifar10-TensorFlow-tensorboard /A</span><br></pre></td></tr></table></figure></p><p><img src="http://img.blog.csdn.net/20170315123119881?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="另一种方式输出"></p><hr><p>列出目录及文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tree D:\MasterFiles\MachineLearning\TensorFlow\TensorFlow-Examples\MyCode\cifar10-TensorFlow-tensorboard /F</span><br></pre></td></tr></table></figure></p><p><img src="http://img.blog.csdn.net/20170315123155565?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="列出目录及文件"></p><hr><h1 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h1><p>由于我现在用的是 Windows 10，所以就先暂时用 Windows 10 自带的 Ubuntu 子系统测试了，回头再用真正的 Ubuntu 试试。关于如何使用 Windows 10 自带的 Ubuntu 子系统我就不多说了，大家直接百度就好，教程很多。</p><p>列出目录及文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tree cifar10-TensorFlow-tensorboard</span><br></pre></td></tr></table></figure></p><p><img src="http://img.blog.csdn.net/20170315123846386?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="列出目录及文件"></p><hr><p>只列出目录<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tree cifar10-TensorFlow-tensorboard -d</span><br></pre></td></tr></table></figure></p><p><img src="http://img.blog.csdn.net/20170315123953494?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="只列出目录"></p><p>更详细的参数设置可以使用 <code>man tree</code> 查看，如果输入 <code>tree</code> 提示没有安装，那么可以使用 <code>sudo apt-get install tree</code> 来安装该命令。</p><hr><h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 &lt;code&gt;tree&lt;/code&gt; 的命令，Windows 和 Linux 都有这个命令。&lt;/p&gt;
-    
-    </summary>
-    
-    
-      <category term="Ubuntu" scheme="https://secsilm.github.io/tags/Ubuntu/"/>
-    
-      <category term="Windows" scheme="https://secsilm.github.io/tags/Windows/"/>
+      <category term="TensorFlow" scheme="https://secsilm.github.io/tags/TensorFlow/"/>
     
   </entry>
   

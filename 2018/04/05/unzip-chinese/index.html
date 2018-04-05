@@ -384,7 +384,7 @@ height:50vh;
 <h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>知道文件名用的编码后，就可以使用对应的编码来解码了。也就是先用 <code>CP437</code> 编码 encode 成 bytes，再以 <code>gbk</code> 格式解码成中文 string。</p>
 <p>有两种解决方案，两种方案都是使用 <code>extract</code> 方法而不是 <code>extractall</code>方法，都是对压缩文件内的文件名进行遍历，逐个解压。</p>
 <blockquote>
-<p>Python 版本为 <code>3.6.4 |Anaconda custom (64-bit)| (default, Jan 16 2018, 10:22:32) [MSC v.1900 64 bit (AMD64)]</code>。</p>
+<p>Note：Python 版本为 <code>3.6.4 |Anaconda custom (64-bit)| (default, Jan 16 2018, 10:22:32) [MSC v.1900 64 bit (AMD64)]</code>。</p>
 </blockquote>
 <h3 id="方案-1"><a href="#方案-1" class="headerlink" title="方案 1"></a>方案 1</h3><p>第一种方案的思路是：</p>
 <ol>

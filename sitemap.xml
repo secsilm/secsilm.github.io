@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2018/04/28/analyzing-python-survey-2017/</loc>
+    
+    <lastmod>2018-04-29T05:48:47.762Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2018/04/05/unzip-chinese/</loc>
     
     <lastmod>2018-04-05T14:44:30.882Z</lastmod>
@@ -296,20 +303,6 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
-    
-    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
-    
-    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://secsilm.github.io/2017/04/22/python-fire/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
@@ -318,6 +311,20 @@
   
   <url>
     <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
+    
+    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
+    
+    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

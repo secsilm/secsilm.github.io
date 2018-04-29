@@ -7,10 +7,10 @@
 
 
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
     <meta name="description" content="Machine Learning, NLP, Data Science">
-    <title>Lee&#39;s Space Station</title>
+    <title>2017 Python 问卷调查结果初步分析 · Lee&#39;s Space Station</title>
     <style type="text/css">
     @font-face {
         font-family: 'Oswald-Regular';
@@ -65,6 +65,8 @@
 
     <link rel="preload" href= /css/style.css?v=20180317 as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180317 media="(max-width: 980px)"/>
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
         
     <link rel="icon" href= /avatar/Bastion_cute.png>
     <script>
@@ -191,17 +193,28 @@
         })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
         ga('create', 'UA-111553531-1', 'auto');
         ga('send', 'pageview');
-    </script>
+    </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
     
 </head>
 
     
+        <body class="post-body">
     
-<header class="header">
+    
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><header class="header">
 
     <div class="read-progress"></div>
     <div class="header-sidebar-menu">&#xe775;</div>
     <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/" >Lee&#39;s Space Station</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">2017 Python 问卷调查结果初步分析</a>
+            </div>
+    </div>
     
     <a class="home-link" href=/>Lee's Space Station</a>
 </header>
@@ -215,24 +228,69 @@
 
 
 
+height:50vh;
+
 >
     
     <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
             
-    <div class="site-intro-img" style="background-image: url(/)"></div>
+    <div class="site-intro-img" style="background-image: url(https://i.imgur.com/cOCiWKq.png)"></div>
     <div class="site-intro-placeholder"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
             <!-- 主页  -->
             
+            2017 Python 问卷调查结果初步分析
+            <!-- 404 -->
+            
         </h1>
         <!-- 副标题 -->
         <p class="intro-subtitle">
             <!-- 主页副标题  -->
             
+            
+            <!-- 404 -->
+            
         </p>
         <!-- 文章页meta -->
+        
+            <!-- 文章页标签  -->
+            
+                <div class= post-intro-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
+    
+</div>
+            
+            <div class="post-intro-meta">
+                <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                <span class="post-intro-time">2018/04/28</span>
+                
+                <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                    <span class="iconfont-archer">&#xe602;</span>
+                    <span id="busuanzi_value_page_pv"></span>
+                </span>
+                
+                <span class="shareWrapper">
+                    <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                    <span class="shareText">Share</span>
+                    <ul class="shareList">
+                        <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                            <div class="share-qrcode"></div>
+                        </li>
+                        <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                        <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                        <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                        <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                    </ul>
+                </span>
+            </div>
         
     </div>
 </div>
@@ -316,305 +374,134 @@
 </script>        
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
         <div class="container container-unloaded">
-            <main class="main index-page">
+            <main class="main post-page">
+    <article class="article-entry">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>2017 年末，PSF（Python Software Foundation，Python 软件基金会）和 JetBrains 一起进行了一次全球范围内的关于 Python 使用情况的问卷调查，共有来自 153 个国家的 9506 名开发者参与了这次调查，<a href="https://www.jetbrains.com/research/python-developers-survey-2017/" target="_blank" rel="noopener">官方</a>也发布了一份调查报告分析。</p>
+<p>这次我从我自己感兴趣的角度来尝试做一些简单的分析，也是一次练手。这个过程断断续续持续了很长时间，中间也是被种种事情打断，现在终于基本完成了，然而还有很多东西可以分析，等以后有时间了再来接着分析。</p>
+<p>我个人认为调查报告的分析主要有两点：</p>
+<ul>
+<li>验证一些常理</li>
+<li>发现一些现象</li>
+</ul>
+<p>本文基本只做到了前者，而且侧重于直接展现分析结果（大多数为图），具体的代码实现见 <a href="https://nbviewer.jupyter.org/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb" target="_blank" rel="noopener">analyzing-python-survey-2017.ipynb</a>，GitHub 上的内容见 <a href="https://github.com/secsilm/analyzing-python-survey-2017" target="_blank" rel="noopener">secsilm/analyzing-python-survey-2017</a>，包括问卷调查的内容（PDF）和调查结果原始数据（CSV）。</p>
+<h2 id="数据"><a href="#数据" class="headerlink" title="数据"></a>数据</h2><p>我认为拿到数据的第一步就是先看下数据长什么样，这样才能着手分析。先来看下我们的调查结果数据：</p>
+<p><img src="https://i.imgur.com/MBIZmzA.png" alt=""></p>
+<p>数据总大小是 9506×162，即 9506 行 162 列，上图是前 5 行，每行代表一个样本，即一个参与调查的开发者。可以看到已经将一道选择题的答案拆分成多列，这一般是用于处理多选题，例如上图中的「What other language(s) do you use?」，而单选题则不用拆分，可以直接写答案，例如上图第一列。</p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>分析前，我们需要首先提出一些问题，基于这些问题来作分析。本文提出了以下几个问题：</p>
+<ul>
+<li>开发者中使用 Python 2 和 Python 3 的情况</li>
+<li>做数据分析和机器学习的人中分别有多少人使用的是 Python 3？</li>
+<li>常用框架中使用 Python 2 和 Python 3 的比例</li>
+<li>做数据分析和机器学习的人常用的框架？</li>
+<li>团队规模大小和是否使用 Python 3 的关系？</li>
+<li>开发者年龄和是否使用 Python 3 的关系？</li>
+<li>使用 Python 3 和 Python 2 的开发者的国别分布？</li>
+</ul>
+<p>下面我们依次看下这几个问题。</p>
+<h2 id="开发者中使用-Python-2-和-Python-3-的情况"><a href="#开发者中使用-Python-2-和-Python-3-的情况" class="headerlink" title="开发者中使用 Python 2 和 Python 3 的情况"></a>开发者中使用 Python 2 和 Python 3 的情况</h2><p>这个问题比较好解决，调查问卷中的问题 5 是「Which version of Python do you use the most?」，而且是单选题，那么我们直接那么对这列使用 <code>value_counts()</code> 进行处理，然后使用 <code>plt.pie()</code> 绘制饼图：</p>
+<p><img src="https://i.imgur.com/VmC9haP.png" alt="python version"></p>
+<p>可以看到 Python 开发者中已经有 $\frac{3}{4}$ 的人在使用 Python 3 了。</p>
+<blockquote>
+<p>Note：2020 年 Python 2 就会停止维护，如果你还在纠结使用 Python 2 还是 Python 3，毋庸置疑 Python 3！</p>
+</blockquote>
+<h2 id="做数据分析和机器学习的人中分别有多少人使用的是-Python-3"><a href="#做数据分析和机器学习的人中分别有多少人使用的是-Python-3" class="headerlink" title="做数据分析和机器学习的人中分别有多少人使用的是 Python 3"></a>做数据分析和机器学习的人中分别有多少人使用的是 Python 3</h2><p>调查问卷中问题 4 是「What do you use Python for the most?」，这是一道单选题，选项中有「Data analysis」和「Machine learning」两项，因此我们可以直接将这列与「Which version of Python do you use the most?」列进行交叉，就可以得到数据分析和机器学习中使用 Python 3 的比例，而交叉可以使用 <code>pd.crosstab()</code> 来做，然后绘制出条形图：</p>
+<p><img src="https://i.imgur.com/xq8WUst.png" alt="data analysis and machine learning VS python version"></p>
+<p>可以看到其实相差无几，Python 3 似乎在机器学习中更为流行。数据分析和机器学习中涉及到的字符串处理比较多，而 Python 3 在这方面显然更具有优势。</p>
+<p>机器学习尤其是深度学习中最常用的库就是 <a href="https://www.tensorflow.org/" target="_blank" rel="noopener">TensorFlow</a> 了，但是这个库官方只支持 Python 3，可以说这也是机器学习中 Python 3 的比例略微高于数据分析的一个原因。</p>
+<h2 id="常用框架中使用-Python-2-和-Python-3-的比例"><a href="#常用框架中使用-Python-2-和-Python-3-的比例" class="headerlink" title="常用框架中使用 Python 2 和 Python 3 的比例"></a>常用框架中使用 Python 2 和 Python 3 的比例</h2><p>如果我们将开发者常用的框架（库）与所使用的 Python 版本进行交叉，那么将得到各框架中的 Python 2 和 Python 3 使用情况。</p>
+<p>在这之前，让我们先来看下框架使用排行（Just for curious 😆）：</p>
+<p><img src="https://i.imgur.com/YvMez30.png" alt="frameworks"></p>
+<p>统治 Python 的两大阵营（Web 开发和数据科学）的框架果然占据了前两名 👍</p>
+<p>好了回到正题，让我们来看下各框架中的 Python 2 和 Python 3 使用情况：</p>
+<p><img src="https://i.imgur.com/nwzwRi3.png" alt="frameworks in python version"></p>
+<p>上图是按照 Python 3 的使用比例由高到低排序的，可以看到排名前五的都是网络和 UI 相关的库，排名第一的 aiohttp Python 2 与 Python 3 的比例甚至达到了 1:9 🙀 由于我本人对这方面不太了解，就不做过多评价了，如有懂得同学可以留言解释下为何网络和 UI 方面的库中 Python 3 的占比如此高。</p>
+<p>不过总体上来说，各大框架中 Python 3 的使用比例都已经超过甚至远超 Python 2 👍</p>
+<h2 id="做数据分析和机器学习的人常用的框架"><a href="#做数据分析和机器学习的人常用的框架" class="headerlink" title="做数据分析和机器学习的人常用的框架"></a>做数据分析和机器学习的人常用的框架</h2><p>接着上面，我们可以将框架使用情况与 Python 在数据分析和机器学习方面的应用进行交叉，得到数据分析和机器学习开发者最常用的框架：</p>
+<p><img src="https://i.imgur.com/RvW9Yyp.png" alt="frameworks in data analysis and machine learning"></p>
+<p>可以看到数据分析和机器学习开发者所用的框架大体相同，数据分析开发者人数要多于机器学习开发者，但是由于机器学习开发者更常用 Keras、scikit-learn 和 TensorFlow 等框架，反而使用这些框架上的机器学习和数据分析开发者人数基本一致。</p>
+<p>乍一看让我有点意外的是 Django 和 Flask 的位置，相对来说这两个用于构建网站的框架排名还是很靠前的，但是仔细一想，我见过很多数据分析和机器学习开发者做一个网站来展示自己的作品，这样一来也不足为奇了。又或者是 Web 开发者兼职数据分析和机器学习？细思极恐……</p>
+<h2 id="团队规模大小和是否使用-Python-3-的关系"><a href="#团队规模大小和是否使用-Python-3-的关系" class="headerlink" title="团队规模大小和是否使用 Python 3 的关系"></a>团队规模大小和是否使用 Python 3 的关系</h2><p>一般来说，团队规模越大，由 Python 2 转型 Python 3 所花费的代价就越大，所以团队规模越大使用 Python 3 的比例可能就会越低，而下图也印证了这一点。</p>
+<p><img src="https://i.imgur.com/3Ksk5JQ.png" alt="team scale and python 3"></p>
+<p>但是需要注意的是，有将近 62% 的人是独立开发或者是外部顾问（external consultant）和培训讲师（trainer），也就是说不在一个团队中进行工作。上图就是基于剩下的约 38% 的开发者来绘制的。</p>
+<h2 id="开发者年龄和是否使用-Python-3-的关系"><a href="#开发者年龄和是否使用-Python-3-的关系" class="headerlink" title="开发者年龄和是否使用 Python 3 的关系"></a>开发者年龄和是否使用 Python 3 的关系</h2><p>同上，越年轻使用 Python 3 的比例就越高，毕竟年轻人「情怀」比较少 😆</p>
+<p>BUT，物极必反，60 岁以上的开发者使用 Python 3 的比例陡然提升了 10%……难道回光返照？</p>
+<p><img src="https://i.imgur.com/HezUSFH.png" alt="age python 3"></p>
+<p>60 岁以上还在 coding 的人应该不多，我们来统计下每个国家内 60 岁以上的开发者人数，然后排名取前十名：</p>
+<p><img src="https://i.imgur.com/fUDmC8a.png" alt="top10"></p>
+<p>几乎是美国一家独大，后面的几乎可以忽略不计，所有 153 个国家的 60 岁以上开发者人数为 111，而美国为 56，占到了一半，而这 56 个人中有 41 个人使用的是 Python 3，占比约为 73%，so，上面的疑问也就不是疑问了。</p>
+<p>此外，我们来看下开发者人数最多的三个国家（美国、印度和中国）的开发者年龄构成：</p>
+<p><img src="https://i.imgur.com/0r7bQR3.png" alt="age distribution"></p>
+<p>结合国内程序圈的情况，大家都想着 30 以后要不转要不升，上图也不足为奇，美国的年龄分布相对来说要好很多。</p>
+<h2 id="使用-Python-3-和-Python-2-的开发者的国别分布"><a href="#使用-Python-3-和-Python-2-的开发者的国别分布" class="headerlink" title="使用 Python 3 和 Python 2 的开发者的国别分布"></a>使用 Python 3 和 Python 2 的开发者的国别分布</h2><p>首先来看下所有开发者的国别分布：</p>
+<p><img src="https://i.imgur.com/QHllwyy.png" alt="country counts"></p>
+<p>美国、印度和中国排名前三，上一节的年龄分布图选取的三个国家就是就是根据这个排名取的。</p>
+<p>再来看下上图排名前十的国家中的 Python 2 和 Python 3 的使用比例：</p>
+<p><img src="https://i.imgur.com/rXuzRKi.png" alt="country python version"></p>
+<p>其实使用比例是差不多的，都是 Python 3 远超 Python 2，这一点也可以用下图佐证：</p>
+<p><img src="https://i.imgur.com/IpKZCq3.png" alt="use-ratio-of-python3-in-the-world"></p>
+<p>我们有了国家信息，那么自然而然就会想到直接在地图上显示数据：</p>
+<p><img src="https://i.imgur.com/TAJV1LT.png" alt="python3-in-the-world"></p>
+<center><i>在<a href="https://nbviewer.jupyter.org/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb#%E4%BD%BF%E7%94%A8-Python-3-%E5%92%8C-Python-2-%E7%9A%84%E5%BC%80%E5%8F%91%E8%80%85%E7%9A%84%E5%9B%BD%E5%88%AB%E5%88%86%E5%B8%83%EF%BC%9F" target="_blank" rel="noopener">这里</a>查看有更好的交互式体验</i></center>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>可以看到的趋势是：</p>
+<ul>
+<li>Python 3 已经被大多数人使用，无论是 Web 开发还是数据科学（数据分析和机器学习），无论是美国还是中国还是其他国家</li>
+<li>Web 开发和数据科学是 Python 开发的两大统治者</li>
+<li>数据分析和机器学习开发者使用的 Python 框架有很大的相似性，只是在 TensorFlow 等机器学习框架上的使用有一定区别</li>
+<li>年龄和团队规模和使用 Python 3 的比例有一定关系</li>
+<li>美国的开发者年龄分布要好于中国</li>
+</ul>
+<p>总的来说，本文所分析的内容只能说是冰山一角，还有大量内容可以分析，但是时间精力有限，后续可能的话再在此基础上加以分析。</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+    </article>
+    <!-- 前后页  -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href= "/2018/04/05/unzip-chinese/" title= 使用 zipfile 解压含有中文文件名的 zip 文件 >
+                    <div class="prevTitle">使用 zipfile 解压含有中文文件名的 zip 文件</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
     
+    <div id="disqus_thread"></div>
+    <script>
+        /**
+    *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+    *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+        
+        var disqus_config = function () {
+        this.page.url = "https://secsilm.github.io/2018/04/28/analyzing-python-survey-2017/";  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = "2017 Python 问卷调查结果初步分析"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+        
+        (function () { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://secsilm.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
     
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/04/28/analyzing-python-survey-2017/" >
-                
-                    <span>2017 Python 问卷调查结果初步分析</span>
-            </a>
-            <div class="abstract-content">
-                前言2017 年末，PSF（Python Software Foundation，Python 软件基金会）和 JetBrains 一起进行了一次全球范围内的关于 Python 使用情况的问卷调查，共有来自 153 个国家的 9506 名开发者参与了这次调查，官方也发布了一份调查报告分析。
-这...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/04/28</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/04/05/unzip-chinese/" >
-                
-                    <span>使用 zipfile 解压含有中文文件名的 zip 文件</span>
-            </a>
-            <div class="abstract-content">
-                问题在使用 Python 内置标准库 zipfile 解压文件时，如果压缩文件中有的文件含有中文，那么解压后就会发现文件名中的中文部分是乱码。例如我分别新建三个 txt 文件：文件1.txt，文件2.txt 和 文件3.txt，然后将这三个文件压缩到一个名为 文件.zip 的压缩文件中。然后我...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/04/05</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/03/15/embed-bokeh-plot/" >
-                
-                    <span>嵌入 bokeh 绘图到 hexo 博客中</span>
-            </a>
-            <div class="abstract-content">
-                
+    <!--PC版-->
+
+    <!--PC版-->
 
 
-
-
-Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器的交互式图表，D3.js 的风格，Anaconda 出品。关注这个库很久了，我知道的 Python 中用于创建这种交互式图表的库好用的不是很多，还有个 plotly 也不错，同时支持 Python 和 R，只不过...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/15</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "hexo">hexo</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/12/25/export-csdn-blogs-to-md/" >
-                
-                    <span>批量导出 CSDN 博客为 Markdown 文件</span>
-            </a>
-            <div class="abstract-content">
-                CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/25</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/06/17/numpy-shuffle-permutation/" >
-                
-                    <span>Numpy 中的 shuffle VS permutation</span>
-            </a>
-            <div class="abstract-content">
-                有时候我们会有随机打乱一个数组的需求，例如训练时随机打乱样本，我们可以使用 numpy.random.shuffle() 或者 numpy.random.permutation() 来完成。这两者非常相似，实现的功能是一样的，那么他们到底有什么区别？
-
-本文代码及图片可以在 我的GitHub ...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/06/17</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/04/22/python-fire/" >
-                
-                    <span>Python 自动生成命令行工具 - fire 简介</span>
-            </a>
-            <div class="abstract-content">
-                Python 中用于生成命令行接口（Command Line Interfaces, CLIs）的工具已经有一些了，例如已经成为 Python 标准库的 argparse 和第三方的 click ，这些都是很不错的工具。但是这些工具为 Python 程序生成 CLIs 的时候稍显麻烦，需要增加...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/04/22</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/25/python-string-count/" >
-                
-                    <span>使用 Python 统计字符串中英文、空格、数字、标点个数</span>
-            </a>
-            <div class="abstract-content">
-                题外话：今天打酱油的做了网易数据挖掘工程师的在线笔试题，被打击了。
-本文代码可在 这里 下载。
-
-
-问题在网上无意间看到这么一个题目：统计一个字符串中的中英文、空格、数字、标点符号个数。正好再熟悉一下 Python 中字符串相关方法，所以来做一下。
-
-代码1234567891011121314...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/25</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/01/numpy-copy/" >
-                
-                    <span>Numpy 中的 copy 问题详解</span>
-            </a>
-            <div class="abstract-content">
-                这篇文章本是我在 segmentfault 上的一个回答，但是越来越觉得有必要单独拿出来，毕竟这个问题挺常见的。具体可参看 numpy 官方文档 。
-
-
-正文numpy关于copy有三种情况，完全不复制、视图（view）或者叫浅复制（shadow copy）和深复制（deep copy）。
-而...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/01</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/02/26/tensorflow-cudnn-version/" >
-                
-                    <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
-            </a>
-            <div class="abstract-content">
-                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：m...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/02/26</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
-                
-                    <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
-            </a>
-            <div class="abstract-content">
-                前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
-本文代码基于 TensorFlow 的官方文档 做了些许修改，完...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/28</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
-    
-    <!-- paginator  -->
-    
-    <nav class="page-nav">
-        <span class="page-number current">1</span><a class="page-number" href="/tags/Python/page/2/">2</a><a class="page-number" href="/tags/Python/page/3/">3</a><a class="extend next" rel="next" href="/tags/Python/page/2/">NEXT &#62;</a>
-    </nav>
-    
+    <!-- 评论 -->
 </main>
             <!-- profile -->
             
@@ -678,6 +565,24 @@ Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器
 </footer>
     </div>
     <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#数据"><span class="toc-number">2.</span> <span class="toc-text">数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题"><span class="toc-number">3.</span> <span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#开发者中使用-Python-2-和-Python-3-的情况"><span class="toc-number">4.</span> <span class="toc-text">开发者中使用 Python 2 和 Python 3 的情况</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#做数据分析和机器学习的人中分别有多少人使用的是-Python-3"><span class="toc-number">5.</span> <span class="toc-text">做数据分析和机器学习的人中分别有多少人使用的是 Python 3</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#常用框架中使用-Python-2-和-Python-3-的比例"><span class="toc-number">6.</span> <span class="toc-text">常用框架中使用 Python 2 和 Python 3 的比例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#做数据分析和机器学习的人常用的框架"><span class="toc-number">7.</span> <span class="toc-text">做数据分析和机器学习的人常用的框架</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#团队规模大小和是否使用-Python-3-的关系"><span class="toc-number">8.</span> <span class="toc-text">团队规模大小和是否使用 Python 3 的关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#开发者年龄和是否使用-Python-3-的关系"><span class="toc-number">9.</span> <span class="toc-text">开发者年龄和是否使用 Python 3 的关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用-Python-3-和-Python-2-的开发者的国别分布"><span class="toc-number">10.</span> <span class="toc-text">使用 Python 3 和 Python 2 的开发者的国别分布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">11.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-number">12.</span> <span class="toc-text">END</span></a></li></ol>
+    </div>
     
     <div class="back-top iconfont-archer">&#xe639;</div>
     <div class="sidebar sidebar-hide">
@@ -1781,6 +1686,8 @@ jsonContent:
     </div>
     <!-- async load share.js -->
     
+        <script src="/scripts/share.js" async></script>    
+    
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {
@@ -1795,7 +1702,7 @@ jsonContent:
             all[i].SourceElement().parentNode.className += ' has-jax';
     });
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 </body>
 </html>
 

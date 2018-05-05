@@ -383,7 +383,12 @@ height:50vh;
 <li>验证一些常理</li>
 <li>发现一些现象</li>
 </ul>
-<p>本文基本只做到了前者，而且侧重于直接展现分析结果（大多数为图），具体的代码实现见 <a href="https://nbviewer.jupyter.org/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb" target="_blank" rel="noopener">analyzing-python-survey-2017.ipynb</a>，GitHub 上的内容见 <a href="https://github.com/secsilm/analyzing-python-survey-2017" target="_blank" rel="noopener">secsilm/analyzing-python-survey-2017</a>，包括问卷调查的内容（PDF）和调查结果原始数据（CSV）。</p>
+<p>本文基本只做到了前者，而且侧重于直接展现分析结果（大多数为图），具体的代码实现见：</p>
+<ul>
+<li>Jupyter nbviewer：<a href="https://nbviewer.jupyter.org/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb" target="_blank" rel="noopener">analyzing-python-survey-2017.ipynb</a></li>
+<li>GitHub：<a href="https://github.com/secsilm/analyzing-python-survey-2017" target="_blank" rel="noopener">secsilm/analyzing-python-survey-2017</a>，包括问卷调查的内容（PDF）和调查结果原始数据（CSV）</li>
+<li>Colab：<a href="https://colab.research.google.com/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb" target="_blank" rel="noopener">analyzing-python-survey-2017.ipynb - Colaboratory</a></li>
+</ul>
 <h2 id="数据"><a href="#数据" class="headerlink" title="数据"></a>数据</h2><p>我认为拿到数据的第一步就是先看下数据长什么样，这样才能着手分析。先来看下我们的调查结果数据：</p>
 <p><img src="https://i.imgur.com/MBIZmzA.png" alt=""></p>
 <p>数据总大小是 9506×162，即 9506 行 162 列，上图是前 5 行，每行代表一个样本，即一个参与调查的开发者。可以看到已经将一道选择题的答案拆分成多列，这一般是用于处理多选题，例如上图中的「What other language(s) do you use?」，而单选题则不用拆分，可以直接写答案，例如上图第一列。</p>
@@ -1786,24 +1791,9 @@ jsonContent:
     </div>
     <!-- async load share.js -->
     
-        <script src="/scripts/share.js" async></script>    
+        <script src="/scripts/share.js" async></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->    
     
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
-</body>
+    </body>
 </html>
 
 

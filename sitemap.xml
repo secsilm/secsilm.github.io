@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2016/11/06/tensorflow-logistic-regression/</loc>
+    
+    <lastmod>2018-05-10T04:50:07.639Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2018/04/28/analyzing-python-survey-2017/</loc>
     
     <lastmod>2018-05-05T14:57:57.730Z</lastmod>
@@ -261,13 +268,6 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2016/11/06/tensorflow-logistic-regression/</loc>
-    
-    <lastmod>2017-12-23T07:53:46.516Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://secsilm.github.io/2016/10/24/plt-save/</loc>
     
     <lastmod>2017-12-23T07:52:24.928Z</lastmod>
@@ -303,14 +303,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
-    
-    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
+    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
@@ -324,7 +317,14 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
+    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
+    
+    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

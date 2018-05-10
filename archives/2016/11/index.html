@@ -392,7 +392,7 @@
                     <span>TensorFlow 中的 Logistic Regression</span>
             </a>
             <div class="abstract-content">
-                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下LR所用的损失函数：J(...
+                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数...
             </div>
             <div class="abstract-post-meta">
                 <!-- date  -->
@@ -1714,7 +1714,22 @@ jsonContent:
     </div>
     <!-- async load share.js -->
     
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</body>
 </html>
 
 

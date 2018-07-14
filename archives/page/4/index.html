@@ -5,11 +5,16 @@
 
 
 
-
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" >
+    <meta name="author" content="Alan Lee">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="Alan Lee">
+    <meta name="keywords" content="Alan Lee Space Station | Alan Lee">
     <meta name="description" content="Machine Learning, NLP, Data Science">
+    <meta name="Cache-Control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
     <title>Lee&#39;s Space Station</title>
     <style type="text/css">
     @font-face {
@@ -63,110 +68,124 @@
 
 </style>
 
-    <link rel="preload" href= /css/style.css?v=20180317 as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180317 media="(max-width: 980px)"/>
-        
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <script>
-        (function (w) {
-            "use strict";
-            // rel=preload support test
-            if (!w.loadCSS) {
-                w.loadCSS = function () { };
-            }
-            // define on the loadCSS obj
-            var rp = loadCSS.relpreload = {};
-            // rel=preload feature support test
-            // runs once and returns a function for compat purposes
-            rp.support = (function () {
-                var ret;
-                try {
-                    ret = w.document.createElement("link").relList.supports("preload");
-                } catch (e) {
-                    ret = false;
-                }
-                return function () {
-                    return ret;
-                };
-            })();
+    <link rel="preload" href= /css/style.css?v=20180709 as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="stylesheet" href= /css/mobile.css?v=20180709 media="(max-width: 980px)">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
 
-            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
-            // then change that media back to its intended value on load
-            rp.bindMediaToggle = function (link) {
-                // remember existing media attr for ultimate state, or default to 'all'
-                var finalMedia = link.media || "all";
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
 
-                function enableStylesheet() {
-                    link.media = finalMedia;
-                }
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
 
-                // bind load handlers to enable media
-                if (link.addEventListener) {
-                    link.addEventListener("load", enableStylesheet);
-                } else if (link.attachEvent) {
-                    link.attachEvent("onload", enableStylesheet);
-                }
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
 
-                // Set rel and non-applicable media type to start an async request
-                // note: timeout allows this to happen async to let rendering continue in IE
-                setTimeout(function () {
-                    link.rel = "stylesheet";
-                    link.media = "only x";
-                });
-                // also enable media after 3 seconds,
-                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
-                setTimeout(enableStylesheet, 3000);
-            };
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
 
-            // loop through link elements in DOM
-            rp.poly = function () {
-                // double check this to prevent external calls from running
-                if (rp.support()) {
-                    return;
-                }
-                var links = w.document.getElementsByTagName("link");
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i];
-                    // qualify links to those with rel=preload and as=style attrs
-                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
-                        // prevent rerunning on link
-                        link.setAttribute("data-loadcss", true);
-                        // bind listeners to toggle media back
-                        rp.bindMediaToggle(link);
-                    }
-                }
-            };
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
 
-            // if unsupported, run the polyfill
-            if (!rp.support()) {
-                // run once at least
-                rp.poly();
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
 
-                // rerun poly on an interval until onload
-                var run = w.setInterval(rp.poly, 500);
-                if (w.addEventListener) {
-                    w.addEventListener("load", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                } else if (w.attachEvent) {
-                    w.attachEvent("onload", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                }
-            }
-            // commonjs
-            if (typeof exports !== "undefined") {
-                exports.loadCSS = loadCSS;
-            }
-            else {
-                w.loadCSS = loadCSS;
-            }
-        }(typeof global !== "undefined" ? global : this));
-    </script>
-    <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    <script src="/scripts/main.js" defer></script>
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href= "/avatar/Bastion_cute.png" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script" />
+    <link rel="preload" href="/scripts/main.js" as="script" />
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
     <!-- 百度统计  -->
     
@@ -219,8 +238,8 @@
     
     <!-- 主页  -->
             
-    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
@@ -237,16 +256,7 @@
     </div>
 </div>
         <script>
-  // load webfont-loader async, and add callback function
-  function async(u, c) {
-    var d = document, t = 'script',
-      o = d.createElement(t),
-      s = d.getElementsByTagName(t)[0];
-    o.src = u;
-    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-    s.parentNode.insertBefore(o, s);
-  }
-  
+ 
   // get user agent
   var browser = {
     versions: function () {
@@ -276,13 +286,9 @@
     if (document.getElementsByClassName('site-intro-meta')) {
       document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
       document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-      if (postIntroTags) {
-        postIntroTags.classList.add('post-fade-in');
-      }
-      if (postIntroMeat) {
-        postIntroMeat.classList.add('post-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
       }
     }
   }
@@ -312,7 +318,37 @@
     }
   }
 
-  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
 </script>        
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
         <div class="container container-unloaded">
@@ -320,53 +356,90 @@
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/12/01/installing-tensorflow/" >
-                
-                    <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
-            </a>
-            <div class="abstract-content">
-                之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对...
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/12/10/tensorboard-mnist-pca/" >
+            
+                <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
+        </a>
+        <div class="abstract-content">
+            <blockquote>
+<p>Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. </p>
+</blockquote>
+<p>主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 <a href="https://my.oschina.net/gujianhan/blog/225241" target="_blank" rel="noopener">这里</a> 或者 <a href="https://en.wikipedia.org/wiki/Principal_component_analysis" target="_blank" rel="noopener">PCA 的维基百科页面</a>。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/10</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/01</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/12/01/installing-tensorflow/" >
+            
+                <span>Windows10 64 位下安装 TensorFlow - 官方原生支持</span>
+        </a>
+        <div class="abstract-content">
+            之前 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 增加对...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/01</span>
             </div>
-        </article>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
+    
+</div>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/11/30/numpy-array-memory/" >
-                
-                    <span>小谈 Numpy 数组占用内存空间问题</span>
-            </a>
-            <div class="abstract-content">
-                之前跟同学讨论过numpy数组的占用空间大小问题，但是今天给忘了，又重新试验了一下，主要是利用sys模块的getsizeof函数，使用的版本是 Python3.5。记录下来，以备后忘。
-
-
-问题
-一个空的numpy数组对象占用多大空间。
-一个int32、int64、float32、float6...
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/11/30/numpy-array-memory/" >
+            
+                <span>小谈 Numpy 数组占用内存空间问题</span>
+        </a>
+        <div class="abstract-content">
+            <p>之前跟同学讨论过<code>numpy</code>数组的占用空间大小问题，但是今天给忘了，又重新试验了一下，主要是利用<code>sys</code>模块的<code>getsizeof</code>函数，使用的版本是 Python3.5。记录下来，以备后忘。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/30</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/30</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -375,29 +448,32 @@
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/11/19/tensorflow-mlp/" >
+            
+                <span>TensorFlow 中的多层感知器（MLP）</span>
+        </a>
+        <div class="abstract-content">
+            <p>前面有几篇博文讲了使用 <code>TensorFlow</code> 实现<a href="http://blog.csdn.net/u010099080/article/details/52894773" target="_blank" rel="noopener">线性回归</a>和<a href="http://blog.csdn.net/u010099080/article/details/53054519" target="_blank" rel="noopener">逻辑斯蒂回归</a>，这次来说下多层感知器（Multi-Layer Perceptron）的 <code>TensorFlow</code> 实现。</p>
+<p><strong>本篇博文的代码及结果图片等可以在<a href="http://download.csdn.net/download/u010099080/9687585" target="_blank" rel="noopener">这里</a>下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。</strong></p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/19</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/11/19/tensorflow-mlp/" >
-                
-                    <span>TensorFlow 中的多层感知器（MLP）</span>
-            </a>
-            <div class="abstract-content">
-                前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。
-本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/19</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -406,28 +482,31 @@
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/11/06/tensorflow-logistic-regression/" >
+            
+                <span>TensorFlow 中的 Logistic Regression</span>
+        </a>
+        <div class="abstract-content">
+            前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/06</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/11/06/tensorflow-logistic-regression/" >
-                
-                    <span>TensorFlow 中的 Logistic Regression</span>
-            </a>
-            <div class="abstract-content">
-                前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/06</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -436,64 +515,63 @@
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/11/03/pandas-apply/" >
+            
+                <span>Pandas 中的 apply 函数使用示例</span>
+        </a>
+        <div class="abstract-content">
+            <p><code>apply</code> 是 <code>pandas</code> 库的一个很重要的函数，多和 <code>groupby</code> 函数一起用，也可以直接用于 <code>DataFrame</code> 和 <code>Series</code> 对象。主要用于数据聚合运算，可以很方便的对分组进行现有的运算和自定义的运算。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/03</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/11/03/pandas-apply/" >
-                
-                    <span>Pandas 中的 apply 函数使用示例</span>
-            </a>
-            <div class="abstract-content">
-                apply 是 pandas 库的一个很重要的函数，多和 groupby 函数一起用，也可以直接用于 DataFrame 和 Series 对象。主要用于数据聚合运算，可以很方便的对分组进行现有的运算和自定义的运算。
-
-
-
-数据集使用的数据集是美国人口普查的数据，可以从这里下载，里面包含了CS...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/11/03</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/10/29/tensorflow-hyperparams/" >
+            
+                <span>学习率、迭代次数和初始化方式对模型准确率的影响</span>
+        </a>
+        <div class="abstract-content">
+            <p>想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？</p>
+<p>我初步做了个实验，在 <code>TensorFlow</code> 框架下使用 Logistics Regression 对经典的 <code>MNIST</code> 数据集进行分类。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/29</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/10/29/tensorflow-hyperparams/" >
-                
-                    <span>学习率、迭代次数和初始化方式对模型准确率的影响</span>
-            </a>
-            <div class="abstract-content">
-                想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？
-我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。
-
-
-本文所说的 准确率 均指...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/29</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -502,28 +580,32 @@
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
+            
+                <span>sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</span>
+        </a>
+        <div class="abstract-content">
+            <p>使用<code>sklearn</code>库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 <code>coef_</code> 和 <code>intercept_</code> 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。</p>
+<p>好尴尬，折腾了一会，终于弄明白了，记录下来，以说明自己too young。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/26</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/10/26/sklearn-logistics-regression-parameters/" >
-                
-                    <span>sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</span>
-            </a>
-            <div class="abstract-content">
-                使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/26</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -532,66 +614,65 @@
         <a class="post-tag" href="javascript:void(0);" data-tags = "sklearn">sklearn</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/10/24/plt-save/" >
+            
+                <span>解决使用 plt.savefig 保存图片时一片空白</span>
+        </a>
+        <div class="abstract-content">
+            <h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><p>这里我会列出对本文的更新。</p>
+<ul>
+<li>2017 年 9 月 28 日：修正几处错字，优化排版。</li>
+</ul>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/24</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/10/24/plt-save/" >
-                
-                    <span>解决使用 plt.savefig 保存图片时一片空白</span>
-            </a>
-            <div class="abstract-content">
-                更新这里我会列出对本文的更新。
-
-2017 年 9 月 28 日：修正几处错字，优化排版。
-
-
-
-问题当使用如下代码保存使用 plt.savefig 保存生成的图片时，结果打开生成的图片却是一片空白。
-123456import matplotlib.pyplot as plt""" 一些画图代...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/24</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/10/22/tensorflow-linear-regression/" >
+            
+                <span>TensorFlow 中的线性回归</span>
+        </a>
+        <div class="abstract-content">
+            <p>前面 <a href="http://blog.csdn.net/u010099080/article/details/52333935" target="_blank" rel="noopener">有篇博文</a> 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/22</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/10/22/tensorflow-linear-regression/" >
-                
-                    <span>TensorFlow 中的线性回归</span>
-            </a>
-            <div class="abstract-content">
-                前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。
-
-
-训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/22</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -600,41 +681,9 @@
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/10/16/python-email/" >
-                
-                    <span>用 Python 发电子邮件</span>
-            </a>
-            <div class="abstract-content">
-                
-本文首发于【赛克分享站】微信公号，未经允许，不得转载。
-
-
-使用的库这个程序涉及两个库：smtplib 和 email。
-这两个库都是 Python 自带的，所以不需要额外的下载安装，此外，这次使用的 Python 版本为 2.7。
-思路步骤总体思路很简单，就像我们平常上网是通过HTTP协议...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/16</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-</div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     <!-- paginator  -->
     
@@ -698,8 +747,10 @@
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
-        </span>
+    
+     
+    <span id="busuanzi_container_site_pv">本站已被浏览 <span id="busuanzi_value_site_pv"></span> 次</span>
+    
     </div>
     
 </footer>
@@ -1544,7 +1595,40 @@
     
     
     
-    <div class="total-archive"> Total : 52 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 53
+        </div>
+        <!-- search  -->
+        
+    </div>
     
     <div class="post-archive">
     
@@ -1553,6 +1637,11 @@
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/14</span><a class="archive-post-title" href= "/2018/07/14/remote-jupyter/" >在本地使用远程 Jupyter Lab 服务器</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1911,10 +2000,22 @@ jsonContent:
 </div> 
     <script>
     var siteMeta = {
-        root: '/',
-        author: 'Alan Lee'
+        root: "/",
+        author: "Alan Lee"
     }
 </script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
     <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
@@ -1923,7 +2024,7 @@ jsonContent:
     
     </div>
     <!-- async load share.js -->
-    
+     
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

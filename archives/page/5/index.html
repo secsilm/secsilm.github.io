@@ -5,11 +5,16 @@
 
 
 
-
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" >
+    <meta name="author" content="Alan Lee">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="Alan Lee">
+    <meta name="keywords" content="Alan Lee Space Station | Alan Lee">
     <meta name="description" content="Machine Learning, NLP, Data Science">
+    <meta name="Cache-Control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
     <title>Lee&#39;s Space Station</title>
     <style type="text/css">
     @font-face {
@@ -63,110 +68,124 @@
 
 </style>
 
-    <link rel="preload" href= /css/style.css?v=20180317 as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180317 media="(max-width: 980px)"/>
-        
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <script>
-        (function (w) {
-            "use strict";
-            // rel=preload support test
-            if (!w.loadCSS) {
-                w.loadCSS = function () { };
-            }
-            // define on the loadCSS obj
-            var rp = loadCSS.relpreload = {};
-            // rel=preload feature support test
-            // runs once and returns a function for compat purposes
-            rp.support = (function () {
-                var ret;
-                try {
-                    ret = w.document.createElement("link").relList.supports("preload");
-                } catch (e) {
-                    ret = false;
-                }
-                return function () {
-                    return ret;
-                };
-            })();
+    <link rel="preload" href= /css/style.css?v=20180709 as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="stylesheet" href= /css/mobile.css?v=20180709 media="(max-width: 980px)">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
 
-            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
-            // then change that media back to its intended value on load
-            rp.bindMediaToggle = function (link) {
-                // remember existing media attr for ultimate state, or default to 'all'
-                var finalMedia = link.media || "all";
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
 
-                function enableStylesheet() {
-                    link.media = finalMedia;
-                }
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
 
-                // bind load handlers to enable media
-                if (link.addEventListener) {
-                    link.addEventListener("load", enableStylesheet);
-                } else if (link.attachEvent) {
-                    link.attachEvent("onload", enableStylesheet);
-                }
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
 
-                // Set rel and non-applicable media type to start an async request
-                // note: timeout allows this to happen async to let rendering continue in IE
-                setTimeout(function () {
-                    link.rel = "stylesheet";
-                    link.media = "only x";
-                });
-                // also enable media after 3 seconds,
-                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
-                setTimeout(enableStylesheet, 3000);
-            };
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
 
-            // loop through link elements in DOM
-            rp.poly = function () {
-                // double check this to prevent external calls from running
-                if (rp.support()) {
-                    return;
-                }
-                var links = w.document.getElementsByTagName("link");
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i];
-                    // qualify links to those with rel=preload and as=style attrs
-                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
-                        // prevent rerunning on link
-                        link.setAttribute("data-loadcss", true);
-                        // bind listeners to toggle media back
-                        rp.bindMediaToggle(link);
-                    }
-                }
-            };
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
 
-            // if unsupported, run the polyfill
-            if (!rp.support()) {
-                // run once at least
-                rp.poly();
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
 
-                // rerun poly on an interval until onload
-                var run = w.setInterval(rp.poly, 500);
-                if (w.addEventListener) {
-                    w.addEventListener("load", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                } else if (w.attachEvent) {
-                    w.attachEvent("onload", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                }
-            }
-            // commonjs
-            if (typeof exports !== "undefined") {
-                exports.loadCSS = loadCSS;
-            }
-            else {
-                w.loadCSS = loadCSS;
-            }
-        }(typeof global !== "undefined" ? global : this));
-    </script>
-    <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    <script src="/scripts/main.js" defer></script>
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href= "/avatar/Bastion_cute.png" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script" />
+    <link rel="preload" href="/scripts/main.js" as="script" />
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
     <!-- 百度统计  -->
     
@@ -219,8 +238,8 @@
     
     <!-- 主页  -->
             
-    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
@@ -237,16 +256,7 @@
     </div>
 </div>
         <script>
-  // load webfont-loader async, and add callback function
-  function async(u, c) {
-    var d = document, t = 'script',
-      o = d.createElement(t),
-      s = d.getElementsByTagName(t)[0];
-    o.src = u;
-    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-    s.parentNode.insertBefore(o, s);
-  }
-  
+ 
   // get user agent
   var browser = {
     versions: function () {
@@ -276,13 +286,9 @@
     if (document.getElementsByClassName('site-intro-meta')) {
       document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
       document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-      if (postIntroTags) {
-        postIntroTags.classList.add('post-fade-in');
-      }
-      if (postIntroMeat) {
-        postIntroMeat.classList.add('post-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
       }
     }
   }
@@ -312,7 +318,37 @@
     }
   }
 
-  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
 </script>        
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
         <div class="container container-unloaded">
@@ -320,118 +356,147 @@
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/08/27/ubuntu-installing-tensorflow/" >
-                
-                    <span>Ubuntu 14.04 64 位安装 Google 的 TensorFlow</span>
-            </a>
-            <div class="abstract-content">
-                今天来说一下机器学习库 TensorFlow 的在 Ubuntu14.04 64位下的安装。
-
-
-更新这里我会列出对本文的更新。
-
-2017 年 10 月 13 日：
-优化排版，与其他博文保持统一。
-去掉公众号相关内容。
-
-
-
-
-
-
-什么是 TensorFlow关于什么是 TensorFlow...
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/10/16/python-email/" >
+            
+                <span>用 Python 发电子邮件</span>
+        </a>
+        <div class="abstract-content">
+            <blockquote>
+<p>本文首发于【赛克分享站】微信公号，未经允许，不得转载。</p>
+</blockquote>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/10/16</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/08/27</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/08/27/ubuntu-installing-tensorflow/" >
+            
+                <span>Ubuntu 14.04 64 位安装 Google 的 TensorFlow</span>
+        </a>
+        <div class="abstract-content">
+            <p>今天来说一下机器学习库 TensorFlow 的在 Ubuntu14.04 64位下的安装。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/08/27</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Ubuntu">Ubuntu</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/08/22/ubuntu-update-issue/" >
+            
+                <span>Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁</span>
+        </a>
+        <div class="abstract-content">
+            我电脑装的是 Windows10 和 Ubuntu 双系统，最近一直在用ubuntu，昨天系统说有更新我就更新了，更新完说需要重启，我选了稍后启动，然后昨天晚上从实验室关机出来就没管了，结果今天早上开机选择 ubuntu 之后系统就进不去了，左上角光标一直闪，重启几次无果，于是上网查了查，解决...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/08/22</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/08/22/ubuntu-update-issue/" >
-                
-                    <span>Ubuntu 14.04 64 位系统更新重启后无法进入系统，光标不停闪烁</span>
-            </a>
-            <div class="abstract-content">
-                我电脑装的是 Windows10 和 Ubuntu 双系统，最近一直在用ubuntu，昨天系统说有更新我就更新了，更新完说需要重启，我选了稍后启动，然后昨天晚上从实验室关机出来就没管了，结果今天早上开机选择 ubuntu 之后系统就进不去了，左上角光标一直闪，重启几次无果，于是上网查了查，解决...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/08/22</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Ubuntu">Ubuntu</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/06/27/python-strptime/" >
+            
+                <span>Python 中 strptime 的简单使用</span>
+        </a>
+        <div class="abstract-content">
+            <p><code>strptime</code>是python <code>datetime</code>库中的函数，用于将一个日期字符串转成datetime日期格式便于后期处理，<strong>使用格式</strong>为<code>datetime.strptime(date_string, format)</code>，其中<code>date_string</code> 就是要转成日期的字符串，<code>format</code> 根据<code>date_string</code> 不同而不同，<code>format</code> 有以下格式：</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/06/27</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/06/27/python-strptime/" >
-                
-                    <span>Python 中 strptime 的简单使用</span>
-            </a>
-            <div class="abstract-content">
-                strptime是python datetime库中的函数，用于将一个日期字符串转成datetime日期格式便于后期处理，使用格式为datetime.strptime(date_string, format)，其中date_string 就是要转成日期的字符串，format 根据date_st...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/06/27</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/04/03/python-numpy/" >
+            
+                <span>Python NumPy 基础</span>
+        </a>
+        <div class="abstract-content">
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这两天读完<em>《利用Python进行数据分析》</em> 这本书的第4章：<em>NumPy 基础：数组和矢量计算</em> 后，在进行下一步阅读高级应用前，先整理本章内容，做个笔记备查，也好加深印象。在往下看前请确保你已经安装了NumPy 库，并且已经使用 <code>import numpy as np</code> 加载numpy库。如果 还没有安装，那么可以在cmd（windows下）中使用 <code>pip install numpy</code> 命令安装，ubuntu下也可以使用 <code>sudo apt-get install python-numpy</code> 命令安装。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/04/03</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/04/03/python-numpy/" >
-                
-                    <span>Python NumPy 基础</span>
-            </a>
-            <div class="abstract-content">
-                前言这两天读完《利用Python进行数据分析》 这本书的第4章：NumPy 基础：数组和矢量计算 后，在进行下一步阅读高级应用前，先整理本章内容，做个笔记备查，也好加深印象。在往下看前请确保你已经安装了NumPy 库，并且已经使用 import numpy as np 加载numpy库。如果 ...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/04/03</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -440,184 +505,161 @@
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/03/24/ubuntu-gedit-change-theme/" >
+            
+                <span>Ubuntu14.04 gnome3 下 gedit 首选项消失时如何修改 gedit 主题</span>
+        </a>
+        <div class="abstract-content">
+            <h2 id="一些前期题外话"><a href="#一些前期题外话" class="headerlink" title="一些前期题外话"></a>一些前期题外话</h2><p>前天装双系统的时候忘记选择引导设备什么的导致硬盘被格式化(T_T)，接着不甘心装完win10后再装ubuntu，这次吸取了教训，不过在引导的时候出现了问题，使用easyBCD设置启动项重启进入ubuntu后出现<em>Grub error: unknown filesystem</em> ，网上逛了好一会才发现<strong>可能</strong>是我双硬盘的原因导致ubuntu找不到自己的引导文件，反而是找到了 windows 的 NTFS 文件系统，ubuntu 当然不认识这货了，所以需要自己手动告诉他引导文件在哪。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/03/24</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/03/24/ubuntu-gedit-change-theme/" >
-                
-                    <span>Ubuntu14.04 gnome3 下 gedit 首选项消失时如何修改 gedit 主题</span>
-            </a>
-            <div class="abstract-content">
-                一些前期题外话前天装双系统的时候忘记选择引导设备什么的导致硬盘被格式化(T_T)，接着不甘心装完win10后再装ubuntu，这次吸取了教训，不过在引导的时候出现了问题，使用easyBCD设置启动项重启进入ubuntu后出现Grub error: unknown filesystem ，网上逛...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/03/24</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Ubuntu">Ubuntu</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "IDE">IDE</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/01/18/matlab-plot-parallelepiped/" >
+            
+                <span>MATLAB绘制平行六面体</span>
+        </a>
+        <div class="abstract-content">
+            <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">如果给出一个平行六面体（甚至其他多面体）的各个顶点坐标，如何画出这个平行六面体。</span><br></pre></td></tr></table></figure>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/01/18</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/01/18/matlab-plot-parallelepiped/" >
-                
-                    <span>MATLAB绘制平行六面体</span>
-            </a>
-            <div class="abstract-content">
-                1如果给出一个平行六面体（甚至其他多面体）的各个顶点坐标，如何画出这个平行六面体。
-
-在网上找了找方法，可以参考这篇博客 matlab中patch函数详解。然后我具体查看了 Multifaceted Patches 帮助，记录下来以备后查。
-绘制主要就是利用 patch 函数，patch 的一...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/01/18</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "MATLAB">MATLAB</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/01/11/matlab-mat2cell/" >
+            
+                <span>MATLAB 矩阵分块函数 mat2cell 及 cellfun 函数</span>
+        </a>
+        <div class="abstract-content">
+            <p>为了清理桌面上的 words, so do this!</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/01/11</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/01/11/matlab-mat2cell/" >
-                
-                    <span>MATLAB 矩阵分块函数 mat2cell 及 cellfun 函数</span>
-            </a>
-            <div class="abstract-content">
-                为了清理桌面上的 words, so do this!
-
-在做一个项目的时候，接触到了这个函数，瞬间感觉好有用，遂记录之。（好像有点废话……）
-mat2cell 函数就是将矩阵转化成胞元数组（cell array），用数学的语言讲就是矩阵分块。其意义和用法可以用 matlab 的帮助文档说清楚...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/01/11</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "MATLAB">MATLAB</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/01/11/machine-learning-book-note/" >
+            
+                <span>《机器学习》学习笔记1——绪论 机器学习概述</span>
+        </a>
+        <div class="abstract-content">
+            <p>在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：</p>
+<blockquote>
+<p>布里斯托尔大学人工智能教授，拥有20多年的机器学习教研经验。在高度结构化的数据挖掘以及通过ROC分析来评估和改进机器学习模型方面，Flach是国际领先的研究人员。他还是<em>Machine Learning</em>期刊总编。曾担任2009年ACM知识发现与数据挖掘国际会议、2012年欧洲机器学习与数据挖掘国际会议的程序委员会共同主席。另著有<em>Simply Logical：Intelligent Reasoning by Example</em>。</p>
+</blockquote>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/01/11</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/01/11/machine-learning-book-note/" >
-                
-                    <span>《机器学习》学习笔记1——绪论 机器学习概述</span>
-            </a>
-            <div class="abstract-content">
-                在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：
-
-布里斯托尔大学人工智能教授，拥有20多年的机器学习教研经验。在高度结构化的数据挖掘以及通过ROC分析来评估和改进机器学习模型方面，Flach是国际领先...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/01/11</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2015/12/21/matlab-fitlm/" >
+            
+                <span>使用 MATLAB 的 fitlm 函数进行线性回归</span>
+        </a>
+        <div class="abstract-content">
+            <p>今天在做《数理统计》关于线性回归的作业，本来用<code>R</code>已经做出来了，但是由于最近使用<code>matlab</code>很多，所以也想看看用<code>matlab</code>怎么做。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2015/12/21</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2015/12/21/matlab-fitlm/" >
-                
-                    <span>使用 MATLAB 的 fitlm 函数进行线性回归</span>
-            </a>
-            <div class="abstract-content">
-                今天在做《数理统计》关于线性回归的作业，本来用R已经做出来了，但是由于最近使用matlab很多，所以也想看看用matlab怎么做。
-
-matlab中有很多函数可以做各种各样的回归，也有cftool工具箱可以可视化的做回归，很方便。这里选用fitlm做回归，由于多元回归和一元回归基本思想是差不多...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2015/12/21</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "MATLAB">MATLAB</a>
     
 </div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2015/11/19/matlab-rename-files/" >
-                
-                    <span>MATLAB 批量文件重命名（详细解释）</span>
-            </a>
-            <div class="abstract-content">
-                这段时间在用 matlab 做手写数字识别，处理样本的时候需要对样本文件进行重命名，可是有好多，总不能一个一个重命名吧，于是上网百度了好多，不过大多都一样，但是没有解释，只有干巴巴的程序，弄了好一会才弄清楚（我太菜了……），于是写下了以备后用。
-
-
-更新这里我会列出对本文的更新。
-
-2017 ...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2015/11/19</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "MATLAB">MATLAB</a>
-    
-</div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     <!-- paginator  -->
     
@@ -681,8 +723,10 @@ matlab中有很多函数可以做各种各样的回归，也有cftool工具箱�
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
-        </span>
+    
+     
+    <span id="busuanzi_container_site_pv">本站已被浏览 <span id="busuanzi_value_site_pv"></span> 次</span>
+    
     </div>
     
 </footer>
@@ -1527,7 +1571,40 @@ matlab中有很多函数可以做各种各样的回归，也有cftool工具箱�
     
     
     
-    <div class="total-archive"> Total : 52 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 53
+        </div>
+        <!-- search  -->
+        
+    </div>
     
     <div class="post-archive">
     
@@ -1536,6 +1613,11 @@ matlab中有很多函数可以做各种各样的回归，也有cftool工具箱�
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/14</span><a class="archive-post-title" href= "/2018/07/14/remote-jupyter/" >在本地使用远程 Jupyter Lab 服务器</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1894,10 +1976,22 @@ jsonContent:
 </div> 
     <script>
     var siteMeta = {
-        root: '/',
-        author: 'Alan Lee'
+        root: "/",
+        author: "Alan Lee"
     }
 </script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
     <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
@@ -1906,7 +2000,7 @@ jsonContent:
     
     </div>
     <!-- async load share.js -->
-    
+     
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

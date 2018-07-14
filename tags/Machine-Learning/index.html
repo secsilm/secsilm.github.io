@@ -5,11 +5,16 @@
 
 
 
-
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" >
+    <meta name="author" content="Alan Lee">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="Alan Lee">
+    <meta name="keywords" content="Alan Lee Space Station | Alan Lee">
     <meta name="description" content="Machine Learning, NLP, Data Science">
+    <meta name="Cache-Control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
     <title>Lee&#39;s Space Station</title>
     <style type="text/css">
     @font-face {
@@ -63,110 +68,124 @@
 
 </style>
 
-    <link rel="preload" href= /css/style.css?v=20180317 as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180317 media="(max-width: 980px)"/>
-        
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <script>
-        (function (w) {
-            "use strict";
-            // rel=preload support test
-            if (!w.loadCSS) {
-                w.loadCSS = function () { };
-            }
-            // define on the loadCSS obj
-            var rp = loadCSS.relpreload = {};
-            // rel=preload feature support test
-            // runs once and returns a function for compat purposes
-            rp.support = (function () {
-                var ret;
-                try {
-                    ret = w.document.createElement("link").relList.supports("preload");
-                } catch (e) {
-                    ret = false;
-                }
-                return function () {
-                    return ret;
-                };
-            })();
+    <link rel="preload" href= /css/style.css?v=20180709 as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="stylesheet" href= /css/mobile.css?v=20180709 media="(max-width: 980px)">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
 
-            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
-            // then change that media back to its intended value on load
-            rp.bindMediaToggle = function (link) {
-                // remember existing media attr for ultimate state, or default to 'all'
-                var finalMedia = link.media || "all";
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
 
-                function enableStylesheet() {
-                    link.media = finalMedia;
-                }
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
 
-                // bind load handlers to enable media
-                if (link.addEventListener) {
-                    link.addEventListener("load", enableStylesheet);
-                } else if (link.attachEvent) {
-                    link.attachEvent("onload", enableStylesheet);
-                }
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
 
-                // Set rel and non-applicable media type to start an async request
-                // note: timeout allows this to happen async to let rendering continue in IE
-                setTimeout(function () {
-                    link.rel = "stylesheet";
-                    link.media = "only x";
-                });
-                // also enable media after 3 seconds,
-                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
-                setTimeout(enableStylesheet, 3000);
-            };
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
 
-            // loop through link elements in DOM
-            rp.poly = function () {
-                // double check this to prevent external calls from running
-                if (rp.support()) {
-                    return;
-                }
-                var links = w.document.getElementsByTagName("link");
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i];
-                    // qualify links to those with rel=preload and as=style attrs
-                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
-                        // prevent rerunning on link
-                        link.setAttribute("data-loadcss", true);
-                        // bind listeners to toggle media back
-                        rp.bindMediaToggle(link);
-                    }
-                }
-            };
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
 
-            // if unsupported, run the polyfill
-            if (!rp.support()) {
-                // run once at least
-                rp.poly();
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
 
-                // rerun poly on an interval until onload
-                var run = w.setInterval(rp.poly, 500);
-                if (w.addEventListener) {
-                    w.addEventListener("load", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                } else if (w.attachEvent) {
-                    w.attachEvent("onload", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                }
-            }
-            // commonjs
-            if (typeof exports !== "undefined") {
-                exports.loadCSS = loadCSS;
-            }
-            else {
-                w.loadCSS = loadCSS;
-            }
-        }(typeof global !== "undefined" ? global : this));
-    </script>
-    <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    <script src="/scripts/main.js" defer></script>
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href= "/avatar/Bastion_cute.png" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script" />
+    <link rel="preload" href="/scripts/main.js" as="script" />
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
     <!-- 百度统计  -->
     
@@ -219,8 +238,8 @@
     
     <!-- 主页  -->
             
-    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
@@ -237,16 +256,7 @@
     </div>
 </div>
         <script>
-  // load webfont-loader async, and add callback function
-  function async(u, c) {
-    var d = document, t = 'script',
-      o = d.createElement(t),
-      s = d.getElementsByTagName(t)[0];
-    o.src = u;
-    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-    s.parentNode.insertBefore(o, s);
-  }
-  
+ 
   // get user agent
   var browser = {
     versions: function () {
@@ -276,13 +286,9 @@
     if (document.getElementsByClassName('site-intro-meta')) {
       document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
       document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-      if (postIntroTags) {
-        postIntroTags.classList.add('post-fade-in');
-      }
-      if (postIntroMeat) {
-        postIntroMeat.classList.add('post-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
       }
     }
   }
@@ -312,7 +318,37 @@
     }
   }
 
-  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
 </script>        
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
         <div class="container container-unloaded">
@@ -320,260 +356,292 @@
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/06/04/understanding-objective-functions-in-neural-networks/" >
-                
-                    <span>理解神经网络中的目标函数</span>
-            </a>
-            <div class="abstract-content">
-                
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/06/04/understanding-objective-functions-in-neural-networks/" >
+            
+                <span>理解神经网络中的目标函数</span>
+        </a>
+        <div class="abstract-content">
+            
 译者注：
 
 本文翻译自 Lars Hulstaert 于 2017 年 11 月 4 日发表的文章 Understanding objective functions in neural networks。
 文中括号或者引用块中的 斜体字 为对应的英文原文或者我自己注释的话（会标明「译者注」...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/06/04</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/06/04</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/12/29/understanding-lstms/" >
-                
-                    <span>理解 LSTM 网络</span>
-            </a>
-            <div class="abstract-content">
-                
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/12/29/understanding-lstms/" >
+            
+                <span>理解 LSTM 网络</span>
+        </a>
+        <div class="abstract-content">
+            
 译者注：
 
 本文原文为 Christopher Olah 于 2015 年发表在自己博客上的经典文章：Understanding LSTM Networks — colah’s blog。
 没有翻译原文中的 Acknowledgments 部分，此部分为致谢，私以为无关。
 文中括号或者引用块...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/29</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/29</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Translation">Translation</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/10/08/gradient-descent-methods/" >
+            
+                <span>梯度下降优化算法概述</span>
+        </a>
+        <div class="abstract-content">
+            <blockquote>
+<p>原文作者简介：<a href="http://ruder.io/" target="_blank" rel="noopener">Sebastian Ruder</a> 是我非常喜欢的一个博客作者，是 NLP 方向的博士生，目前供职于一家做 NLP 相关服务的爱尔兰公司 <a href="http://aylien.com/" target="_blank" rel="noopener">AYLIEN</a>，博客主要是写机器学习、NLP 和深度学习相关的文章。</p>
+<ul>
+<li>本文原文是 <a href="http://ruder.io/optimizing-gradient-descent/index.html" target="_blank" rel="noopener">An overview of gradient descent optimization algorithms</a>，同时作者也在 arXiv 上发了一篇同样内容的 <a href="https://arxiv.org/abs/1609.04747" target="_blank" rel="noopener">论文</a>。</li>
+<li>本文结合了两者来翻译，但是阅读原文我个人建议读博客中的，感觉体验更好点。</li>
+<li>文中括号中或者引用块中的 <em>斜体字</em> 为对应的英文原文或者我自己注释的话（会标明 <code>译者注</code>），否则为原文中本来就有的话。</li>
+<li>为方便阅读，我在引用序号后加了所引用论文的题目，用 <em>斜体字</em> 表示，例如 Learning rate schedules [11，<em>A stochastic approximation method</em>] 。</li>
+<li>水平有限，如有错误欢迎指出。翻译尽量遵循原文意思，但不意味着逐字逐句。</li>
+<li>本文也放在 <a href="https://github.com/secsilm/awesome-posts" target="_blank" rel="noopener">我 GitHub 上的 awesome-posts 项目</a> 上，选取数据科学和机器学习领域内比较好的英文文章进行翻译，欢迎各位 star 。</li>
+</ul>
+</blockquote>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/10/08</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/10/08/gradient-descent-methods/" >
-                
-                    <span>梯度下降优化算法概述</span>
-            </a>
-            <div class="abstract-content">
-                
-原文作者简介：Sebastian Ruder 是我非常喜欢的一个博客作者，是 NLP 方向的博士生，目前供职于一家做 NLP 相关服务的爱尔兰公司 AYLIEN，博客主要是写机器学习、NLP 和深度学习相关的文章。
-
-本文原文是 An overview of gradient descent...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/10/08</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Translation">Translation</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/08/30/ensemble-methods/" >
+            
+                <span>使用集成学习提升机器学习算法性能</span>
+        </a>
+        <div class="abstract-content">
+            <blockquote>
+<p>译者注：这篇文章是对 PythonWeekly 推荐的一篇讲集成模型的文章的翻译，原文为 <a href="https://blog.statsbot.co/ensemble-learning-d1dcd548e936" target="_blank" rel="noopener">Ensemble Learning to Improve Machine Learning Results</a>，由 Vadim Smolyakov 于 2017 年 8 月 22 日发表在 Medium 上，Vadim Smolyakov 是一名 MIT 的研究生。水平有限，如有错误，欢迎评论区或者邮件或者私信指出。建议阅读英文原文。</p>
+</blockquote>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/08/30</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/08/30/ensemble-methods/" >
-                
-                    <span>使用集成学习提升机器学习算法性能</span>
-            </a>
-            <div class="abstract-content">
-                
-译者注：这篇文章是对 PythonWeekly 推荐的一篇讲集成模型的文章的翻译，原文为 Ensemble Learning to Improve Machine Learning Results，由 Vadim Smolyakov 于 2017 年 8 月 22 日发表在 Medium 上...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/08/30</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Translation">Translation</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/06/02/tensorflow-DNNRegressor/" >
+            
+                <span>TensorFlow DNNRegressor 的简单使用</span>
+        </a>
+        <div class="abstract-content">
+            <p><code>tf.contrib.learn.DNNRegressor</code> 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。<br>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/06/02</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/06/02/tensorflow-DNNRegressor/" >
-                
-                    <span>TensorFlow DNNRegressor 的简单使用</span>
-            </a>
-            <div class="abstract-content">
-                tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRe...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/06/02</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/05/18/installing-xgboost/" >
+            
+                <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
+        </a>
+        <div class="abstract-content">
+            <p>关于什么是 <code>XGBoost</code>，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 <a href="https://arxiv.org/abs/1603.02754" target="_blank" rel="noopener">XGBoost: A Scalable Tree Boosting System</a> ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 <code>XGBoost</code> 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/05/18</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/05/18/installing-xgboost/" >
-                
-                    <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
-            </a>
-            <div class="abstract-content">
-                关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/05/18</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/29/understanding-svd/" >
+            
+                <span>奇异值分解 SVD 的数学解释</span>
+        </a>
+        <div class="abstract-content">
+            <p>奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解，这个方法在机器学习的一些算法里占有重要地位。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/29</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/29/understanding-svd/" >
-                
-                    <span>奇异值分解 SVD 的数学解释</span>
-            </a>
-            <div class="abstract-content">
-                奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR d...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/29</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
+            
+                <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
+        </a>
+        <div class="abstract-content">
+            <p><a href="http://blog.csdn.net/u010099080/article/details/53906810" target="_blank" rel="noopener">前面</a> 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 <a href="http://download.csdn.net/detail/u010099080/9781711" target="_blank" rel="noopener">这里</a> 下载。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/17</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
-                
-                    <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
-            </a>
-            <div class="abstract-content">
-                前面 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 这里 下载。
-
-
-什么是 TensorBoard
-To make it easier to understand, debug, and op...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/17</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
+            
+                <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
+        </a>
+        <div class="abstract-content">
+            <p><a href="http://blog.csdn.net/u010099080/article/details/53234227" target="_blank" rel="noopener">前面</a> 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 <strong>46.98%</strong>。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。</p>
+<p>本文代码基于 <a href="https://www.tensorflow.org/tutorials/deep_cnn/" target="_blank" rel="noopener">TensorFlow 的官方文档</a> 做了些许修改，完整代码及结果图片可从 <a href="http://download.csdn.net/download/u010099080/9723302" target="_blank" rel="noopener">这里</a> 下载。</p>
+<p><a href="http://blog.csdn.net/u010099080/article/details/62882006" target="_blank" rel="noopener">这篇</a> 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/28</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
-                
-                    <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
-            </a>
-            <div class="abstract-content">
-                前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。
-本文代码基于 TensorFlow 的官方文档 做了些许修改，完...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/28</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -582,29 +650,34 @@ To make it easier to understand, debug, and op...
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2016/12/10/tensorboard-mnist-pca/" >
+            
+                <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
+        </a>
+        <div class="abstract-content">
+            <blockquote>
+<p>Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. </p>
+</blockquote>
+<p>主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 <a href="https://my.oschina.net/gujianhan/blog/225241" target="_blank" rel="noopener">这里</a> 或者 <a href="https://en.wikipedia.org/wiki/Principal_component_analysis" target="_blank" rel="noopener">PCA 的维基百科页面</a>。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/10</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2016/12/10/tensorboard-mnist-pca/" >
-                
-                    <span>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</span>
-            </a>
-            <div class="abstract-content">
-                
-Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly ...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/10</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -613,9 +686,9 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     <!-- paginator  -->
     
@@ -679,8 +752,10 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
-        </span>
+    
+     
+    <span id="busuanzi_container_site_pv">本站已被浏览 <span id="busuanzi_value_site_pv"></span> 次</span>
+    
     </div>
     
 </footer>
@@ -1525,7 +1600,40 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     
     
-    <div class="total-archive"> Total : 52 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 53
+        </div>
+        <!-- search  -->
+        
+    </div>
     
     <div class="post-archive">
     
@@ -1534,6 +1642,11 @@ Principal component analysis (PCA) is a statistical procedure that uses an ortho
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/14</span><a class="archive-post-title" href= "/2018/07/14/remote-jupyter/" >在本地使用远程 Jupyter Lab 服务器</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1892,10 +2005,22 @@ jsonContent:
 </div> 
     <script>
     var siteMeta = {
-        root: '/',
-        author: 'Alan Lee'
+        root: "/",
+        author: "Alan Lee"
     }
 </script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
     <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
@@ -1904,7 +2029,7 @@ jsonContent:
     
     </div>
     <!-- async load share.js -->
-    
+     
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

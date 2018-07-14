@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2018/07/14/remote-jupyter/</loc>
+    
+    <lastmod>2018-07-14T06:34:56.927Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2018/06/04/understanding-objective-functions-in-neural-networks/</loc>
     
     <lastmod>2018-06-04T13:10:32.529Z</lastmod>
@@ -317,7 +324,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
+    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
@@ -331,14 +338,14 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
+    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
+    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

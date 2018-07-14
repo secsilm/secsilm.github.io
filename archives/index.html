@@ -5,11 +5,16 @@
 
 
 
-
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" >
+    <meta name="author" content="Alan Lee">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="Alan Lee">
+    <meta name="keywords" content="Alan Lee Space Station | Alan Lee">
     <meta name="description" content="Machine Learning, NLP, Data Science">
+    <meta name="Cache-Control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
     <title>Lee&#39;s Space Station</title>
     <style type="text/css">
     @font-face {
@@ -63,110 +68,124 @@
 
 </style>
 
-    <link rel="preload" href= /css/style.css?v=20180317 as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180317 media="(max-width: 980px)"/>
-        
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <script>
-        (function (w) {
-            "use strict";
-            // rel=preload support test
-            if (!w.loadCSS) {
-                w.loadCSS = function () { };
-            }
-            // define on the loadCSS obj
-            var rp = loadCSS.relpreload = {};
-            // rel=preload feature support test
-            // runs once and returns a function for compat purposes
-            rp.support = (function () {
-                var ret;
-                try {
-                    ret = w.document.createElement("link").relList.supports("preload");
-                } catch (e) {
-                    ret = false;
-                }
-                return function () {
-                    return ret;
-                };
-            })();
+    <link rel="preload" href= /css/style.css?v=20180709 as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="stylesheet" href= /css/mobile.css?v=20180709 media="(max-width: 980px)">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
 
-            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
-            // then change that media back to its intended value on load
-            rp.bindMediaToggle = function (link) {
-                // remember existing media attr for ultimate state, or default to 'all'
-                var finalMedia = link.media || "all";
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
 
-                function enableStylesheet() {
-                    link.media = finalMedia;
-                }
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
 
-                // bind load handlers to enable media
-                if (link.addEventListener) {
-                    link.addEventListener("load", enableStylesheet);
-                } else if (link.attachEvent) {
-                    link.attachEvent("onload", enableStylesheet);
-                }
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
 
-                // Set rel and non-applicable media type to start an async request
-                // note: timeout allows this to happen async to let rendering continue in IE
-                setTimeout(function () {
-                    link.rel = "stylesheet";
-                    link.media = "only x";
-                });
-                // also enable media after 3 seconds,
-                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
-                setTimeout(enableStylesheet, 3000);
-            };
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
 
-            // loop through link elements in DOM
-            rp.poly = function () {
-                // double check this to prevent external calls from running
-                if (rp.support()) {
-                    return;
-                }
-                var links = w.document.getElementsByTagName("link");
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i];
-                    // qualify links to those with rel=preload and as=style attrs
-                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
-                        // prevent rerunning on link
-                        link.setAttribute("data-loadcss", true);
-                        // bind listeners to toggle media back
-                        rp.bindMediaToggle(link);
-                    }
-                }
-            };
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
 
-            // if unsupported, run the polyfill
-            if (!rp.support()) {
-                // run once at least
-                rp.poly();
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
 
-                // rerun poly on an interval until onload
-                var run = w.setInterval(rp.poly, 500);
-                if (w.addEventListener) {
-                    w.addEventListener("load", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                } else if (w.attachEvent) {
-                    w.attachEvent("onload", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                }
-            }
-            // commonjs
-            if (typeof exports !== "undefined") {
-                exports.loadCSS = loadCSS;
-            }
-            else {
-                w.loadCSS = loadCSS;
-            }
-        }(typeof global !== "undefined" ? global : this));
-    </script>
-    <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    <script src="/scripts/main.js" defer></script>
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href= "/avatar/Bastion_cute.png" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script" />
+    <link rel="preload" href="/scripts/main.js" as="script" />
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
     <!-- 百度统计  -->
     
@@ -219,8 +238,8 @@
     
     <!-- 主页  -->
             
-    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
@@ -237,16 +256,7 @@
     </div>
 </div>
         <script>
-  // load webfont-loader async, and add callback function
-  function async(u, c) {
-    var d = document, t = 'script',
-      o = d.createElement(t),
-      s = d.getElementsByTagName(t)[0];
-    o.src = u;
-    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-    s.parentNode.insertBefore(o, s);
-  }
-  
+ 
   // get user agent
   var browser = {
     versions: function () {
@@ -276,13 +286,9 @@
     if (document.getElementsByClassName('site-intro-meta')) {
       document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
       document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-      if (postIntroTags) {
-        postIntroTags.classList.add('post-fade-in');
-      }
-      if (postIntroMeat) {
-        postIntroMeat.classList.add('post-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
       }
     }
   }
@@ -312,7 +318,37 @@
     }
   }
 
-  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
 </script>        
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
         <div class="container container-unloaded">
@@ -320,138 +356,187 @@
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/06/04/understanding-objective-functions-in-neural-networks/" >
-                
-                    <span>理解神经网络中的目标函数</span>
-            </a>
-            <div class="abstract-content">
-                
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/07/14/remote-jupyter/" >
+            
+                <span>在本地使用远程 Jupyter Lab 服务器</span>
+        </a>
+        <div class="abstract-content">
+            
+注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。
+
+TL;DR
+【本地】登入远程服务器：ssh USER@IP -p PORT
+【远程服务器】启动 Jupyter Lab：jupyte...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/07/14</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/06/04/understanding-objective-functions-in-neural-networks/" >
+            
+                <span>理解神经网络中的目标函数</span>
+        </a>
+        <div class="abstract-content">
+            
 译者注：
 
 本文翻译自 Lars Hulstaert 于 2017 年 11 月 4 日发表的文章 Understanding objective functions in neural networks。
 文中括号或者引用块中的 斜体字 为对应的英文原文或者我自己注释的话（会标明「译者注」...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/06/04</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/06/04</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/05/18/ubuntu-ssr/" >
+            
+                <span>在 Ubuntu 上使用 SSR 梯子</span>
+        </a>
+        <div class="abstract-content">
+            引言过去两年左右我基本上都是使用 SS 梯子，Windows 上的客户端使用的就是 shadowsocks，Ubuntu 上使用 shadowsocks-qt5。然而最近换成了 SSR（也就是俗称的酸酸乳，shadowsocksr），SS 和 SSR 这其中的爱恨纠葛我就不再赘述，有兴趣的可自...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/05/18</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/05/18/ubuntu-ssr/" >
-                
-                    <span>在 Ubuntu 上使用 SSR 梯子</span>
-            </a>
-            <div class="abstract-content">
-                引言过去两年左右我基本上都是使用 SS 梯子，Windows 上的客户端使用的就是 shadowsocks，Ubuntu 上使用 shadowsocks-qt5。然而最近换成了 SSR（也就是俗称的酸酸乳，shadowsocksr），SS 和 SSR 这其中的爱恨纠葛我就不再赘述，有兴趣的可自...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/05/18</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Ubuntu">Ubuntu</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/04/28/analyzing-python-survey-2017/" >
-                
-                    <span>2017 Python 问卷调查结果初步分析</span>
-            </a>
-            <div class="abstract-content">
-                前言2017 年末，PSF（Python Software Foundation，Python 软件基金会）和 JetBrains 一起进行了一次全球范围内的关于 Python 使用情况的问卷调查，共有来自 153 个国家的 9506 名开发者参与了这次调查，官方也发布了一份调查报告分析。
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/04/28/analyzing-python-survey-2017/" >
+            
+                <span>2017 Python 问卷调查结果初步分析</span>
+        </a>
+        <div class="abstract-content">
+            前言2017 年末，PSF（Python Software Foundation，Python 软件基金会）和 JetBrains 一起进行了一次全球范围内的关于 Python 使用情况的问卷调查，共有来自 153 个国家的 9506 名开发者参与了这次调查，官方也发布了一份调查报告分析。
 这...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/04/28</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/04/28</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/04/05/unzip-chinese/" >
+            
+                <span>使用 zipfile 解压含有中文文件名的 zip 文件</span>
+        </a>
+        <div class="abstract-content">
+            问题在使用 Python 内置标准库 zipfile 解压文件时，如果压缩文件中有的文件含有中文，那么解压后就会发现文件名中的中文部分是乱码。例如我分别新建三个 txt 文件：文件1.txt，文件2.txt 和 文件3.txt，然后将这三个文件压缩到一个名为 文件.zip 的压缩文件中。然后我...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/04/05</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/04/05/unzip-chinese/" >
-                
-                    <span>使用 zipfile 解压含有中文文件名的 zip 文件</span>
-            </a>
-            <div class="abstract-content">
-                问题在使用 Python 内置标准库 zipfile 解压文件时，如果压缩文件中有的文件含有中文，那么解压后就会发现文件名中的中文部分是乱码。例如我分别新建三个 txt 文件：文件1.txt，文件2.txt 和 文件3.txt，然后将这三个文件压缩到一个名为 文件.zip 的压缩文件中。然后我...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/04/05</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/03/15/embed-bokeh-plot/" >
-                
-                    <span>嵌入 bokeh 绘图到 hexo 博客中</span>
-            </a>
-            <div class="abstract-content">
-                
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/03/15/embed-bokeh-plot/" >
+            
+                <span>嵌入 bokeh 绘图到 hexo 博客中</span>
+        </a>
+        <div class="abstract-content">
+            
 
 
 
 
 Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器的交互式图表，D3.js 的风格，Anaconda 出品。关注这个库很久了，我知道的 Python 中用于创建这种交互式图表的库好用的不是很多，还有个 plotly 也不错，同时支持 Python 和 R，只不过...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/15</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/15</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
@@ -460,105 +545,117 @@ Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器
         <a class="post-tag" href="javascript:void(0);" data-tags = "hexo">hexo</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/03/14/stephen-hawking/" >
-                
-                    <span>曾经我也有一位 Stephen Hawking</span>
-            </a>
-            <div class="abstract-content">
-                今天去河西找我老师说论文和签字，结束后就去等校车，本以为 12 点半的校车结果我们 11 点 50 到的时候校车已经停在那了，于是上车找到座位坐下，没多少人，看到手机即刻有个 Breaking News 的通知：据卫报等多家英媒报道，史蒂芬·霍金逝世，享年 76 岁。
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/03/14/stephen-hawking/" >
+            
+                <span>曾经我也有一位 Stephen Hawking</span>
+        </a>
+        <div class="abstract-content">
+            今天去河西找我老师说论文和签字，结束后就去等校车，本以为 12 点半的校车结果我们 11 点 50 到的时候校车已经停在那了，于是上车找到座位坐下，没多少人，看到手机即刻有个 Breaking News 的通知：据卫报等多家英媒报道，史蒂芬·霍金逝世，享年 76 岁。
 
 感觉先是震惊，不敢相信...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/14</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/14</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Living">Living</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/03/09/using-https-namecheap-hexo/" >
-                
-                    <span>使用 CloudFlare 为 hexo 博客实现 HTTPS</span>
-            </a>
-            <div class="abstract-content">
-                过了个年，好久没更博客了，忙着各种事。
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/03/09/using-https-namecheap-hexo/" >
+            
+                <span>使用 CloudFlare 为 hexo 博客实现 HTTPS</span>
+        </a>
+        <div class="abstract-content">
+            过了个年，好久没更博客了，忙着各种事。
 博客地址之前一直都是默认的 secsilm.github.io，一直想换个自己的域名，正巧看到 NameBeta 上好几个域名都好便宜，就准备买个搞搞，最后挑中了 alanlee.fun 这个域名。
 把自己的博客域名换成自己买的域名并实现 HTTPS（G...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/09</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/03/09</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "hexo">hexo</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2018/01/03/neteasemusic-year-report-2017/" >
-                
-                    <span>我的网易云音乐 2017 年度听歌报告</span>
-            </a>
-            <div class="abstract-content">
-                又是一年，最近网易云音乐推出了年度听歌报告，来看看我的报告吧，也是记录下来和以后做个比较 😄
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2018/01/03/neteasemusic-year-report-2017/" >
+            
+                <span>我的网易云音乐 2017 年度听歌报告</span>
+        </a>
+        <div class="abstract-content">
+            又是一年，最近网易云音乐推出了年度听歌报告，来看看我的报告吧，也是记录下来和以后做个比较 😄
 温暖同行
 报告首页，「网易云音乐陪你温暖同行」，我的 IDsecsilm，确实音乐是我的陪伴，以前每次晚上睡不着的时候都会听歌，但是最近发现越听越睡不着……
 1550
 2017 年里共在云村听了 1...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/01/03</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2018/01/03</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Living">Living</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/12/30/google-sitemap/" >
-                
-                    <span>Google sitemap 不允许的网址的解决办法</span>
-            </a>
-            <div class="abstract-content">
-                
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/12/30/google-sitemap/" >
+            
+                <span>Google sitemap 不允许的网址的解决办法</span>
+        </a>
+        <div class="abstract-content">
+            
 
 
 
@@ -566,55 +663,22 @@ Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器
 
 
 问题这段时间搭建好自己的博客后，想要让别人可以在 Google 中找到我的文章，于是就得添加 sitemap，怎么生成 sitemap 的相关文章有很多，我在这里就不赘述了。我在npm install hexo-generator-sitemap --save装了插件后，确实生成...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/30</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/30</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "hexo">hexo</a>
     
 </div>
-                
-            </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/12/29/understanding-lstms/" >
-                
-                    <span>理解 LSTM 网络</span>
-            </a>
-            <div class="abstract-content">
-                
-译者注：
-
-本文原文为 Christopher Olah 于 2015 年发表在自己博客上的经典文章：Understanding LSTM Networks — colah’s blog。
-没有翻译原文中的 Acknowledgments 部分，此部分为致谢，私以为无关。
-文中括号或者引用块...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/12/29</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Translation">Translation</a>
-    
-</div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     <!-- paginator  -->
     
@@ -678,8 +742,10 @@ Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
-        </span>
+    
+     
+    <span id="busuanzi_container_site_pv">本站已被浏览 <span id="busuanzi_value_site_pv"></span> 次</span>
+    
     </div>
     
 </footer>
@@ -1524,7 +1590,40 @@ Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器
     
     
     
-    <div class="total-archive"> Total : 52 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 53
+        </div>
+        <!-- search  -->
+        
+    </div>
     
     <div class="post-archive">
     
@@ -1533,6 +1632,11 @@ Bokeh 是一个 Python 交互式可视化库，主要用于绘制面向浏览器
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/14</span><a class="archive-post-title" href= "/2018/07/14/remote-jupyter/" >在本地使用远程 Jupyter Lab 服务器</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1891,10 +1995,22 @@ jsonContent:
 </div> 
     <script>
     var siteMeta = {
-        root: '/',
-        author: 'Alan Lee'
+        root: "/",
+        author: "Alan Lee"
     }
 </script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
     <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
@@ -1903,7 +2019,7 @@ jsonContent:
     
     </div>
     <!-- async load share.js -->
-    
+     
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

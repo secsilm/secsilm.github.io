@@ -5,11 +5,16 @@
 
 
 
-
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" >
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" >
+    <meta name="author" content="Alan Lee">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="Alan Lee">
+    <meta name="keywords" content="Alan Lee Space Station | Alan Lee">
     <meta name="description" content="Machine Learning, NLP, Data Science">
+    <meta name="Cache-Control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
     <title>Lee&#39;s Space Station</title>
     <style type="text/css">
     @font-face {
@@ -63,110 +68,124 @@
 
 </style>
 
-    <link rel="preload" href= /css/style.css?v=20180317 as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" type="text/css" href= /css/mobile.css?v=20180317 media="(max-width: 980px)"/>
-        
-    <link rel="icon" href= /avatar/Bastion_cute.png>
-    <script>
-        (function (w) {
-            "use strict";
-            // rel=preload support test
-            if (!w.loadCSS) {
-                w.loadCSS = function () { };
-            }
-            // define on the loadCSS obj
-            var rp = loadCSS.relpreload = {};
-            // rel=preload feature support test
-            // runs once and returns a function for compat purposes
-            rp.support = (function () {
-                var ret;
-                try {
-                    ret = w.document.createElement("link").relList.supports("preload");
-                } catch (e) {
-                    ret = false;
-                }
-                return function () {
-                    return ret;
-                };
-            })();
+    <link rel="preload" href= /css/style.css?v=20180709 as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="stylesheet" href= /css/mobile.css?v=20180709 media="(max-width: 980px)">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
 
-            // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
-            // then change that media back to its intended value on load
-            rp.bindMediaToggle = function (link) {
-                // remember existing media attr for ultimate state, or default to 'all'
-                var finalMedia = link.media || "all";
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
 
-                function enableStylesheet() {
-                    link.media = finalMedia;
-                }
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
 
-                // bind load handlers to enable media
-                if (link.addEventListener) {
-                    link.addEventListener("load", enableStylesheet);
-                } else if (link.attachEvent) {
-                    link.attachEvent("onload", enableStylesheet);
-                }
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
 
-                // Set rel and non-applicable media type to start an async request
-                // note: timeout allows this to happen async to let rendering continue in IE
-                setTimeout(function () {
-                    link.rel = "stylesheet";
-                    link.media = "only x";
-                });
-                // also enable media after 3 seconds,
-                // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
-                setTimeout(enableStylesheet, 3000);
-            };
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
 
-            // loop through link elements in DOM
-            rp.poly = function () {
-                // double check this to prevent external calls from running
-                if (rp.support()) {
-                    return;
-                }
-                var links = w.document.getElementsByTagName("link");
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i];
-                    // qualify links to those with rel=preload and as=style attrs
-                    if (link.rel === "preload" && link.getAttribute("as") === "style" && !link.getAttribute("data-loadcss")) {
-                        // prevent rerunning on link
-                        link.setAttribute("data-loadcss", true);
-                        // bind listeners to toggle media back
-                        rp.bindMediaToggle(link);
-                    }
-                }
-            };
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
 
-            // if unsupported, run the polyfill
-            if (!rp.support()) {
-                // run once at least
-                rp.poly();
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
 
-                // rerun poly on an interval until onload
-                var run = w.setInterval(rp.poly, 500);
-                if (w.addEventListener) {
-                    w.addEventListener("load", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                } else if (w.attachEvent) {
-                    w.attachEvent("onload", function () {
-                        rp.poly();
-                        w.clearInterval(run);
-                    });
-                }
-            }
-            // commonjs
-            if (typeof exports !== "undefined") {
-                exports.loadCSS = loadCSS;
-            }
-            else {
-                w.loadCSS = loadCSS;
-            }
-        }(typeof global !== "undefined" ? global : this));
-    </script>
-    <script src="//cdn.staticfile.org/jquery/3.2.1/jquery.min.js" defer></script>
-    <script src="/scripts/main.js" defer></script>
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href= "/avatar/Bastion_cute.png" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script" />
+    <link rel="preload" href="/scripts/main.js" as="script" />
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
     <!-- 百度统计  -->
     
@@ -219,8 +238,8 @@
     
     <!-- 主页  -->
             
-    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/)"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
@@ -237,16 +256,7 @@
     </div>
 </div>
         <script>
-  // load webfont-loader async, and add callback function
-  function async(u, c) {
-    var d = document, t = 'script',
-      o = d.createElement(t),
-      s = d.getElementsByTagName(t)[0];
-    o.src = u;
-    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-    s.parentNode.insertBefore(o, s);
-  }
-  
+ 
   // get user agent
   var browser = {
     versions: function () {
@@ -276,13 +286,9 @@
     if (document.getElementsByClassName('site-intro-meta')) {
       document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
       document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
-      var postIntroTags = document.getElementsByClassName('post-intro-tags')[0],
-        postIntroMeat = document.getElementsByClassName('post-intro-meta')[0];
-      if (postIntroTags) {
-        postIntroTags.classList.add('post-fade-in');
-      }
-      if (postIntroMeat) {
-        postIntroMeat.classList.add('post-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
       }
     }
   }
@@ -312,7 +318,37 @@
     }
   }
 
-  async("https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", asyncCb)
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
 </script>        
         <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
         <div class="container container-unloaded">
@@ -320,290 +356,307 @@
     
     
     
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/05/18/installing-xgboost/" >
-                
-                    <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
-            </a>
-            <div class="abstract-content">
-                关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装...
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/05/18/installing-xgboost/" >
+            
+                <span>XGBoost 在 Windows 10 和 Ubuntu 上的安装</span>
+        </a>
+        <div class="abstract-content">
+            <p>关于什么是 <code>XGBoost</code>，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 <a href="https://arxiv.org/abs/1603.02754" target="_blank" rel="noopener">XGBoost: A Scalable Tree Boosting System</a> ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 <code>XGBoost</code> 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/05/18</span>
             </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/05/18</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Data Science">Data Science</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/04/22/python-fire/" >
+            
+                <span>Python 自动生成命令行工具 - fire 简介</span>
+        </a>
+        <div class="abstract-content">
+            <p>Python 中用于生成命令行接口（Command Line Interfaces, CLIs）的工具已经有一些了，例如已经成为 Python 标准库的 <a href="https://docs.python.org/3/library/argparse.html" target="_blank" rel="noopener">argparse</a> 和第三方的 <a href="http://click.pocoo.org/5/" target="_blank" rel="noopener">click</a> ，这些都是很不错的工具。但是这些工具为 Python 程序生成 CLIs 的时候稍显麻烦，需要增加的地方比较多，过程稍显繁琐。今天介绍的这个工具，几乎可以不改变原始代码就可以生成 CLIs，是 Google 于 今年（2017 年）3 月 2 日宣布在 <a href="https://github.com/google/python-fire" target="_blank" rel="noopener">GitHub</a> 上开源的。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/04/22</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/04/22/python-fire/" >
-                
-                    <span>Python 自动生成命令行工具 - fire 简介</span>
-            </a>
-            <div class="abstract-content">
-                Python 中用于生成命令行接口（Command Line Interfaces, CLIs）的工具已经有一些了，例如已经成为 Python 标准库的 argparse 和第三方的 click ，这些都是很不错的工具。但是这些工具为 Python 程序生成 CLIs 的时候稍显麻烦，需要增加...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/04/22</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/29/understanding-svd/" >
+            
+                <span>奇异值分解 SVD 的数学解释</span>
+        </a>
+        <div class="abstract-content">
+            <p>奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解，这个方法在机器学习的一些算法里占有重要地位。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/29</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/29/understanding-svd/" >
-                
-                    <span>奇异值分解 SVD 的数学解释</span>
-            </a>
-            <div class="abstract-content">
-                奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR d...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/29</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/25/python-string-count/" >
+            
+                <span>使用 Python 统计字符串中英文、空格、数字、标点个数</span>
+        </a>
+        <div class="abstract-content">
+            <p><em>题外话：今天打酱油的做了网易数据挖掘工程师的在线笔试题，被打击了。</em></p>
+<p>本文代码可在 <a href="http://download.csdn.net/detail/u010099080/9793725" target="_blank" rel="noopener">这里</a> 下载。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/25</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/25/python-string-count/" >
-                
-                    <span>使用 Python 统计字符串中英文、空格、数字、标点个数</span>
-            </a>
-            <div class="abstract-content">
-                题外话：今天打酱油的做了网易数据挖掘工程师的在线笔试题，被打击了。
-本文代码可在 这里 下载。
-
-
-问题在网上无意间看到这么一个题目：统计一个字符串中的中英文、空格、数字、标点符号个数。正好再熟悉一下 Python 中字符串相关方法，所以来做一下。
-
-代码1234567891011121314...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/25</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
+            
+                <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
+        </a>
+        <div class="abstract-content">
+            <p><a href="http://blog.csdn.net/u010099080/article/details/53906810" target="_blank" rel="noopener">前面</a> 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 <a href="http://download.csdn.net/detail/u010099080/9781711" target="_blank" rel="noopener">这里</a> 下载。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/17</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/17/tensorflow-cnn-tensorboard/" >
-                
-                    <span>TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</span>
-            </a>
-            <div class="abstract-content">
-                前面 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 这里 下载。
-
-
-什么是 TensorBoard
-To make it easier to understand, debug, and op...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/17</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/15/using-tree/" >
+            
+                <span>使用 tree 命令格式化输出目录结构</span>
+        </a>
+        <div class="abstract-content">
+            <p>今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 <code>tree</code> 的命令，Windows 和 Linux 都有这个命令。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/15</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/15/using-tree/" >
-                
-                    <span>使用 tree 命令格式化输出目录结构</span>
-            </a>
-            <div class="abstract-content">
-                今天在写一个 Markdown 文件的时候需要将一个目录的结构表示出来，于是找了找有没有相关命令，找到一个叫做 tree 的命令，Windows 和 Linux 都有这个命令。
-
-
-Windows 10我是在 Windows 10 上用的，不过根据 这篇文章 应该在 Windows 7 和 8...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/15</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Ubuntu">Ubuntu</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Windows">Windows</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/11/vscode-pdf-error/" >
+            
+                <span>VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法</span>
+        </a>
+        <div class="abstract-content">
+            <h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>VSCode 是微软推出的一款开源的代码编辑器，从 sublime text 转过来后感觉还不错，昨天在用他写 Markdown 文件时想着直接导出 PDF 文件（之前都是用 Markdown Pad 2），找到一个叫 <em>Markdown PDF</em> 的插件，安装之后在 Markdown 文件里右键选择 <code>Convert Markdown to PDF</code> 后报如下错误：</p>
+<p><img src="http://img.blog.csdn.net/20170311094443495?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></p>
+<p>就是 <code>ERROR: phantomjs binary does not exist</code> ，在后面那个目录找不到这个文件。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/11</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/11/vscode-pdf-error/" >
-                
-                    <span>VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法</span>
-            </a>
-            <div class="abstract-content">
-                问题VSCode 是微软推出的一款开源的代码编辑器，从 sublime text 转过来后感觉还不错，昨天在用他写 Markdown 文件时想着直接导出 PDF 文件（之前都是用 Markdown Pad 2），找到一个叫 Markdown PDF 的插件，安装之后在 Markdown 文件里...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/11</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "IDE">IDE</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/03/01/numpy-copy/" >
+            
+                <span>Numpy 中的 copy 问题详解</span>
+        </a>
+        <div class="abstract-content">
+            <p>这篇文章本是我在 <a href="https://segmentfault.com/q/1010000008271935/a-1020000008284346" target="_blank" rel="noopener">segmentfault</a> 上的一个回答，但是越来越觉得有必要单独拿出来，毕竟这个问题挺常见的。具体可参看 <a href="https://docs.scipy.org/doc/numpy-dev/user/quickstart.html#copies-and-views" target="_blank" rel="noopener"><code>numpy</code> 官方文档</a> 。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/01</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/03/01/numpy-copy/" >
-                
-                    <span>Numpy 中的 copy 问题详解</span>
-            </a>
-            <div class="abstract-content">
-                这篇文章本是我在 segmentfault 上的一个回答，但是越来越觉得有必要单独拿出来，毕竟这个问题挺常见的。具体可参看 numpy 官方文档 。
-
-
-正文numpy关于copy有三种情况，完全不复制、视图（view）或者叫浅复制（shadow copy）和深复制（deep copy）。
-而...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/03/01</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/02/26/tensorflow-cudnn-version/" >
+            
+                <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
+        </a>
+        <div class="abstract-content">
+            <p>由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 <a href="https://www.tensorflow.org/tutorials/deep_cnn" target="_blank" rel="noopener">TensorFlow 官方的 CNN 例子</a>的时候，总是报 <code>ImportError</code> 错误，找不到 <code>cifar10</code> 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：<a href="https://github.com/tensorflow/models" target="_blank" rel="noopener">models</a> 。</p>
+<p>但是呢，在我 <code>clone</code> 了 <code>models</code> 到本地后，按照 TensorFlow 官方的例子运行 <code>python cifar10_train.py</code> 的时候，问题又出现了……</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/02/26</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/02/26/tensorflow-cudnn-version/" >
-                
-                    <span>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法</span>
-            </a>
-            <div class="abstract-content">
-                由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：m...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/02/26</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
+        <a class="abstract-title" href = "/2017/02/16/tensorflow-1.0/" >
+            
+                <span>TensorFlow 1.0 发布</span>
+        </a>
+        <div class="abstract-content">
+            <p>前面写了 <a href="https://secsilm.github.io/2016/12/01/installing-tensorflow/">TensorFlow 在Windows上的安装教程</a>，当时版本还是 0.12 。</p>
+<p>NOW</p>
+<p>首届 <a href="https://events.withgoogle.com/tensorflow-dev-summit/watch-the-videos/#content" target="_blank" rel="noopener">TensorFlow 开发者大会</a>（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，<strong>TensorFlow 1.0</strong> 版本发布。Google Research Blog 也于昨天在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html" target="_blank" rel="noopener">博客</a> 中公布了这一消息。</p>
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/02/16</span>
             </div>
-        </article>
-    
-    
-    
-        <article class="index-post">
-            <a class="abstract-title" href = "/2017/02/16/tensorflow-1.0/" >
-                
-                    <span>TensorFlow 1.0 发布</span>
-            </a>
-            <div class="abstract-content">
-                前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。
-NOW
-首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Goog...
-            </div>
-            <div class="abstract-post-meta">
-                <!-- date  -->
-                <div class="abstract-date">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2017/02/16</span>
-                </div>
-                <!-- tags  -->
-                
-                <div class= abstract-tags >
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
-                
-            </div>
-        </article>
+            
+        </div>
+    </article>
     
     <!-- paginator  -->
     
@@ -667,8 +720,10 @@ NOW
     <!-- 不蒜子  -->
     
     <div class="busuanzi-container">
-        <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span>
-        </span>
+    
+     
+    <span id="busuanzi_container_site_pv">本站已被浏览 <span id="busuanzi_value_site_pv"></span> 次</span>
+    
     </div>
     
 </footer>
@@ -1513,7 +1568,40 @@ NOW
     
     
     
-    <div class="total-archive"> Total : 52 </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 53
+        </div>
+        <!-- search  -->
+        
+    </div>
     
     <div class="post-archive">
     
@@ -1522,6 +1610,11 @@ NOW
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/14</span><a class="archive-post-title" href= "/2018/07/14/remote-jupyter/" >在本地使用远程 Jupyter Lab 服务器</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1880,10 +1973,22 @@ jsonContent:
 </div> 
     <script>
     var siteMeta = {
-        root: '/',
-        author: 'Alan Lee'
+        root: "/",
+        author: "Alan Lee"
     }
 </script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
     <!-- busuanzi  -->
     
     <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
@@ -1892,7 +1997,7 @@ jsonContent:
     
     </div>
     <!-- async load share.js -->
-    
+     
     <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {

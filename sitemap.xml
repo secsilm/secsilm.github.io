@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2017/10/08/gradient-descent-methods/</loc>
+    
+    <lastmod>2018-07-17T14:06:59.523Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2018/07/14/remote-jupyter/</loc>
     
     <lastmod>2018-07-17T12:57:45.516Z</lastmod>
@@ -317,14 +324,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/10/08/gradient-descent-methods/</loc>
-    
-    <lastmod>2017-12-23T04:54:22.559Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
+    <loc>https://secsilm.github.io/2017/04/22/python-fire/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
@@ -338,7 +338,7 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/04/22/python-fire/</loc>
+    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

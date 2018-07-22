@@ -416,11 +416,6 @@ height:50vh;
         <blockquote>
 <p>注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看<a href="https://github.com/jupyterlab/jupyterlab" target="_blank" rel="noopener">项目地址</a>。<strong>强烈推荐使用 Jupyter Lab。</strong></p>
 </blockquote>
-<h2 id="TL-DR"><a href="#TL-DR" class="headerlink" title="TL;DR"></a>TL;DR</h2><ol>
-<li>【本地】登入远程服务器：<code>ssh USER@IP -p PORT</code></li>
-<li>【远程服务器】启动 Jupyter Lab：<code>jupyter lab --port LAB_PORT --no-browser</code></li>
-<li>【本地】打开浏览器（chrome），地址栏输入 <code>IP:LAB_PORT</code> 回车，done</li>
-</ol>
 <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>一般来说，我们都是在本地使用 Jupyter Lab，但有时候我们需要（想）在远程服务器上运行 Jupyter Lab，因为配置相对我们本地的 PC 要好点，这时候就需要在服务器上启动一个 lab，然后在本地浏览器访问。其实这方面在<a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html" target="_blank" rel="noopener">官方文档</a>上已经有相关说明，而且网络上也有其他方法（端口转发），如 <a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/" target="_blank" rel="noopener">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a>。这两种方法不太相同，官网的实现效果是在本地浏览器输入服务器 IP + 端口，而后者的方法是采用了端口转发的方法，不管服务器的 IP 和端口是多少，最后只需要在本地浏览器输入 <code>localhost:8888</code> 就行，和在本地运行 Jupyter Lab 是一样的。</p>
 <p>本质上来说，我们需要实现的是这样一个东西：</p>
 <ol>
@@ -433,9 +428,17 @@ height:50vh;
 <h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><p>你要做的很简单：</p>
 <ol>
 <li>【本地】登入远程服务器：<code>ssh USER@IP -p PORT</code></li>
-<li>【远程服务器】启动 Jupyter Lab：<code>jupyter lab --port LAB_PORT --no-browser</code></li>
+<li><p>【远程服务器】在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中写入如下内容，尤其是 <code>&quot;ip&quot;: &quot;*&quot;</code>，这样让服务器监听所有 ip：</p>
+ <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"NotebookApp"</span>: &#123;</span><br><span class="line">    <span class="attr">"ip"</span>: <span class="string">"*"</span>,</span><br><span class="line">    <span class="attr">"open_browser"</span>: <span class="literal">false</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>【远程服务器】启动 Jupyter Lab：<code>jupyter lab --port LAB_PORT --no-browser</code></p>
+</li>
 <li>【本地】打开浏览器（chrome），地址栏输入 <code>IP:LAB_PORT</code> 回车，done</li>
 </ol>
+<p>在第 2 步时，如果你想为自己的 Jupyter Lab 设置一个密码，那么你可以在终端内输入 <code>jupyter notebook password</code>，然后会提示你输入密码，此时输入你想要设置的密码就行，不必像其他教程那样用工具生成加密的密码，因为 Jupyter Notebook 会为你自动生成。你可以在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中看到类似如下的内容，其中 <code>*****</code> 是一长串的加密过后的密码。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"NotebookApp"</span>: &#123;</span><br><span class="line">    <span class="attr">"password"</span>: <span class="string">"sha1:*****"</span>,</span><br><span class="line">    <span class="attr">"ip"</span>: <span class="string">"*"</span>,</span><br><span class="line">    <span class="attr">"open_browser"</span>: <span class="literal">false</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后当你在本地浏览器输入 <code>IP:LAB_PORT</code> 回车时，会要求你输入密码：</p>
+<p><img src="https://i.imgur.com/UvPymtH.png" alt="jupyter lab password"></p>
 <p>这种方法适合在本地 PC 和远程服务器在同一个局域网内的情况，对于不在局域网内的情况还不行，应该是需要在远程服务器上配置防火墙开放端口，但是由于我没有 root 权限，设置不了防火墙。</p>
 <h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
 <li><a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html" target="_blank" rel="noopener">Running a notebook server — Jupyter Notebook 5.5.0 documentation</a></li>
@@ -456,6 +459,11 @@ height:50vh;
     <!-- paginator  -->
     <ul class="post-paginator">
         <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href= "/2018/07/18/text-classification-with-tensorflow-estimator/" title= 使用 TensorFlow Estimators 进行文本分类 >
+                    <div class="nextTitle">使用 TensorFlow Estimators 进行文本分类</div>
+                </a>
             
         </li>
         <li class="previous">
@@ -584,7 +592,7 @@ top:50vh;
         <div class="toc-catalog">
             <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
         </div>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#TL-DR"><span class="toc-number">1.</span> <span class="toc-text">TL;DR</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">2.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#步骤"><span class="toc-number">3.</span> <span class="toc-text">步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-number">4.</span> <span class="toc-text">References</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-number">5.</span> <span class="toc-text">END</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#步骤"><span class="toc-number">2.</span> <span class="toc-text">步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-number">3.</span> <span class="toc-text">References</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-number">4.</span> <span class="toc-text">END</span></a></li></ol>
     </div>
     
     <div class="back-top iconfont-archer">&#xe639;</div>
@@ -1430,9 +1438,38 @@ top:50vh;
     
     
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 53
+        Total : 54
         </div>
         <!-- search  -->
         
@@ -1445,6 +1482,11 @@ top:50vh;
     
     <div class="archive-year"> 2018 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/18</span><a class="archive-post-title" href= "/2018/07/18/text-classification-with-tensorflow-estimator/" >使用 TensorFlow Estimators 进行文本分类</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1747,11 +1789,11 @@ top:50vh;
     
         <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
     
-        <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
-    
         <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
     
         <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
+    
+        <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
     
         <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
     
@@ -1760,6 +1802,8 @@ top:50vh;
         <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
     
         <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
+    
+        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
     
         <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
     

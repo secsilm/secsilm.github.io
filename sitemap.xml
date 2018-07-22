@@ -2,16 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://secsilm.github.io/2017/10/08/gradient-descent-methods/</loc>
+    <loc>https://secsilm.github.io/2018/07/18/text-classification-with-tensorflow-estimator/</loc>
     
-    <lastmod>2018-07-17T14:06:59.523Z</lastmod>
+    <lastmod>2018-07-22T03:00:43.228Z</lastmod>
     
   </url>
   
   <url>
     <loc>https://secsilm.github.io/2018/07/14/remote-jupyter/</loc>
     
-    <lastmod>2018-07-17T12:57:45.516Z</lastmod>
+    <lastmod>2018-07-21T03:26:25.252Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://secsilm.github.io/2017/10/08/gradient-descent-methods/</loc>
+    
+    <lastmod>2018-07-17T14:06:59.523Z</lastmod>
     
   </url>
   
@@ -338,14 +345,14 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
+    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
+    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

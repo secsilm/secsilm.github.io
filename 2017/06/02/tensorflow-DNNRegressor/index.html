@@ -415,8 +415,8 @@ height:50vh;
         <div class="container container-unloaded">
             <main class="main post-page">
     <article class="article-entry">
-        <p><code>tf.contrib.learn.DNNRegressor</code> 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。<br><a id="more"></a><br>此文的代码和所生成的 TensorBoard 文件可以从 <a href="https://github.com/secsilm/TensorFlow-DNNRegressor" target="_blank" rel="noopener">secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。</a> 下载。</p>
-<hr>
+        <p><code>tf.contrib.learn.DNNRegressor</code> 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。</p>
+<p>此文的代码和所生成的 TensorBoard 文件可以从 <a href="https://github.com/secsilm/TensorFlow-DNNRegressor" target="_blank" rel="noopener">secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。</a> 下载。</p>
 <h2 id="tf-contrib-learn"><a href="#tf-contrib-learn" class="headerlink" title="tf.contrib.learn"></a><code>tf.contrib.learn</code></h2><p><code>tf.contrib.learn</code> 是 TensorFlow 提供的一个机器学习高级 API 模块，让用户可以更方便的配置、训练和评估各种各样的机器学习模型，里面内置了很多模型可以直接调用，使用类似 <a href="http://scikit-learn.org/stable/" target="_blank" rel="noopener">scikit-learn</a> 的 API 。大致有以下几种模型，具体可参考 <a href="https://www.tensorflow.org/api_guides/python/contrib.learn" target="_blank" rel="noopener">Learn (contrib)</a>：</p>
 <ul>
 <li>K-means 聚类 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/KMeansClustering" target="_blank" rel="noopener"><code>tf.contrib.learn.KMeansClustering</code></a></li>
@@ -428,7 +428,6 @@ height:50vh;
 <li>线性回归 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/LinearRegressor" target="_blank" rel="noopener"><code>tf.contrib.learn.LinearRegressor</code></a></li>
 <li>逻辑斯谛回归 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/LogisticRegressor" target="_blank" rel="noopener"><code>tf.contrib.learn.LogisticRegressor</code></a></li>
 </ul>
-<hr>
 <h2 id="DNNRegressor"><a href="#DNNRegressor" class="headerlink" title="DNNRegressor"></a>DNNRegressor</h2><p>下面以波士顿房价预测的例子来说明一下 DNNRegressor 的使用。</p>
 <p>波士顿房价数据集大小为 506*14，也就是说有 506 个样本，每个样本有 13 个特征，另外一个是要预测的房价。数据集我们直接使用 scikit-learn 的 <code>load_boston()</code> 函数直接载入，这里引用下UCI 的解释：</p>
 <blockquote>
@@ -467,10 +466,10 @@ height:50vh;
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">训练集：(354, 13)</span><br><span class="line">测试集：(152, 13)</span><br></pre></td></tr></table></figure>
 <p>在进行下一步之前，我们先来简单的看下这个数据集的分布情况。</p>
 <p>各个变量的 violin 图，从这些图我们可以看出每个变量的分布情况：</p>
-<p><img src="http://img.blog.csdn.net/20170602195143390?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="violinplot"></p>
+<p><img src="https://i.imgur.com/4kCw6Qo.png" alt="violinplot"></p>
 <p>14 个变量之间的相关情况：</p>
-<p><img src="http://img.blog.csdn.net/20170602200737942?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="corrplot"><br><em>右键在新标签页打开可以查看大图</em></p>
-<p>从这个图我们可以看出 RM （住宅平均房间数）与最终的售价是最正相关的，而 LSTAT （人口中地位低下者的比例）是最负相关的。</p>
+<p><img src="https://i.imgur.com/grQ9VAA.png" alt="corrplot"></p>
+<p>从这个图我们可以看出 RM（住宅平均房间数）与最终的售价是最正相关的，而 LSTAT（人口中地位低下者的比例）是最负相关的。</p>
 <h3 id="定义-FeatureColumn"><a href="#定义-FeatureColumn" class="headerlink" title="定义 FeatureColumn"></a>定义 <code>FeatureColumn</code></h3><p>TensorFlow 使用 <a href="https://www.tensorflow.org/tutorials/linear#feature_columns_and_transformations" target="_blank" rel="noopener"><code>FeatureColumn</code></a> 来表示数据集中的一个的特征，我们需要根据特征类型（连续或者分类）把原来的特征都转换成 <code>FeatureColumn</code>。此处数据已经都是连续数值了，所以直接使用 <code>tf.contrib.layers.real_valued_column()</code> 来转换成 <code>FeatureColumn</code>，如果是分类变量，则需要使用 <code>tf.contrib.layers.sparse_column_with_keys()</code> 或者 <code>tf.contrib.layers.sparse_column_with_hash_bucket()</code>。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">feature_cols = [tf.contrib.layers.real_valued_column(k) <span class="keyword">for</span> k <span class="keyword">in</span> FEATURE_COLUMNS]</span><br></pre></td></tr></table></figure>
 <h3 id="定义-regressor"><a href="#定义-regressor" class="headerlink" title="定义 regressor"></a>定义 regressor</h3><p>这里就到定义模型的时候了，也就是 DNNRegressor，将我们前面定义的 <code>FeatureColumn</code> 传进去，再设置下隐藏层的层数和神经元数量，指定模型保存目录（训练完成后可以使用 tensorboard 可视化网络结构和训练过程）。</p>
@@ -488,17 +487,15 @@ height:50vh;
 <p>测试结果是一个字典，包括最终损失和迭代步数：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ev: &#123;&apos;loss&apos;: 32.229404, &apos;global_step&apos;: 5000&#125;</span><br></pre></td></tr></table></figure>
 <p>我们从 TensorBoard 可以看到最终的训练损失和测试损失：</p>
-<p><img src="http://img.blog.csdn.net/20170602215657871?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="loss"><br><em>右键在新标签页打开可以查看大图</em></p>
+<p><img src="https://i.imgur.com/nldZ5mk.png" alt="loss"></p>
 <p>整个计算图是这样的：</p>
-<p><img src="http://img.blog.csdn.net/20170602215843609?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="graph"><br><em>右键在新标签页打开可以查看大图</em></p>
+<p><img src="https://i.imgur.com/YIAt4Zq.png" alt="graph"></p>
 <h3 id="预测"><a href="#预测" class="headerlink" title="预测"></a>预测</h3><p>使用训练好的模型对测试数据进行预测，只输出前 10 项预测结果：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">predict = regressor.predict(input_fn=test_input_fn, as_iterable=<span class="keyword">False</span>)</span><br><span class="line">print(predict[:<span class="number">10</span>])</span><br></pre></td></tr></table></figure>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[ <span class="number">25.04570198</span>  <span class="number">31.65488815</span>  <span class="number">11.31779861</span>  <span class="number">14.20497131</span>  <span class="number">31.12402344</span></span><br><span class="line">  <span class="number">37.50260925</span>  <span class="number">25.20910835</span>  <span class="number">24.17683983</span>  <span class="number">20.83440208</span>  <span class="number">35.22043991</span>]</span><br></pre></td></tr></table></figure>
-<hr>
 <h2 id="Trouble-Shooting"><a href="#Trouble-Shooting" class="headerlink" title="Trouble Shooting"></a>Trouble Shooting</h2><h3 id="InternalError-see-above-for-traceback-Blas-SGEMM-launch-failed"><a href="#InternalError-see-above-for-traceback-Blas-SGEMM-launch-failed" class="headerlink" title="InternalError (see above for traceback): Blas SGEMM launch failed"></a><code>InternalError (see above for traceback): Blas SGEMM launch failed</code></h3><p>如果你的程序报类似这样的错，说明你在使用 GPU 计算（默认行为）且你的 GPU 可用显存不足，TensorFlow 总是试图为自己分配全部显存，例如你的显存是 2GB，那么他就会试图为自己分配 2GB，但是一般情况下你的显存不会一点都不被其他程序占用的，导致 TensorFlow 分配显存失败。</p>
 <p><strong>解决办法</strong>是在定义 regressor 的时候使用 <code>config</code> 参数中的 <code>gpu_memory_fraction</code> 来指定分配给 TensorFlow 的显存大小（比例）：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># log_device_placement 用于记录并输出使用的设备，可以不用写</span></span><br><span class="line">config = tf.contrib.learn.RunConfig(gpu_memory_fraction=<span class="number">0.3</span>, log_device_placement=<span class="keyword">True</span>)</span><br><span class="line">regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_cols, </span><br><span class="line">                                          hidden_units=[<span class="number">64</span>, <span class="number">128</span>], </span><br><span class="line">                                          model_dir=<span class="string">'./models/dnnregressor'</span>, </span><br><span class="line">                                          config=config)</span><br></pre></td></tr></table></figure>
-<hr>
 <h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
     </article>
     <!-- license  -->

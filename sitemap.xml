@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://secsilm.github.io/2017/06/02/tensorflow-DNNRegressor/</loc>
+    
+    <lastmod>2018-07-29T12:39:26.164Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://secsilm.github.io/2018/07/18/text-classification-with-tensorflow-estimator/</loc>
     
     <lastmod>2018-07-22T09:38:19.121Z</lastmod>
@@ -124,13 +131,6 @@
     <loc>https://secsilm.github.io/2017/08/20/understanding-tensorboard/</loc>
     
     <lastmod>2017-12-26T15:22:34.117Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://secsilm.github.io/2017/06/02/tensorflow-DNNRegressor/</loc>
-    
-    <lastmod>2017-12-26T02:07:47.750Z</lastmod>
     
   </url>
   
@@ -331,13 +331,6 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/04/22/python-fire/</loc>
-    
-    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://secsilm.github.io/2017/06/17/numpy-shuffle-permutation/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
@@ -345,14 +338,21 @@
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
+    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://secsilm.github.io/2017/05/18/installing-xgboost/</loc>
+    <loc>https://secsilm.github.io/2017/04/22/python-fire/</loc>
+    
+    <lastmod>2017-12-23T00:22:03.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://secsilm.github.io/2017/03/17/tensorflow-cnn-tensorboard/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

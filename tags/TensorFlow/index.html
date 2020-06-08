@@ -362,6 +362,39 @@
     
     
     <article class="index-post">
+        <a class="abstract-title" href = "/2020/06/04/count-lstm-params/" >
+            
+                <span>计算 LSTM 的参数量</span>
+        </a>
+        <div class="abstract-content">
+            理论上的参数量之前翻译了 Christopher Olah 的那篇著名的 Understanding LSTM Networks，这篇文章对于整体理解 LSTM 很有帮助，但是在理解 LSTM 的参数数量这种细节方面，略有不足。本文就来补充一下，讲讲如何计算 LSTM 的参数数量。
+
+建议阅读...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2020/06/04</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
         <a class="abstract-title" href = "/2020/05/08/bert-model/" >
             
                 <span>BERT 是如何构建模型的</span>
@@ -385,11 +418,11 @@ BERT 模型的大致结构可能大家已经很...
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
             
@@ -420,11 +453,11 @@ BERT 模型的大致结构可能大家已经很...
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
             
@@ -456,13 +489,13 @@ BERT 模型的大致结构可能大家已经很...
             
             <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Translation">Translation</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Translation">Translation</a>
     
 </div>
             
@@ -552,9 +585,9 @@ Datasets：创建一个输入管道（input pipeli...
             
             <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
             
@@ -583,9 +616,9 @@ Datasets：创建一个输入管道（input pipeli...
             
             <div class= abstract-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
             
@@ -647,41 +680,6 @@ Datasets：创建一个输入管道（input pipeli...
             <!-- tags  -->
             
             <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
-    
-</div>
-            
-        </div>
-    </article>
-    
-    
-    
-    
-    
-    
-    <article class="index-post">
-        <a class="abstract-title" href = "/2016/12/28/tensorflow-cnn-no-tensorboard/" >
-            
-                <span>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</span>
-        </a>
-        <div class="abstract-content">
-            <p><a href="http://blog.csdn.net/u010099080/article/details/53234227" target="_blank" rel="noopener">前面</a> 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 <strong>46.98%</strong>。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。</p>
-<p>本文代码基于 <a href="https://www.tensorflow.org/tutorials/deep_cnn/" target="_blank" rel="noopener">TensorFlow 的官方文档</a> 做了些许修改，完整代码及结果图片可从 <a href="http://download.csdn.net/download/u010099080/9723302" target="_blank" rel="noopener">这里</a> 下载。</p>
-<p><a href="http://blog.csdn.net/u010099080/article/details/62882006" target="_blank" rel="noopener">这篇</a> 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。</p>
-        </div>
-        <div class="abstract-post-meta">
-            <!-- date  -->
-            <div class="abstract-date">
-                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2016/12/28</span>
-            </div>
-            <!-- tags  -->
-            
-            <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
@@ -1455,15 +1453,9 @@ Datasets：创建一个输入管道（input pipeli...
     
     
     
-    
-    
-    
-    
-    
-    
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 47
+        Total : 49
         </div>
         <!-- search  -->
         
@@ -1479,7 +1471,17 @@ Datasets：创建一个输入管道（input pipeli...
     
     
         <li class="archive-post-item">
+            <span class="archive-post-date">06/04</span><a class="archive-post-title" href= "/2020/06/04/count-lstm-params/" >计算 LSTM 的参数量</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
             <span class="archive-post-date">05/22</span><a class="archive-post-title" href= "/2020/05/22/understanding-edit-distance/" >理解编辑距离</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/22</span><a class="archive-post-title" href= "/2020/05/22/find-subsequences/" >寻找所有公共子序列并返回索引</a>
         </li>
     
     
@@ -1762,11 +1764,21 @@ Datasets：创建一个输入管道（input pipeli...
         <div class="sidebar-panel-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name" data-tags="Tools"><span class="iconfont-archer">&#xe606;</span>Tools</span>
-    
         <span class="sidebar-tag-name" data-tags="Python"><span class="iconfont-archer">&#xe606;</span>Python</span>
     
         <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
+    
+        <span class="sidebar-tag-name" data-tags="Tools"><span class="iconfont-archer">&#xe606;</span>Tools</span>
+    
+        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
+    
+        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
+    
+        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
+    
+        <span class="sidebar-tag-name" data-tags="置顶"><span class="iconfont-archer">&#xe606;</span>置顶</span>
+    
+        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
     
         <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
     
@@ -1774,21 +1786,11 @@ Datasets：创建一个输入管道（input pipeli...
     
         <span class="sidebar-tag-name" data-tags="MATLAB"><span class="iconfont-archer">&#xe606;</span>MATLAB</span>
     
-        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
-    
         <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
     
         <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
     
-        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
-    
         <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
-    
-        <span class="sidebar-tag-name" data-tags="置顶"><span class="iconfont-archer">&#xe606;</span>置顶</span>
-    
-        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
-    
-        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
     
     </div>
     <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
@@ -1856,22 +1858,7 @@ jsonContent:
     </div>
     <!-- async load share.js -->
      
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-</body>
+    </body>
 </html>
 
 

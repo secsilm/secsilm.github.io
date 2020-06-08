@@ -286,11 +286,11 @@ height:50vh;
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
     
 </div>
                 
@@ -440,10 +440,10 @@ height:50vh;
 <p>Python 中可以通过 <code>ord(c)</code> 来获取字符 <code>c</code> 的码位，使用 <code>chr(i)</code> 来获取码位为 <code>i</code> 的 Unicode 字符，$0 \leq i \leq \text{0x10ffff}$，即十进制的 $[0, 1114111]$。</p>
 </blockquote>
 <ul>
-<li>码位为 0 的 <code>\x00</code>，即<a href="https://en.wikipedia.org/wiki/Null_character" target="_blank" rel="noopener">空字符</a>（Null character），或叫结束符，肉眼不可见，属于<a href="https://en.wikipedia.org/wiki/Control_character" target="_blank" rel="noopener">控制字符</a>，一般在字符串末尾。注意不是空格，空格的码位是 32</li>
-<li>码位为 0xfffd（十进制 65533）的 <code>�</code>，即<a href="https://en.wikipedia.org/wiki/Specials_(Unicode_block" target="_blank" rel="noopener">替换字符</a>)（REPLACEMENT CHARACTER），通常用来替换未知、无法识别或者无法表示的字符</li>
-<li>除 <code>\t</code>、<code>\r</code> 和 <code>\n</code> 以外的控制字符（Control character），即 Unicode 类别是 <code>Cc</code> 和 <code>Cf</code> 的字符。可以使用 <code>unicodedata.category(c)</code> 来查看 <code>c</code> 的 Unicode 类别。代码中用 <code>_is_control(char)</code> 来判断 <code>char</code> 是不是控制字符</li>
-<li>将所有空白字符转换为一个空格，包括标准空格、<code>\t</code>、<code>\r</code>、<code>\n</code> 以及 Unicode 类别为 <code>Zs</code> 的字符。代码中用 <code>_is_whitespace(char)</code> 来判断 <code>char</code> 是不是空白字符</li>
+<li>码位为 0 的 <code>\x00</code>，即<a href="https://en.wikipedia.org/wiki/Null_character" target="_blank" rel="noopener">空字符</a>（Null character），或叫结束符，肉眼不可见，属于<a href="https://en.wikipedia.org/wiki/Control_character" target="_blank" rel="noopener">控制字符</a>，一般在字符串末尾。注意不是空格，空格的码位是 32。</li>
+<li>码位为 0xfffd（十进制 65533）的 <code>�</code>，即<a href="https://en.wikipedia.org/wiki/Specials_(Unicode_block" target="_blank" rel="noopener">替换字符</a>)（REPLACEMENT CHARACTER），通常用来替换未知、无法识别或者无法表示的字符。</li>
+<li>除 <code>\t</code>、<code>\r</code> 和 <code>\n</code> 以外的控制字符（Control character），即 Unicode 类别是 <code>Cc</code> 和 <code>Cf</code> 的字符。可以使用 <code>unicodedata.category(c)</code> 来查看 <code>c</code> 的 Unicode 类别。代码中用 <code>_is_control(char)</code> 来判断 <code>char</code> 是不是控制字符。</li>
+<li>将所有空白字符转换为一个空格，包括标准空格、<code>\t</code>、<code>\r</code>、<code>\n</code> 以及 Unicode 类别为 <code>Zs</code> 的字符。代码中用 <code>_is_whitespace(char)</code> 来判断 <code>char</code> 是不是空白字符。</li>
 </ul>
 <p>经过这步后，<code>example</code> 中的 <code>\r\n</code> 被替换成两个空格：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = _clean_text(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line"><span class="string">'Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。  '</span></span><br></pre></td></tr></table></figure>
@@ -459,7 +459,7 @@ height:50vh;
 <li>[0xF900, 0xFAFF]：十进制 [63744, 64255]</li>
 <li>[0x2F800, 0x2FA1F]：十进制 [194560, 195103]</li>
 </ul>
-<p>其实我觉得这个范文可以再精简下，因为有几个区间是相邻的，下面三个区间：</p>
+<p>其实我觉得这个范围可以再精简下，因为有几个区间是相邻的，下面三个区间：</p>
 <ul>
 <li>[0x2A700, 0x2B73F]：十进制 [173824, <strong>177983</strong>]</li>
 <li>[0x2B740, 0x2B81F]：十进制 [<strong>177984</strong>, <strong>178207</strong>]</li>
@@ -1399,15 +1399,9 @@ top:50vh;
     
     
     
-    
-    
-    
-    
-    
-    
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 47
+        Total : 49
         </div>
         <!-- search  -->
         
@@ -1423,7 +1417,17 @@ top:50vh;
     
     
         <li class="archive-post-item">
+            <span class="archive-post-date">06/04</span><a class="archive-post-title" href= "/2020/06/04/count-lstm-params/" >计算 LSTM 的参数量</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
             <span class="archive-post-date">05/22</span><a class="archive-post-title" href= "/2020/05/22/understanding-edit-distance/" >理解编辑距离</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/22</span><a class="archive-post-title" href= "/2020/05/22/find-subsequences/" >寻找所有公共子序列并返回索引</a>
         </li>
     
     
@@ -1706,11 +1710,21 @@ top:50vh;
         <div class="sidebar-panel-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name" data-tags="Tools"><span class="iconfont-archer">&#xe606;</span>Tools</span>
-    
         <span class="sidebar-tag-name" data-tags="Python"><span class="iconfont-archer">&#xe606;</span>Python</span>
     
         <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
+    
+        <span class="sidebar-tag-name" data-tags="Tools"><span class="iconfont-archer">&#xe606;</span>Tools</span>
+    
+        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
+    
+        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
+    
+        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
+    
+        <span class="sidebar-tag-name" data-tags="置顶"><span class="iconfont-archer">&#xe606;</span>置顶</span>
+    
+        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
     
         <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
     
@@ -1718,21 +1732,11 @@ top:50vh;
     
         <span class="sidebar-tag-name" data-tags="MATLAB"><span class="iconfont-archer">&#xe606;</span>MATLAB</span>
     
-        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
-    
         <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
     
         <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
     
-        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
-    
         <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
-    
-        <span class="sidebar-tag-name" data-tags="置顶"><span class="iconfont-archer">&#xe606;</span>置顶</span>
-    
-        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
-    
-        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
     
     </div>
     <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
@@ -1800,24 +1804,9 @@ jsonContent:
     </div>
     <!-- async load share.js -->
     
-        <script src="/scripts/share.js" async></script>    
+        <script src="/scripts/share.js" async></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->    
      
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
-</body>
+    </body>
 </html>
 
 

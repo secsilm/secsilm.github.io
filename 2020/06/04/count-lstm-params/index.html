@@ -284,9 +284,9 @@ height:50vh;
                 
                     <div class= post-intro-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
     
 </div>
                 
@@ -428,7 +428,9 @@ height:50vh;
 <blockquote>
 <p>实际上我觉得这里 $x_t$ 并不准确，第一个 $x_t$ 应该指的是整句话，而第二个 $x_t$ 应该指的是这句话中最后一个词，所以为了避免歧义，我认为可以将第一个 $x_t$ 重命名为 $x$，第二个仍然保留，即现在 $x$ 表示一句话，该句话有 $t+1$ 个词，$x_t$ 表示该句话的第 $t+1$ 个词，$t \in [0, t]$。</p>
 </blockquote>
-<p>始终要记住这么多 $A$ 都是一样的，权重是一样的，$x_0$ 到 $x_t$ 是一个个词，每一次的处理都依赖前一个词的处理结果，这也是 RNN 系的网络难以像 CNN 一样并行加速的原因。</p>
+<p>始终要记住这么多 $A$ 都是一样的，权重是一样的，$x_0$ 到 $x_t$ 是一个个词，每一次的处理都依赖前一个词的处理结果，这也是 RNN 系的网络难以像 CNN 一样并行加速的原因。同时， 这就像一个递归过程，如果把求 $h_t$ 的公式展开写，$A$ 里的权重记为 $W$，那么就会发现需要 $t$ 个 $W$ 相乘，即 $W^t$，这是非常恐怖的：</p>
+<script type="math/tex; mode=display">0.9^{100} = 2.6561398887587544 \times 10^{-5}</script><script type="math/tex; mode=display">1.1^{100} = 13780.61233982238</script><p>一个不那么小的数被多次相乘之后会变得很小，一个不那么大的数被多次相乘之后会变得很大。所以，这也是普通 RNN 容易出现梯度消失/爆炸的问题的<a href="https://youtu.be/S27pHKBEp30?t=284" target="_blank" rel="noopener">原因</a>。</p>
+<p>扯远了点。</p>
 <p>那么 LSTM 的参数很明显了，就是这个 $A$ 中的参数。这个 $A$ 内部具体是这样的：</p>
 <p><img src="https://i.loli.net/2020/06/03/3UDWxmOfbr7acE4.png" alt="cell.png"></p>
 <p>从这张图来理解参数的数量你可能有点懵逼，一步一步来看，实际上这里面有 4 个非线性变换（3 个 门 + 1 个 tanh），每一个非线性变换说白了就是一个两层的全连接网络。重点来了，第一层是 $x_i$ 和 $h_i$ 的结合，维度就是 <code>embedding_size + hidden_size</code>，第二层就是输出层，维度为 <code>hidden_size</code>，所以该网络的参数量就是：</p>
@@ -625,82 +627,6 @@ top:50vh;
     <div class="sidebar-content sidebar-content-show-archive">
           <div class="sidebar-panel-archives">
     <!-- 在ejs中将archive按照时间排序 -->
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -1689,11 +1615,21 @@ top:50vh;
         <div class="sidebar-panel-tags">
     <div class="sidebar-tags-name">
     
-        <span class="sidebar-tag-name" data-tags="Tools"><span class="iconfont-archer">&#xe606;</span>Tools</span>
-    
         <span class="sidebar-tag-name" data-tags="Python"><span class="iconfont-archer">&#xe606;</span>Python</span>
     
         <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
+    
+        <span class="sidebar-tag-name" data-tags="Tools"><span class="iconfont-archer">&#xe606;</span>Tools</span>
+    
+        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
+    
+        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
+    
+        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
+    
+        <span class="sidebar-tag-name" data-tags="置顶"><span class="iconfont-archer">&#xe606;</span>置顶</span>
+    
+        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
     
         <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
     
@@ -1701,21 +1637,11 @@ top:50vh;
     
         <span class="sidebar-tag-name" data-tags="MATLAB"><span class="iconfont-archer">&#xe606;</span>MATLAB</span>
     
-        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
-    
         <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
     
         <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
     
-        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
-    
         <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
-    
-        <span class="sidebar-tag-name" data-tags="置顶"><span class="iconfont-archer">&#xe606;</span>置顶</span>
-    
-        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
-    
-        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
     
     </div>
     <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
@@ -1783,24 +1709,9 @@ jsonContent:
     </div>
     <!-- async load share.js -->
     
-        <script src="/scripts/share.js" async></script>    
+        <script src="/scripts/share.js" async></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->    
      
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
-</body>
+    </body>
 </html>
 
 

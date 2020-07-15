@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://alanlee.fun/"/>
-  <updated>2020-07-13T13:48:16.716Z</updated>
+  <updated>2020-07-04T01:31:56.360Z</updated>
   <id>https://alanlee.fun/</id>
   
   <author>
@@ -15,31 +15,6 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
-  
-  <entry>
-    <title>Résumé</title>
-    <link href="https://alanlee.fun/2020/07/13/r%C3%A9sum%C3%A9/"/>
-    <id>https://alanlee.fun/2020/07/13/résumé/</id>
-    <published>2020-07-13T12:35:34.000Z</published>
-    <updated>2020-07-13T13:48:16.716Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="关于我"><a href="#关于我" class="headerlink" title="关于我"></a>关于我</h2><ul><li>1993 年生，2018 年硕士毕业，现居北京小山村。</li><li>熟悉 CNN、LSTM、BERT 等深度学习常用算法和分类、NER 等 NLP 任务。</li><li>使用 Python、TensorFlow，有 TensorFlow Serving 使用经验。</li><li>可以使用 Flask 编写基本的算法接口，部署模型。</li><li>熟悉 Linux 和 Docker 常用操作。</li><li>坚持写技术博客，目前 <a href="https://secsilm.blog.csdn.net/" target="_blank" rel="noopener">CSDN 博客</a>总阅读量超百万（大部分原创，无转载）。当然还有你现在看到的这个博客。</li><li><a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>。</li></ul><h2 id="项目经历"><a href="#项目经历" class="headerlink" title="项目经历"></a>项目经历</h2><p>2018.07 - 至今，某半国企 NLP 算法工程师。</p><ul><li><p>X 网站后台政策分类</p><ul><li>项目简介：对该网站上传的政策做自动分类，减少后台人工参与量，简化发文流程。</li><li>负责内容：负责从数据收集到模型部署所有流程，包括数据收集（由于一些原因无法直接获取原始数据，故需自己写爬虫抓取当时双创网中所有政策，接近 2000 份，9 个类别）、数据清洗（分词、停用词处理、整理格式等）、词向量训练（skip-gram）、模型训练（DNN）、模型部署（TensorFlow Serving 和 API 编写）。</li></ul></li><li><p>AI 开放平台</p><ul><li>项目简介：打造一个 AI 开放平台，为开发者和公司内部提供NLP、KG 和 CV API 接口，方便其他应用调用和开发。</li><li>负责内容：NLP 数据集的收集整理和标注，训练部署基于 BERT 的 NLP 模型（评论情感分析、文章分类、文章标签和命名实体识别），编写算法 API 接口，打包 docker 镜像。此外包括其他各个算法镜像管理和文档编写等，前期部分和后期所有后端（非算法 API）接口，如算法调度、数据库相关。</li></ul></li><li><p>X 律所专利和商标信息抽取</p><ul><li>项目简介：实际上这是两个项目，类型相似，均是为了节省律所整理专利局商标局下发的专利和商标所需人工、时间成本。</li><li>负责内容：主要负责信息抽取部分，使用基于 BERT 的分类模型和 NER 模型分别判断官文类型和抽取律师对象、地址等信息，使用TFS 部署，BIOES 标注格式，97% 左右准确率。一些较有规律的字段使用正则等规则方法进行提取。此外包括 TIF 拆分、我方接口编写和部署和客户方程序编写和部署等。</li></ul></li><li><p>X 银行智能核对</p><ul><li>项目简介：将纸质审计证据转换为可编辑、可运算的数据，并自动关联银行日记账进行挖掘利用，帮助客户降低成本。</li><li>负责内容：负责从对账单中提取公司名用以后续比对，使用训练过的基于 BERT 的 NER 模型。</li></ul></li></ul><h2 id="学历"><a href="#学历" class="headerlink" title="学历"></a>学历</h2><ul><li>2011.10 – 2015.06，本科，天津商业大学，信息与计算科学专业应用统计方向。</li><li>2015.09 – 2018.06，硕士，天津科技大学，计算机应用技术专业。</li></ul><h2 id="联系我"><a href="#联系我" class="headerlink" title="联系我"></a>联系我</h2><p>如果您觉得我有戏，可以邮件联系我：secsilm at outlook dot com。谢谢。</p><h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h2 id=&quot;关于我&quot;&gt;&lt;a href=&quot;#关于我&quot; class=&quot;headerlink&quot; title=&quot;关于我&quot;&gt;&lt;/a&gt;关于我&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;1993 年生，2018 年硕士毕业，现居北京小山村。&lt;/li&gt;
-&lt;li&gt;熟悉 CNN、LSTM、BERT 等深度学习常
-      
-    
-    </summary>
-    
-    
-      <category term="临时" scheme="https://alanlee.fun/tags/%E4%B8%B4%E6%97%B6/"/>
-    
-  </entry>
   
   <entry>
     <title>Pixel 重置后卡在检查更新界面的一种解决办法</title>
@@ -537,6 +512,30 @@
       <category term="Machine Learning" scheme="https://alanlee.fun/tags/Machine-Learning/"/>
     
       <category term="Translation" scheme="https://alanlee.fun/tags/Translation/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>在本地使用远程 Jupyter Lab 服务器</title>
+    <link href="https://alanlee.fun/2018/07/14/remote-jupyter/"/>
+    <id>https://alanlee.fun/2018/07/14/remote-jupyter/</id>
+    <published>2018-07-14T02:35:34.000Z</published>
+    <updated>2018-07-21T03:26:25.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看<a href="https://github.com/jupyterlab/jupyterlab" target="_blank" rel="noopener">项目地址</a>。<strong>强烈推荐使用 Jupyter Lab。</strong></p></blockquote><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>一般来说，我们都是在本地使用 Jupyter Lab，但有时候我们需要（想）在远程服务器上运行 Jupyter Lab，因为配置相对我们本地的 PC 要好点，这时候就需要在服务器上启动一个 lab，然后在本地浏览器访问。其实这方面在<a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html" target="_blank" rel="noopener">官方文档</a>上已经有相关说明，而且网络上也有其他方法（端口转发），如 <a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/" target="_blank" rel="noopener">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a>。这两种方法不太相同，官网的实现效果是在本地浏览器输入服务器 IP + 端口，而后者的方法是采用了端口转发的方法，不管服务器的 IP 和端口是多少，最后只需要在本地浏览器输入 <code>localhost:8888</code> 就行，和在本地运行 Jupyter Lab 是一样的。</p><p>本质上来说，我们需要实现的是这样一个东西：</p><ol><li>在远程服务器上启动 Jupyter Lab</li><li>在本地浏览器上访问使用远程服务器的 Jupyter Lab，所有的计算都在远程服务器完成</li></ol><p>其实我刚开始用的是 <a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/" target="_blank" rel="noopener">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a> 的方法，即端口转发，但是我在成功了一次后就在也没成功了，后续连接一直报 <code>ERROR_CONNECTION_RESET</code> 错误，搜寻无果，无奈之下就又去官网看了看。</p><p><img src="https://i.imgur.com/nOvsXbY.png" alt="ERROR_CONNECTION_RESET"></p><p>官方文档是真的详细……什么加密安全都想好了，但是对我来说，我用不着这些，因为我就是在局域网内用，而且就我一个人用，也不公开，所以说流程就可以简化很多了。</p><h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><p>你要做的很简单：</p><ol><li>【本地】登入远程服务器：<code>ssh USER@IP -p PORT</code></li><li><p>【远程服务器】在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中写入如下内容，尤其是 <code>&quot;ip&quot;: &quot;*&quot;</code>，这样让服务器监听所有 ip：</p> <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"NotebookApp"</span>: &#123;</span><br><span class="line">    <span class="attr">"ip"</span>: <span class="string">"*"</span>,</span><br><span class="line">    <span class="attr">"open_browser"</span>: <span class="literal">false</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li><li><p>【远程服务器】启动 Jupyter Lab：<code>jupyter lab --port LAB_PORT --no-browser</code></p></li><li>【本地】打开浏览器（chrome），地址栏输入 <code>IP:LAB_PORT</code> 回车，done</li></ol><p>在第 2 步时，如果你想为自己的 Jupyter Lab 设置一个密码，那么你可以在终端内输入 <code>jupyter notebook password</code>，然后会提示你输入密码，此时输入你想要设置的密码就行，不必像其他教程那样用工具生成加密的密码，因为 Jupyter Notebook 会为你自动生成。你可以在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中看到类似如下的内容，其中 <code>*****</code> 是一长串的加密过后的密码。</p><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"NotebookApp"</span>: &#123;</span><br><span class="line">    <span class="attr">"password"</span>: <span class="string">"sha1:*****"</span>,</span><br><span class="line">    <span class="attr">"ip"</span>: <span class="string">"*"</span>,</span><br><span class="line">    <span class="attr">"open_browser"</span>: <span class="literal">false</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>然后当你在本地浏览器输入 <code>IP:LAB_PORT</code> 回车时，会要求你输入密码：</p><p><img src="https://i.imgur.com/UvPymtH.png" alt="jupyter lab password"></p><p>这种方法适合在本地 PC 和远程服务器在同一个局域网内的情况，对于不在局域网内的情况还不行，应该是需要在远程服务器上配置防火墙开放端口，但是由于我没有 root 权限，设置不了防火墙。</p><h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul><li><a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html" target="_blank" rel="noopener">Running a notebook server — Jupyter Notebook 5.5.0 documentation</a></li><li><a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/" target="_blank" rel="noopener">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a></li><li><a href="https://agent-jay.github.io/2018/03/jupyterserver/" target="_blank" rel="noopener">Setting up a Jupyter Lab remote server | Kernel of Truth</a></li></ul><h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt;注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看&lt;a href=&quot;https://github.com/jupyterlab/jupyterlab&quot; target=&quot;_blank&quot; rel
+      
+    
+    </summary>
+    
+    
+      <category term="Python" scheme="https://alanlee.fun/tags/Python/"/>
     
   </entry>
   

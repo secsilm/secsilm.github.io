@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://alanlee.fun/"/>
-  <updated>2020-07-04T01:31:56.360Z</updated>
+  <updated>2020-10-25T09:49:26.384Z</updated>
   <id>https://alanlee.fun/</id>
   
   <author>
@@ -15,6 +15,38 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Windows Terminal 快捷键</title>
+    <link href="https://alanlee.fun/2020/10/25/windows-terminal-hotkeys/"/>
+    <id>https://alanlee.fun/2020/10/25/windows-terminal-hotkeys/</id>
+    <published>2020-10-25T13:34:53.000Z</published>
+    <updated>2020-10-25T09:49:26.384Z</updated>
+    
+    <content type="html"><![CDATA[<p>这里记录一下常用的 Windows terminal 快捷键。</p><div class="table-container"><table><thead><tr><th>序号</th><th>快捷键</th><th>说明</th></tr></thead><tbody><tr><td>1</td><td><kbd><code>Alt</code></kbd> + <kbd><code>Shift</code></kbd> + <kbd><code>=</code></kbd></td><td>横向 split</td></tr><tr><td>2</td><td><kbd><code>Alt</code></kbd> + <kbd><code>Shift</code></kbd> + <kbd><code>-</code></kbd></td><td>纵向 split</td></tr><tr><td>3</td><td><kbd><code>Alt</code></kbd> + 方向键</td><td>在各个 panes 之间切换</td></tr><tr><td>4</td><td><kbd><code>Alt</code></kbd> + <kbd><code>Shift</code></kbd> + 方向键</td><td>调整 pane 的大小</td></tr><tr><td>5</td><td><kbd><code>Ctrl</code></kbd> + <kbd><code>Shift</code></kbd> + <kbd><code>W</code></kbd></td><td>关闭当前 pane，注意如果是最后一个的话会直接关闭整个 terminal 窗口</td></tr></tbody></table></div><p>值得说明的是，如果你想改这些默认的快捷键，可以在 <code>settings.json</code> 里改，格式大致如下：</p><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123; "command": &#123; "action": "splitPane", "split": "vertical" &#125;, "keys": "alt+shift+=" &#125;,</span><br><span class="line">&#123; "command": &#123; "action": "splitPane", "split": "horizontal" &#125;, "keys": "alt+shift+-" &#125;,</span><br><span class="line">&#123; <span class="attr">"command"</span>: &#123; <span class="attr">"action"</span>: <span class="string">"splitPane"</span>, <span class="attr">"split"</span>: <span class="string">"auto"</span> &#125;, <span class="attr">"keys"</span>: <span class="string">"alt+shift+d"</span> &#125;</span><br></pre></td></tr></table></figure><p>其中 <code>action</code> 有多种选择： 分割 <code>splitPane</code>、切换 pane <code>moveFocus</code>、调整大小 <code>resizePane</code>、关闭 pane <code>closePane</code>，每种不同的 action 都有不同的模式，具体可参考<a href="https://docs.microsoft.com/en-us/windows/terminal/panes" target="_blank" rel="noopener">官方文档</a>。</p><h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul><li><a href="https://docs.microsoft.com/en-us/windows/terminal/panes" target="_blank" rel="noopener">Windows Terminal Panes | Microsoft Docs</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;这里记录一下常用的 Windows terminal 快捷键。&lt;/p&gt;
+&lt;div class=&quot;table-container&quot;&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;序号&lt;/th&gt;
+&lt;th&gt;快捷键&lt;/th&gt;
+&lt;th&gt;说明&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead
+      
+    
+    </summary>
+    
+    
+      <category term="Windows" scheme="https://alanlee.fun/tags/Windows/"/>
+    
+  </entry>
   
   <entry>
     <title>Pixel 重置后卡在检查更新界面的一种解决办法</title>
@@ -512,30 +544,6 @@
       <category term="Machine Learning" scheme="https://alanlee.fun/tags/Machine-Learning/"/>
     
       <category term="Translation" scheme="https://alanlee.fun/tags/Translation/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>在本地使用远程 Jupyter Lab 服务器</title>
-    <link href="https://alanlee.fun/2018/07/14/remote-jupyter/"/>
-    <id>https://alanlee.fun/2018/07/14/remote-jupyter/</id>
-    <published>2018-07-14T02:35:34.000Z</published>
-    <updated>2018-07-21T03:26:25.000Z</updated>
-    
-    <content type="html"><![CDATA[<blockquote><p>注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看<a href="https://github.com/jupyterlab/jupyterlab" target="_blank" rel="noopener">项目地址</a>。<strong>强烈推荐使用 Jupyter Lab。</strong></p></blockquote><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>一般来说，我们都是在本地使用 Jupyter Lab，但有时候我们需要（想）在远程服务器上运行 Jupyter Lab，因为配置相对我们本地的 PC 要好点，这时候就需要在服务器上启动一个 lab，然后在本地浏览器访问。其实这方面在<a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html" target="_blank" rel="noopener">官方文档</a>上已经有相关说明，而且网络上也有其他方法（端口转发），如 <a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/" target="_blank" rel="noopener">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a>。这两种方法不太相同，官网的实现效果是在本地浏览器输入服务器 IP + 端口，而后者的方法是采用了端口转发的方法，不管服务器的 IP 和端口是多少，最后只需要在本地浏览器输入 <code>localhost:8888</code> 就行，和在本地运行 Jupyter Lab 是一样的。</p><p>本质上来说，我们需要实现的是这样一个东西：</p><ol><li>在远程服务器上启动 Jupyter Lab</li><li>在本地浏览器上访问使用远程服务器的 Jupyter Lab，所有的计算都在远程服务器完成</li></ol><p>其实我刚开始用的是 <a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/" target="_blank" rel="noopener">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a> 的方法，即端口转发，但是我在成功了一次后就在也没成功了，后续连接一直报 <code>ERROR_CONNECTION_RESET</code> 错误，搜寻无果，无奈之下就又去官网看了看。</p><p><img src="https://i.imgur.com/nOvsXbY.png" alt="ERROR_CONNECTION_RESET"></p><p>官方文档是真的详细……什么加密安全都想好了，但是对我来说，我用不着这些，因为我就是在局域网内用，而且就我一个人用，也不公开，所以说流程就可以简化很多了。</p><h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><p>你要做的很简单：</p><ol><li>【本地】登入远程服务器：<code>ssh USER@IP -p PORT</code></li><li><p>【远程服务器】在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中写入如下内容，尤其是 <code>&quot;ip&quot;: &quot;*&quot;</code>，这样让服务器监听所有 ip：</p> <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"NotebookApp"</span>: &#123;</span><br><span class="line">    <span class="attr">"ip"</span>: <span class="string">"*"</span>,</span><br><span class="line">    <span class="attr">"open_browser"</span>: <span class="literal">false</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li><li><p>【远程服务器】启动 Jupyter Lab：<code>jupyter lab --port LAB_PORT --no-browser</code></p></li><li>【本地】打开浏览器（chrome），地址栏输入 <code>IP:LAB_PORT</code> 回车，done</li></ol><p>在第 2 步时，如果你想为自己的 Jupyter Lab 设置一个密码，那么你可以在终端内输入 <code>jupyter notebook password</code>，然后会提示你输入密码，此时输入你想要设置的密码就行，不必像其他教程那样用工具生成加密的密码，因为 Jupyter Notebook 会为你自动生成。你可以在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中看到类似如下的内容，其中 <code>*****</code> 是一长串的加密过后的密码。</p><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"NotebookApp"</span>: &#123;</span><br><span class="line">    <span class="attr">"password"</span>: <span class="string">"sha1:*****"</span>,</span><br><span class="line">    <span class="attr">"ip"</span>: <span class="string">"*"</span>,</span><br><span class="line">    <span class="attr">"open_browser"</span>: <span class="literal">false</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>然后当你在本地浏览器输入 <code>IP:LAB_PORT</code> 回车时，会要求你输入密码：</p><p><img src="https://i.imgur.com/UvPymtH.png" alt="jupyter lab password"></p><p>这种方法适合在本地 PC 和远程服务器在同一个局域网内的情况，对于不在局域网内的情况还不行，应该是需要在远程服务器上配置防火墙开放端口，但是由于我没有 root 权限，设置不了防火墙。</p><h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul><li><a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html" target="_blank" rel="noopener">Running a notebook server — Jupyter Notebook 5.5.0 documentation</a></li><li><a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/" target="_blank" rel="noopener">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a></li><li><a href="https://agent-jay.github.io/2018/03/jupyterserver/" target="_blank" rel="noopener">Setting up a Jupyter Lab remote server | Kernel of Truth</a></li></ul><h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;blockquote&gt;
-&lt;p&gt;注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看&lt;a href=&quot;https://github.com/jupyterlab/jupyterlab&quot; target=&quot;_blank&quot; rel
-      
-    
-    </summary>
-    
-    
-      <category term="Python" scheme="https://alanlee.fun/tags/Python/"/>
     
   </entry>
   

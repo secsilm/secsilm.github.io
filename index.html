@@ -377,6 +377,37 @@ height:50vh;
     
     
     <article class="index-post">
+        <a class="abstract-title" href = "/2020/11/16/self-attentive-parser-paper/" >
+            
+                <span>Constituency Parsing with a Self-Attensive Encoder 论文解读</span>
+        </a>
+        <div class="abstract-content">
+            之前没咋涉略过 parsing 部分，最近有用到，遇到一个实现的很不错的库：benepar，无论是速度、代码还是性能上，伯克利出品。而本文要讲的论文就是 benepar 的参考论文：Constituency Parsing with a Self-Attensive Encoder，代码和论文...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2020/11/16</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Paper">Paper</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
         <a class="abstract-title" href = "/2020/10/25/windows-terminal-hotkeys/" >
             
                 <span>Windows Terminal 快捷键</span>
@@ -698,35 +729,6 @@ Alan Lee：主要用...
             <div class= abstract-tags >
     
         <a class="post-tag" href="javascript:void(0);" data-tags = "置顶">置顶</a>
-    
-</div>
-            
-        </div>
-    </article>
-    
-    
-    
-    
-    
-    
-    <article class="index-post">
-        <a class="abstract-title" href = "/2020/04/07/understanding-lcs/" >
-            
-                <span>理解最长公共子序列算法</span>
-        </a>
-        <div class="abstract-content">
-            最近看一篇 Google 的论文：《Encode, Tag, Realize: High-Precision Text Editing》，看源码的时候发现其前期预处理的时候用了最长公共子序列（Longest Common Subsequence，LCS）算法来生成词汇表。之前只是知道这个算法，...
-        </div>
-        <div class="abstract-post-meta">
-            <!-- date  -->
-            <div class="abstract-date">
-                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2020/04/07</span>
-            </div>
-            <!-- tags  -->
-            
-            <div class= abstract-tags >
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
     
 </div>
             
@@ -1680,20 +1682,9 @@ Alan Lee：主要用...
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 51
+        Total : 52
         </div>
         <!-- search  -->
         
@@ -1706,6 +1697,11 @@ Alan Lee：主要用...
     
     <div class="archive-year"> 2020 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/16</span><a class="archive-post-title" href= "/2020/11/16/self-attentive-parser-paper/" >Constituency Parsing with a Self-Attensive Encoder 论文解读</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -2048,6 +2044,8 @@ Alan Lee：主要用...
     
         <span class="sidebar-tag-name" data-tags="Windows"><span class="iconfont-archer">&#xe606;</span>Windows</span>
     
+        <span class="sidebar-tag-name" data-tags="Paper"><span class="iconfont-archer">&#xe606;</span>Paper</span>
+    
     </div>
     <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
     <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
@@ -2110,9 +2108,24 @@ jsonContent:
     <!-- CNZZ  -->
     
     </div>
-    <!-- async load share.js --><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    <!-- async load share.js -->
      
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>
 
 

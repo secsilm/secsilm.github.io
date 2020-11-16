@@ -362,6 +362,35 @@
     
     
     <article class="index-post">
+        <a class="abstract-title" href = "/2020/04/07/understanding-lcs/" >
+            
+                <span>理解最长公共子序列算法</span>
+        </a>
+        <div class="abstract-content">
+            最近看一篇 Google 的论文：《Encode, Tag, Realize: High-Precision Text Editing》，看源码的时候发现其前期预处理的时候用了最长公共子序列（Longest Common Subsequence，LCS）算法来生成词汇表。之前只是知道这个算法，...
+        </div>
+        <div class="abstract-post-meta">
+            <!-- date  -->
+            <div class="abstract-date">
+                <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2020/04/07</span>
+            </div>
+            <!-- tags  -->
+            
+            <div class= abstract-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+    
+</div>
+            
+        </div>
+    </article>
+    
+    
+    
+    
+    
+    
+    <article class="index-post">
         <a class="abstract-title" href = "/2020/03/15/meet-label-studio/" >
             
                 <span>试用开源标注平台 Label Studio</span>
@@ -1256,20 +1285,9 @@
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 51
+        Total : 52
         </div>
         <!-- search  -->
         
@@ -1282,6 +1300,11 @@
     
     <div class="archive-year"> 2020 </div>
     <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/16</span><a class="archive-post-title" href= "/2020/11/16/self-attentive-parser-paper/" >Constituency Parsing with a Self-Attensive Encoder 论文解读</a>
+        </li>
     
     
         <li class="archive-post-item">
@@ -1624,6 +1647,8 @@
     
         <span class="sidebar-tag-name" data-tags="Windows"><span class="iconfont-archer">&#xe606;</span>Windows</span>
     
+        <span class="sidebar-tag-name" data-tags="Paper"><span class="iconfont-archer">&#xe606;</span>Paper</span>
+    
     </div>
     <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
     <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
@@ -1688,7 +1713,22 @@ jsonContent:
     </div>
     <!-- async load share.js -->
      
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</body>
 </html>
 
 

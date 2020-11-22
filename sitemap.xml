@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://alanlee.fun/2020/11/22/c++-for-python-programmers/</loc>
+    
+    <lastmod>2020-11-22T11:39:10.846Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2020/11/16/self-attentive-parser-paper/</loc>
     
     <lastmod>2020-11-16T12:36:56.868Z</lastmod>
@@ -86,13 +93,6 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2016/11/19/tensorflow-mlp/</loc>
-    
-    <lastmod>2020-05-25T05:54:05.654Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/</loc>
     
     <lastmod>2020-05-25T05:54:05.654Z</lastmod>
@@ -100,7 +100,14 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2016/10/22/tensorflow-linear-regression/</loc>
+    <loc>https://alanlee.fun/2016/11/19/tensorflow-mlp/</loc>
+    
+    <lastmod>2020-05-25T05:54:05.654Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/</loc>
     
     <lastmod>2020-05-25T05:54:05.653Z</lastmod>
     
@@ -114,7 +121,7 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/</loc>
+    <loc>https://alanlee.fun/2016/10/22/tensorflow-linear-regression/</loc>
     
     <lastmod>2020-05-25T05:54:05.653Z</lastmod>
     
@@ -128,6 +135,13 @@
   </url>
   
   <url>
+    <loc>https://alanlee.fun/2019/08/09/sklearn-tfidf/</loc>
+    
+    <lastmod>2020-05-25T05:54:05.651Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/</loc>
     
     <lastmod>2020-05-25T05:54:05.651Z</lastmod>
@@ -136,13 +150,6 @@
   
   <url>
     <loc>https://alanlee.fun/2017/02/16/tensorflow-1.0/</loc>
-    
-    <lastmod>2020-05-25T05:54:05.651Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2019/08/09/sklearn-tfidf/</loc>
     
     <lastmod>2020-05-25T05:54:05.651Z</lastmod>
     
@@ -170,14 +177,14 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2016/01/11/machine-learning-book-note/</loc>
+    <loc>https://alanlee.fun/2015/12/21/matlab-fitlm/</loc>
     
     <lastmod>2020-05-25T05:54:05.647Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2015/12/21/matlab-fitlm/</loc>
+    <loc>https://alanlee.fun/2016/01/11/machine-learning-book-note/</loc>
     
     <lastmod>2020-05-25T05:54:05.647Z</lastmod>
     
@@ -219,13 +226,6 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2020/05/08/bert-model/</loc>
-    
-    <lastmod>2020-05-25T05:54:05.640Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://alanlee.fun/2020/05/15/bandizip-noads/</loc>
     
     <lastmod>2020-05-25T05:54:05.640Z</lastmod>
@@ -233,14 +233,21 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/</loc>
+    <loc>https://alanlee.fun/2020/05/08/bert-model/</loc>
+    
+    <lastmod>2020-05-25T05:54:05.640Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/04/10/analyzing-python-servey/</loc>
     
     <lastmod>2020-05-25T05:54:05.639Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2019/04/10/analyzing-python-servey/</loc>
+    <loc>https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/</loc>
     
     <lastmod>2020-05-25T05:54:05.639Z</lastmod>
     

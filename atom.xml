@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://alanlee.fun/"/>
-  <updated>2020-11-22T11:48:51.256Z</updated>
+  <updated>2020-11-24T23:06:09.088Z</updated>
   <id>https://alanlee.fun/</id>
   
   <author>
@@ -15,6 +15,30 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi</title>
+    <link href="https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/"/>
+    <id>https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/</id>
+    <published>2020-11-24T23:00:00.000Z</published>
+    <updated>2020-11-24T23:06:09.088Z</updated>
+    
+    <content type="html"><![CDATA[<p>平常我们查看 GPU 信息，比如哪个进程在占用 GPU，占用了多少，GPU 利用率怎么样等信息，都是使用 nvidia-smi，但这些信息都是实时的，也就是说你无法查看一定时间段内的变化情况。</p><p><a href="https://github.com/Syllo/nvtop" target="_blank" rel="noopener">nvtop</a>（NVIDIA TOP）是一个为 NVIDIA GPU 打造的、类 htop 的任务监视器，和 nvidia-smi 功能类似，但有着比 nvidia-smi 更漂亮的外观，也弥补了 nvidia-smi 不能查看一定时间段内 GPU 变化情况的缺陷。</p><p>先来看一张官方效果图：</p><p><img src="https://i.loli.net/2020/11/25/GkxuCoZt1sEmpc3.png" alt="官方效果图"></p><p>我自己使用时的截图：</p><p><img src="https://i.loli.net/2020/11/25/JL5TIxROCFsAvPw.png" alt="实际使用截图"></p><p>那么你还满意的话，就接着看怎么安装吧。</p><h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>接下来的安装步骤针对的是 Ubuntu 18.04，16.04 估计也可以。</p><p>但如果你是 19.04，那很简单，一条命令即可：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install nvtop</span><br></pre></td></tr></table></figure><h3 id="1-安装显卡驱动"><a href="#1-安装显卡驱动" class="headerlink" title="1. 安装显卡驱动"></a>1. 安装显卡驱动</h3><p>这步我就不赘述了，我想大家应该都已经装好了。不会的话请参见 <a href="https://linuxconfig.org/how-to-install-the-nvidia-drivers-on-ubuntu-18-04-bionic-beaver-linux" target="_blank" rel="noopener">How to install the NVIDIA drivers on Ubuntu 18.04 Bionic Beaver Linux</a>。</p><h3 id="2-安装-CMake、ncurses-和-git"><a href="#2-安装-CMake、ncurses-和-git" class="headerlink" title="2. 安装 CMake、ncurses 和 git"></a>2. 安装 CMake、ncurses 和 git</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install cmake libncurses5-dev libncursesw5-dev git</span><br></pre></td></tr></table></figure><h3 id="3-源码编译"><a href="#3-源码编译" class="headerlink" title="3. 源码编译"></a>3. 源码编译</h3><p>在开始之前，如果你使用 conda 并且已经处在一个 conda 虚拟环境中，那么请先 <code>conda deactivate</code> 退出环境。</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/Syllo/nvtop.git</span><br><span class="line">mkdir -p nvtop/build &amp;&amp; <span class="built_in">cd</span> nvtop/build</span><br><span class="line">cmake ..</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果报错："Could NOT find NVML (missing: NVML_INCLUDE_DIRS)"</span></span><br><span class="line"><span class="comment"># 那么请使用下面的命令</span></span><br><span class="line"><span class="comment"># cmake .. -DNVML_RETRIEVE_HEADER_ONLINE=True</span></span><br><span class="line"></span><br><span class="line">make</span><br><span class="line">make install <span class="comment"># 需要 root 权限，如果报权限错误请加上 sudo</span></span><br></pre></td></tr></table></figure><p>至此就安装好了。</p><h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>通常来说，你只需要输入 <code>nvtop</code> 回车就行了，但是也有一些参数可以让你更改。</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">$ nvtop --<span class="built_in">help</span></span><br><span class="line">nvtop version 1.0.0</span><br><span class="line">Available options:</span><br><span class="line">  -d --delay        : Select the refresh rate (1 == 0.1s)</span><br><span class="line">  -v --version      : Print the version and <span class="built_in">exit</span></span><br><span class="line">  -s --gpu-select   : Colon separated list of GPU IDs to monitor</span><br><span class="line">  -i --gpu-ignore   : Colon separated list of GPU IDs to ignore</span><br><span class="line">  -p --no-plot      : Disable bar plot</span><br><span class="line">  -r --reverse-abs  : Reverse abscissa: plot the recent data left and older on the right</span><br><span class="line">  -C --no-color     : No colors</span><br><span class="line">  -N --no-cache     : Always query the system <span class="keyword">for</span> user names and <span class="built_in">command</span> line information</span><br><span class="line">  -f --freedom-unit : Use fahrenheit</span><br><span class="line">  -E --encode-hide  : Set encode/decode auto hide time <span class="keyword">in</span> seconds (default 30s, negative = always on screen)</span><br><span class="line">  -h --<span class="built_in">help</span>         : Print <span class="built_in">help</span> and <span class="built_in">exit</span></span><br></pre></td></tr></table></figure><h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;平常我们查看 GPU 信息，比如哪个进程在占用 GPU，占用了多少，GPU 利用率怎么样等信息，都是使用 nvidia-smi，但这些信息都是实时的，也就是说你无法查看一定时间段内的变化情况。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/Syllo
+      
+    
+    </summary>
+    
+    
+      <category term="Ubuntu" scheme="https://alanlee.fun/tags/Ubuntu/"/>
+    
+  </entry>
   
   <entry>
     <title>给 Python 程序员的 C++ 简易入门</title>
@@ -515,31 +539,6 @@
       <category term="Python" scheme="https://alanlee.fun/tags/Python/"/>
     
       <category term="Data Science" scheme="https://alanlee.fun/tags/Data-Science/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>我的网易云音乐 2018 年度听歌报告</title>
-    <link href="https://alanlee.fun/2019/01/13/neteasemusic-year-report-2018/"/>
-    <id>https://alanlee.fun/2019/01/13/neteasemusic-year-report-2018/</id>
-    <published>2019-01-13T02:11:40.000Z</published>
-    <updated>2020-05-25T05:54:05.649Z</updated>
-    
-    <content type="html"><![CDATA[<p>一年又一年。</p><p>2019 年 1 月 4 日，2018 年的网易云音乐的年度听歌报告终于来了，比去年晚了两天，又是我该写听歌报告的时候了。</p><p>然而今年写这个的时间比<a href="https://secsilm.github.io/2018/01/03/neteasemusic-year-report-2017/" target="_blank" rel="noopener">去年</a>晚了 <strong>10</strong> 天 😂 没办法，事情繁忙，没有在学校的时候的充裕时间了。</p><p>话不多说，报告开始。</p><h2 id="遇见你-真好"><a href="#遇见你-真好" class="headerlink" title="遇见你 真好"></a>遇见你 真好</h2><p><img src="https://i.imgur.com/bPN2jjc.jpg" height="600"></p><p>这是报告首页，今年的个人 ID 比去年小了许多，没那么显眼了，也没那么有设计感了。去年还是「温暖同行」，今年却是「遇见你真好」，这逻辑不太对啊，不应该是先「遇见你真好」，再「温暖同行」吗 🤣</p><p>今年首页还提示了最后一页有彩蛋，这个彩蛋等会再说吧。</p><h2 id="1165"><a href="#1165" class="headerlink" title="1165"></a>1165</h2><p><img src="https://i.imgur.com/r3ZyIaB.jpg" height="600"></p><p>1165 首歌，去年是 1550 首，同样应该指的是听歌量，这里再贴下云村对听歌量的定义：</p><blockquote><p>听歌量是指累计播放的歌曲数量而非播放次数，并且实际播放时间过短的歌曲将不纳入计算，每天最多计算300首。</p></blockquote><p>1165 首歌着实不少了，毕竟哪有那么多首新歌，当然也包括之前我听过但不是在云村听的歌。我的等级依然停留在 8 级，这一级好难升……</p><p>说我风格成谜，喜欢日间听歌，热爱分享，这……，和去年一毛一样，文案几乎一字不差，就是把「TA」换成了「你」。就我自身而言，我没觉得我今年留下了多少评论和动态，毕竟我伦的歌没了，也就没啥可分享的了。不过日间听歌倒是很正常，毕竟现在晚上几乎不听歌了 😉</p><h2 id="永远"><a href="#永远" class="headerlink" title="永远"></a>永远</h2><p><img src="https://i.imgur.com/eZYiodb.jpg" height="600"></p><p>真的是永远都是「永远」啊 ヾ(≧▽≦*)o</p><p>去年是，今年还是，而且依然还是我伦的歌，难道我伦的歌的歌词里面最多的词是「永远」？回头等有时间在<a href="https://github.com/secsilm/analyzing-jay-chou-songs" target="_blank" rel="noopener">我之前的分析</a>上再加一个歌词的分析。</p><p><center><div class="github-card" data-github="secsilm/analyzing-jay-chou-songs" data-width="500" data-height="150" data-theme="default"></div></center></p><script src="//cdn.jsdelivr.net/github-cards/latest/widget.js"></script><h2 id="张大仙你是妖怪吧"><a href="#张大仙你是妖怪吧" class="headerlink" title="张大仙你是妖怪吧"></a>张大仙你是妖怪吧</h2><p><img src="https://i.imgur.com/9wBoGEZ.jpg" height="600"></p><p><a href="https://music.163.com/#/song?id=406000489" target="_blank" rel="noopener">Whatever</a> 和 <a href="https://music.163.com/#/song?id=409654859" target="_blank" rel="noopener">China-X</a> 入坑徐梦圆，之后发布的新曲都会去品一下，有些还真的不错的，这首《张大仙你是妖怪吧》便是其中之一 🎉</p><iframe width="750" height="400" src="https://www.youtube.com/embed/Z6fCCgqne5o" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><p>很魔性很灵性的一首歌，有时候还很激励人。</p><h2 id="03-53"><a href="#03-53" class="headerlink" title="03:53"></a>03:53</h2><p><img src="https://i.imgur.com/EpDLtfT.jpg" height="600"></p><p>一般吧，出现这种情况，有大概率是我听歌睡着了 😁 而且我后来听了听这首 <a href="https://music.163.com/#/song?id=30953046" target="_blank" rel="noopener">Rubik</a> 我确实没印象，不过着实还挺好听的。</p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="500" height="86" src="//music.163.com/outchain/player?type=2&id=30953046&auto=0&height=66"></iframe><h2 id="42"><a href="#42" class="headerlink" title="42"></a>42</h2><p><img src="https://i.imgur.com/EPstZOr.jpg" height="600"></p><p>42 天深夜后还在听歌，看来<a href="https://secsilm.github.io/2018/01/03/neteasemusic-year-report-2017/#133" target="_blank" rel="noopener">去年立的 flag </a>实现了啊，去年还是 133 天 🎆</p><p><img src="https://i.imgur.com/0WzGdlM.png" alt="flag"></p><h2 id="【喵帕斯】张大仙你是妖怪吧"><a href="#【喵帕斯】张大仙你是妖怪吧" class="headerlink" title="【喵帕斯】张大仙你是妖怪吧"></a>【喵帕斯】张大仙你是妖怪吧</h2><p><img src="https://i.imgur.com/h4dPIgl.jpg" height="600"></p><p>这绝对是今年报告中最灵异的一个。。。我完全没印象，而且我一般不会听这种的。。。不多说了。。。</p><h2 id="有何不可"><a href="#有何不可" class="headerlink" title="有何不可"></a>有何不可</h2><p><img src="https://i.imgur.com/cHdsqbi.jpg" height="600"></p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="520" height="86" src="//music.163.com/outchain/player?type=2&id=167876&auto=0&height=66"></iframe><p>同时出现在今年和去年的报告中，去年是因为鬼畜，今年不知道因为啥，都说是最专一的一首歌。（对不起我伦 😔）</p><h2 id="Eye-of-the-Tiger"><a href="#Eye-of-the-Tiger" class="headerlink" title="Eye of the Tiger"></a>Eye of the Tiger</h2><p><img src="https://i.imgur.com/R7pebGC.jpg" height="600"></p><iframe width="750" height="400" src="https://www.youtube.com/embed/btPJPFnesV4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><p>生活大爆炸中的一个配乐，很带感啊，还是老歌好听。</p><h2 id="【喵帕斯】张大仙你是妖怪吧-1"><a href="#【喵帕斯】张大仙你是妖怪吧-1" class="headerlink" title="【喵帕斯】张大仙你是妖怪吧"></a>【喵帕斯】张大仙你是妖怪吧</h2><p><img src="https://i.imgur.com/25qNwDE.jpg" height="600"></p><p>过！</p><h2 id="历史大事件"><a href="#历史大事件" class="headerlink" title="历史大事件"></a>历史大事件</h2><p><img src="https://i.imgur.com/Mw4eMIC.jpg" height="600"></p><p>实在是忘了为什么有这个了。。。还听了一个小时，应该是和某个电视剧有关。</p><h2 id="徐梦圆"><a href="#徐梦圆" class="headerlink" title="徐梦圆"></a>徐梦圆</h2><p><img src="https://i.imgur.com/CyPq0Sb.jpg" height="600"></p><p>果然不出所料，云村果然会说我的年度歌手是徐梦圆，那是因为你们没有我伦了啊 👣</p><p>不过推荐一下《藏》，我推荐的一些人听了都说很好听。</p><iframe width="750" height="400" src="https://www.youtube.com/embed/MKq4ehR5qzA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><h2 id="523"><a href="#523" class="headerlink" title="523"></a>523</h2><p><img src="https://i.imgur.com/5GsvIG8.jpg" height="600"></p><p>523 小时，2018 年共有 8760 小时，这一年中有约 6% 的时间在听歌 😱</p><p>但相比去年的 862 小时，还是少了很多。</p><h2 id="十大"><a href="#十大" class="headerlink" title="十大"></a>十大</h2><p><img src="https://i.imgur.com/zQypttg.jpg" height="600"></p><p>讽刺的是，我在写到这的时候，听的歌恰好是去年十大排行第一的《美丽的神话》。</p><p>今年的十大就像缺了我伦的金曲奖，实在没什么参考意义，衷心希望云村早点拿到版权。</p><h2 id="遇见最相似的人"><a href="#遇见最相似的人" class="headerlink" title="遇见最相似的人"></a>遇见最相似的人</h2><p><img src="https://i.imgur.com/j77TwIS.jpg" height="600"></p><p>今年比去年多了个匹配，也就是刚开始很多人在评论里说的，希望云村出一个「红娘」的功能，什么红心歌曲相同比较多就牵线之类的。好了现在出来了，但是我发现这个其实很鸡肋，因为很多人不愿意说话的，我猜那些之前喊这个功能的人都是男生吧 🤔</p><h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><p>和去年结尾一样，只是希望新的一年云村能够拿到更多版权！</p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;p&gt;一年又一年。&lt;/p&gt;
-&lt;p&gt;2019 年 1 月 4 日，2018 年的网易云音乐的年度听歌报告终于来了，比去年晚了两天，又是我该写听歌报告的时候了。&lt;/p&gt;
-&lt;p&gt;然而今年写这个的时间比&lt;a href=&quot;https://secsilm.github.io/2018/01/
-      
-    
-    </summary>
-    
-    
-      <category term="Living" scheme="https://alanlee.fun/tags/Living/"/>
     
   </entry>
   

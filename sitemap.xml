@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://alanlee.fun/2020/12/17/five-years/</loc>
+    
+    <lastmod>2020-12-17T13:09:56.066Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2020/11/30/pyconchina2020/</loc>
     
     <lastmod>2020-11-30T13:12:34.202Z</lastmod>
@@ -58,14 +65,14 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2019/10/16/bert-tokenizer/</loc>
+    <loc>https://alanlee.fun/2020/05/22/find-subsequences/</loc>
     
     <lastmod>2020-06-03T13:53:14.627Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2020/05/22/find-subsequences/</loc>
+    <loc>https://alanlee.fun/2019/10/16/bert-tokenizer/</loc>
     
     <lastmod>2020-06-03T13:53:14.627Z</lastmod>
     
@@ -387,14 +394,14 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/</loc>
+    <loc>https://alanlee.fun/2017/05/18/installing-xgboost/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2017/05/18/installing-xgboost/</loc>
+    <loc>https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/</loc>
     
     <lastmod>2017-12-23T00:22:03.000Z</lastmod>
     

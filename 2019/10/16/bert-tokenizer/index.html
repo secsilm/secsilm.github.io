@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html>
+    <!-- title -->
+
+
+
+
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" >
+    <meta name="author" content="Alan Lee">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="Alan Lee">
+    <meta name="keywords" content="Alan Lee | Alan Lee">
+    <meta name="description" content="Machine Learning, Deep Learning, NLP">
+    <meta name="Cache-Control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <title>BERT 是如何分词的 · Alan Lee</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s 1;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href= /css/style.css?v=201807017_1502 as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="stylesheet" href= /css/mobile.css?v=20180709 media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href= "/avatar/Bastion_cute.png" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script" />
+    <link rel="preload" href="/scripts/main.js" as="script" />
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+    
+    <!-- 谷歌统计  -->
+    
+    <script>
+        (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-111553531-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+    
+    <script data-ad-client="ca-pub-8696777001133331" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap" rel="stylesheet"><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+
+    
+        <body class="post-body">
+    
+    
+<!-- hexo-inject:begin --><!-- hexo-inject:end --><header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/" >Alan Lee</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">BERT 是如何分词的</a>
+            </div>
+    </div>
+    
+    <a class="home-link" href=/>Alan Lee</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style=
+
+
+
+
+
+
+
+
+height:50vh;
+
+>
+    
+    <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
+            
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(https://i.loli.net/2019/10/16/VPXxydw9st2eoYR.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+            BERT 是如何分词的
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+            
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "NLP">NLP</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "TensorFlow">TensorFlow</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
+    
+</div>
+                
+                
+                <div class="post-intro-meta">
+                    <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                    <span class="post-intro-time">2019/10/16</span>
+                    
+                    <span class="shareWrapper">
+                        <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                        <span class="shareText">Share</span>
+                        <ul class="shareList">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>        
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main post-page">
+    <article class="article-entry">
+        <p><a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">BERT</a> 表示 Bidirectional Encoder Representations from Transformers，是 Google 于 2018 年发布的一种语言表示模型。该模型一经发布便成为争相效仿的对象，相信大家也都多少听说过研究过了。本文主要聚焦于 BERT 的分词方法，后续再谈模型实现细节。</p>
+<p><a href="https://github.com/google-research/bert" target="_blank" rel="noopener">BERT 源码</a>中 <code>tokenization.py</code> 就是预处理进行分词的程序，主要有两个分词器：<code>BasicTokenizer</code> 和 <code>WordpieceTokenizer</code>，另外一个 <code>FullTokenizer</code> 是这两个的结合：先进行 <code>BasicTokenizer</code> 得到一个分得比较粗的 token 列表，然后再对每个 token 进行一次 <code>WordpieceTokenizer</code>，得到最终的分词结果。</p>
+<p>为了能直观看到每一步处理效果，我会用下面这个贯穿始终的例子来说明，该句修改自 <a href="https://zh.wikipedia.org/wiki/Keras" target="_blank" rel="noopener">Keras 的维基百科</a>介绍：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">example = <span class="string">"Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。\r\n"</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>对于中文来说，一句话概括：BERT 采取的是「分字」，即每一个汉字都切开。</p>
+</blockquote>
+<h2 id="BasicTokenizer"><a href="#BasicTokenizer" class="headerlink" title="BasicTokenizer"></a><code>BasicTokenizer</code></h2><p><code>BasicTokenizer</code>（以下简称 BT）是一个初步的分词器。对于一个待分词字符串，流程大致就是转成 unicode -&gt; 去除各种奇怪字符 -&gt; 处理中文 -&gt; 空格分词 -&gt; 去除多余字符和标点分词 -&gt; 再次空格分词，结束。</p>
+<p>大致流程就是这样，还有很多细节，下面我依次说下。</p>
+<h3 id="转成-unicode"><a href="#转成-unicode" class="headerlink" title="转成 unicode"></a>转成 unicode</h3><p><strong>转成 unicode</strong> 这步对应于 <code>convert_to_unicode(text)</code> 函数，很好理解，就是将输入转成 unicode 字符串，如果你用的 Python 3 而且输入是 <code>str</code> 类型，那么这点无需担心，输入和输出一样；如果是 Python 3 而且输入类型是 <code>bytes</code>，那么该函数会使用 <code>text.decode(&quot;utf-8&quot;, &quot;ignore&quot;)</code> 来转成 unicode 类型。如果你用的是 Python 2，那么请看 <a href="https://python3statement.org/" target="_blank" rel="noopener">Sunsetting Python 2 support
+</a> 和 <a href="https://pythonclock.org/" target="_blank" rel="noopener">Python 2.7 Countdown
+</a>，Just drop it。</p>
+<p>经过这步后，<code>example</code> 和原来相同：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = convert_to_unicode(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line"><span class="string">'Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。\r\n'</span></span><br></pre></td></tr></table></figure>
+<h3 id="去除各种奇怪字符"><a href="#去除各种奇怪字符" class="headerlink" title="去除各种奇怪字符"></a>去除各种奇怪字符</h3><p><strong>去除各种奇怪字符</strong>对应于 BT 类的 <code>_clean_text(text)</code> 方法，通过 Unicode <a href="https://en.wikipedia.org/wiki/Code_point" target="_blank" rel="noopener">码位</a>（Unicode code point，以下码位均指 Unicode 码位）来去除各种不合法字符和多余空格，包括：</p>
+<blockquote>
+<p>Python 中可以通过 <code>ord(c)</code> 来获取字符 <code>c</code> 的码位，使用 <code>chr(i)</code> 来获取码位为 <code>i</code> 的 Unicode 字符，$0 \leq i \leq \text{0x10ffff}$，即十进制的 $[0, 1114111]$。</p>
+</blockquote>
+<ul>
+<li>码位为 0 的 <code>\x00</code>，即<a href="https://en.wikipedia.org/wiki/Null_character" target="_blank" rel="noopener">空字符</a>（Null character），或叫结束符，肉眼不可见，属于<a href="https://en.wikipedia.org/wiki/Control_character" target="_blank" rel="noopener">控制字符</a>，一般在字符串末尾。注意不是空格，空格的码位是 32。</li>
+<li>码位为 0xfffd（十进制 65533）的 <code>�</code>，即<a href="https://en.wikipedia.org/wiki/Specials_(Unicode_block" target="_blank" rel="noopener">替换字符</a>)（REPLACEMENT CHARACTER），通常用来替换未知、无法识别或者无法表示的字符。</li>
+<li>除 <code>\t</code>、<code>\r</code> 和 <code>\n</code> 以外的控制字符（Control character），即 Unicode 类别是 <code>Cc</code> 和 <code>Cf</code> 的字符。可以使用 <code>unicodedata.category(c)</code> 来查看 <code>c</code> 的 Unicode 类别。代码中用 <code>_is_control(char)</code> 来判断 <code>char</code> 是不是控制字符。</li>
+<li>将所有空白字符转换为一个空格，包括标准空格、<code>\t</code>、<code>\r</code>、<code>\n</code> 以及 Unicode 类别为 <code>Zs</code> 的字符。代码中用 <code>_is_whitespace(char)</code> 来判断 <code>char</code> 是不是空白字符。</li>
+</ul>
+<p>经过这步后，<code>example</code> 中的 <code>\r\n</code> 被替换成两个空格：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = _clean_text(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line"><span class="string">'Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。  '</span></span><br></pre></td></tr></table></figure>
+<h3 id="处理中文"><a href="#处理中文" class="headerlink" title="处理中文"></a>处理中文</h3><p><strong>处理中文</strong>对应于 BT 类的 <code>_tokenize_chinese_chars(text)</code> 方法。对于 <code>text</code> 中的字符，首先判断其是不是「中文字符」（关于中文字符的说明见下方引用块说明），是的话在其前后加上一个空格，否则原样输出。那么有一个问题，如何判断一个字符是不是「中文」呢？</p>
+<p><code>_is_chinese_char(cp)</code> 方法，<code>cp</code> 就是刚才说的码位，通过码位来判断，总共有 81520 个字，详细的码位范围如下（都是闭区间）：</p>
+<ul>
+<li>[0x4E00, 0x9FFF]：十进制 [19968, 40959]</li>
+<li>[0x3400, 0x4DBF]：十进制 [13312, 19903]</li>
+<li>[0x20000, 0x2A6DF]：十进制 [131072, 173791]</li>
+<li>[0x2A700, 0x2B73F]：十进制 [173824, 177983]</li>
+<li>[0x2B740, 0x2B81F]：十进制 [177984, 178207]</li>
+<li>[0x2B820, 0x2CEAF]：十进制 [178208, 183983]</li>
+<li>[0xF900, 0xFAFF]：十进制 [63744, 64255]</li>
+<li>[0x2F800, 0x2FA1F]：十进制 [194560, 195103]</li>
+</ul>
+<p>其实我觉得这个范围可以再精简下，因为有几个区间是相邻的，下面三个区间：</p>
+<ul>
+<li>[0x2A700, 0x2B73F]：十进制 [173824, <strong>177983</strong>]</li>
+<li>[0x2B740, 0x2B81F]：十进制 [<strong>177984</strong>, <strong>178207</strong>]</li>
+<li>[0x2B820, 0x2CEAF]：十进制 [<strong>178208</strong>, 183983]</li>
+</ul>
+<p>可以精简成一个：</p>
+<ul>
+<li>[0x2A700, 0x2CEAF]：十进制 [173824, 183983]</li>
+</ul>
+<p>原来的 8 个区间精简成 6 个，至于原来为什么写成 8 个，I don’t know 啊 😂</p>
+<blockquote>
+<p>关于「中文字符」的说明：按照代码中的定义，这里说的「中文字符」指的是 <a href="https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block" target="_blank" rel="noopener">CJK Unicode block</a>) 中的字符，包括现代汉语、部分日语、部分韩语和越南语。但是根据 <a href="https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block" target="_blank" rel="noopener">CJK Unicode block</a>) 中的定义，这些字符只包括第一个码位区间（[0x4E00, 0x9FFF]）内的字符，也就是说<strong>代码中的字符要远远多于 CJK Unicode block 中包括的字符</strong>，这一点暂时有些疑问。我把源码关于这块的注释引用过来如下：</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_is_chinese_char</span><span class="params">(self, cp)</span>:</span></span><br><span class="line">    <span class="string">"""Checks whether CP is the codepoint of a CJK character."""</span></span><br><span class="line">    <span class="comment"># This defines a "chinese character" as anything in the CJK Unicode block:</span></span><br><span class="line">    <span class="comment">#   https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)</span></span><br><span class="line">    <span class="comment">#</span></span><br><span class="line">    <span class="comment"># Note that the CJK Unicode block is NOT all Japanese and Korean characters,</span></span><br><span class="line">    <span class="comment"># despite its name. The modern Korean Hangul alphabet is a different block,</span></span><br><span class="line">    <span class="comment"># as is Japanese Hiragana and Katakana. Those alphabets are used to write</span></span><br><span class="line">    <span class="comment"># space-separated words, so they are not treated specially and handled</span></span><br><span class="line">    <span class="comment"># like the all of the other languages.</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+<p>经过这步后，中文被按字分开，用空格分隔，但英文数字等仍然保持原状：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = _tokenize_chinese_chars(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line"><span class="string">'Keras 是 ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System， 开  放  式  神  经  电  子  智  能  机  器  人  操  作  系  统 ） 项  目  研  究  工  作  的  部  分  产  物 [3]， 主  要  作  者  和  维  护  者  是 Google 工  程  师 François Chollet。  '</span></span><br></pre></td></tr></table></figure>
+<h3 id="空格分词"><a href="#空格分词" class="headerlink" title="空格分词"></a>空格分词</h3><p><strong>空格分词</strong>对应于 <code>whitespace_tokenize(text)</code> 函数。首先对 <code>text</code> 进行 <code>strip()</code> 操作，去掉两边多余空白字符，然后如果剩下的是一个空字符串，则直接返回空列表，否则进行 <code>split()</code> 操作，得到最初的分词结果 <code>orig_tokens</code>。</p>
+<p>经过这步后，<code>example</code> 变成一个列表：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = whitespace_tokenize(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line">[<span class="string">'Keras'</span>, <span class="string">'是'</span>, <span class="string">'ONEIROS（Open-ended'</span>, <span class="string">'Neuro-Electronic'</span>, <span class="string">'Intelligent'</span>, <span class="string">'Robot'</span>, <span class="string">'Operating'</span>, <span class="string">'System，'</span>, <span class="string">'开'</span>, <span class="string">'放'</span>, <span class="string">'式'</span>, <span class="string">'神'</span>, <span class="string">'经'</span>, <span class="string">'电'</span>, <span class="string">'子'</span>, <span class="string">'智'</span>, <span class="string">'能'</span>, <span class="string">'机'</span>, <span class="string">'器'</span>, <span class="string">'人'</span>, <span class="string">'操'</span>, <span class="string">'作'</span>, <span class="string">'系'</span>, <span class="string">'统'</span>, <span class="string">'）'</span>, <span class="string">'项'</span>, <span class="string">'目'</span>, <span class="string">'研'</span>, <span class="string">'究'</span>, <span class="string">'工'</span>, <span class="string">'作'</span>, <span class="string">'的'</span>, <span class="string">'部'</span>, <span class="string">'分'</span>, <span class="string">'产'</span>, <span class="string">'物'</span>, <span class="string">'[3]，'</span>, <span class="string">'主'</span>, <span class="string">'要'</span>, <span class="string">'作'</span>, <span class="string">'者'</span>, <span class="string">'和'</span>, <span class="string">'维'</span>, <span class="string">'护'</span>, <span class="string">'者'</span>, <span class="string">'是'</span>, <span class="string">'Google'</span>, <span class="string">'工'</span>, <span class="string">'程'</span>, <span class="string">'师'</span>, <span class="string">'François'</span>, <span class="string">'Chollet。'</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="去除多余字符和标点分词"><a href="#去除多余字符和标点分词" class="headerlink" title="去除多余字符和标点分词"></a>去除多余字符和标点分词</h3><p>接下来是针对 <code>orig_tokens</code> 的分词结果进一步处理，代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> token <span class="keyword">in</span> orig_tokens:</span><br><span class="line">      <span class="keyword">if</span> self.do_lower_case:</span><br><span class="line">        token = token.lower()</span><br><span class="line">        token = self._run_strip_accents(token)</span><br><span class="line">      split_tokens.extend(self._run_split_on_punc(token))</span><br></pre></td></tr></table></figure>
+<p>逻辑不复杂，我在这里主要说下 <code>_run_strip_accents</code> 和 <code>_run_split_on_punc</code>。</p>
+<p><strong><code>_run_strip_accents(text)</code></strong> 方法用于去除 <a href="https://en.wikipedia.org/wiki/Diacritic" target="_blank" rel="noopener">accents</a>，即变音符号，那么什么是变音符号呢？像 Keras 作者 François Chollet 名字中些许奇怪的字符 <code>ç</code>、简历的英文 résumé 中的 <code>é</code> 和中文拼音声调 <code>á</code> 等，这些都是变音符号 accents，维基百科中描述如下：</p>
+<blockquote>
+<p>附加符号或称变音符号（diacritic、diacritical mark、diacritical point、diacritical sign），是指添加在字母上面的符号，以更改字母的发音或者以区分拼写相似词语。例如汉语拼音字母“ü”上面的两个小点，或“á”、“à”字母上面的标调符。</p>
+</blockquote>
+<p>常见 accents 可参见 <a href="https://practicaltypography.com/common-accented-characters.html" target="_blank" rel="noopener">Common accented characters</a>。</p>
+<p><code>_run_strip_accents(text)</code> 方法就是要把这些 accents 去掉，例如 <code>François Chollet</code> 变成 <code>Francois Chollet</code>，<code>résumé</code> 变成 <code>resume</code>，<code>á</code> 变成 <code>a</code>。该方法代码不长，如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_run_strip_accents</span><span class="params">(self, text)</span>:</span></span><br><span class="line">    <span class="string">"""Strips accents from a piece of text."""</span></span><br><span class="line">    text = unicodedata.normalize(<span class="string">"NFD"</span>, text)</span><br><span class="line">    output = []</span><br><span class="line">    <span class="keyword">for</span> char <span class="keyword">in</span> text:</span><br><span class="line">      cat = unicodedata.category(char)</span><br><span class="line">      <span class="keyword">if</span> cat == <span class="string">"Mn"</span>:</span><br><span class="line">        <span class="keyword">continue</span></span><br><span class="line">      output.append(char)</span><br><span class="line">    <span class="keyword">return</span> <span class="string">""</span>.join(output)</span><br></pre></td></tr></table></figure>
+<p>使用列表推导式代码还可以进一步精简为：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_run_strip_accents</span><span class="params">(self, text)</span>:</span></span><br><span class="line">    <span class="string">"""Strips accents from a piece of text."""</span></span><br><span class="line">    text = unicodedata.normalize(<span class="string">"NFD"</span>, text)</span><br><span class="line">    output = [char <span class="keyword">for</span> char <span class="keyword">in</span> text <span class="keyword">if</span> unicodedata.category(char) != <span class="string">'Mn'</span>]</span><br><span class="line">    <span class="keyword">return</span> <span class="string">""</span>.join(output)</span><br></pre></td></tr></table></figure>
+<p>这段代码核心就是 <a href="https://docs.python.org/zh-cn/3.7/library/unicodedata.html#unicodedata.normalize" target="_blank" rel="noopener"><code>unicodedata.normalize</code></a> 和 <a href="https://docs.python.org/zh-cn/3.7/library/unicodedata.html#unicodedata.category" target="_blank" rel="noopener"><code>unicodedata.category</code></a> 两个函数。前者返回输入字符串 <code>text</code> 的规范分解形式（Unicode 字符有多种规范形式，本文默认指 <code>NFD</code> 形式，即规范分解），后者返回输入字符 <code>char</code> 的 <a href="https://www.compart.com/en/unicode/category" target="_blank" rel="noopener">Unicode 类别</a>。下面我举例说明一下两个函数的作用。</p>
+<p>假如我们要处理 <code>āóǔè</code>，其中含有变音符号，这种字符其实是由两个字符组成的，比如 <code>ā</code>（码位 0x101）是由 <code>a</code>（码位 0x61）和 上面那一横（码位 0x304）组成的，通过 <code>unicodedata.normalize</code> 就可以把这两者拆分出来：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> unicodedata  <span class="comment"># unicodedata 是内置库</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>s = <span class="string">'āóǔè'</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>s_norm = unicodedata.normalize(<span class="string">'NFD'</span>, s)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>s_norm, len(s_norm)</span><br><span class="line">(<span class="string">'āóǔè'</span>, <span class="number">8</span>)  <span class="comment"># 看起来和原来的一摸一样，但是长度已经变了</span></span><br></pre></td></tr></table></figure>
+<p><code>unicodedata.category</code> 用来返回各个字符的类别：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="string">' '</span>.join(unicodedata.category(c) <span class="keyword">for</span> c <span class="keyword">in</span> s_norm)</span><br><span class="line"><span class="string">'Ll Mn Ll Mn Ll Mn Ll Mn'</span></span><br></pre></td></tr></table></figure>
+<p><a href="https://www.compart.com/en/unicode/category/Ll" target="_blank" rel="noopener"><code>Ll</code> 类别</a> 表示 Lowercase Letter，小写字母。<a href="https://www.compart.com/en/unicode/category/Mn" target="_blank" rel="noopener"><code>Mn</code> 类别</a> 表示的是 Nonspacing Mark，非间距标记，变音字符就属于这类，所以我们可以根据类别直接去掉变音字符：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="string">''</span>.join(c <span class="keyword">for</span> c <span class="keyword">in</span> s_norm <span class="keyword">if</span> unicodedata.category(c) != <span class="string">'Mn'</span>)</span><br><span class="line"><span class="string">'aoue'</span></span><br></pre></td></tr></table></figure>
+<p><strong><code>_run_split_on_punc(text)</code></strong> 是标点分词，按照标点符号分词。</p>
+<blockquote>
+<p><code>_run_split_on_punc(text)</code> 方法是针对上一步空格分词后的每个 token 的。</p>
+</blockquote>
+<p>在说这个方法之前，先说一下判断一个字符是否是标点符号的函数：<code>_is_punctuation(char)</code>。该函数代码不长，我放到下面：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_is_punctuation</span><span class="params">(char)</span>:</span></span><br><span class="line">  <span class="string">"""Checks whether `chars` is a punctuation character."""</span></span><br><span class="line">  cp = ord(char)</span><br><span class="line">  <span class="keyword">if</span> ((cp &gt;= <span class="number">33</span> <span class="keyword">and</span> cp &lt;= <span class="number">47</span>) <span class="keyword">or</span> (cp &gt;= <span class="number">58</span> <span class="keyword">and</span> cp &lt;= <span class="number">64</span>) <span class="keyword">or</span></span><br><span class="line">      (cp &gt;= <span class="number">91</span> <span class="keyword">and</span> cp &lt;= <span class="number">96</span>) <span class="keyword">or</span> (cp &gt;= <span class="number">123</span> <span class="keyword">and</span> cp &lt;= <span class="number">126</span>)):</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line">  cat = unicodedata.category(char)</span><br><span class="line">  <span class="keyword">if</span> cat.startswith(<span class="string">"P"</span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">False</span></span><br></pre></td></tr></table></figure>
+<p>通常我们会用一个类似词库的文件来存放所有的标点符号，而 <code>_is_punctuation</code> 函数是通过码位来判断的，这样更灵活，也不必保留一个额外的词库文件。具体是有两种情况会视为标点：<a href="https://en.wikipedia.org/wiki/ASCII" target="_blank" rel="noopener">ASCII</a> 中除了字母和数字意外的字符和以 P 开头的 Unicode 类别中的字符。第一种情况总共有 32 个字符，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">!&quot;#$%&amp;&apos;()*+,-./:;&lt;=&gt;?@[\]^_`&#123;|&#125;~</span><br></pre></td></tr></table></figure>
+<p><code>_run_split_on_punc</code> 的总体过程就是：</p>
+<ol>
+<li>首先设置 <code>start_new_word=True</code> 和 <code>output=[]</code>，<code>output</code> 就是最终的输出</li>
+<li>对 <code>text</code> 中每个字符进行判断，如果该字符是标点，则 <code>output.append([char])</code>，并设置 <code>start_new_word=True</code></li>
+<li>如果不是标点且 <code>start_new_word=True</code>，那么意味着这是新一段的开始，直接 <code>output.append([])</code>，然后再设置 <code>start_new_word = False</code>，并在刚才 append 的空列表上加上当前字符：<code>output[-1].append(char)</code></li>
+</ol>
+<p>现在得到的 <code>output</code> 是一个嵌套列表，其中每一个列表都是被标点分开的一段，最后把每个列表 join 拼接一下，拉平 <code>output</code> 即可。</p>
+<p>经过这步后，原先没有被分开的字词标点（例如 <code>ONEIROS（Open-ended</code>）、没有去掉的变音符号（例如 <code>ç</code>）都被相应处理：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line">[<span class="string">'keras'</span>, <span class="string">'是'</span>, <span class="string">'oneiros'</span>, <span class="string">'（'</span>, <span class="string">'open'</span>, <span class="string">'-'</span>, <span class="string">'ended'</span>, <span class="string">'neuro'</span>, <span class="string">'-'</span>, <span class="string">'electronic'</span>, <span class="string">'intelligent'</span>, <span class="string">'robot'</span>, <span class="string">'operating'</span>, <span class="string">'system'</span>, <span class="string">'，'</span>, <span class="string">'开'</span>, <span class="string">'放'</span>, <span class="string">'式'</span>, <span class="string">'神'</span>, <span class="string">'经'</span>, <span class="string">'电'</span>, <span class="string">'子'</span>, <span class="string">'智'</span>, <span class="string">'能'</span>, <span class="string">'机'</span>, <span class="string">'器'</span>, <span class="string">'人'</span>, <span class="string">'操'</span>, <span class="string">'作'</span>, <span class="string">'系'</span>, <span class="string">'统'</span>, <span class="string">'）'</span>, <span class="string">'项'</span>, <span class="string">'目'</span>, <span class="string">'研'</span>, <span class="string">'究'</span>, <span class="string">'工'</span>, <span class="string">'作'</span>, <span class="string">'的'</span>, <span class="string">'部'</span>, <span class="string">'分'</span>, <span class="string">'产'</span>, <span class="string">'物'</span>, <span class="string">'['</span>, <span class="string">'3'</span>, <span class="string">']'</span>, <span class="string">'，'</span>, <span class="string">'主'</span>, <span class="string">'要'</span>, <span class="string">'作'</span>, <span class="string">'者'</span>, <span class="string">'和'</span>, <span class="string">'维'</span>, <span class="string">'护'</span>, <span class="string">'者'</span>, <span class="string">'是'</span>, <span class="string">'google'</span>, <span class="string">'工'</span>, <span class="string">'程'</span>, <span class="string">'师'</span>, <span class="string">'francois'</span>, <span class="string">'chollet'</span>, <span class="string">'。'</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="再次空格分词"><a href="#再次空格分词" class="headerlink" title="再次空格分词"></a>再次空格分词</h3><p>这句对应于如下代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">output_tokens = whitespace_tokenize(<span class="string">" "</span>.join(split_tokens))</span><br></pre></td></tr></table></figure>
+<p>很简单，就是先用标准空格拼接上一步的处理结果，再执行空格分词。（But WHY?）</p>
+<p>经过这步后，和上步结果一样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line">[<span class="string">'keras'</span>, <span class="string">'是'</span>, <span class="string">'oneiros'</span>, <span class="string">'（'</span>, <span class="string">'open'</span>, <span class="string">'-'</span>, <span class="string">'ended'</span>, <span class="string">'neuro'</span>, <span class="string">'-'</span>, <span class="string">'electronic'</span>, <span class="string">'intelligent'</span>, <span class="string">'robot'</span>, <span class="string">'operating'</span>, <span class="string">'system'</span>, <span class="string">'，'</span>, <span class="string">'开'</span>, <span class="string">'放'</span>, <span class="string">'式'</span>, <span class="string">'神'</span>, <span class="string">'经'</span>, <span class="string">'电'</span>, <span class="string">'子'</span>, <span class="string">'智'</span>, <span class="string">'能'</span>, <span class="string">'机'</span>, <span class="string">'器'</span>, <span class="string">'人'</span>, <span class="string">'操'</span>, <span class="string">'作'</span>, <span class="string">'系'</span>, <span class="string">'统'</span>, <span class="string">'）'</span>, <span class="string">'项'</span>, <span class="string">'目'</span>, <span class="string">'研'</span>, <span class="string">'究'</span>, <span class="string">'工'</span>, <span class="string">'作'</span>, <span class="string">'的'</span>, <span class="string">'部'</span>, <span class="string">'分'</span>, <span class="string">'产'</span>, <span class="string">'物'</span>, <span class="string">'['</span>, <span class="string">'3'</span>, <span class="string">']'</span>, <span class="string">'，'</span>, <span class="string">'主'</span>, <span class="string">'要'</span>, <span class="string">'作'</span>, <span class="string">'者'</span>, <span class="string">'和'</span>, <span class="string">'维'</span>, <span class="string">'护'</span>, <span class="string">'者'</span>, <span class="string">'是'</span>, <span class="string">'google'</span>, <span class="string">'工'</span>, <span class="string">'程'</span>, <span class="string">'师'</span>, <span class="string">'francois'</span>, <span class="string">'chollet'</span>, <span class="string">'。'</span>]</span><br></pre></td></tr></table></figure>
+<p>这就是 BT 最终的输出了。</p>
+<h2 id="WordpieceTokenizer"><a href="#WordpieceTokenizer" class="headerlink" title="WordpieceTokenizer"></a><code>WordpieceTokenizer</code></h2><p><code>WordpieceTokenizer</code>（以下简称 WPT）是在 BT 结果的基础上进行再一次切分，得到子词（subword，以 <code>##</code> 开头），词汇表就是在此时引入的。该类只有两个方法：一个初始化方法 <code>__init__(self, vocab, unk_token=&quot;[UNK]&quot;, max_input_chars_per_word=200)</code>，一个分词方法 <code>tokenize(self, text)</code>。</p>
+<blockquote>
+<p>对于中文来说，使不使用 WPT 都一样，因为中文经过 BasicTokenizer 后已经变成一个字一个字了，没法再「子」了 😂</p>
+</blockquote>
+<p><code>__init__(self, vocab, unk_token=&quot;[UNK]&quot;, max_input_chars_per_word=200)</code>：<code>vocab</code> 就是词汇表，<code>collections.OrderedDict()</code> 类型，由 <code>load_vocab(vocab_file)</code> 读入，key 为词汇，value 为对应索引，顺序依照 <code>vocab_file</code> 中的顺序。有一点需要注意的是，词汇表中已包含所有可能的子词。<code>unk_token</code> 为未登录词的标记，默认为 <code>[UNK]</code>。<code>max_input_chars_per_word</code> 为单个词的最大长度，如果一个词的长度超过这个最大长度，那么直接将其设为 <code>unk_token</code>。</p>
+<p><code>tokenize(self, text)</code>：该方法就是主要的分词方法了，大致分词思路是<strong>按照从左到右的顺序，将一个词拆分成多个子词，每个子词尽可能长。</strong>按照<a href="https://github.com/google-research/bert/blob/master/tokenization.py#L311-L312" target="_blank" rel="noopener">源码</a>中的说法，该方法称之为 greedy longest-match-first algorithm，贪婪最长优先匹配算法。</p>
+<p>开始时首先将 <code>text</code> 转成 unicode，并进行空格分词，然后依次遍历每个词。为了能够清楚直观地理解遍历流程，我特地制作了一个 GIF 来解释，以 <code>unaffable</code> 为例：</p>
+<p><img src="https://i.loli.net/2019/10/16/tXSKJZloFuHLOvw.gif" alt="longest-match-first.gif"></p>
+<p>注：</p>
+<ul>
+<li>蓝色底色表示当前子字符串，对应于代码中的 <code>cur_substr</code></li>
+<li>当从第一个位置开始遍历时，不需要在当前字串前面加 <code>##</code>，否则需要</li>
+</ul>
+<p>大致流程说明（虽然我相信上面那个 GIF 够清楚了）：</p>
+<ol>
+<li>从第一个位置开始，由于是最长匹配，结束位置需要从最右端依次递减，所以遍历的第一个子词是其本身 <code>unaffable</code>，该子词不在词汇表中</li>
+<li>结束位置左移一位得到子词 <code>unaffabl</code>，同样不在词汇表中</li>
+<li>重复这个操作，直到 <code>un</code>，该子词在词汇表中，将其加入 <code>output_tokens</code>，以第一个位置开始的遍历结束</li>
+<li>跳过 <code>un</code>，从其后的 <code>a</code> 开始新一轮遍历，结束位置依然是从最右端依次递减，但此时需要在前面加上 <code>##</code> 标记，得到 <code>##affable</code> 不在词汇表中</li>
+<li>结束位置左移一位得到子词 <code>##affabl</code>，同样不在词汇表中</li>
+<li>重复这个操作，直到 <code>##aff</code>，该字词在词汇表中，将其加入 <code>output_tokens</code>，此轮遍历结束</li>
+<li>跳过 <code>aff</code>，从其后的 <code>a</code> 开始新一轮遍历，结束位置依然是从最右端依次递减。<code>##able</code> 在词汇表中，将其加入 <code>output_tokens</code></li>
+<li><code>able</code> 后没有字符了，整个遍历结束</li>
+</ol>
+<p>将 BT 的结果输入给 WPT，那么 <code>example</code> 的最终分词结果就是</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="string">'keras'</span>, <span class="string">'是'</span>, <span class="string">'one'</span>, <span class="string">'##iros'</span>, <span class="string">'（'</span>, <span class="string">'open'</span>, <span class="string">'-'</span>, <span class="string">'ended'</span>, <span class="string">'neu'</span>, <span class="string">'##ro'</span>, <span class="string">'-'</span>, <span class="string">'electronic'</span>, <span class="string">'intelligent'</span>, <span class="string">'robot'</span>, <span class="string">'operating'</span>, <span class="string">'system'</span>, <span class="string">'，'</span>, <span class="string">'开'</span>, <span class="string">'放'</span>, <span class="string">'式'</span>, <span class="string">'神'</span>, <span class="string">'经'</span>, <span class="string">'电'</span>, <span class="string">'子'</span>, <span class="string">'智'</span>, <span class="string">'能'</span>, <span class="string">'机'</span>, <span class="string">'器'</span>, <span class="string">'人'</span>, <span class="string">'操'</span>, <span class="string">'作'</span>, <span class="string">'系'</span>, <span class="string">'统'</span>, <span class="string">'）'</span>, <span class="string">'项'</span>, <span class="string">'目'</span>, <span class="string">'研'</span>, <span class="string">'究'</span>, <span class="string">'工'</span>, <span class="string">'作'</span>, <span class="string">'的'</span>, <span class="string">'部'</span>, <span class="string">'分'</span>, <span class="string">'产'</span>, <span class="string">'物'</span>, <span class="string">'['</span>, <span class="string">'3'</span>, <span class="string">']'</span>, <span class="string">'，'</span>, <span class="string">'主'</span>, <span class="string">'要'</span>, <span class="string">'作'</span>, <span class="string">'者'</span>, <span class="string">'和'</span>, <span class="string">'维'</span>, <span class="string">'护'</span>, <span class="string">'者'</span>, <span class="string">'是'</span>, <span class="string">'google'</span>, <span class="string">'工'</span>, <span class="string">'程'</span>, <span class="string">'师'</span>, <span class="string">'franco'</span>, <span class="string">'##is'</span>, <span class="string">'cho'</span>, <span class="string">'##llet'</span>, <span class="string">'。'</span>]</span><br></pre></td></tr></table></figure>
+<p>至此，BERT 分词部分结束。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">[1810.04805] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</a></li>
+<li><a href="https://github.com/google-research/bert/blob/master/tokenization.py" target="_blank" rel="noopener">bert/tokenization.py at master · google-research/bert</a></li>
+<li><a href="https://stackoverflow.com/questions/44431730/how-to-replace-accented-characters-in-python" target="_blank" rel="noopener">How to replace accented characters in python? - Stack Overflow</a></li>
+<li><a href="https://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-in-a-python-unicode-string" target="_blank" rel="noopener">What is the best way to remove accents in a Python unicode string? - Stack Overflow</a></li>
+<li><a href="https://www.fonts.com/content/learning/fontology/level-3/signs-and-symbols/accents" target="_blank" rel="noopener">Accents &amp; Accented Characters - Fonts.com | Fonts.com</a></li>
+<li><a href="https://practicaltypography.com/common-accented-characters.html" target="_blank" rel="noopener">Common accented characters | Butterick’s Practical Typography</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+    </article>
+    <!-- license  -->
+    
+        <div class="license-wrapper">
+            <p>原文作者: <a href="https://alanlee.fun">Alan Lee</a>
+            <p>原文链接: <a href="https://alanlee.fun/2019/10/16/bert-tokenizer/">https://alanlee.fun/2019/10/16/bert-tokenizer/</a>
+            <p>发表日期: <a href="https://alanlee.fun/2019/10/16/bert-tokenizer/">October 16th 2019, 8:39:00 pm</a>
+            <p>版权声明: 本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator  -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href= "/2019/10/28/bisect-speed/" title= 二分查找真的很快吗 >
+                    <div class="nextTitle">二分查找真的很快吗</div>
+                </a>
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href= "/2019/09/19/install-ghost/" title= Ghost 博客平台安装和配置 >
+                    <div class="prevTitle">Ghost 博客平台安装和配置</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    <div id="disqus_thread"></div>
+    <script>
+        /**
+    *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+    *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+        
+        var disqus_config = function () {
+        this.page.url = "https://alanlee.fun/2019/10/16/bert-tokenizer/";  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = "BERT 是如何分词的"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+        
+        (function () { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://secsilm.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+    
+    <!--PC和WAP自适应版-->
+
+    <!--PC版-->
+
+
+    
+    
+
+    <!-- 评论 -->
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:secsilm@outlook.com" class="iconfont-archer email" title=email ></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/secsilm" class="iconfont-archer github" target="_blank" title=github></a>
+            
+        
+    
+        
+            
+                <a href="https://www.zhihu.com/people/lyjwf1216" class="iconfont-archer zhihu" target="_blank" title=zhihu></a>
+            
+        
+    
+        
+            
+                <a href="https://twitter.com/SilverSecondMan" class="iconfont-archer twitter" target="_blank" title=twitter></a>
+            
+        
+    
+        
+            
+                <a href="https://www.instagram.com/secsilm/" class="iconfont-archer instagram" target="_blank" title=instagram></a>
+            
+        
+    
+        
+            
+                <a href="https://www.v2ex.com/member/secsilm" class="iconfont-archer v2ex" target="_blank" title=v2ex></a>
+            
+        
+    
+        
+            
+                <a href="/atom.xml" class="iconfont-archer rss" target="_blank" title=rss></a>
+            
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#BasicTokenizer"><span class="toc-number">1.</span> <span class="toc-text">BasicTokenizer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#转成-unicode"><span class="toc-number">1.1.</span> <span class="toc-text">转成 unicode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#去除各种奇怪字符"><span class="toc-number">1.2.</span> <span class="toc-text">去除各种奇怪字符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#处理中文"><span class="toc-number">1.3.</span> <span class="toc-text">处理中文</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#空格分词"><span class="toc-number">1.4.</span> <span class="toc-text">空格分词</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#去除多余字符和标点分词"><span class="toc-number">1.5.</span> <span class="toc-text">去除多余字符和标点分词</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#再次空格分词"><span class="toc-number">1.6.</span> <span class="toc-text">再次空格分词</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WordpieceTokenizer"><span class="toc-number">2.</span> <span class="toc-text">WordpieceTokenizer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">3.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-number">4.</span> <span class="toc-text">END</span></a></li></ol>
+    </div>
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 57
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2021 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/25</span><a class="archive-post-title" href= "/2021/02/25/lemmatization-vs-stemming/" >Lemmatization VS Stemming</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2020 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/17</span><a class="archive-post-title" href= "/2020/12/17/five-years/" >博客五年</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/30</span><a class="archive-post-title" href= "/2020/11/30/pyconchina2020/" >PyCon China 2020 参会感受</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/25</span><a class="archive-post-title" href= "/2020/11/25/install-nvtop-ubuntu/" >Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/22</span><a class="archive-post-title" href= "/2020/11/22/c++-for-python-programmers/" >给 Python 程序员的 C++ 简易入门</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/16</span><a class="archive-post-title" href= "/2020/11/16/self-attentive-parser-paper/" >Constituency Parsing with a Self-Attensive Encoder 论文解读</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/25</span><a class="archive-post-title" href= "/2020/10/25/windows-terminal-hotkeys/" >Windows Terminal 快捷键</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/04</span><a class="archive-post-title" href= "/2020/07/04/pixel-check-update/" >Pixel 重置后卡在检查更新界面的一种解决办法</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/04</span><a class="archive-post-title" href= "/2020/06/04/count-lstm-params/" >计算 LSTM 的参数量</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/22</span><a class="archive-post-title" href= "/2020/05/22/understanding-edit-distance/" >理解编辑距离</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/22</span><a class="archive-post-title" href= "/2020/05/22/find-subsequences/" >寻找所有公共子序列并返回索引</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/15</span><a class="archive-post-title" href= "/2020/05/15/bandizip-noads/" >Bandizip 无广告版</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/08</span><a class="archive-post-title" href= "/2020/05/08/bert-model/" >BERT 是如何构建模型的</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/10</span><a class="archive-post-title" href= "/2020/04/10/hexo-add-ads/" >Hexo 博客添加 Google Adsense ads.txt</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/08</span><a class="archive-post-title" href= "/2020/04/08/changes/" >博文变动记录</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/07</span><a class="archive-post-title" href= "/2020/04/07/understanding-lcs/" >理解最长公共子序列算法</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/15</span><a class="archive-post-title" href= "/2020/03/15/meet-label-studio/" >试用开源标注平台 Label Studio</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/28</span><a class="archive-post-title" href= "/2019/10/28/bisect-speed/" >二分查找真的很快吗</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/16</span><a class="archive-post-title" href= "/2019/10/16/bert-tokenizer/" >BERT 是如何分词的</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/19</span><a class="archive-post-title" href= "/2019/09/19/install-ghost/" >Ghost 博客平台安装和配置</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/09</span><a class="archive-post-title" href= "/2019/08/09/sklearn-tfidf/" >sklearn 如何计算 TFIDF</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/13</span><a class="archive-post-title" href= "/2019/04/13/understanding-pca/" >理解主成分分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/10</span><a class="archive-post-title" href= "/2019/04/10/analyzing-python-servey/" >各年份 Python 开发者调查结果分析汇总</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/13</span><a class="archive-post-title" href= "/2019/01/13/neteasemusic-year-report-2018/" >我的网易云音乐 2018 年度听歌报告</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2018 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/17</span><a class="archive-post-title" href= "/2018/11/17/introducing-plotly/" >Plotly 初步</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/18</span><a class="archive-post-title" href= "/2018/07/18/text-classification-with-tensorflow-estimator/" >使用 TensorFlow Estimators 进行文本分类</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/14</span><a class="archive-post-title" href= "/2018/07/14/remote-jupyter/" >在本地使用远程 Jupyter Lab 服务器</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/04</span><a class="archive-post-title" href= "/2018/06/04/understanding-objective-functions-in-neural-networks/" >理解神经网络中的目标函数</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/18</span><a class="archive-post-title" href= "/2018/05/18/ubuntu-ssr/" >在 Ubuntu 上使用 SSR 梯子</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/28</span><a class="archive-post-title" href= "/2018/04/28/analyzing-python-survey-2017/" >2017 Python 问卷调查结果初步分析</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/15</span><a class="archive-post-title" href= "/2018/03/15/embed-bokeh-plot/" >嵌入 bokeh 绘图到 hexo 博客中</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/09</span><a class="archive-post-title" href= "/2018/03/09/using-https-namecheap-hexo/" >使用 CloudFlare 为 hexo 博客实现 HTTPS</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/03</span><a class="archive-post-title" href= "/2018/01/03/neteasemusic-year-report-2017/" >我的网易云音乐 2017 年度听歌报告</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2017 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/30</span><a class="archive-post-title" href= "/2017/12/30/google-sitemap/" >Google sitemap 不允许的网址的解决办法</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/29</span><a class="archive-post-title" href= "/2017/12/29/understanding-lstms/" >理解 LSTM 网络</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/25</span><a class="archive-post-title" href= "/2017/12/25/export-csdn-blogs-to-md/" >批量导出 CSDN 博客为 Markdown 文件</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/22</span><a class="archive-post-title" href= "/2017/12/22/understanding-estimators-datasets/" >理解 Estimators 和 Datasets</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/08</span><a class="archive-post-title" href= "/2017/10/08/gradient-descent-methods/" >梯度下降优化算法概述</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/30</span><a class="archive-post-title" href= "/2017/08/30/ensemble-methods/" >使用集成学习提升机器学习算法性能</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/20</span><a class="archive-post-title" href= "/2017/08/20/understanding-tensorboard/" >理解 TensorBoard</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/02</span><a class="archive-post-title" href= "/2017/06/02/tensorflow-DNNRegressor/" >TensorFlow DNNRegressor 的简单使用</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/18</span><a class="archive-post-title" href= "/2017/05/18/installing-xgboost/" >XGBoost 在 Windows 10 和 Ubuntu 上的安装</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/29</span><a class="archive-post-title" href= "/2017/03/29/understanding-svd/" >奇异值分解 SVD 的数学解释</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/17</span><a class="archive-post-title" href= "/2017/03/17/tensorflow-cnn-tensorboard/" >TensorFlow 中的卷积神经网络 CNN - TensorBoard 版</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/26</span><a class="archive-post-title" href= "/2017/02/26/tensorflow-cudnn-version/" >Check failed stream->parent()->GetConvolveAlgorithms(&algorithms)解决办法</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/16</span><a class="archive-post-title" href= "/2017/02/16/tensorflow-1.0/" >TensorFlow 1.0 发布</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2016 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/28</span><a class="archive-post-title" href= "/2016/12/28/tensorflow-cnn-no-tensorboard/" >TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/10</span><a class="archive-post-title" href= "/2016/12/10/tensorboard-mnist-pca/" >在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span><a class="archive-post-title" href= "/2016/12/01/installing-tensorflow/" >Windows10 64 位下安装 TensorFlow - 官方原生支持</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/19</span><a class="archive-post-title" href= "/2016/11/19/tensorflow-mlp/" >TensorFlow 中的多层感知器（MLP）</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/06</span><a class="archive-post-title" href= "/2016/11/06/tensorflow-logistic-regression/" >TensorFlow 中的 Logistic Regression</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/29</span><a class="archive-post-title" href= "/2016/10/29/tensorflow-hyperparams/" >学习率、迭代次数和初始化方式对模型准确率的影响</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/26</span><a class="archive-post-title" href= "/2016/10/26/sklearn-logistics-regression-parameters/" >sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/22</span><a class="archive-post-title" href= "/2016/10/22/tensorflow-linear-regression/" >TensorFlow 中的线性回归</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/27</span><a class="archive-post-title" href= "/2016/08/27/ubuntu-installing-tensorflow/" >Ubuntu 14.04 64 位安装 Google 的 TensorFlow</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/11</span><a class="archive-post-title" href= "/2016/01/11/machine-learning-book-note/" >《机器学习》学习笔记1——绪论 机器学习概述</a>
+        </li>
+    
+    
+    
+    
+    
+        </ul>
+    
+    <div class="archive-year"> 2015 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/21</span><a class="archive-post-title" href= "/2015/12/21/matlab-fitlm/" >使用 MATLAB 的 fitlm 函数进行线性回归</a>
+        </li>
+    
+    </div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="Python"><span class="iconfont-archer">&#xe606;</span>Python</span>
+    
+        <span class="sidebar-tag-name" data-tags="Data Science"><span class="iconfont-archer">&#xe606;</span>Data Science</span>
+    
+        <span class="sidebar-tag-name" data-tags="Tools"><span class="iconfont-archer">&#xe606;</span>Tools</span>
+    
+        <span class="sidebar-tag-name" data-tags="NLP"><span class="iconfont-archer">&#xe606;</span>NLP</span>
+    
+        <span class="sidebar-tag-name" data-tags="TensorFlow"><span class="iconfont-archer">&#xe606;</span>TensorFlow</span>
+    
+        <span class="sidebar-tag-name" data-tags="Machine Learning"><span class="iconfont-archer">&#xe606;</span>Machine Learning</span>
+    
+        <span class="sidebar-tag-name" data-tags="Translation"><span class="iconfont-archer">&#xe606;</span>Translation</span>
+    
+        <span class="sidebar-tag-name" data-tags="C++"><span class="iconfont-archer">&#xe606;</span>C++</span>
+    
+        <span class="sidebar-tag-name" data-tags="置顶"><span class="iconfont-archer">&#xe606;</span>置顶</span>
+    
+        <span class="sidebar-tag-name" data-tags="Living"><span class="iconfont-archer">&#xe606;</span>Living</span>
+    
+        <span class="sidebar-tag-name" data-tags="hexo"><span class="iconfont-archer">&#xe606;</span>hexo</span>
+    
+        <span class="sidebar-tag-name" data-tags="Ubuntu"><span class="iconfont-archer">&#xe606;</span>Ubuntu</span>
+    
+        <span class="sidebar-tag-name" data-tags="Ghost"><span class="iconfont-archer">&#xe606;</span>Ghost</span>
+    
+        <span class="sidebar-tag-name" data-tags="MATLAB"><span class="iconfont-archer">&#xe606;</span>MATLAB</span>
+    
+        <span class="sidebar-tag-name" data-tags="Pixel"><span class="iconfont-archer">&#xe606;</span>Pixel</span>
+    
+        <span class="sidebar-tag-name" data-tags="Android"><span class="iconfont-archer">&#xe606;</span>Android</span>
+    
+        <span class="sidebar-tag-name" data-tags="sklearn"><span class="iconfont-archer">&#xe606;</span>sklearn</span>
+    
+        <span class="sidebar-tag-name" data-tags="Paper"><span class="iconfont-archer">&#xe606;</span>Paper</span>
+    
+        <span class="sidebar-tag-name" data-tags="Windows"><span class="iconfont-archer">&#xe606;</span>Windows</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br/>
+    1、请确保node版本大于6.2<br/>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br/>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br/>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "Alan Lee"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+        <script src="/scripts/share.js" async></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->    
+     
+    </body>
+</html>
+
+

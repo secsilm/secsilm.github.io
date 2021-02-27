@@ -763,13 +763,13 @@ height:50vh;
             
                 
                     <span>
-                        <a href= http://blog.csdn.net/u010099080 target="_black">我的 CSDN</a>
+                        <a href= http://blog.csdn.net/u010099080 target="_black">CSDN</a>
                     </span>
                 
             
                 
                     <span>
-                        <a href= https://northcloudgate.com/ target="_black">我的生活博客（喵星警告）</a>
+                        <a href= https://northcloudgate.com/ target="_black">TheNorthCloudGate</a>
                     </span>
                 
             
@@ -2123,9 +2123,24 @@ jsonContent:
     <!-- CNZZ  -->
     
     </div>
-    <!-- async load share.js --><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    <!-- async load share.js -->
      
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>
 
 

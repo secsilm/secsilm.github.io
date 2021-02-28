@@ -413,7 +413,7 @@ height:50vh;
         <p><em>Photo by <a href="https://unsplash.com/@mdominguezfoto?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" target="_blank" rel="noopener">Martha Dominguez de Gouveia</a> on <a href="https://unsplash.com/s/photos/empty-file?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" target="_blank" rel="noopener">Unsplash</a></em></p>
 <h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>最近重装系统后，重新安装了 node 和 hexo。写完文章后，在本地 <code>hexo s</code> 后预览博客，显示正常。随即执行 <code>hexo d -g</code> 部署，结果打开博客后显示空白或 GitHub Page 的 404 页面，console 无任何报错。</p>
 <h2 id="尝试"><a href="#尝试" class="headerlink" title="尝试"></a>尝试</h2><p>起初以为 node 或者 hexo 没装好，或者一些依赖没装，就重新安装了一遍 node 和 hexo，结果发现没用。</p>
-<p>然后搜索 V2EX 的一篇 <a href="https://www.v2ex.com/t/368291" target="_blank" rel="noopener">帖子</a>，该帖子 8 楼表示遇到过 index.html 为空的情况，是 git 子模块问题导致 html 文件没有被提交上去。于是我检查了 git 设置，没有问题。随后去 GitHub 上检查那些 html 文件是否正常。结果发现：</p>
+<p>然后搜索到 V2EX 的一篇 <a href="https://www.v2ex.com/t/368291" target="_blank" rel="noopener">帖子</a>，该帖子 8 楼表示遇到过 index.html 为空的情况，是 git 子模块问题导致 html 文件没有被提交上去。于是我检查了 git 设置，没有问题。随后去 GitHub 上检查那些 html 文件是否正常。结果发现：</p>
 <p><strong>所有 html 文件都是空文件。</strong></p>
 <p><img src="https://i.loli.net/2021/02/28/heUVQLA3if298Wp.png" alt="empty_index"></p>
 <p>所以我的问题就是生成 html 的问题，而不是 html 文件没有被提交上的问题，不过还是感谢那位老哥。</p>

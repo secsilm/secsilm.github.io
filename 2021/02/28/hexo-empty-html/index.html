@@ -420,7 +420,7 @@ height:50vh;
 <p>于是我又怀疑是某些插件没装的问题，执行了一次 <code>npm i</code> 后发现问题依旧。最后再次转向 Google，这不过这次目标更为明确：hexo generate empty file。于是找到了一些 hexo GitHub repo 的 issue 和 PR，<a href="https://github.com/hexojs/hexo/issues/4267" target="_blank" rel="noopener">其中</a> 关键的一个信息如下：</p>
 <p><img src="https://i.loli.net/2021/02/28/fcHwJ8DibYIXTkl.png" alt="关键信息"></p>
 <h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>So，我检查了我的 node 和 hexo 版本，前者是 <code>14.x</code>，后者是 <code>4.2.0</code> 。问题明确了，是 <strong>node 版本太高了，hexo 还不支持</strong>。那么解决方案也就很简单了：</p>
-<p><strong>降级 node 到 <code>13</code> 或者 <code>12</code> 。或者升级 hexo 到 <code>4.2.1</code> 。</strong></p>
+<p><strong>降级 node 到 <code>13</code> 或者 <code>12</code> 。或者升级 hexo 到 <code>4.2.1</code> 及以上。</strong></p>
 <p>这里我以降级 node 为例。如何降级呢？很简单，直接在控制面板卸载掉当前的高版本，然后 <a href="https://nodejs.org/en/download/releases/" target="_blank" rel="noopener">官网</a> 重新下载一个新的旧版本（比如 <code>13</code>）msi 安装即可。</p>
 <p>最后重新执行 <code>hexo d -g</code> 即可，此时可以看到 GitHub repo 里的 html 文件已经不再是空文件，博客也已能够正常显示。</p>
 <p><img src="https://i.loli.net/2021/02/28/v5yMrnZaLYDFtAm.png" alt="html已正常"></p>
@@ -1878,24 +1878,9 @@ jsonContent:
     </div>
     <!-- async load share.js -->
     
-        <script src="/scripts/share.js" async></script>    
+        <script src="/scripts/share.js" async></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->    
      
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
-</body>
+    </body>
 </html>
 
 

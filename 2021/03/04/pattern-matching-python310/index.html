@@ -15,7 +15,7 @@
     <meta name="description" content="Machine Learning, Deep Learning, NLP">
     <meta name="Cache-Control" content="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-    <title>使用集成学习提升机器学习算法性能 · Alan Lee</title>
+    <title>Python 3.10 的新功能：模式匹配 Pattern Matching · Alan Lee</title>
     <style type="text/css">
     @font-face {
         font-family: 'Oswald-Regular';
@@ -233,7 +233,7 @@
                 <a href="/" >Alan Lee</a>
             </div>
             <div class="post-title">
-                <a href="#" class="post-name">使用集成学习提升机器学习算法性能</a>
+                <a href="#" class="post-name">Python 3.10 的新功能：模式匹配 Pattern Matching</a>
             </div>
     </div>
     
@@ -259,13 +259,13 @@ height:50vh;
     <!-- 404页  -->
             
     <div class="site-intro-placeholder"></div>
-    <div class="site-intro-img" style="background-image: url(/assets/hanamura.jpg)"></div>
+    <div class="site-intro-img" style="background-image: url(https://i.loli.net/2021/03/04/gWmxJlbwoOR6zSf.jpg)"></div>
     <div class="site-intro-meta">
         <!-- 标题  -->
         <h1 class="intro-title">
             <!-- 主页  -->
             
-            使用集成学习提升机器学习算法性能
+            Python 3.10 的新功能：模式匹配 Pattern Matching
             <!-- 404 -->
             
         </h1>
@@ -284,16 +284,14 @@ height:50vh;
                 
                     <div class= post-intro-tags >
     
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Machine Learning">Machine Learning</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags = "Translation">Translation</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags = "Python">Python</a>
     
 </div>
                 
                 
                 <div class="post-intro-meta">
                     <span class="post-intro-calander iconfont-archer">&#xe676;</span>
-                    <span class="post-intro-time">2017/08/30</span>
+                    <span class="post-intro-time">2021/03/04</span>
                     
                     <span class="shareWrapper">
                         <span class="iconfont-archer shareIcon">&#xe71d;</span>
@@ -412,128 +410,84 @@ height:50vh;
         <div class="container container-unloaded">
             <main class="main post-page">
     <article class="article-entry">
-        <blockquote>
-<p>译者注：这篇文章是对 PythonWeekly 推荐的一篇讲集成模型的文章的翻译，原文为 <a href="https://blog.statsbot.co/ensemble-learning-d1dcd548e936" target="_blank" rel="noopener">Ensemble Learning to Improve Machine Learning Results</a>，由 Vadim Smolyakov 于 2017 年 8 月 22 日发表在 Medium 上，Vadim Smolyakov 是一名 MIT 的研究生。水平有限，如有错误，欢迎评论区或者邮件或者私信指出。建议阅读英文原文。</p>
-</blockquote>
-<a id="more"></a>
-<p><em>集成学习（Ensemble Learning）通过联合几个模型来帮助提高机器学习结果。与单一模型相比，这种方法可以很好地提升模型的预测性能。这也是为什么集成模型在很多著名机器学习比赛中被优先使用的原因，例如 Netflix 比赛，KDD 2009 和 Kaggle。</em></p>
-<p>集成方法是一种将几种机器学习技术组合成一个预测模型的元算法（meta-algorithm），以减小方差（bagging），偏差（boosting），或者改进预测（stacking）。</p>
-<p>集成方法可以分为两类：</p>
-<ul>
-<li>序列集成方法（sequential ensemble methods），基学习器（base learner）顺序生成。序列方法的基本动机是<strong>利用基学习器之间的依赖关系</strong>。算法可以通过提高被分错样本的权重来提高性能。</li>
-<li>并行集成方法（parallel ensemble methods），基学习器并行生成。并行方法的基本动机是<strong>利用基学习器之间的独立性</strong>，因为可以通过平均来显著降低误差。</li>
-</ul>
-<p>大多数集成方法使用一个基学习算法来产生多个同质基学习器（homogeneous base learners），即相同类型的学习器，这就是同质集成（homogeneous ensembles）。</p>
-<p>也有一些方法使用的是异质学习器（heterogeneous learner），即不同类型的学习器，这就是异质集成（heterogeneous ensembles）。为了使集成方法能够比任何构成它的单独的方法更准确，基学习器必须尽可能的准确和多样。</p>
-<hr>
-<h2 id="Bagging"><a href="#Bagging" class="headerlink" title="Bagging"></a>Bagging</h2><p>Bagging 表示的是 Bootstrap AGGregatING。降低一个估计的方差的一个方法就是平均多个估计。例如，我们可以在一个数据集的不同子集上（有放回的随机选取）训练 $M$ 个不同的树然后计算结果的平均值：</p>
-<script type="math/tex; mode=display">f(x)=\frac{1}{M}\Sigma_{m=1}^M f_m(x)</script><p>bagging 使用<a href="https://en.wikipedia.org/wiki/Bootstrapping_(statistics" target="_blank" rel="noopener">自助抽样法</a>)（bootstrapping）来为每个基学习器获得一个数据集的子集。对于如何聚合多个基学习器的结果，bagging 在分类任务中使用投票，而在回归任务重使用平均。</p>
-<p>我们可以通过在 Iris 数据集上执行分类任务来学习 bagging。我们选择两种基学习器：决策树（decision tree）和 kNN 分类器。下图显示了基学习器在 Iris 上学习到的决策边界和他们 bagging 集成之后学习到的决策边界。</p>
-<ul>
-<li>决策树准确率：0.63（+/- 0.02）</li>
-<li>kNN 准确率：0.70（+/- 0.02）</li>
-<li>bagging 树准确率：0.64（+/- 0.01）</li>
-<li>bagging kNN准确率：0.59（+/- 0.07）</li>
-</ul>
-<p><img src="https://i.imgur.com/XA3aooQ.png" width="100%" alt="bagging"></p>
-<center><font color="gray">*Bagging*</font></center>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>2021 年 3 月 2 日的时候，Guido 发推说 3.10.0a6 出来了，文档也已经有了，4 月 5 日会释出 a7，5 月 3 日出 b1。</p>
+<p><img src="https://i.loli.net/2021/03/04/wLZiV64fDnHmkbj.png" alt="guido-twitter"></p>
+<p>推文中还特别提到「With Pattern Matching」，这是 3.10 的一个重磅功能，于去年 9 月 12 日在 <a href="https://www.python.org/dev/peps/pep-0634/" target="_blank" rel="noopener">PEP 634</a> 提出。</p>
+<p>之前我一直听说会有这个功能，但是没怎么仔细了解过。Pattern Matching 这个名字给我的第一印象，是模式识别和正则表达式混合的那种感觉，我想正则不是有了吗，应该不会是正则。那难道是模式识别？Python 要真正称为 AI Python 了吗，直接内置 ML？</p>
+<p>直到 Guido 这个推，我才去仔细看了下文档，才发现，(⊙o⊙)？，too young。根本不是那回事，什么 AI Python，什么正则，都是浮云。</p>
+<p><strong>原来是一个加强版的 switch ……</strong></p>
+<p>我们从安装 Python 3.10.0a6 开始，一步一步看看这个 Pattern Matching 是何方神圣。</p>
+<h2 id="安装-Python-3-10-0a6"><a href="#安装-Python-3-10-0a6" class="headerlink" title="安装 Python 3.10.0a6"></a>安装 Python 3.10.0a6</h2><p><a href="https://hub.docker.com/_/python" target="_blank" rel="noopener">官方</a> 其实已经释出了该版本的 docker 镜像，想要快速体验的话可以直接 pull。</p>
+<p>但此处我们要从 source 安装，使用上述 docker 镜像的可以直接跳过这部分。</p>
+<p>此处我们使用 Ubuntu 18.04 的 docker 镜像，可以直接使用如下命令 pull：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull ubuntu:18.04</span><br></pre></td></tr></table></figure>
+<p>假设我们已经预先从 <a href="https://www.python.org/downloads/release/python-3100a6/" target="_blank" rel="noopener">官网</a> 下载好 Python 3.10.0a6 的压缩包，放到了 host 的 <code>/home/alan/download/</code> 目录，然后我们使用如下命令启动 Ubuntu 镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 网速原因，此处直接使用 -v 将压缩包挂载到容器</span></span><br><span class="line">docker run -it -v /home/alan/download/:/root/ ubuntu:18.04 bash</span><br></pre></td></tr></table></figure>
+<p>进入容器后，依次执行下列命令，即可安装 Python 3.10.0a6：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /root/</span><br><span class="line">tar -xzvf Python-3.10.0a6.tgz</span><br><span class="line"><span class="built_in">cd</span> Python-3.10.0a6</span><br><span class="line">apt update</span><br><span class="line">apt-get install -y make build-essential libssl-dev zlib1g-dev \</span><br><span class="line">       libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \</span><br><span class="line">       libncurses5-dev libncursesw5-dev xz-utils tk-dev</span><br><span class="line">./configure --<span class="built_in">enable</span>-optimizations --with-ensurepip=install</span><br><span class="line">make -j 8  <span class="comment"># 大约需要十几分钟</span></span><br><span class="line">make altinstall  <span class="comment"># 不替换系统 Python</span></span><br></pre></td></tr></table></figure>
+<details>
+<summary>其中，Python-3.10.0a6.tgz 里的目录结构如下：</summary>
 
-<p>决策树的边界与轴平行，而 $k=1$ 时的 kNN 算法与数据点紧密贴合。该集成方法使用了 10 个基学习器，训练子集由原训练数据和特征的 80% 构成。</p>
-<p>决策树集成相对于 kNN 集成达到了较高的准确率。kNN 对训练样本的扰动不敏感，因此也被称为稳定学习器（stable learner）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line">$ tree Python-3.10.0a6/ -d -L 2</span><br><span class="line">Python-3.10.0a6/</span><br><span class="line">|-- Doc</span><br><span class="line">|   |-- c-api</span><br><span class="line">|   |-- data</span><br><span class="line">|   |-- distributing</span><br><span class="line">|   |-- distutils</span><br><span class="line">|   |-- extending</span><br><span class="line">|   |-- faq</span><br><span class="line">|   |-- howto</span><br><span class="line">|   |-- includes</span><br><span class="line">|   |-- install</span><br><span class="line">|   |-- installing</span><br><span class="line">|   |-- library</span><br><span class="line">|   |-- reference</span><br><span class="line">|   |-- tools</span><br><span class="line">|   |-- tutorial</span><br><span class="line">|   |-- using</span><br><span class="line">|   `-- whatsnew</span><br><span class="line">|-- Grammar</span><br><span class="line">|-- Include</span><br><span class="line">|   |-- cpython</span><br><span class="line">|   `-- internal</span><br><span class="line">|-- Lib</span><br><span class="line">|   |-- asyncio</span><br><span class="line">|   |-- collections</span><br><span class="line">|   |-- concurrent</span><br><span class="line">|   |-- ctypes</span><br><span class="line">|   |-- curses</span><br><span class="line">|   |-- dbm</span><br><span class="line">|   |-- distutils</span><br><span class="line">|   |-- email</span><br><span class="line">|   |-- encodings</span><br><span class="line">|   |-- ensurepip</span><br><span class="line">|   |-- html</span><br><span class="line">|   |-- http</span><br><span class="line">|   |-- idlelib</span><br><span class="line">|   |-- importlib</span><br><span class="line">|   |-- json</span><br><span class="line">|   |-- lib2to3</span><br><span class="line">|   |-- logging</span><br><span class="line">|   |-- msilib</span><br><span class="line">|   |-- multiprocessing</span><br><span class="line">|   |-- pydoc_data</span><br><span class="line">|   |-- site-packages</span><br><span class="line">|   |-- sqlite3</span><br><span class="line">|   |-- <span class="built_in">test</span></span><br><span class="line">|   |-- tkinter</span><br><span class="line">|   |-- turtledemo</span><br><span class="line">|   |-- unittest</span><br><span class="line">|   |-- urllib</span><br><span class="line">|   |-- venv</span><br><span class="line">|   |-- wsgiref</span><br><span class="line">|   |-- xml</span><br><span class="line">|   |-- xmlrpc</span><br><span class="line">|   `-- zoneinfo</span><br><span class="line">|-- Mac</span><br><span class="line">|   |-- BuildScript</span><br><span class="line">|   |-- IDLE</span><br><span class="line">|   |-- Icons</span><br><span class="line">|   |-- PythonLauncher</span><br><span class="line">|   |-- Resources</span><br><span class="line">|   `-- Tools</span><br><span class="line">|-- Misc</span><br><span class="line">|-- Modules</span><br><span class="line">|   |-- _blake2</span><br><span class="line">|   |-- _ctypes</span><br><span class="line">|   |-- _decimal</span><br><span class="line">|   |-- _io</span><br><span class="line">|   |-- _multiprocessing</span><br><span class="line">|   |-- _sha3</span><br><span class="line">|   |-- _sqlite</span><br><span class="line">|   |-- _ssl</span><br><span class="line">|   |-- _xxtestfuzz</span><br><span class="line">|   |-- cjkcodecs</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   `-- expat</span><br><span class="line">|-- Objects</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   `-- stringlib</span><br><span class="line">|-- PC</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   |-- icons</span><br><span class="line">|   `-- layout</span><br><span class="line">|-- PCbuild</span><br><span class="line">|-- Parser</span><br><span class="line">|-- Programs</span><br><span class="line">|-- Python</span><br><span class="line">|   `-- clinic</span><br><span class="line">|-- Tools</span><br><span class="line">|   |-- buildbot</span><br><span class="line">|   |-- c-analyzer</span><br><span class="line">|   |-- ccbench</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   |-- demo</span><br><span class="line">|   |-- freeze</span><br><span class="line">|   |-- gdb</span><br><span class="line">|   |-- i18n</span><br><span class="line">|   |-- importbench</span><br><span class="line">|   |-- iobench</span><br><span class="line">|   |-- msi</span><br><span class="line">|   |-- nuget</span><br><span class="line">|   |-- peg_generator</span><br><span class="line">|   |-- pynche</span><br><span class="line">|   |-- scripts</span><br><span class="line">|   |-- ssl</span><br><span class="line">|   |-- stringbench</span><br><span class="line">|   |-- test2to3</span><br><span class="line">|   |-- tz</span><br><span class="line">|   |-- unicode</span><br><span class="line">|   `-- unittestgui</span><br><span class="line">`-- m4</span><br><span class="line"></span><br><span class="line">110 directories</span><br></pre></td></tr></table></figure>
+
+</details>
+
+<p>完成后，Python 3.10.0a6 就已经安装到系统中，直接命令行输入 <code>python3.10</code> 回车即可进入解释器。</p>
+<p><img src="https://i.loli.net/2021/03/04/qJs8NrP2WoigyFK.png" alt="python3.10a6"></p>
+<h2 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h2><p>Pattern Matching 的全称是 Structural Pattern Matching（以下简称 SPM），中文可以翻为「结构模式匹配」，先搁置 Structural，先看后面的 pattern matching。</p>
+<h3 id="基础语法"><a href="#基础语法" class="headerlink" title="基础语法"></a>基础语法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">match subject:</span><br><span class="line">    case &lt;pattern_1&gt;:</span><br><span class="line">        &lt;action_1&gt;</span><br><span class="line">    case &lt;pattern_2&gt;:</span><br><span class="line">        &lt;action_2&gt;</span><br><span class="line">    case &lt;pattern_3&gt;:</span><br><span class="line">        &lt;action_3&gt;</span><br><span class="line">    case _:</span><br><span class="line">        &lt;action_wildcard&gt;</span><br></pre></td></tr></table></figure>
+<p>这就是 SPM 的语法了，很熟悉对不对？其实本质上就是 switch 语句。就是看 <code>subject</code> 和下面的哪一个 <code>case</code> 的 pattern 能匹配得上（顺序依次匹配），就执行该 <code>case</code> 下的 action。最后一个 <code>case</code> 的 pattern 是 <code>_</code> ，表示 default，就是如果前面的都没匹配上，那么就执行该 <code>case</code> ，可以看作是兜底的。那么如果你没写这个兜底的 <code>case</code> 呢？那就是 no-op，什么也不会执行。</p>
+<p>例如，根据不同的 http status 返回不同的 message：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">http_error</span><span class="params">(status)</span>:</span></span><br><span class="line">    match status:</span><br><span class="line">        case <span class="number">400</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">"Bad request"</span></span><br><span class="line">        case <span class="number">401</span> | <span class="number">403</span> | <span class="number">404</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">"Not allowed"</span></span><br><span class="line">        case <span class="number">404</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">"Not found"</span></span><br><span class="line">        case <span class="number">418</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">"I'm a teapot"</span></span><br><span class="line">        case _:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">"Something's wrong with the Internet"</span></span><br></pre></td></tr></table></figure>
+<p>如果 <code>status</code> 是 <code>400</code>，就会返回 <code>&quot;Bad request&quot;</code> ，如果是 <code>500</code> ，就走到最后一个兜底的 <code>case</code> ，返回 <code>&quot;Something&#39;s wrong with the Internet&quot;</code> 。那如果没有最后一个 <code>case</code> ，那么该函数什么也不会返回，或者准确来说，返回 <code>None</code> 。</p>
+<p>上述代码中另一个值得注意的是这句： <code>case 401 | 403 | 404:</code> ， <code>|</code> 在这里同样表示或。</p>
+<h3 id="Structural？"><a href="#Structural？" class="headerlink" title="Structural？"></a>Structural？</h3><p>OK，现在我们来谈谈 structural。语法在哪里体现到了 structural 呢？看文档中下面这句话：</p>
 <blockquote>
-<p>稳定学习器的集成不太有利，因为这样的集成并不会提升泛化性能。</p>
+<p>using data with type and shape (the <code>subject</code>)</p>
 </blockquote>
-<p>图一也显示了集成大小是如何提高测试准确率的。基于交叉验证的结果，我们可以看到在大约 10 个基学习器前准确率一直在增加，随后趋于平缓，在 0.7 左右上下波动。因此，再增加超过 10 个基学习器不仅没有得到准确率的提升，反而增加了计算复杂度。</p>
-<p>我们也可以看到 bagging 树集成的学习曲线。注意到训练数据的平均误差为 0.3 和 测试数据的 U 型误差曲线。训练和测试误差差距最小时发生在 Training set size in percent 为 80% 左右。</p>
+<p><code>subject</code> 是带有 type 和 shape 的，就是说 <code>subject</code> 是带有结构的，事先声明好 pattern 的结构。例如 <code>subject</code> 可以是一个 <code>list</code> 、 <code>tuple</code> 、 <code>class</code> 、 <code>list of class</code> 等等。</p>
+<p>具体例子：</p>
+<p><code>tuple</code> ：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># point 是一个 (x, y) tuple</span></span><br><span class="line">match point:</span><br><span class="line">    case (<span class="number">0</span>, <span class="number">0</span>):</span><br><span class="line">        print(<span class="string">"Origin"</span>)</span><br><span class="line">    case (<span class="number">0</span>, y):</span><br><span class="line">        print(<span class="string">f"Y=<span class="subst">&#123;y&#125;</span>"</span>)</span><br><span class="line">    case (x, <span class="number">0</span>):</span><br><span class="line">        print(<span class="string">f"X=<span class="subst">&#123;x&#125;</span>"</span>)</span><br><span class="line">    case (x, y):</span><br><span class="line">        print(<span class="string">f"X=<span class="subst">&#123;x&#125;</span>, Y=<span class="subst">&#123;y&#125;</span>"</span>)</span><br><span class="line">    case _:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">"Not a point"</span>)</span><br></pre></td></tr></table></figure>
+<p><code>class</code> ：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Point</span>:</span></span><br><span class="line">    x: int</span><br><span class="line">    y: int</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">location</span><span class="params">(point)</span>:</span></span><br><span class="line">    match point:</span><br><span class="line">        case Point(x=<span class="number">0</span>, y=<span class="number">0</span>):</span><br><span class="line">            print(<span class="string">"Origin is the point's location."</span>)</span><br><span class="line">        case Point(x=<span class="number">0</span>, y=y):</span><br><span class="line">            print(<span class="string">f"Y=<span class="subst">&#123;y&#125;</span> and the point is on the y-axis."</span>)</span><br><span class="line">        case Point(x=x, y=<span class="number">0</span>):</span><br><span class="line">            print(<span class="string">f"X=<span class="subst">&#123;x&#125;</span> and the point is on the x-axis."</span>)</span><br><span class="line">        case Point():</span><br><span class="line">            print(<span class="string">"The point is located somewhere else on the plane."</span>)</span><br><span class="line">        case _:</span><br><span class="line">            print(<span class="string">"Not a point"</span>)</span><br></pre></td></tr></table></figure>
+<p>嵌套结构 <code>list of class</code> ：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">match points:</span><br><span class="line">    case []:</span><br><span class="line">        print(<span class="string">"No points in the list."</span>)</span><br><span class="line">    case [Point(<span class="number">0</span>, <span class="number">0</span>)]:</span><br><span class="line">        print(<span class="string">"The origin is the only point in the list."</span>)</span><br><span class="line">    case [Point(x, y)]:</span><br><span class="line">        print(<span class="string">f"A single point <span class="subst">&#123;x&#125;</span>, <span class="subst">&#123;y&#125;</span> is in the list."</span>)</span><br><span class="line">    case [Point(<span class="number">0</span>, y1), Point(<span class="number">0</span>, y2)]:</span><br><span class="line">        print(<span class="string">f"Two points on the Y axis at <span class="subst">&#123;y1&#125;</span>, <span class="subst">&#123;y2&#125;</span> are in the list."</span>)</span><br><span class="line">    case _:</span><br><span class="line">        print(<span class="string">"Something else is found in the list."</span>)</span><br></pre></td></tr></table></figure>
+<p>甚至还可以是 <code>dict</code> （<a href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Mapping" target="_blank" rel="noopener"><code>Mapping</code></a> pattern）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">dict_test</span><span class="params">(d)</span>:</span></span><br><span class="line">    match d:</span><br><span class="line">        case &#123;<span class="string">'a'</span>: <span class="number">1</span>&#125;:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line">        case &#123;<span class="string">'a'</span>: <span class="number">1</span>, <span class="string">'b'</span>: <span class="number">2</span>&#125;:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line">dict_test(&#123;<span class="string">'a'</span>: <span class="number">1</span>&#125;)</span><br><span class="line"><span class="comment"># True</span></span><br></pre></td></tr></table></figure>
+<p>但使用 <code>dict</code> 作为 pattern 的时候要特别注意，pattern 只匹配其包含的 key，额外的 key 会被忽略，即 <code>all(pattern[key] == subject[key] for key in pattern)</code> ，以 pattern 的 key 为依据。例如下面的例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dict_test(&#123;<span class="string">'a'</span>: <span class="number">1</span>, <span class="string">'b'</span>: <span class="number">1</span>&#125;)</span><br><span class="line"><span class="comment"># 仍然返回 True，因为第一个 case 只检查 'a' 这个 key 的值</span></span><br></pre></td></tr></table></figure>
+<p>此外需要注意的是，即使 <code>case</code> 的 pattern 的 type 和 shape 与 <code>subject</code> 对不上，那也不会报错，只不过不会 match 而已。</p>
+<h3 id="A-guard？"><a href="#A-guard？" class="headerlink" title="A guard？"></a>A guard？</h3><p>就像 Python 中常见的 <code>A if B else C</code> 的模式，此处也有这么一种存在：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match point:</span><br><span class="line">    case Point(x=x, y=y) <span class="keyword">if</span> x == y:</span><br><span class="line">        print(<span class="string">f"The point is located on the diagonal Y=X at <span class="subst">&#123;x&#125;</span>."</span>)</span><br><span class="line">    case Point(x=x, y=y):</span><br><span class="line">        print(<span class="string">f"Point is not on the diagonal."</span>)</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，原文档中 <code>Point(x=x, y=y)</code> 写的是 <code>Point(x, y)</code> ，其实这样写的话是会报错的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">"/root/test.py"</span>, line <span class="number">69</span>, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">    guard_test(point)</span><br><span class="line">  File <span class="string">"/root/test.py"</span>, line <span class="number">39</span>, <span class="keyword">in</span> guard_test</span><br><span class="line">    case Point(x, y) <span class="keyword">if</span> x == y:</span><br><span class="line">TypeError: Point() accepts <span class="number">0</span> positional sub-patterns (<span class="number">2</span> given)</span><br></pre></td></tr></table></figure>
+<p>因为 <code>Point</code> 类不是 dataclass，也没有设置 <code>__match_args__</code> ，所以不能直接使用位置参数，文档中相关表述如下：</p>
 <blockquote>
-<p>一种常用的集成算法是随机森林。</p>
+<p>You can use positional parameters with some builtin classes that provide an ordering for their attributes (e.g. dataclasses). You can also define a specific position for attributes in patterns by setting the <code>__match_args__</code> special attribute in your classes.</p>
 </blockquote>
-<p>在随机森林算法中，每个树都是基于从原训练数据集中有放回抽样（即自助抽样法）得到的子集训练的。另外，也对特征进行自助抽样，而不是使用全部特征。</p>
-<p>最终随机森林的偏差可能会轻微增大，但是由于平均了几个不相关的树的结果，降低了方差，导致最终模型的整体性能更好。（<em>译者注：个人觉得类似于时间序列分析中的移动平均</em>）</p>
-<p><img src="https://i.imgur.com/iXTf6Ck.png" alt=""></p>
-<p>在<a href="https://en.wikipedia.org/wiki/Random_forest#ExtraTrees" target="_blank" rel="noopener">极限随机树（extremely randomized tree）</a>算法中，随机性更近了一步：分裂阈值是随机选取的。与寻找最具有判别性的阈值不同，极限随机树为每个候选特征选取一个阈值，并将这些阈值的最佳值作为最终的分割阈值。这通常会降低方差，偏差会稍微增大。</p>
-<hr>
-<h2 id="Boosting"><a href="#Boosting" class="headerlink" title="Boosting"></a>Boosting</h2><p>Boosting 指的是能够将弱学习器转化为强学习器的一系列算法。Boosting 的主要原理是给一系列的弱学习器赋予权重，这些弱学习器各自的性能仅仅比随机猜测高一些，例如小的决策树。先前被分错的样本会被给予更多权重。</p>
-<p>在进行分类任务时，使用一个加权投票来决定最终的预测，而在回归任务时使用加权和。Boosting 和其他方法例如 bagging 的主要区别是基学习器使用加权版本的数据集来顺序生成。</p>
-<p>下面的算法是 AdaBoost（ADAptive BOOSTing），这是目前使用最广泛的 boosting 算法：</p>
+<p>但如果非要写成 <code>Point(x, y)</code> ，可以将 <code>Point</code> 类改成 dataclass 即可：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Point</span>:</span></span><br><span class="line">    x: int</span><br><span class="line">    y: int</span><br></pre></td></tr></table></figure>
+<p>此外关于执行顺序：</p>
 <blockquote>
-<ol>
-<li>初始化样本权重 ${w_n}$ 为 $1/N$</li>
-<li>for $m=1$ to $M$</li>
-<li>通过最小化加权误差函数 $J_m$ 训练一个分类器 $y_m(x)$，此处 $J_m = \Sigma_{n=1}^{N} w_n^{(m)} 1[y_m(x_n) \neq t_n]$</li>
-<li>计算 $\epsilon_m = \dfrac{\Sigma_{n=1}^{N} w_n^{(m)}1[y_m(x_n) \neq t_n]}{\Sigma_{n=1}^{N} w_n^{(m)}}$</li>
-<li>计算 $\alpha_m = \text{log}(\dfrac{1-\epsilon_m}{\epsilon_m})$</li>
-<li>更新样本权重：$w_n^{m+1} = w_n^m e^{\alpha_m1[y_m(x_n) \neq t_n]}$</li>
-<li>end for</li>
-<li>使用最终的模型进行预测：$Y_M(x)=\text{sign}\left(\Sigma_{m=1}{M}\alpha_my_m(x)\right)$</li>
-</ol>
+<p>Note that value capture happens before the guard is evaluated</p>
 </blockquote>
-<p>其中 $N$ 为样本数，$M$ 为集成大小，即基学习器的数量。我们可以看到第一个基分类器 $y_1(x)$ 训练时所使用的权重均为 $1/N$。在接下来的 boosting 循环中，那些被分错的样本的权重会被增大，而那些被分对的样本的权重会减小。</p>
-<p>$\epsilon$ 表示基分类器的加权错误率。因此，权重系数 $\alpha$ 会给予准确率更高的分类器更大的权重。</p>
-<p><img src="https://i.imgur.com/oVZftZh.png" width="100%"></p>
-<center><font color="gray">*AdaBoost*</font></center>
-
-<p>如上图所示，每一个基学习器由一个深度为 1 的决策树组成，因此当 n_est=1 时模型只是基于一个特征阈值将样本空间分为两部分。上图也显示了集成大小是如何提高测试准确率的以及训练样本和测试样本的学习曲线。</p>
-<p>梯度树提升（<strong>Gradient Tree Boosting</strong>）是 boosting 在任意可微分损失函数的一种推广，既可用于回归也可用于分类，同样是顺序生成基学习器。</p>
-<script type="math/tex; mode=display">F_m(x)=F_{m-1}(x)+\gamma_mh_m(x)</script><p>每一步基于当前模型 $F_{m-1}(x)$ 来计算损失 $L$，并最小化 $L$ 来训练决策树 $h_m(x)$：</p>
-<script type="math/tex; mode=display">F_m(x)=F_{m-1}(x)+\text{argmin}_h\Sigma_{i=1}^n L(y_i, F_{m-1}(x_i)+h(x_i))</script><p>使用该算法进行回归和分类任务时不同在于损失函数。</p>
-<hr>
-<h2 id="Stacking"><a href="#Stacking" class="headerlink" title="Stacking"></a>Stacking</h2><p>Stacking 是一种通过元分类器（meta-classifier）或者元回归器（meta-regressor）来综合几个分类模型和回归模型的集成学习技术。基模型（base level model）基于整个数据集进行训练，然后元模型（meta-model）将基模型的输出作为特征来进行训练。( <em>译者注：个人觉得和 stacking-autoencoder 一个思想</em> )</p>
-<p>基模型通常由不同的学习算法组成，因此 stacking 集成通常是异构的。下面的算法总结了 stacking ：</p>
-<blockquote>
-<ol>
-<li>输入：训练样本 $D=\{x_i, y_i\}_{i=1}^{m}$</li>
-<li>输出：集成分类器 $H$</li>
-<li><em>Step 1：学习基分类器</em></li>
-<li>for $t=1$ to $T$</li>
-<li>基于 $D$ 训练 $h_t$</li>
-<li>end for</li>
-<li><em>Step 2：构建新数据</em></li>
-<li>for $i=1$ to $m$</li>
-<li>$D_h=\{x_i^{‘}, y_i\}$，其中 $x_i^{‘}=\{h_1(x_i), \ldots, h_T(x_i)\}$</li>
-<li>end for</li>
-<li><em>Step 3：学习元分类器</em></li>
-<li>基于 $D_h$ 训练 $H$</li>
-<li>返回 $H$</li>
-</ol>
-</blockquote>
-<ul>
-<li>KNN 准确率：0.91（+/- 0.01）</li>
-<li>随机森林 准确率：0.91（+/- 0.06）</li>
-<li>朴素贝叶斯 准确率：0.92（+/- 0.03）</li>
-<li>Stacking 准确率：0.95（+/- 0.03）</li>
+<p>如果我没理解错的话，就是先判断 pattern， <code>True</code> 的话再判断 guard，正常逻辑。<code>subject</code> 就像是一个人（本身也有主语的意思），一个个 <code>case</code> 就像一个个门， <code>subject</code> 想要看看自己能进入哪扇门，就要通过每扇门的检查。先检查你是不是个人，再检查你是不是我想要的那个人。guard 是最后一道防线。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总结起来，还是我上面说的，加强版的 switch：逻辑或、structural（支持多种类型）、guard。应该使用场景挺多的，干掉一大堆 <code>if</code> 指日可待，再也不用羡慕 Java 等的 switch 了。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://realpython.com/installing-python/#how-to-build-python-from-source-code" target="_blank" rel="noopener">Python 3 Installation &amp; Setup Guide – Real Python</a></li>
+<li><a href="https://docs.python.org/3.10/whatsnew/3.10.html#pep-634-structural-pattern-matching" target="_blank" rel="noopener">What’s New In Python 3.10 — Python 3.10.0a6 documentation</a></li>
+<li><a href="https://docs.python.org/3.10/tutorial/controlflow.html#match-statements" target="_blank" rel="noopener">4. More Control Flow Tools — Python 3.10.0a6 documentation</a></li>
+<li><a href="https://mail.python.org/archives/list/python-committers@python.org/message/VGZDQ5TFMSWEQZS6HNDLDJQ7GAASGUUB/" target="_blank" rel="noopener">Mailman 3 [python-committers] [RELEASE] Python 3.10.0a6 is available, now with 100% more pattern matching - python-committers - python.org</a></li>
 </ul>
-<p><img src="https://i.imgur.com/vm1MTWE.png" width="100%"></p>
-<center><font color="gray">*Stacking*</font></center>
-
-<p>如上图所示，该 stacking 集成由 KNN、随机森林和朴素贝叶斯这几个基分类器构成，其预测输出再由逻辑斯底回归综合构成一个元分类器。我们可以看到 stacking 实现了决策边界的混合。上图还显示了 stacking 的准确率要高于单独的分类器，且基于学习曲线，模型没有过拟合的迹象。</p>
-<p>Stacking 在 Kaggle 比赛中经常被用到。例如，在 Otto Group Product Classification 比赛中第一名就使用了超过 30 个模型，这些模型的输出又被作为特征来训练得到 3 个元分类器：XGBoost、神经网络和 AdaBoost。可以在 <a href="https://www.kaggle.com/c/otto-group-product-classification-challenge/discussion/14335" target="_blank" rel="noopener">这里</a> 查看细节。</p>
-<p><em>译者注：为了直观，我把获胜者所使用的模型结构图放在下面。</em></p>
-<p><img src="https://i.imgur.com/J5ghO9c.png" width="100%"></p>
-<center><font color="gray">*模型结构*</font></center>
-
-<hr>
-<h2 id="Code"><a href="#Code" class="headerlink" title="Code"></a>Code</h2><p>生成本文所用图片的代码在这个 <a href="https://github.com/vsmolyakov/experiments_with_python/blob/master/chp01/ensemble_methods.ipynb" target="_blank" rel="noopener">jupyter notebook</a> 上。</p>
-<hr>
-<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>除了本文研究的方法外，集成学习也通常用于深度学习来训练多样化和高准确率的分类器。可以通过不同的网络结构、超参数设置和训练技巧来达到多样性。</p>
-<p>集成方法在比赛数据集中获得创纪录的性能方面非常成功，也是 Kaggle 数据科学比赛中优胜者常用的算法。</p>
-<hr>
-<h2 id="Recommended-reading"><a href="#Recommended-reading" class="headerlink" title="Recommended reading"></a>Recommended reading</h2><ul>
-<li><a href="http://www2.islab.ntua.gr/attachments/article/86/Ensemble%20methods%20-%20Zhou.pdf" target="_blank" rel="noopener">Zhi-Hua Zhou, “Ensemble Methods: Foundations and Algorithms”, CRC Press, 2012</a>（ <em>译者注：原文这里没有链接，我自己找了找资源加上了资源地址，如若下载不下来请在 <a href="http://download.csdn.net/download/u010099080/9957633" target="_blank" rel="noopener">这里</a> 下载</em> ）</li>
-<li><a href="https://www.google.com/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;ved=0ahUKEwj77_jo1f7VAhXCTLwKHbP4D2AQFggtMAA&amp;url=https%3A%2F%2Fpdfs.semanticscholar.org%2F453c%2F2b407c57d7512fdbe19fa1cefa08dd22614a.pdf&amp;usg=AFQjCNGaB5BchT1b-l0KWkdrMgxkeg15yA" target="_blank" rel="noopener">L. Kuncheva, “Combining Pattern Classifiers: Methods and Algorithms”, Wiley, 2004</a>（ <em>译者注：原文这里没有链接，我自己找了找资源加上了资源地址，如若下载不下来请在 <a href="http://download.csdn.net/download/u010099080/9957642" target="_blank" rel="noopener">这里</a> 下载</em> ）</li>
-<li><a href="https://mlwave.com/kaggle-ensembling-guide/" target="_blank" rel="noopener">Kaggle Ensembling Guide</a></li>
-<li><a href="http://scikit-learn.org/stable/modules/ensemble.html" target="_blank" rel="noopener">Scikit Learn Ensemble Guide</a></li>
-<li><a href="http://rasbt.github.io/mlxtend/" target="_blank" rel="noopener">S. Rachka, MLxtend library</a></li>
-<li><a href="https://www.kaggle.com/c/otto-group-product-classification-challenge/discussion/14335" target="_blank" rel="noopener">Kaggle Winning Ensemble</a></li>
-</ul>
-
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
     </article>
     <!-- license  -->
     
         <div class="license-wrapper">
             <p>原文作者: <a href="https://alanlee.fun">Alan Lee</a>
-            <p>原文链接: <a href="https://alanlee.fun/2017/08/30/ensemble-methods/">https://alanlee.fun/2017/08/30/ensemble-methods/</a>
-            <p>发表日期: <a href="https://alanlee.fun/2017/08/30/ensemble-methods/">August 30th 2017, 6:47:00 pm</a>
+            <p>原文链接: <a href="https://alanlee.fun/2021/03/04/pattern-matching-python310/">https://alanlee.fun/2021/03/04/pattern-matching-python310/</a>
+            <p>发表日期: <a href="https://alanlee.fun/2021/03/04/pattern-matching-python310/">March 4th 2021, 9:19:00 pm</a>
             <p>版权声明: 本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -541,17 +495,12 @@ height:50vh;
     <ul class="post-paginator">
         <li class="next">
             
-                <div class="nextSlogan">Next Post</div>
-                <a href= "/2017/10/08/gradient-descent-methods/" title= 梯度下降优化算法概述 >
-                    <div class="nextTitle">梯度下降优化算法概述</div>
-                </a>
-            
         </li>
         <li class="previous">
             
                 <div class="prevSlogan">Previous Post</div>
-                <a href= "/2017/08/20/understanding-tensorboard/" title= 理解 TensorBoard >
-                    <div class="prevTitle">理解 TensorBoard</div>
+                <a href= "/2021/02/28/hexo-empty-html/" title= hexo 生成的 html 文件为空的问题 >
+                    <div class="prevTitle">hexo 生成的 html 文件为空的问题</div>
                 </a>
             
         </li>
@@ -568,8 +517,8 @@ height:50vh;
     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
         
         var disqus_config = function () {
-        this.page.url = "https://alanlee.fun/2017/08/30/ensemble-methods/";  // Replace PAGE_URL with your page's canonical URL variable
-        this.page.identifier = "使用集成学习提升机器学习算法性能"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        this.page.url = "https://alanlee.fun/2021/03/04/pattern-matching-python310/";  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = "Python 3.10 的新功能：模式匹配 Pattern Matching"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
         };
         
         (function () { // DON'T EDIT BELOW THIS LINE
@@ -672,7 +621,7 @@ top:50vh;
         <div class="toc-catalog">
             <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
         </div>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Bagging"><span class="toc-number">1.</span> <span class="toc-text">Bagging</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Boosting"><span class="toc-number">2.</span> <span class="toc-text">Boosting</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Stacking"><span class="toc-number">3.</span> <span class="toc-text">Stacking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Code"><span class="toc-number">4.</span> <span class="toc-text">Code</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Conclusion"><span class="toc-number">5.</span> <span class="toc-text">Conclusion</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Recommended-reading"><span class="toc-number">6.</span> <span class="toc-text">Recommended reading</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简介"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#安装-Python-3-10-0a6"><span class="toc-number">2.</span> <span class="toc-text">安装 Python 3.10.0a6</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#语法"><span class="toc-number">3.</span> <span class="toc-text">语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#基础语法"><span class="toc-number">3.1.</span> <span class="toc-text">基础语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Structural？"><span class="toc-number">3.2.</span> <span class="toc-text">Structural？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#A-guard？"><span class="toc-number">3.3.</span> <span class="toc-text">A guard？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">5.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-number">6.</span> <span class="toc-text">END</span></a></li></ol>
     </div>
     
     <div class="back-top iconfont-archer">&#xe639;</div>

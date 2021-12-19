@@ -316,12 +316,60 @@
             </div>
             
                 <div class="postShorten-excerpt">
-                    <p>本文将会从原始文本出发（中文），经过训练embedding、生成所需文件等步骤，一步一步，最终使用TBP来可视化embedding，并且解决不能使用中文标签的问题。<br>
+                    <p>本文将会从原始文本出发（中文），经过训练 embedding、生成所需文件等步骤，一步一步，最终使用TBP来可视化 embedding，并解决不能使用中文标签的问题。<br>
                     
                         <a
                             href="/2021/12/17/tensorboard-embedding-projector/"
                             class="postShorten-excerpt_link link"
                             aria-label=": TensorBoard Projector 简易指南"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2016/12/10/tensorboard-mnist-pca/"
+                            aria-label=": 在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
+                        >
+                            在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2016-12-10T07:23:02+08:00">
+	
+		    12月 10, 2016
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <blockquote>
+<p>Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. </p>
+</blockquote>
+<p>主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 <a href="https://my.oschina.net/gujianhan/blog/225241" target="_blank" rel="noopener">这里</a> 或者 <a href="https://en.wikipedia.org/wiki/Principal_component_analysis" target="_blank" rel="noopener">PCA 的维基百科页面</a>。</p>
+                    
+                        <a
+                            href="/2016/12/10/tensorboard-mnist-pca/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
                         >
                             阅读全文
                         </a>
@@ -396,11 +444,26 @@
 <div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
         <!--SCRIPTS-->
 <script src="/assets/js/script-vj40vrpcanjaqzsqjgay5bicu90ac8jgntjrkqrpaptlojjef7ccozxks0vd.min.js"></script>
-<!--SCRIPTS END--><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+<!--SCRIPTS END-->
 
 
 
 
 
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>

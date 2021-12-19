@@ -316,9 +316,7 @@
             </div>
             
                 <div class="postShorten-excerpt">
-                    <!-- toc -->
-<blockquote>
-<p>译者注：本文<a href="http://blue.cs.sonoma.edu/~tiawatts/UsefulStuff/C++ForPythonProgrammers.pdf" target="_blank" rel="noopener">原文</a>成文较早，里面一些语法可能已经不是最新的了，但是其大部分观点在我看来仍然具有点拨意义，帮助你快速对 C++ 有个认识。<br>
+                    <p>本文改编自 Michigan State University 的 Rich Enbody 和 Bill Punch 的一篇文档，结合和 Python 的对比，带你走进 C++ 的世界。</p>
                     
                         <a
                             href="/2020/11/22/c++-for-python-programmers/"
@@ -398,11 +396,26 @@
 <div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
         <!--SCRIPTS-->
 <script src="/assets/js/script-vj40vrpcanjaqzsqjgay5bicu90ac8jgntjrkqrpaptlojjef7ccozxks0vd.min.js"></script>
-<!--SCRIPTS END--><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+<!--SCRIPTS END-->
 
 
 
 
 
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>

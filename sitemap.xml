@@ -2,6 +2,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/</loc>
+    
+    <lastmod>2021-12-19T04:23:12.830Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/</loc>
+    
+    <lastmod>2021-12-19T04:22:47.823Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/11/22/c++-for-python-programmers/</loc>
+    
+    <lastmod>2021-12-19T04:21:53.736Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2018/05/18/ubuntu-ssr/</loc>
     
     <lastmod>2021-12-19T04:13:22.183Z</lastmod>
@@ -12,13 +33,6 @@
     <loc>https://alanlee.fun/about/index.html</loc>
     
     <lastmod>2021-12-19T03:10:28.981Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/</loc>
-    
-    <lastmod>2021-12-19T03:03:19.949Z</lastmod>
     
   </url>
   
@@ -180,13 +194,6 @@
     <loc>https://alanlee.fun/2017/02/16/tensorflow-1.0/</loc>
     
     <lastmod>2021-12-19T02:38:33.741Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/</loc>
-    
-    <lastmod>2021-12-19T02:38:33.740Z</lastmod>
     
   </url>
   
@@ -404,13 +411,6 @@
     <loc>https://alanlee.fun/2020/04/08/changes/</loc>
     
     <lastmod>2021-12-19T02:38:33.717Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2020/11/22/c++-for-python-programmers/</loc>
-    
-    <lastmod>2021-12-19T02:38:33.716Z</lastmod>
     
   </url>
   

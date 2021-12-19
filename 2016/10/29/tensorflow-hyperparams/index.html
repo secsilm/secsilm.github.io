@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？\n我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。\n\n\n本文所说的 准确率 均指 测试准确率。\n\n代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787980818283from tensorflow.examples.tutorials.mnist import input_datamnist = input_data.read_data_sets(\"/home/alan/data/\", one_hot=True)from __future__ import print_functionimport tensorflow as tfimport matplotlib.pyplot as plt# 如果运行提示没有seaborn库，可以注释掉这行代码# 也可以使用 pip install seaborn或者 conda install seaborn安装import seaborn# 我是在Jupyter Notebook下运行的# 如果你是在命令行运行那么就注释掉下面这一行%matplotlib inline# 设置模型# 学习率learning_rate = 0.01# 训练迭代次数training_epochs = 50# batch大小batch_size = 100# 每多少次迭代显示一次损失display_step = 1x = tf.placeholder(tf.float32, [None, 784])y = tf.placeholder(tf.float32, [None, 10])# 模型参数# W = tf.Variable(tf.zeros([784, 10]))# b = tf.Variable(tf.zeros([10]))W = tf.Variable(tf.truncated_normal([784, 10]))b = tf.Variable(tf.truncated_normal([10]))# 建立模型pred = tf.nn.softmax(tf.matmul(x, W) + b)# 定义损失函数：交叉熵cost = tf.reduce_mean(-tf.reduce_sum(y*tf.log(pred), reduction_indices=1))# 梯度下降optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)# 初始化所有变量init = tf.initialize_all_variables()# 训练模型with tf.Session() as sess:    sess.run(init)        ax1 = plt.subplot(211)    ax1.set_ylabel(\"Accuracy\")    ax2 = plt.subplot(212, sharex=ax1)    ax2.set_ylabel(\"Cost\")    ax2.set_xlabel(\"Epoch\")    plt.setp(ax1.get_xticklabels(), visible=False)        for epoch in range(training_epochs):        avg_cost = 0        total_batch = int(mnist.train.num_examples / batch_size)                for i in range(total_batch):            batch_xs, batch_ys = mnist.train.next_batch(batch_size)            _, c = sess.run([optimizer, cost], feed_dict=&#123;x: batch_xs, y: batch_ys&#125;)                        avg_cost += c / total_batch                    if (epoch + 1) % display_step == 0:             # 计算测试准确率            correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))            accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))                        ax1.plot(epoch+1, accuracy.eval(&#123;x: mnist.test.images, y: mnist.test.labels&#125;), 'mo')            ax2.plot(epoch+1, avg_cost, 'co')                         print(\"Epoch:\", '%04d' % (epoch+1), \"cost=\", '&#123;:.9f&#125;'.format(avg_cost), end=' ')            print(\"Accuracy:\", accuracy.eval(&#123;x: mnist.test.images, y: mnist.test.labels&#125;))                print(\"Optimization Finished!\")        print(\"Accuracy:\", accuracy.eval(&#123;x: mnist.test.images, y: mnist.test.labels&#125;))    plt.suptitle(\"learning rate=%f, training epochs=%i, with tf.truncated_normal()\" % (learning_rate, training_epochs), size=14)    plt.savefig('AC8.png', dpi=300)    plt.show()\n通过修改 learning_rate 和 training_epochs来修改学习率和迭代次数，修改\n1234567# 所有变量初始化为0# W = tf.Variable(tf.zeros([784, 10]))# b = tf.Variable(tf.zeros([10]))# 所有变量初始化为符合标准截断正态分布的随机数W = tf.Variable(tf.truncated_normal([784, 10]))b = tf.Variable(tf.truncated_normal([10]))\n来修改变量的初始化方式。程序最终会输出损失和准确率随着迭代次数的变化趋势图。\n结果\n以下结果的背景是：TensorFlow，Logistics Regression，MNIST数据集，很可能换一个数据集下面的结论中的某一条就不成立啦，所以要具体情况具体分析，找到最优的超参数组合。\n\n多次的更改会输出多个不同的图，我们先来看下最终的准确率比较，然后再看下每种情况的详细的损失和准确率变化。\n符号说明\nlr：Learning Rate，学习率 \nte：Training Epochs，训练迭代次数\nz：tf.zeros()，变量初始化为0\nt：tf.truncated_normal()，变量初始化为标准截断正态分布的随机数\n\n最终准确率比较\n可以看到\n\n学习率为0.1，迭代次数为50次，并且采用随机初始化方式时准确率远远低于其他方式，甚至不足90%。而学习率为0.1，迭代次数为50次，并且采用随机初始化的方式时准确率最高。\n对于采用随机初始化的方式，在其他参数相同的情况下增大迭代次数会明显的提高准确率。而对于初始化为0的情况则无明显变化。\n其他参数相同的情况下，过度增大学习率的确是会导致准确率下降的，查看详细变化过程时可以看到准确率变化波动比较大。\n在学习率适中，迭代次数较大时变量初始化方式对最终准确率的影响不大。\n\n每种情况损失和准确率的详细变化趋势\n与上图的顺序保持一致，从上至下。每张图的标题在图的下面，斜体字。\n\n学习率为1，迭代次数为50，随机初始化\n\n学习率为1，迭代次数为50，初始化为0\n\n学习率为0.1，迭代次数为50，随机初始化\n\n学习率为0.1，迭代次数为50，初始化为0\n\n学习率为0.1，迭代次数为25，随机初始化\n\n学习率为0.1，迭代次数为25，初始化为0\n\n学习率为0.01，迭代次数为50，随机初始化\n\n学习率为0.01，迭代次数为50，初始化为0\n\n\n大部分情况下准确率和损失的变化时单调的，但是当学习率过大（=1）时准确率开始不稳定。\nEND暂且就是这么多，我说的难免有不合适的地方，有错误的地方欢迎指出。\n","dateCreated":"2016-10-29T04:46:50+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-10-29T04:46:50+08:00","description":"想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？\n我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。","headline":"学习率、迭代次数和初始化方式对模型准确率的影响","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/10/29/tensorflow-hyperparams/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2016/10/29/tensorflow-hyperparams/","keywords":"Python, TensorFlow, Machine Learning"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？\n我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。\n\n\n本文所说的 准确率 均指 测试准确率。\n\n代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787980818283from tensorflow.examples.tutorials.mnist import input_datamnist = input_data.read_data_sets(\"/home/alan/data/\", one_hot=True)from __future__ import print_functionimport tensorflow as tfimport matplotlib.pyplot as plt# 如果运行提示没有seaborn库，可以注释掉这行代码# 也可以使用 pip install seaborn或者 conda install seaborn安装import seaborn# 我是在Jupyter Notebook下运行的# 如果你是在命令行运行那么就注释掉下面这一行%matplotlib inline# 设置模型# 学习率learning_rate = 0.01# 训练迭代次数training_epochs = 50# batch大小batch_size = 100# 每多少次迭代显示一次损失display_step = 1x = tf.placeholder(tf.float32, [None, 784])y = tf.placeholder(tf.float32, [None, 10])# 模型参数# W = tf.Variable(tf.zeros([784, 10]))# b = tf.Variable(tf.zeros([10]))W = tf.Variable(tf.truncated_normal([784, 10]))b = tf.Variable(tf.truncated_normal([10]))# 建立模型pred = tf.nn.softmax(tf.matmul(x, W) + b)# 定义损失函数：交叉熵cost = tf.reduce_mean(-tf.reduce_sum(y*tf.log(pred), reduction_indices=1))# 梯度下降optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)# 初始化所有变量init = tf.initialize_all_variables()# 训练模型with tf.Session() as sess:    sess.run(init)        ax1 = plt.subplot(211)    ax1.set_ylabel(\"Accuracy\")    ax2 = plt.subplot(212, sharex=ax1)    ax2.set_ylabel(\"Cost\")    ax2.set_xlabel(\"Epoch\")    plt.setp(ax1.get_xticklabels(), visible=False)        for epoch in range(training_epochs):        avg_cost = 0        total_batch = int(mnist.train.num_examples / batch_size)                for i in range(total_batch):            batch_xs, batch_ys = mnist.train.next_batch(batch_size)            _, c = sess.run([optimizer, cost], feed_dict=&#123;x: batch_xs, y: batch_ys&#125;)                        avg_cost += c / total_batch                    if (epoch + 1) % display_step == 0:             # 计算测试准确率            correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))            accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))                        ax1.plot(epoch+1, accuracy.eval(&#123;x: mnist.test.images, y: mnist.test.labels&#125;), 'mo')            ax2.plot(epoch+1, avg_cost, 'co')                         print(\"Epoch:\", '%04d' % (epoch+1), \"cost=\", '&#123;:.9f&#125;'.format(avg_cost), end=' ')            print(\"Accuracy:\", accuracy.eval(&#123;x: mnist.test.images, y: mnist.test.labels&#125;))                print(\"Optimization Finished!\")        print(\"Accuracy:\", accuracy.eval(&#123;x: mnist.test.images, y: mnist.test.labels&#125;))    plt.suptitle(\"learning rate=%f, training epochs=%i, with tf.truncated_normal()\" % (learning_rate, training_epochs), size=14)    plt.savefig('AC8.png', dpi=300)    plt.show()\n通过修改 learning_rate 和 training_epochs来修改学习率和迭代次数，修改\n1234567# 所有变量初始化为0# W = tf.Variable(tf.zeros([784, 10]))# b = tf.Variable(tf.zeros([10]))# 所有变量初始化为符合标准截断正态分布的随机数W = tf.Variable(tf.truncated_normal([784, 10]))b = tf.Variable(tf.truncated_normal([10]))\n来修改变量的初始化方式。程序最终会输出损失和准确率随着迭代次数的变化趋势图。\n结果\n以下结果的背景是：TensorFlow，Logistics Regression，MNIST数据集，很可能换一个数据集下面的结论中的某一条就不成立啦，所以要具体情况具体分析，找到最优的超参数组合。\n\n多次的更改会输出多个不同的图，我们先来看下最终的准确率比较，然后再看下每种情况的详细的损失和准确率变化。\n符号说明\nlr：Learning Rate，学习率 \nte：Training Epochs，训练迭代次数\nz：tf.zeros()，变量初始化为0\nt：tf.truncated_normal()，变量初始化为标准截断正态分布的随机数\n\n最终准确率比较\n可以看到\n\n学习率为0.1，迭代次数为50次，并且采用随机初始化方式时准确率远远低于其他方式，甚至不足90%。而学习率为0.1，迭代次数为50次，并且采用随机初始化的方式时准确率最高。\n对于采用随机初始化的方式，在其他参数相同的情况下增大迭代次数会明显的提高准确率。而对于初始化为0的情况则无明显变化。\n其他参数相同的情况下，过度增大学习率的确是会导致准确率下降的，查看详细变化过程时可以看到准确率变化波动比较大。\n在学习率适中，迭代次数较大时变量初始化方式对最终准确率的影响不大。\n\n每种情况损失和准确率的详细变化趋势\n与上图的顺序保持一致，从上至下。每张图的标题在图的下面，斜体字。\n\n学习率为1，迭代次数为50，随机初始化\n\n学习率为1，迭代次数为50，初始化为0\n\n学习率为0.1，迭代次数为50，随机初始化\n\n学习率为0.1，迭代次数为50，初始化为0\n\n学习率为0.1，迭代次数为25，随机初始化\n\n学习率为0.1，迭代次数为25，初始化为0\n\n学习率为0.01，迭代次数为50，随机初始化\n\n学习率为0.01，迭代次数为50，初始化为0\n\n\n大部分情况下准确率和损失的变化时单调的，但是当学习率过大（=1）时准确率开始不稳定。\nEND暂且就是这么多，我说的难免有不合适的地方，有错误的地方欢迎指出。\n","dateCreated":"2016-10-29T04:46:50+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-10-29T04:46:50+08:00","description":"想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？\n我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。","headline":"学习率、迭代次数和初始化方式对模型准确率的影响","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/10/29/tensorflow-hyperparams/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2016/10/29/tensorflow-hyperparams/","keywords":"Python, TensorFlow, Machine Learning"}</script>
     <meta name="description" content="想必学过机器学习的人都知道，学习率、训练迭代次数和模型参数的初始化方式都对模型最后的准确率有一定的影响，那么影响到底有多大呢？ 我初步做了个实验，在 TensorFlow 框架下使用 Logistics Regression 对经典的 MNIST 数据集进行分类。">
 <meta name="keywords" content="Python,TensorFlow,Machine Learning">
 <meta property="og:type" content="blog">
@@ -48,7 +48,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -115,7 +115,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -136,7 +136,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -428,7 +428,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -479,7 +479,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -557,7 +557,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -608,7 +608,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -690,7 +690,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

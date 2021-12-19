@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"\n使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。\n好尴尬，折腾了一会，终于弄明白了，记录下来，以说明自己too young。\n\n正文我们使用 sklearn 官方的一个例子来作为说明，源码可以从这里下载，下面我截取其中一小段并做了一些修改：\n123456789101112131415import numpy as npimport matplotlib.pyplot as pltfrom sklearn.datasets import make_blobsfrom sklearn.linear_model import LogisticRegression\t# 构造一些数据点centers = [[-5, 0], [0, 1.5], [5, -1]]X, y = make_blobs(n_samples=1000, centers=centers, random_state=40)transformation = [[0.4, 0.2], [-0.4, 1.2]]X = np.dot(X, transformation)\tclf = LogisticRegression(solver='sag', max_iter=100, random_state=42, multi_class=multi_class).fit(X, y)print clf.coef_ print clf.intercept_\n输出如图：\n可以看到 clf.coef_ 是一个 3×2(n_class, n_features) 的矩阵，clf.intercept_ 是一个 1×3 的矩阵（向量），那么这些到底是什么意思呢？\n我们来回顾一下 Logistic 回归的模型：\nh\\_\\theta(x) = \\frac{1}{1+e^{(-\\theta^Tx)}}其中 $\\theta$ 是模型参数，其实 $\\theta^Tx$ 就是一个线性表达式，将这个表达式的结果再一次利用 Logistic 函数映射到 0~1 之间。\n知道了这个，也就可以搞清楚那个 clf.coef_ 和 clf.intercept_ 了： clf.coef_ 和 clf.intercept_ 就是 $\\theta$ ，下面我们来验证一下：\n123456i = 100print 1 / (1 + np.exp(-(np.dot(X[i].reshape(1, -1), cc.T) + clf.intercept_)))# 正确的类别print y[i]print clf.predict_proba(X[i].reshape(1, -1))print clf.predict_log_proba(X[i].reshape(1, -1))\n输出结果:\n可以看到结果是吻合的，说明我们的猜想是正确的。\nEND","dateCreated":"2016-10-26T01:39:10+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-10-26T01:39:10+08:00","description":"\n使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。","headline":"sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/10/26/sklearn-logistics-regression-parameters/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2016/10/26/sklearn-logistics-regression-parameters/","keywords":"Python, Machine Learning, sklearn"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。\n好尴尬，折腾了一会，终于弄明白了，记录下来，以说明自己too young。\n\n正文我们使用 sklearn 官方的一个例子来作为说明，源码可以从这里下载，下面我截取其中一小段并做了一些修改：\n123456789101112131415import numpy as npimport matplotlib.pyplot as pltfrom sklearn.datasets import make_blobsfrom sklearn.linear_model import LogisticRegression\t# 构造一些数据点centers = [[-5, 0], [0, 1.5], [5, -1]]X, y = make_blobs(n_samples=1000, centers=centers, random_state=40)transformation = [[0.4, 0.2], [-0.4, 1.2]]X = np.dot(X, transformation)\tclf = LogisticRegression(solver='sag', max_iter=100, random_state=42, multi_class=multi_class).fit(X, y)print clf.coef_ print clf.intercept_\n输出如图：\n可以看到 clf.coef_ 是一个 3×2(n_class, n_features) 的矩阵，clf.intercept_ 是一个 1×3 的矩阵（向量），那么这些到底是什么意思呢？\n我们来回顾一下 Logistic 回归的模型：\nh\\_\\theta(x) = \\frac{1}{1+e^{(-\\theta^Tx)}}其中 $\\theta$ 是模型参数，其实 $\\theta^Tx$ 就是一个线性表达式，将这个表达式的结果再一次利用 Logistic 函数映射到 0~1 之间。\n知道了这个，也就可以搞清楚那个 clf.coef_ 和 clf.intercept_ 了： clf.coef_ 和 clf.intercept_ 就是 $\\theta$ ，下面我们来验证一下：\n123456i = 100print 1 / (1 + np.exp(-(np.dot(X[i].reshape(1, -1), cc.T) + clf.intercept_)))# 正确的类别print y[i]print clf.predict_proba(X[i].reshape(1, -1))print clf.predict_log_proba(X[i].reshape(1, -1))\n输出结果:\n可以看到结果是吻合的，说明我们的猜想是正确的。\nEND","dateCreated":"2016-10-26T01:39:10+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-10-26T01:39:10+08:00","description":"\n使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。","headline":"sklearn 中 Logistics Regression 的 coef_ 和 intercept_ 的具体意义","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/10/26/sklearn-logistics-regression-parameters/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2016/10/26/sklearn-logistics-regression-parameters/","keywords":"Python, Machine Learning, sklearn"}</script>
     <meta name="description" content="使用sklearn库可以很方便的实现各种基本的机器学习算法，例如今天说的逻辑斯谛回归（Logistic Regression），我在实现完之后，可能陷入代码太久，忘记基本的算法原理了，突然想不到 coef_ 和 intercept_ 具体是代表什么意思了，就是具体到公式中的哪个字母，虽然总体知道代表的是模型参数。">
 <meta name="keywords" content="Python,Machine Learning,sklearn">
 <meta property="og:type" content="blog">
@@ -41,7 +41,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -108,7 +108,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -129,7 +129,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -385,7 +385,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -436,7 +436,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -514,7 +514,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -565,7 +565,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -647,7 +647,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

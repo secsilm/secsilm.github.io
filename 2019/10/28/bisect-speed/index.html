@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"\n很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。\n有多种方法来完成这个题目，大部分人第一反应都是二分查找。我喜欢从实践出发来想问题。我有几个问题：\n\n二分查找真的很快吗？如果快，快多少？\n实际中我们应该怎么写才能更好地完成这个题目？\n\n本文就是来回答这两个问题的。我不会在本文中赘述二分查找的思想原理，不了解的同学可以先出门搜索了解以下。\n来点硬的，直接来跑一下结果。你可以在 colab 中自己试验一下。\n代码我们这里测试了 4 种方法，如下：\n1234567891011121314151617181920212223242526272829303132333435363738394041424344def recursive(a, low, high, x):    '''递归写法'''    middle = int((low + high) / 2)    if high &gt;= low:        if a[middle] == x:            return middle        elif a[middle] &gt; x:            return recursive(a, low, middle - 1, x)        else:            return recursive(a, middle + 1, high, x)    if x &lt; a[middle]:        return middle    if x &gt; a[middle]:        return middle + 1def whileloop(a, x):    '''while 循环写法'''    low = 0    high = len(a) - 1    while low &lt;= high:        middle = int((low + high) / 2)        if a[middle] &lt; x:            low = middle + 1        elif a[middle] &gt; x:            high = middle - 1        else:            return middle    if x &lt; a[middle]:        return middle    if x &gt; a[middle]:        return middle + 1def forloop(a, x):    '''for 循环写法'''    for idx, item in enumerate(a):        if item &gt;= x:            return idxdef builtin_bisect(a, x):    '''使用内置的 bisect'''    return bisect.bisect_left(a, x)\n共进行 3 次测试，各次 a 的长度为 $10^3$、$10^6$ 和 $10^9$，x 为长度的 0.67，测试 CPU 环境为 Intel(R) Xeon(R) CPU @ 2.00GHz，Python 版本为 Python 3.6.8，就是 colab 的环境：\n123456789101112131415161718192021222324252627282930313233343536373839recursive_times = []whileloop_times = []forloop_times = []builtin_times = []lengths = [int(1e3), int(1e6), int(1e9)]for i in lengths:    a = range(i)    x = 0.67 * i    print(i)    start = time.time()    _ = recursive(a, 0, i - 1, x)    cost = time.time() - start    recursive_times.append(cost)    start = time.time()    _ = whileloop(a, x)    cost = time.time() - start    whileloop_times.append(cost)    start = time.time()    _ = forloop(a, x)    cost = time.time() - start    forloop_times.append(cost)    start = time.time()    _ = builtin_bisect(a, x)    cost = time.time() - start    builtin_times.append(cost)fig = plt.figure(figsize=(15, 8))plt.plot(range(3), [i * 1000 for i in recursive_times], '-o', label=\"recursive\")plt.plot(range(3), [i * 1000 for i in whileloop_times], '-o', label=\"whileloop\")plt.plot(range(3), [i * 1000 for i in forloop_times], '-o', label=\"forloop\")plt.plot(range(3), [i * 1000 for i in builtin_times], '-o', label=\"builtin_bisect\")plt.xticks([0, 1, 2], [3, 6, 9])plt.xlabel(\"length/10^\")plt.ylabel(\"COST/ms\")plt.legend()plt.grid(True)\n测试结果：\n测试结果\n可以看到随着数组长度的扩大，for 循环方法消耗的时间也非常非常快的增长，而其他方法波动很小。具体而言，数组长度变为原来的 1000 倍，for 循环方法耗时也变为原来的 1000 倍左右，而其他方法的耗时变为原来的 1-3 倍左右。\n暂且除去 for 循环，如果我们细看在 $10^3$、$10^6$ 和 $10^9$ 处的图，可以看到剩余三个方法之间的差距，递归耗时均最高：\n\n\n\n实际上 bisect 内部实现用的就是 while 循环的方法，代码很短，我直接贴过来（吐槽下官方代码竟然没有很好的格式化）：\n123456789101112131415161718def bisect_left(a, x, lo=0, hi=None):    \"\"\"Return the index where to insert item x in list a, assuming a is sorted.    The return value i is such that all e in a[:i] have e &lt; x, and all e in    a[i:] have e &gt;= x.  So if x already appears in the list, a.insert(x) will    insert just before the leftmost x already there.    Optional args lo (default 0) and hi (default len(a)) bound the    slice of a to be searched.    \"\"\"    if lo &lt; 0:        raise ValueError('lo must be non-negative')    if hi is None:        hi = len(a)    while lo &lt; hi:        mid = (lo+hi)//2        if a[mid] &lt; x: lo = mid+1        else: hi = mid    return lo\n详细的测试时间数据如下：\n1234recursive_times=[1.5735626220703125e-05, 2.5272369384765625e-05, 4.553794860839844e-05]whileloop_times=[6.67572021484375e-06, 1.1205673217773438e-05, 1.8358230590820312e-05]forloop_times=[4.982948303222656e-05, 0.058376312255859375, 58.462812423706055]builtin_times=[6.4373016357421875e-06, 1.9311904907226562e-05, 2.4557113647460938e-05]\n到此时我们回答了第一个问题，二分查找真的很快！ 在数组长度较小时，差距还不是那么的明显。但是随着数组长度扩大，差距简直指数级扩大，差距甚至几百万倍。\n至于第二个问题，我认为的答案是尽可能使用内置库，这些都是经过了很多优化，速度和稳定性都有保证，写起来还简单粗暴，何乐而不为呢？\n写完感觉一篇废话 😂\nReference\ncpython/bisect.py at 3.6 · python/cpython\n8.6. bisect — Array bisection algorithm — Python 3.6.9 documentation\n\nEND","dateCreated":"2019-10-28T20:39:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2019-10-28T20:39:00+08:00","description":"\n很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。","headline":"二分查找真的很快吗","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2019/10/28/bisect-speed/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2019/10/28/bisect-speed/","keywords":"Python"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。\n有多种方法来完成这个题目，大部分人第一反应都是二分查找。我喜欢从实践出发来想问题。我有几个问题：\n\n二分查找真的很快吗？如果快，快多少？\n实际中我们应该怎么写才能更好地完成这个题目？\n\n本文就是来回答这两个问题的。我不会在本文中赘述二分查找的思想原理，不了解的同学可以先出门搜索了解以下。\n来点硬的，直接来跑一下结果。你可以在 colab 中自己试验一下。\n代码我们这里测试了 4 种方法，如下：\n1234567891011121314151617181920212223242526272829303132333435363738394041424344def recursive(a, low, high, x):    '''递归写法'''    middle = int((low + high) / 2)    if high &gt;= low:        if a[middle] == x:            return middle        elif a[middle] &gt; x:            return recursive(a, low, middle - 1, x)        else:            return recursive(a, middle + 1, high, x)    if x &lt; a[middle]:        return middle    if x &gt; a[middle]:        return middle + 1def whileloop(a, x):    '''while 循环写法'''    low = 0    high = len(a) - 1    while low &lt;= high:        middle = int((low + high) / 2)        if a[middle] &lt; x:            low = middle + 1        elif a[middle] &gt; x:            high = middle - 1        else:            return middle    if x &lt; a[middle]:        return middle    if x &gt; a[middle]:        return middle + 1def forloop(a, x):    '''for 循环写法'''    for idx, item in enumerate(a):        if item &gt;= x:            return idxdef builtin_bisect(a, x):    '''使用内置的 bisect'''    return bisect.bisect_left(a, x)\n共进行 3 次测试，各次 a 的长度为 $10^3$、$10^6$ 和 $10^9$，x 为长度的 0.67，测试 CPU 环境为 Intel(R) Xeon(R) CPU @ 2.00GHz，Python 版本为 Python 3.6.8，就是 colab 的环境：\n123456789101112131415161718192021222324252627282930313233343536373839recursive_times = []whileloop_times = []forloop_times = []builtin_times = []lengths = [int(1e3), int(1e6), int(1e9)]for i in lengths:    a = range(i)    x = 0.67 * i    print(i)    start = time.time()    _ = recursive(a, 0, i - 1, x)    cost = time.time() - start    recursive_times.append(cost)    start = time.time()    _ = whileloop(a, x)    cost = time.time() - start    whileloop_times.append(cost)    start = time.time()    _ = forloop(a, x)    cost = time.time() - start    forloop_times.append(cost)    start = time.time()    _ = builtin_bisect(a, x)    cost = time.time() - start    builtin_times.append(cost)fig = plt.figure(figsize=(15, 8))plt.plot(range(3), [i * 1000 for i in recursive_times], '-o', label=\"recursive\")plt.plot(range(3), [i * 1000 for i in whileloop_times], '-o', label=\"whileloop\")plt.plot(range(3), [i * 1000 for i in forloop_times], '-o', label=\"forloop\")plt.plot(range(3), [i * 1000 for i in builtin_times], '-o', label=\"builtin_bisect\")plt.xticks([0, 1, 2], [3, 6, 9])plt.xlabel(\"length/10^\")plt.ylabel(\"COST/ms\")plt.legend()plt.grid(True)\n测试结果：\n测试结果\n可以看到随着数组长度的扩大，for 循环方法消耗的时间也非常非常快的增长，而其他方法波动很小。具体而言，数组长度变为原来的 1000 倍，for 循环方法耗时也变为原来的 1000 倍左右，而其他方法的耗时变为原来的 1-3 倍左右。\n暂且除去 for 循环，如果我们细看在 $10^3$、$10^6$ 和 $10^9$ 处的图，可以看到剩余三个方法之间的差距，递归耗时均最高：\n\n\n\n实际上 bisect 内部实现用的就是 while 循环的方法，代码很短，我直接贴过来（吐槽下官方代码竟然没有很好的格式化）：\n123456789101112131415161718def bisect_left(a, x, lo=0, hi=None):    \"\"\"Return the index where to insert item x in list a, assuming a is sorted.    The return value i is such that all e in a[:i] have e &lt; x, and all e in    a[i:] have e &gt;= x.  So if x already appears in the list, a.insert(x) will    insert just before the leftmost x already there.    Optional args lo (default 0) and hi (default len(a)) bound the    slice of a to be searched.    \"\"\"    if lo &lt; 0:        raise ValueError('lo must be non-negative')    if hi is None:        hi = len(a)    while lo &lt; hi:        mid = (lo+hi)//2        if a[mid] &lt; x: lo = mid+1        else: hi = mid    return lo\n详细的测试时间数据如下：\n1234recursive_times=[1.5735626220703125e-05, 2.5272369384765625e-05, 4.553794860839844e-05]whileloop_times=[6.67572021484375e-06, 1.1205673217773438e-05, 1.8358230590820312e-05]forloop_times=[4.982948303222656e-05, 0.058376312255859375, 58.462812423706055]builtin_times=[6.4373016357421875e-06, 1.9311904907226562e-05, 2.4557113647460938e-05]\n到此时我们回答了第一个问题，二分查找真的很快！ 在数组长度较小时，差距还不是那么的明显。但是随着数组长度扩大，差距简直指数级扩大，差距甚至几百万倍。\n至于第二个问题，我认为的答案是尽可能使用内置库，这些都是经过了很多优化，速度和稳定性都有保证，写起来还简单粗暴，何乐而不为呢？\n写完感觉一篇废话 😂\nReference\ncpython/bisect.py at 3.6 · python/cpython\n8.6. bisect — Array bisection algorithm — Python 3.6.9 documentation\n\nEND","dateCreated":"2019-10-28T20:39:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2019-10-28T20:39:00+08:00","description":"\n很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。","headline":"二分查找真的很快吗","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2019/10/28/bisect-speed/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2019/10/28/bisect-speed/","keywords":"Python"}</script>
     <meta name="description" content="很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。">
 <meta name="keywords" content="Python">
 <meta property="og:type" content="blog">
@@ -43,7 +43,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -110,7 +110,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -131,7 +131,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -404,7 +404,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -455,7 +455,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -533,7 +533,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -584,7 +584,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -666,7 +666,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

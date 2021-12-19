@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"\nPhoto by Josh Sorenson on Unsplash\n\n数据标注是人工智能背后的女人。—— 我说的\n\n初探在 reddit 上看到一个人提了一个问题：What is your favourite (free) labelling tool?，你最喜欢的（免费）标注工具是什么。由于我一直关注标注工具，而且没找到好用、漂亮的标注工具（甚至一度计划自己做一个），也认为这块很重要，所以就点进去看了下。收获不少，帖子楼主提到的 Prodigy，我点进去看了看，确实很漂亮，但是收费，来看下价格：\nProdigy 价格\n罢了。\n贫穷让我看到了 Label Studio、doccano 和 brat，brat 我之前就知道，只是没那么美观。剩下两个都很不错，开源也美观，这次我们来看看前者。\nLabel Studio\n以命名实体识别任务的数据标注为例，先来看下使用 Label Studio 进行标注的效果：\nner演示.gif\n查看任务进度：\n查看任务进度\n后端使用的是 flask，前端使用的是 React。\nOK，如果你还满意的话可以继续往下看安装、导入数据等部分了。接下来我会以标注 NER 数据为例，介绍如何使用 Label Studio。标注类别有人名、地名、公司名、产品和时间，标注数据放在 sentences.txt 中，内容如下：\n12345狼牙山，我站在你面前，显得多么矮小呀！1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。\n安装和启动主要有三种方式 ：\n\npip：pip install label-studio，建议使用 conda 等虚拟环境\ndocker：docker pull heartexlabs/label-studio，docker 镜像版本可能会滞后\n源码：  123git clone https://github.com/heartexlabs/label-studio.gitcd label-studiopython setup.py develop\n\n\n建议使用 pip 方式安装。\n假设我们计划将标注相关文件放在 ner_labeling 文件夹中，你不用事先创建。安装好后使用如下命令启动：\n1label-studio start ner_labeling --init\n这会初始化这个项目并默认在 8200 端口启动服务，生成一些默认文件和文件夹：\n12345ner_labeling/├── completions  # 存放标注好的数据，json 文件，每一个标注完成的任务都放在一个以其 ID 命名的 json 文件中├── config.json  # 项目设置，例如服务端口├── config.xml   # 标签（label）设置└── tasks.json   # 所有导入的任务，key 为任务 ID，value 为任务数据\n然后你就可以在 http://{your-server-ip}:8200 访问了。\n设置标签第一步就是要设置标签，具体包括标签名称、颜色等。可以在网页上直接修改并直观看到效果：\n设置标签\n如图修改标签名称和颜色，满意后点击左下角的 Save 按钮，保存设置到 config.xml 中。\n\n注意官方并不建议直接修改项目中的文件，建议使用网页或者命令修改。\n\n导入任务接着点击左上角图标回到主页面，进行第二步导入任务，可以导入 json、csv、tsv 和 txt 等文件格式。对于本文的例子来说，我们使用 txt 文件最为方便，一行是一个句子，直接将文件拖入上传框中即可，完成后会显示导入任务数和耗费时间：\n\n单个 txt 文件大小不超过 1M，如果超过 1M，可以使用  split 命令分割。\n\n导入任务\n关闭后点击右上方导航栏的 Tasks，可看到导入的任务数和任务存放地址，就是那个 tasks.json，任务 ID 默认从 0 开始计数，生成的 tasks.json 如下：\n1234567891011121314151617181920212223242526272829303132&#123;    \"0\": &#123;        \"id\": 0,        \"data\": &#123;            \"text\": \"狼牙山，我站在你面前，显得多么矮小呀！\"        &#125;    &#125;,    \"1\": &#123;        \"id\": 1,        \"data\": &#123;            \"text\": \"1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。\"        &#125;    &#125;,    \"2\": &#123;        \"id\": 2,        \"data\": &#123;            \"text\": \"罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。\"        &#125;    &#125;,    \"3\": &#123;        \"id\": 3,        \"data\": &#123;            \"text\": \"20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。\"        &#125;    &#125;,    \"4\": &#123;        \"id\": 4,        \"data\": &#123;            \"text\": \"可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。\"        &#125;    &#125;&#125;\n开始标注导入数据后就可以开始标注了，点击导航栏的 Tasks → Start Labeling 或者直接点击导航栏的 Labeling 即可开始标注：\n标注示例.gif\n每次点击 Submit 就会保存标注好的数据到 completions 文件夹中，同时也可以在 Tasks 中查看已完成的任务及完成时间：\n查看已完成的任务及完成时间\n导出数据导出数据这块是 Label Studio 的一个缺点，官方目前支持的是 JSON、CSV、TSV、CoNLL 2003、COCO 和 Pascal VOC XML，其中 CoNLL 2003 是 ner 数据格式的一种，但是经过我测试导出这种格式并不成功，导出的文件是空的。\n但是我们可以先导出为 JSON 文件，然后编写一个脚本转换成我们需要的格式，例如 BIEOS。\n优缺点经过我粗浅的使用，发现一些优缺点：\n优点：\n\n界面相对美观\n部署方便\n配置方便，有多种内置模板\n导入数据方便\n可以明晰了解任务的完成度及每条任务的完成时间\n支持图像、文本和音频等多种数据格式和多种任务数据的标注\n\n缺点：\n\n速度较慢，尤其是保存标注结果并进行下一条标注时\n没有账号体系，但是有一个 multisession mode，暂未深入研究\n\nReference\n[D] What is your favourite (free) labelling tool? : MachineLearning\nLabel Studio\ndoccano/doccano: Open source text annotation tool for machine learning practitioner.\nProdigy · An annotation tool for AI, Machine Learning &amp; NLP\nbrat rapid annotation tool\n\nEND","dateCreated":"2020-03-15T11:55:19+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-03-15T11:55:19+08:00","description":"\nPhoto by Josh Sorenson on Unsplash","headline":"试用开源标注平台 Label Studio","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/03/15/meet-label-studio/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2020/03/15/meet-label-studio/","keywords":"Data Science, Machine Learning"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\nPhoto by Josh Sorenson on Unsplash\n\n数据标注是人工智能背后的女人。—— 我说的\n\n初探在 reddit 上看到一个人提了一个问题：What is your favourite (free) labelling tool?，你最喜欢的（免费）标注工具是什么。由于我一直关注标注工具，而且没找到好用、漂亮的标注工具（甚至一度计划自己做一个），也认为这块很重要，所以就点进去看了下。收获不少，帖子楼主提到的 Prodigy，我点进去看了看，确实很漂亮，但是收费，来看下价格：\nProdigy 价格\n罢了。\n贫穷让我看到了 Label Studio、doccano 和 brat，brat 我之前就知道，只是没那么美观。剩下两个都很不错，开源也美观，这次我们来看看前者。\nLabel Studio\n以命名实体识别任务的数据标注为例，先来看下使用 Label Studio 进行标注的效果：\nner演示.gif\n查看任务进度：\n查看任务进度\n后端使用的是 flask，前端使用的是 React。\nOK，如果你还满意的话可以继续往下看安装、导入数据等部分了。接下来我会以标注 NER 数据为例，介绍如何使用 Label Studio。标注类别有人名、地名、公司名、产品和时间，标注数据放在 sentences.txt 中，内容如下：\n12345狼牙山，我站在你面前，显得多么矮小呀！1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。\n安装和启动主要有三种方式 ：\n\npip：pip install label-studio，建议使用 conda 等虚拟环境\ndocker：docker pull heartexlabs/label-studio，docker 镜像版本可能会滞后\n源码：  123git clone https://github.com/heartexlabs/label-studio.gitcd label-studiopython setup.py develop\n\n\n建议使用 pip 方式安装。\n假设我们计划将标注相关文件放在 ner_labeling 文件夹中，你不用事先创建。安装好后使用如下命令启动：\n1label-studio start ner_labeling --init\n这会初始化这个项目并默认在 8200 端口启动服务，生成一些默认文件和文件夹：\n12345ner_labeling/├── completions  # 存放标注好的数据，json 文件，每一个标注完成的任务都放在一个以其 ID 命名的 json 文件中├── config.json  # 项目设置，例如服务端口├── config.xml   # 标签（label）设置└── tasks.json   # 所有导入的任务，key 为任务 ID，value 为任务数据\n然后你就可以在 http://{your-server-ip}:8200 访问了。\n设置标签第一步就是要设置标签，具体包括标签名称、颜色等。可以在网页上直接修改并直观看到效果：\n设置标签\n如图修改标签名称和颜色，满意后点击左下角的 Save 按钮，保存设置到 config.xml 中。\n\n注意官方并不建议直接修改项目中的文件，建议使用网页或者命令修改。\n\n导入任务接着点击左上角图标回到主页面，进行第二步导入任务，可以导入 json、csv、tsv 和 txt 等文件格式。对于本文的例子来说，我们使用 txt 文件最为方便，一行是一个句子，直接将文件拖入上传框中即可，完成后会显示导入任务数和耗费时间：\n\n单个 txt 文件大小不超过 1M，如果超过 1M，可以使用  split 命令分割。\n\n导入任务\n关闭后点击右上方导航栏的 Tasks，可看到导入的任务数和任务存放地址，就是那个 tasks.json，任务 ID 默认从 0 开始计数，生成的 tasks.json 如下：\n1234567891011121314151617181920212223242526272829303132&#123;    \"0\": &#123;        \"id\": 0,        \"data\": &#123;            \"text\": \"狼牙山，我站在你面前，显得多么矮小呀！\"        &#125;    &#125;,    \"1\": &#123;        \"id\": 1,        \"data\": &#123;            \"text\": \"1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。\"        &#125;    &#125;,    \"2\": &#123;        \"id\": 2,        \"data\": &#123;            \"text\": \"罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。\"        &#125;    &#125;,    \"3\": &#123;        \"id\": 3,        \"data\": &#123;            \"text\": \"20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。\"        &#125;    &#125;,    \"4\": &#123;        \"id\": 4,        \"data\": &#123;            \"text\": \"可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。\"        &#125;    &#125;&#125;\n开始标注导入数据后就可以开始标注了，点击导航栏的 Tasks → Start Labeling 或者直接点击导航栏的 Labeling 即可开始标注：\n标注示例.gif\n每次点击 Submit 就会保存标注好的数据到 completions 文件夹中，同时也可以在 Tasks 中查看已完成的任务及完成时间：\n查看已完成的任务及完成时间\n导出数据导出数据这块是 Label Studio 的一个缺点，官方目前支持的是 JSON、CSV、TSV、CoNLL 2003、COCO 和 Pascal VOC XML，其中 CoNLL 2003 是 ner 数据格式的一种，但是经过我测试导出这种格式并不成功，导出的文件是空的。\n但是我们可以先导出为 JSON 文件，然后编写一个脚本转换成我们需要的格式，例如 BIEOS。\n优缺点经过我粗浅的使用，发现一些优缺点：\n优点：\n\n界面相对美观\n部署方便\n配置方便，有多种内置模板\n导入数据方便\n可以明晰了解任务的完成度及每条任务的完成时间\n支持图像、文本和音频等多种数据格式和多种任务数据的标注\n\n缺点：\n\n速度较慢，尤其是保存标注结果并进行下一条标注时\n没有账号体系，但是有一个 multisession mode，暂未深入研究\n\nReference\n[D] What is your favourite (free) labelling tool? : MachineLearning\nLabel Studio\ndoccano/doccano: Open source text annotation tool for machine learning practitioner.\nProdigy · An annotation tool for AI, Machine Learning &amp; NLP\nbrat rapid annotation tool\n\nEND","dateCreated":"2020-03-15T11:55:19+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-03-15T11:55:19+08:00","description":"\nPhoto by Josh Sorenson on Unsplash","headline":"试用开源标注平台 Label Studio","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/03/15/meet-label-studio/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2020/03/15/meet-label-studio/","keywords":"Data Science, Machine Learning"}</script>
     <meta name="description" content="Photo by Josh Sorenson on Unsplash">
 <meta name="keywords" content="Data Science,Machine Learning">
 <meta property="og:type" content="blog">
@@ -47,7 +47,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -114,7 +114,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -135,7 +135,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -448,7 +448,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -499,7 +499,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -577,7 +577,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -628,7 +628,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -710,7 +710,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

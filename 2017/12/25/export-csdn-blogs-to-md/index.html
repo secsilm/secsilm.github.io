@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"\nCSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞\n内容为王，站搭起来了，就需要内容来充实。但是我的文章都在 CSDN 上，手动一篇一篇导过来太慢，而且 hexo 的文章需要在头部添加 Front-matter，所以这样一来工作量就更大了，所以考虑用 Python 把文章都爬过来，然后统一添加 Front-matter。\n完整程序源码在 secsilm/csdn2md: Export csdn blogs to markdown files.。\n\nNote：你的文章必须是使用 markdown 写的，不然无法使用本文方法导出。\n\n思路对于单篇文章，CSDN 有导出为 markdown 的功能，如下图：\n导出单篇文章\n但是这样费时费力，所以我们需要找到当我们点击编辑按钮时，网页向服务器发送的请求地址，这样我们就可以直接获取到博客内容，也就可以重新写入到 markdown 文件了。\n我们在文章页按F12调出开发者工具，切换到Network选项卡，然后点击编辑，可以看到如下几个请求：\n三个请求\nwebspeeds无关，那么剩下两个，从名字可以很快看出来我们需要的是第二个：\n1http://write.blog.csdn.net/mdeditor/getArticle?id=53418159&amp;username=u010099080\n可以看到需要两个参数：id和username，id就是文章 id，这个很好获取，可以在文章地址中找到。username则是你的用户名，也可以在你的博客地址中找到。\n下面我们看下请求头：\n请求头\n可以看到其实也没啥特别的，其中Cookie是一会儿我们需要的，你可以将此复制到一个 txt 文件（假设名字叫cookies.txt）中以备后用。由于 cookie 字符串是存在一个文件中的，所以需要一个函数来解析成dict：\n12345678910111213141516def read_and_parse_cookies(cookie_file):    \"\"\"读取并解析 cookies。    Args:        cookie_file: 含有 cookies 字符串的 txt 文件名    Returns:        一个字典形式的 cookies    \"\"\"    with open(cookie_file, 'r') as f:        cookies_str = f.readline()    cookies_dict = &#123;&#125;    for item in cookies_str.split(\";\"):        k, v = item.split(\"=\", maxsplit=1)        cookies_dict[k.strip()] = v.strip()    return cookies_dict\n那么现在我们就可以使用requests来发起请求：\n1234567base_url = 'http://write.blog.csdn.net/mdeditor/getArticle'params = &#123;    'id': article_id,    'username': username&#125;# 根据文章 id 获取文章数据r = requests.get(base_url, params=params, cookies=cookies)\n再从开发者工具看下请求返回值：\nResponse\n基本上囊括了一篇文章的所有信息了，而我们只需要里面的markdowncontent、title和create。而且返回的数据是 json 格式，我们可以用json.loads()来解析成dict格式，方便我们写入文件：\n1data = json.loads(r.text, strict=False)\n最后由于我是要导入到 hexo 站点中，所以需要加 Front-matter，所以在获取到文章内容后，需要先把定义好的 Front-matter 加到文章内容里，一起写入文件：\n123456789101112if hexo:hexo_str = '---\\ntitle: &#123;title&#125;\\ndate: &#123;date&#125;\\ntags:\\n---\\n\\n'.format(    title=title, date=data['data']['create'])# Windows 下文件名中的非法字符forbidden = ['\\\\', '/', ':', '*', '?', '\"', '&lt;', '&gt;', '|']# 如果文章名含有非法字符，那么使用其 id 作为 md 文件名if any([c in repr(title) for c in forbidden]):    with open(os.path.join(md_dir, article_id + '.md'), 'w', encoding='utf8') as f:        f.write(hexo_str + data['data']['markdowncontent'])else:    with open(os.path.join(md_dir, title + '.md'), 'w', encoding='utf8') as f:        f.write(hexo_str + data['data']['markdowncontent'])\n至于如何通过文章列表获取文章 id，这个比较简单，我就不赘述了，大家可以直接看源码。\nUsage程序使用fire来从命令行接收参数，如何使用fire请参考 Python 自动生成命令行工具 - fire 简介 · Lee’s Space Station。我们可以使用如下命令来查看帮助：\n1python csdn2md.py -- --help\n输出：\n12345678910111213141516Type:        functionString form: &lt;function to_md_files at 0x000001CACC8C5E18&gt;File:        d:\\chromedownload\\mdfiles\\csdn2md.pyLine:        47Docstring:   导出为 Markdown 文件。Args:    total_pages: 博客文章在摘要模式下的总页数    filename: 含有 cookies 字符串的 txt 文件名    start: 从 start 页开始导出 (default: &#123;1&#125;)    stop: 到 stop 页停止 (default: &#123;None&#125;)    hexo: 是否添加 hexo 文章头部字符串（default: &#123;True&#125;）    md_dir: md 文件导出目录，默认为当前目录（default: .）Usage:       csdn2md.py USERNAME TOTAL_PAGES COOKIE_FILE [START] [STOP] [HEXO] [MD_DIR]             csdn2md.py --username USERNAME --total-pages TOTAL_PAGES --cookie-file COOKIE_FILE [--start START] [--stop STOP] [--hexo HEXO] [--md-dir MD_DIR]\n从帮助可以看出，你需要提供用户名username、博客总页数total-pages和 cookie 文件名cookie-file，可选参数为start、stop（默认为None，即一直到博客文章最后一页）、hexo和md-dir。\n例如，你需要导出博客的第一页文章到当前目录下的mdfiles目录，你的博客总页数为3，那么只需要执行如下命令：\n1python csdn2md.py --username u010099080 --total-pages 3 --cookie-file cookies.txt --stop 1 --md-dir mdfiles\n控制台输出：\n12345678910111213141516172017-12-25 11:54:08 INFO: Page 12017-12-25 11:54:08 INFO: Exporting 【TensorFlow】理解 Estimators 和 Datasets ...2017-12-25 11:54:08 INFO: Exporting Windows 10 资源管理器黑色风格 ...2017-12-25 11:54:09 INFO: Exporting 梯度下降优化算法概述 ...2017-12-25 11:54:09 INFO: Exporting 使用集成学习提升机器学习算法性能 ...2017-12-25 11:54:09 INFO: Exporting 【TensorFlow | TensorBoard】理解 TensorBoard ...2017-12-25 11:54:09 INFO: Exporting 【Python】Numpy 中的 shuffle VS permutation ...2017-12-25 11:54:09 INFO: Exporting 【TensorFlow】DNNRegressor 的简单使用 ...2017-12-25 11:54:09 INFO: Exporting XGBoost 在 Windows 10 和 Ubuntu 上的安装 ...2017-12-25 11:54:10 INFO: Exporting 【Python】自动生成命令行工具 - fire 简介 ...2017-12-25 11:54:10 INFO: Exporting 奇异值分解 SVD 的数学解释 ...2017-12-25 11:54:10 INFO: Exporting 【Python】统计字符串中英文、空格、数字、标点个数 ...2017-12-25 11:54:10 INFO: Exporting 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 ...2017-12-25 11:54:10 INFO: Exporting 使用 tree 命令格式化输出目录结构 ...2017-12-25 11:54:11 INFO: Exporting VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法 ...2017-12-25 11:54:11 INFO: Exporting 【Python】numpy 中的 copy 问题详解 ...2017-12-25 11:54:11 INFO: Done!\nmdfiles文件夹：\nmdfiles\nEND当然，导出的文件中 Front-matter 中的 tags 还是需要自己添加，因为我想自己再重新加标签而不是使用原来的标签，如果你想使用原来的标签，那么只需把请求返回 json 数据中的categories提取出来加进去即可。\nMerry Christmas! 😄\n","dateCreated":"2017-12-25T09:27:18+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2017-12-25T09:27:18+08:00","description":"\nCSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞","headline":"批量导出 CSDN 博客为 Markdown 文件","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/","keywords":"Python"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\nCSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞\n内容为王，站搭起来了，就需要内容来充实。但是我的文章都在 CSDN 上，手动一篇一篇导过来太慢，而且 hexo 的文章需要在头部添加 Front-matter，所以这样一来工作量就更大了，所以考虑用 Python 把文章都爬过来，然后统一添加 Front-matter。\n完整程序源码在 secsilm/csdn2md: Export csdn blogs to markdown files.。\n\nNote：你的文章必须是使用 markdown 写的，不然无法使用本文方法导出。\n\n思路对于单篇文章，CSDN 有导出为 markdown 的功能，如下图：\n导出单篇文章\n但是这样费时费力，所以我们需要找到当我们点击编辑按钮时，网页向服务器发送的请求地址，这样我们就可以直接获取到博客内容，也就可以重新写入到 markdown 文件了。\n我们在文章页按F12调出开发者工具，切换到Network选项卡，然后点击编辑，可以看到如下几个请求：\n三个请求\nwebspeeds无关，那么剩下两个，从名字可以很快看出来我们需要的是第二个：\n1http://write.blog.csdn.net/mdeditor/getArticle?id=53418159&amp;username=u010099080\n可以看到需要两个参数：id和username，id就是文章 id，这个很好获取，可以在文章地址中找到。username则是你的用户名，也可以在你的博客地址中找到。\n下面我们看下请求头：\n请求头\n可以看到其实也没啥特别的，其中Cookie是一会儿我们需要的，你可以将此复制到一个 txt 文件（假设名字叫cookies.txt）中以备后用。由于 cookie 字符串是存在一个文件中的，所以需要一个函数来解析成dict：\n12345678910111213141516def read_and_parse_cookies(cookie_file):    \"\"\"读取并解析 cookies。    Args:        cookie_file: 含有 cookies 字符串的 txt 文件名    Returns:        一个字典形式的 cookies    \"\"\"    with open(cookie_file, 'r') as f:        cookies_str = f.readline()    cookies_dict = &#123;&#125;    for item in cookies_str.split(\";\"):        k, v = item.split(\"=\", maxsplit=1)        cookies_dict[k.strip()] = v.strip()    return cookies_dict\n那么现在我们就可以使用requests来发起请求：\n1234567base_url = 'http://write.blog.csdn.net/mdeditor/getArticle'params = &#123;    'id': article_id,    'username': username&#125;# 根据文章 id 获取文章数据r = requests.get(base_url, params=params, cookies=cookies)\n再从开发者工具看下请求返回值：\nResponse\n基本上囊括了一篇文章的所有信息了，而我们只需要里面的markdowncontent、title和create。而且返回的数据是 json 格式，我们可以用json.loads()来解析成dict格式，方便我们写入文件：\n1data = json.loads(r.text, strict=False)\n最后由于我是要导入到 hexo 站点中，所以需要加 Front-matter，所以在获取到文章内容后，需要先把定义好的 Front-matter 加到文章内容里，一起写入文件：\n123456789101112if hexo:hexo_str = '---\\ntitle: &#123;title&#125;\\ndate: &#123;date&#125;\\ntags:\\n---\\n\\n'.format(    title=title, date=data['data']['create'])# Windows 下文件名中的非法字符forbidden = ['\\\\', '/', ':', '*', '?', '\"', '&lt;', '&gt;', '|']# 如果文章名含有非法字符，那么使用其 id 作为 md 文件名if any([c in repr(title) for c in forbidden]):    with open(os.path.join(md_dir, article_id + '.md'), 'w', encoding='utf8') as f:        f.write(hexo_str + data['data']['markdowncontent'])else:    with open(os.path.join(md_dir, title + '.md'), 'w', encoding='utf8') as f:        f.write(hexo_str + data['data']['markdowncontent'])\n至于如何通过文章列表获取文章 id，这个比较简单，我就不赘述了，大家可以直接看源码。\nUsage程序使用fire来从命令行接收参数，如何使用fire请参考 Python 自动生成命令行工具 - fire 简介 · Lee’s Space Station。我们可以使用如下命令来查看帮助：\n1python csdn2md.py -- --help\n输出：\n12345678910111213141516Type:        functionString form: &lt;function to_md_files at 0x000001CACC8C5E18&gt;File:        d:\\chromedownload\\mdfiles\\csdn2md.pyLine:        47Docstring:   导出为 Markdown 文件。Args:    total_pages: 博客文章在摘要模式下的总页数    filename: 含有 cookies 字符串的 txt 文件名    start: 从 start 页开始导出 (default: &#123;1&#125;)    stop: 到 stop 页停止 (default: &#123;None&#125;)    hexo: 是否添加 hexo 文章头部字符串（default: &#123;True&#125;）    md_dir: md 文件导出目录，默认为当前目录（default: .）Usage:       csdn2md.py USERNAME TOTAL_PAGES COOKIE_FILE [START] [STOP] [HEXO] [MD_DIR]             csdn2md.py --username USERNAME --total-pages TOTAL_PAGES --cookie-file COOKIE_FILE [--start START] [--stop STOP] [--hexo HEXO] [--md-dir MD_DIR]\n从帮助可以看出，你需要提供用户名username、博客总页数total-pages和 cookie 文件名cookie-file，可选参数为start、stop（默认为None，即一直到博客文章最后一页）、hexo和md-dir。\n例如，你需要导出博客的第一页文章到当前目录下的mdfiles目录，你的博客总页数为3，那么只需要执行如下命令：\n1python csdn2md.py --username u010099080 --total-pages 3 --cookie-file cookies.txt --stop 1 --md-dir mdfiles\n控制台输出：\n12345678910111213141516172017-12-25 11:54:08 INFO: Page 12017-12-25 11:54:08 INFO: Exporting 【TensorFlow】理解 Estimators 和 Datasets ...2017-12-25 11:54:08 INFO: Exporting Windows 10 资源管理器黑色风格 ...2017-12-25 11:54:09 INFO: Exporting 梯度下降优化算法概述 ...2017-12-25 11:54:09 INFO: Exporting 使用集成学习提升机器学习算法性能 ...2017-12-25 11:54:09 INFO: Exporting 【TensorFlow | TensorBoard】理解 TensorBoard ...2017-12-25 11:54:09 INFO: Exporting 【Python】Numpy 中的 shuffle VS permutation ...2017-12-25 11:54:09 INFO: Exporting 【TensorFlow】DNNRegressor 的简单使用 ...2017-12-25 11:54:09 INFO: Exporting XGBoost 在 Windows 10 和 Ubuntu 上的安装 ...2017-12-25 11:54:10 INFO: Exporting 【Python】自动生成命令行工具 - fire 简介 ...2017-12-25 11:54:10 INFO: Exporting 奇异值分解 SVD 的数学解释 ...2017-12-25 11:54:10 INFO: Exporting 【Python】统计字符串中英文、空格、数字、标点个数 ...2017-12-25 11:54:10 INFO: Exporting 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 ...2017-12-25 11:54:10 INFO: Exporting 使用 tree 命令格式化输出目录结构 ...2017-12-25 11:54:11 INFO: Exporting VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法 ...2017-12-25 11:54:11 INFO: Exporting 【Python】numpy 中的 copy 问题详解 ...2017-12-25 11:54:11 INFO: Done!\nmdfiles文件夹：\nmdfiles\nEND当然，导出的文件中 Front-matter 中的 tags 还是需要自己添加，因为我想自己再重新加标签而不是使用原来的标签，如果你想使用原来的标签，那么只需把请求返回 json 数据中的categories提取出来加进去即可。\nMerry Christmas! 😄\n","dateCreated":"2017-12-25T09:27:18+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2017-12-25T09:27:18+08:00","description":"\nCSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞","headline":"批量导出 CSDN 博客为 Markdown 文件","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/","keywords":"Python"}</script>
     <meta name="description" content="CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了">
 <meta name="keywords" content="Python">
 <meta property="og:type" content="blog">
@@ -44,7 +44,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -111,7 +111,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -132,7 +132,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -415,7 +415,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -466,7 +466,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -544,7 +544,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -595,7 +595,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -677,7 +677,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

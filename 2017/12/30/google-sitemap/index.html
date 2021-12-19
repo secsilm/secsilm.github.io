@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"\n\n\n\n\n\n\n\n问题\n这段时间搭建好自己的博客后，想要让别人可以在 Google 中找到我的文章，于是就得添加 sitemap，怎么生成 sitemap 的相关文章有很多，我在这里就不赘述了。我在npm install hexo-generator-sitemap --save装了插件后，确实生成了sitemap.xml文件，但是提交到 Google Search Console 的时候就出错了：不允许的网址（忘了截图）。\n\nNote：本文方法只是许多解决方法中的一个，造成这个问题的原因也不止一个（见完整错误列表），因此本文方法可能并不能解决你的问题，仅供参考。\n\n解决网上搜了好多文章，千篇一律，一个偶然的机会我仔细看了下我生成的sitemap.xml文件，结果发现：\n错误的 sitemap\n可以看到地址都是错的，都是yoursite.com开头，这很明显不是我的网址啊 😲，肯定是我犯了个 stupid 错误，哪里的默认配置没有改。\n后来在检查我的_config.yml文件的时候发现：\n\nurl竟然写的是默认值，没有改！\n那么把url改成你的地址就可以了，例如我的\n1url: https://secsilm.github.io/\n然后hexo g -d更新网站，再在 Google Search Console 重新提交一次 sitemap 就可以了。\nsuccess\nProblem solved！\nEND","dateCreated":"2017-12-30T11:20:47+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2017-12-30T11:20:47+08:00","description":"\n\n\n\n\n\n\n\n问题","headline":"Google sitemap 不允许的网址的解决办法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/12/30/google-sitemap/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2017/12/30/google-sitemap/","keywords":"hexo"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n\n\n\n\n\n\n\n问题\n这段时间搭建好自己的博客后，想要让别人可以在 Google 中找到我的文章，于是就得添加 sitemap，怎么生成 sitemap 的相关文章有很多，我在这里就不赘述了。我在npm install hexo-generator-sitemap --save装了插件后，确实生成了sitemap.xml文件，但是提交到 Google Search Console 的时候就出错了：不允许的网址（忘了截图）。\n\nNote：本文方法只是许多解决方法中的一个，造成这个问题的原因也不止一个（见完整错误列表），因此本文方法可能并不能解决你的问题，仅供参考。\n\n解决网上搜了好多文章，千篇一律，一个偶然的机会我仔细看了下我生成的sitemap.xml文件，结果发现：\n错误的 sitemap\n可以看到地址都是错的，都是yoursite.com开头，这很明显不是我的网址啊 😲，肯定是我犯了个 stupid 错误，哪里的默认配置没有改。\n后来在检查我的_config.yml文件的时候发现：\n\nurl竟然写的是默认值，没有改！\n那么把url改成你的地址就可以了，例如我的\n1url: https://secsilm.github.io/\n然后hexo g -d更新网站，再在 Google Search Console 重新提交一次 sitemap 就可以了。\nsuccess\nProblem solved！\nEND","dateCreated":"2017-12-30T11:20:47+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2017-12-30T11:20:47+08:00","description":"\n\n\n\n\n\n\n\n问题","headline":"Google sitemap 不允许的网址的解决办法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/12/30/google-sitemap/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2017/12/30/google-sitemap/","keywords":"hexo"}</script>
     <meta name="description" content="问题">
 <meta name="keywords" content="hexo">
 <meta property="og:type" content="blog">
@@ -42,7 +42,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -109,7 +109,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -130,7 +130,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -396,7 +396,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -447,7 +447,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -525,7 +525,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -576,7 +576,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -658,7 +658,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

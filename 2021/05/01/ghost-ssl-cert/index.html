@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"\n问题\n今天访问我的 Ghost 博客 的时候，发现进不去了：\n您的连接不是私密连接\n网上找的图，不过就是这个样子，当时忘了截图\n点击 高级 也没有进去的链接，而且页面地址前面写着”不安全“，证书显示也已经过期一个月了。而且我自己部署的 flask 服务也访问不了了。\n原因Ghost 本身其实会自动 renew 证书，可使用如下命令查看定时任务：\n12$ sudo crontab -l14 0 * * * \"/etc/letsencrypt\"/acme.sh --cron --home \"/etc/letsencrypt\" &gt; /dev/null\n有这个输出就表示会自动 renew。但是根据网上的说法，Ghost 没有及时升级  /etc/letsencrypt/acme.sh 版本，造成 renew 失败之类的。\n我看同目录下的 account.conf 中有一行是这样的：\n1#AUTO_UPGRADE=\"1\"\n自动升级默认是被注释掉的，不过我也不能百分比确定取消注释就会自动升级。具体我也不是很懂，就不多说了，就提一嘴。\n解决所以总而言之，就是要升级 acme.sh 然后重启 Ghost。\n\n进入 acme.sh 目录：\n 1$ cd /etc/letsencrypt\n\n备份原文件：\n 1$ sudo cp acme.sh acme.sh.bk\n\n升级：\n 123456789101112131415$ sudo ./acme.sh --upgrade./acme.sh: line 6192: cd: /home/username/.acme.sh: No such file or directory[Fri Apr 30 09:47:22 CST 2021] Installing from online archive.[Fri Apr 30 09:47:22 CST 2021] Downloading https://github.com/Neilpang/acme.sh/archive/master.tar.gztouch: cannot touch '/home/username/.acme.sh/http.header': No such file or directory[Fri Apr 30 09:48:36 CST 2021] Extracting master.tar.gz[Fri Apr 30 09:48:36 CST 2021] It is recommended to install socat first.[Fri Apr 30 09:48:36 CST 2021] We use socat for standalone server if you use standalone mode.[Fri Apr 30 09:48:36 CST 2021] If you don't use standalone mode, just ignore this warning.[Fri Apr 30 09:48:36 CST 2021] Installing to /home/username/.acme.sh[Fri Apr 30 09:48:36 CST 2021] Installed to /home/username/.acme.sh/acme.sh[Fri Apr 30 09:48:36 CST 2021] Good, bash is found, so change the shebang to use bash as preferred.[Fri Apr 30 09:48:37 CST 2021] OK[Fri Apr 30 09:48:37 CST 2021] Install success![Fri Apr 30 09:48:37 CST 2021] Upgrade success!\n\n升级后的文件是放在 home 目录下的，所以要 cp 过来：\n 1$ sudo cp ~/.acme.sh/acme.sh .\n\n手动执行一次定时任务。注意加上 —force，原因：sudo · acmesh-official/acme.sh Wiki\n 12345678910111213141516171819202122232425$ sudo \"/etc/letsencrypt\"/acme.sh --cron --home \"/etc/letsencrypt\"[Fri Apr 30 09:53:20 CST 2021] ===Starting cron===[Fri Apr 30 09:53:21 CST 2021] Renew: 'northcloudgate.com'[Fri Apr 30 09:53:22 CST 2021] Using CA: https://acme-v02.api.letsencrypt.org/directory[Fri Apr 30 09:53:22 CST 2021] Single domain='northcloudgate.com'[Fri Apr 30 09:53:22 CST 2021] Getting domain auth token for each domain[Fri Apr 30 09:53:25 CST 2021] Getting webroot for domain='northcloudgate.com'[Fri Apr 30 09:53:25 CST 2021] Verifying: northcloudgate.com[Fri Apr 30 09:53:30 CST 2021] Success[Fri Apr 30 09:53:30 CST 2021] Verify finished, start to sign.[Fri Apr 30 09:53:30 CST 2021] Lets finalize the order.[Fri Apr 30 09:53:30 CST 2021] Le_OrderFinalize='https://acme-v02.api.letsencrypt.org/acme/finalize/64051473/9381845272'[Fri Apr 30 09:53:31 CST 2021] Downloading cert.[Fri Apr 30 09:53:31 CST 2021] Le_LinkCert='https://acme-v02.api.letsencrypt.org/acme/cert/03175a17da415b526b37dedf518750770ddc'[Fri Apr 30 09:53:32 CST 2021] Cert success.-----BEGIN CERTIFICATE-----CERTIFICATE CONTENT==-----END CERTIFICATE-----[Fri Apr 30 09:53:32 CST 2021] Your cert is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.cer[Fri Apr 30 09:53:32 CST 2021] Your cert key is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.key[Fri Apr 30 09:53:32 CST 2021] The intermediate CA cert is in  /etc/letsencrypt/northcloudgate.com/ca.cer[Fri Apr 30 09:53:32 CST 2021] And the full chain certs is there:  /etc/letsencrypt/northcloudgate.com/fullchain.cer[Fri Apr 30 09:53:32 CST 2021] Run reload cmd: nginx -s reload[Fri Apr 30 09:53:32 CST 2021] Reload success[Fri Apr 30 09:53:32 CST 2021] ===End cron===\n\n重启 Ghost：\n 12345$ cd /var/www/ghost$ ghost restart+ sudo systemctl is-active ghost_northcloudgate-com+ sudo systemctl restart ghost_northcloudgate-com✔ Restarting Ghost\n\n\n然后，就又可以看到安全的小白锁了，证书也有效了：\n博客恢复]\n彩蛋在 Google ”您的连接不是私密连接“这个问题的时候，意外发现了一个神奇操作：\n”thisisunsafe“：这是我见过的最神奇最离奇的操作了，没有之一。当你遇到”您的连接不是私密连接“错误的时候，直接在当前页面”凭空“输入这个字符串，就可以进去页面了。注意是凭空，不是地址栏，你看不到你所输入的东西。#有用而有趣的冷知识https://t.co/TnZ5a5o5LN&mdash; Alan Lee (@bluekirin93) April 30, 2021 \n即，当你遇到“您的连接不是私密连接”错误的时候，直接在当前页面“凭空”输入 thisisunsafe，就可以进去页面了。注意是凭空，不是地址栏，你是看不到你所输入的东西的。\n而且根据 reddit 上的说法，\n\n这个 bypass word 之前是 badidea，再之前是 danger。\nChrome 65 的时候把 badidea 改成了 thisisnotsafe 又改成了 thisisunsafe。而且还用 base64 加密了。\n\nReddit\nbypass word 更改\n此外前文提到的 flask 服务也恢复正常了。\nReference\nGhost博客网站证书过期，怎么办？\n事故记录—SSL证书过期\nChrome 65 replaces the “badidea” bypass keyword with “thisisunsafe” : sysadmin\nDiff - d8fc089b62cd4f8d907acff6fb3f5ff58f168697^! - chromium/src - Git at Google\nTHIS IS UNSAFE (and a Bad Idea) - DEV Community\n\nEND","dateCreated":"2021-05-01T17:10:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2021-05-01T17:10:00+08:00","description":"\n问题","headline":"Ghost SSL 证书过期的解决办法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/05/01/ghost-ssl-cert/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2021/05/01/ghost-ssl-cert/","keywords":"Ghost"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n问题\n今天访问我的 Ghost 博客 的时候，发现进不去了：\n您的连接不是私密连接\n网上找的图，不过就是这个样子，当时忘了截图\n点击 高级 也没有进去的链接，而且页面地址前面写着”不安全“，证书显示也已经过期一个月了。而且我自己部署的 flask 服务也访问不了了。\n原因Ghost 本身其实会自动 renew 证书，可使用如下命令查看定时任务：\n12$ sudo crontab -l14 0 * * * \"/etc/letsencrypt\"/acme.sh --cron --home \"/etc/letsencrypt\" &gt; /dev/null\n有这个输出就表示会自动 renew。但是根据网上的说法，Ghost 没有及时升级  /etc/letsencrypt/acme.sh 版本，造成 renew 失败之类的。\n我看同目录下的 account.conf 中有一行是这样的：\n1#AUTO_UPGRADE=\"1\"\n自动升级默认是被注释掉的，不过我也不能百分比确定取消注释就会自动升级。具体我也不是很懂，就不多说了，就提一嘴。\n解决所以总而言之，就是要升级 acme.sh 然后重启 Ghost。\n\n进入 acme.sh 目录：\n 1$ cd /etc/letsencrypt\n\n备份原文件：\n 1$ sudo cp acme.sh acme.sh.bk\n\n升级：\n 123456789101112131415$ sudo ./acme.sh --upgrade./acme.sh: line 6192: cd: /home/username/.acme.sh: No such file or directory[Fri Apr 30 09:47:22 CST 2021] Installing from online archive.[Fri Apr 30 09:47:22 CST 2021] Downloading https://github.com/Neilpang/acme.sh/archive/master.tar.gztouch: cannot touch '/home/username/.acme.sh/http.header': No such file or directory[Fri Apr 30 09:48:36 CST 2021] Extracting master.tar.gz[Fri Apr 30 09:48:36 CST 2021] It is recommended to install socat first.[Fri Apr 30 09:48:36 CST 2021] We use socat for standalone server if you use standalone mode.[Fri Apr 30 09:48:36 CST 2021] If you don't use standalone mode, just ignore this warning.[Fri Apr 30 09:48:36 CST 2021] Installing to /home/username/.acme.sh[Fri Apr 30 09:48:36 CST 2021] Installed to /home/username/.acme.sh/acme.sh[Fri Apr 30 09:48:36 CST 2021] Good, bash is found, so change the shebang to use bash as preferred.[Fri Apr 30 09:48:37 CST 2021] OK[Fri Apr 30 09:48:37 CST 2021] Install success![Fri Apr 30 09:48:37 CST 2021] Upgrade success!\n\n升级后的文件是放在 home 目录下的，所以要 cp 过来：\n 1$ sudo cp ~/.acme.sh/acme.sh .\n\n手动执行一次定时任务。注意加上 —force，原因：sudo · acmesh-official/acme.sh Wiki\n 12345678910111213141516171819202122232425$ sudo \"/etc/letsencrypt\"/acme.sh --cron --home \"/etc/letsencrypt\"[Fri Apr 30 09:53:20 CST 2021] ===Starting cron===[Fri Apr 30 09:53:21 CST 2021] Renew: 'northcloudgate.com'[Fri Apr 30 09:53:22 CST 2021] Using CA: https://acme-v02.api.letsencrypt.org/directory[Fri Apr 30 09:53:22 CST 2021] Single domain='northcloudgate.com'[Fri Apr 30 09:53:22 CST 2021] Getting domain auth token for each domain[Fri Apr 30 09:53:25 CST 2021] Getting webroot for domain='northcloudgate.com'[Fri Apr 30 09:53:25 CST 2021] Verifying: northcloudgate.com[Fri Apr 30 09:53:30 CST 2021] Success[Fri Apr 30 09:53:30 CST 2021] Verify finished, start to sign.[Fri Apr 30 09:53:30 CST 2021] Lets finalize the order.[Fri Apr 30 09:53:30 CST 2021] Le_OrderFinalize='https://acme-v02.api.letsencrypt.org/acme/finalize/64051473/9381845272'[Fri Apr 30 09:53:31 CST 2021] Downloading cert.[Fri Apr 30 09:53:31 CST 2021] Le_LinkCert='https://acme-v02.api.letsencrypt.org/acme/cert/03175a17da415b526b37dedf518750770ddc'[Fri Apr 30 09:53:32 CST 2021] Cert success.-----BEGIN CERTIFICATE-----CERTIFICATE CONTENT==-----END CERTIFICATE-----[Fri Apr 30 09:53:32 CST 2021] Your cert is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.cer[Fri Apr 30 09:53:32 CST 2021] Your cert key is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.key[Fri Apr 30 09:53:32 CST 2021] The intermediate CA cert is in  /etc/letsencrypt/northcloudgate.com/ca.cer[Fri Apr 30 09:53:32 CST 2021] And the full chain certs is there:  /etc/letsencrypt/northcloudgate.com/fullchain.cer[Fri Apr 30 09:53:32 CST 2021] Run reload cmd: nginx -s reload[Fri Apr 30 09:53:32 CST 2021] Reload success[Fri Apr 30 09:53:32 CST 2021] ===End cron===\n\n重启 Ghost：\n 12345$ cd /var/www/ghost$ ghost restart+ sudo systemctl is-active ghost_northcloudgate-com+ sudo systemctl restart ghost_northcloudgate-com✔ Restarting Ghost\n\n\n然后，就又可以看到安全的小白锁了，证书也有效了：\n博客恢复]\n彩蛋在 Google ”您的连接不是私密连接“这个问题的时候，意外发现了一个神奇操作：\n”thisisunsafe“：这是我见过的最神奇最离奇的操作了，没有之一。当你遇到”您的连接不是私密连接“错误的时候，直接在当前页面”凭空“输入这个字符串，就可以进去页面了。注意是凭空，不是地址栏，你看不到你所输入的东西。#有用而有趣的冷知识https://t.co/TnZ5a5o5LN&mdash; Alan Lee (@bluekirin93) April 30, 2021 \n即，当你遇到“您的连接不是私密连接”错误的时候，直接在当前页面“凭空”输入 thisisunsafe，就可以进去页面了。注意是凭空，不是地址栏，你是看不到你所输入的东西的。\n而且根据 reddit 上的说法，\n\n这个 bypass word 之前是 badidea，再之前是 danger。\nChrome 65 的时候把 badidea 改成了 thisisnotsafe 又改成了 thisisunsafe。而且还用 base64 加密了。\n\nReddit\nbypass word 更改\n此外前文提到的 flask 服务也恢复正常了。\nReference\nGhost博客网站证书过期，怎么办？\n事故记录—SSL证书过期\nChrome 65 replaces the “badidea” bypass keyword with “thisisunsafe” : sysadmin\nDiff - d8fc089b62cd4f8d907acff6fb3f5ff58f168697^! - chromium/src - Git at Google\nTHIS IS UNSAFE (and a Bad Idea) - DEV Community\n\nEND","dateCreated":"2021-05-01T17:10:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2021-05-01T17:10:00+08:00","description":"\n问题","headline":"Ghost SSL 证书过期的解决办法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/05/01/ghost-ssl-cert/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2021/05/01/ghost-ssl-cert/","keywords":"Ghost"}</script>
     <meta name="description" content="问题">
 <meta name="keywords" content="Ghost">
 <meta property="og:type" content="blog">
@@ -43,7 +43,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -110,7 +110,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -131,7 +131,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -426,7 +426,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -477,7 +477,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -555,7 +555,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -606,7 +606,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -688,7 +688,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

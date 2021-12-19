@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。\n本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。\n\n\n原理\n多层感知器（Multilayer Perceptron,缩写MLP）是一种前向结构的人工神经网络，映射一组输入向量到一组输出向量。MLP是感知器的推广，克服了感知器不能对线性不可分数据进行识别的弱点。\n\n关于 MLP 的原理我就不再赘述，我用下面的一个图来简单说明下：\n\n如上图，实际上这就是一个前馈神经网络，我画的就是本篇博文所使用的结构（粗心少画了一层隐藏层，实际上使用的是3层隐藏层……）：\n\n输入层：有 3072 个输入神经元，$m=3072$\n隐藏层：有两层（三层）隐藏层，每个隐藏层有 1024 个神经元，$ p=q=1024$；\n输出层：有10个神经元，$n=10$\n\n输入层和输出层的神经元个数，是根据数据集来定的，而隐藏层的层数和每层隐藏层的神经元个数，这些都属于超参数（hyperparameter），是事先通过某种方法确定的。\n\n数据集这次采用的数据集是著名的 CIFAR-10 图像数据集，包含 60000 张 32×32 的彩色RGB图像，共有 10 类，每类有 6000 张图像。完整数据集可以从这里下载，注意选择 Python 版本，大概是 163 MB。\n下载好后解压会看到有5个训练文件和1个测试文件，还有一个说明文件（batches.meta），这个文件说明了每个数字类别（0-9）具体代表哪些类别。这几个文件都是用 cPickle 打包好的，所以载入数据也要用 cPickle 来载入。注意Python2和Python3的载入方式稍微有些不同，具体见代码。\n目前在此数据集上做的实验在没有数据增加的情况下最低的错误率是 18%，数据增加的情况下最低的错误率是 11%，都是采用的卷积神经网络（CNN）的结构。\n数据集中的图像和分类大致是这样的：\n\n\n代码以下代码的运行环境是 Python2 + Ubuntu14.04 + Jupyter Notebook。\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112113114115116117118119120121122123124125126127128129130131132133from __future__ import print_functionimport tensorflow as tfimport numpy as npimport matplotlib.pyplot as pltimport cPickle as pickle# seaborn非必需import seaborn# 如果不是在Jupyter Notebook上运行的话请注释掉下面这句%matplotlib inlinedef unpickle(filename):\t''' 解压数据 '''    with open(filename) as f:        # for python3         # d = pickle.load(f, encoding='latin1')        d = pickle.load(f)        return ddef onehot(labels):\t''' one-hot 编码 '''    n_sample = len(labels)    n_class = max(labels) + 1    onehot_labels = np.zeros((n_sample, n_class))    onehot_labels[np.arange(n_sample), labels] = 1        return onehot_labels# 读取数据data1 = unpickle('cifar-10-batches-py/data_batch_1')data2 = unpickle('cifar-10-batches-py/data_batch_2')data3 = unpickle('cifar-10-batches-py/data_batch_3')data4 = unpickle('cifar-10-batches-py/data_batch_4')data5 = unpickle('cifar-10-batches-py/data_batch_5')X_train = np.concatenate((data1['data'], data2['data'], data3['data'], data4['data'], data5['data']), axis=0)label = np.concatenate((data1['labels'], data2['labels'], data3['labels'], data4['labels'], data5['labels']), axis=0)y_train = onehot(label)test = unpickle('cifar-10-batches-py/test_batch')X_test = test['data']y_test = onehot(test['labels'])# 设置模型参数learning_rate = 0.001training_epochs = 500batch_size = 500display_step = 1n_sample = X_train.shape[0]n_input = X_train.shape[1]n_hidden_1 = 1024n_hidden_2 = 1024n_hidden_3 = 1024n_class = y_train.shape[1]x = tf.placeholder('float', [None, n_input])y = tf.placeholder('float', [None, n_class])def multiplayer_perceptron(x, weight, bias):        layer1 = tf.add(tf.matmul(x, weight['h1']), bias['h1'])    layer1 = tf.nn.relu(layer1)    layer2 = tf.add(tf.matmul(layer1, weight['h2']), bias['h2'])    layer2 = tf.nn.relu(layer2)    layer3 = tf.add(tf.matmul(layer2, weight['h3']), bias['h3'])    layer3 = tf.nn.relu(layer3)    out_layer = tf.add(tf.matmul(layer3, weight['out']), bias['out'])        return out_layerweight = &#123;    'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),    'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),     'h3': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_3])),     'out': tf.Variable(tf.random_normal([n_hidden_3, n_class]))&#125;bias = &#123;    'h1': tf.Variable(tf.random_normal([n_hidden_1])),    'h2': tf.Variable(tf.random_normal([n_hidden_2])),     'h3': tf.Variable(tf.random_normal([n_hidden_3])),     'out': tf.Variable(tf.random_normal([n_class]))&#125;# 建立模型pred = multiplayer_perceptron(x, weight, bias)# 定义损失函数cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))# 优化optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)# 初始化所有变量init = tf.initialize_all_variables()correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))# 训练模型with tf.Session() as sess:    sess.run(init)        for epoch in range(training_epochs):        avg_cost = 0        total_batch = int(n_sample / batch_size)                for i in range(total_batch):            _, c = sess.run([optimizer, cost], feed_dict=&#123;x: X_train[i*batch_size : (i+1)*batch_size, :],                                                           y: y_train[i*batch_size : (i+1)*batch_size, :]&#125;)            avg_cost += c / total_batch                plt.plot(epoch+1, avg_cost, 'co')                if epoch % display_step == 0:            print('Epoch:', '%04d' % (epoch+1), 'cost=', '&#123;:.9f&#125;'.format(avg_cost))                print('Opitimization Finished!')        # Test    acc = accuracy.eval(&#123;x: X_test, y: y_test&#125;)    print('Accuracy:', acc)        plt.xlabel('Epoch')    plt.ylabel('Cost')    plt.title('lr=%f, te=%d, bs=%d, acc=%f' % (learning_rate, training_epochs, batch_size, acc))    plt.tight_layout()    plt.savefig('cifar-10-batches-py/MLP-TF14-test.png', dpi=200)        plt.show()\n\n结果由于进行了500次迭代，结果太多，这里我就不一一列出了，完整的可以在这里连带代码一起下载，里面也包含了我测试不同超参数组合的结果图。\n下面给出本次实验的结果图：\n\n其中的缩写仍然遵照我以前博文的习惯，\n\nlr：learning rate，学习率\ntr：training epochs，训练迭代次数\nbs：batch size，batch大小\nacc：测试准确率\n\n可以看到最终的准确率是 46.98%，如前所述，目前此数据集上最好的结果是 82%，用的是对图像识别有巨大优势的卷积神经网络。当然，使用更深层的MLP也会提高准确率。\n\n一些问题\n学习率不能过大，这里使用的 0.001 已经是极限，其他参数不变的情况下，再大例如 0.01，准确率会大幅下跌，跌至 10% 左右，此时无论再怎么增加迭代次数准确率（包括训练准确率）也不会提高，一直在 10% 左右，但是损失却降得很厉害，此处还未彻底搞清楚。\n我使用sklearn也测试了一下（代码下载链接和上面一样），最终准确率 46.25%。\n本片博文只是为了说明如何使用 TensorFlow 实现MLP，本次做的实验并不一定是最优的实验结果。\n这篇博文 同样使用CIFAR10数据集但是使用CNN模型，可以和本文做个对比。\n\n\n\nEND","dateCreated":"2016-11-19T08:56:14+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-11-19T08:56:14+08:00","description":"前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。\n本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。","headline":"TensorFlow 中的多层感知器（MLP）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/11/19/tensorflow-mlp/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2016/11/19/tensorflow-mlp/","keywords":"Python, TensorFlow, Machine Learning"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。\n本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。\n\n\n原理\n多层感知器（Multilayer Perceptron,缩写MLP）是一种前向结构的人工神经网络，映射一组输入向量到一组输出向量。MLP是感知器的推广，克服了感知器不能对线性不可分数据进行识别的弱点。\n\n关于 MLP 的原理我就不再赘述，我用下面的一个图来简单说明下：\n\n如上图，实际上这就是一个前馈神经网络，我画的就是本篇博文所使用的结构（粗心少画了一层隐藏层，实际上使用的是3层隐藏层……）：\n\n输入层：有 3072 个输入神经元，$m=3072$\n隐藏层：有两层（三层）隐藏层，每个隐藏层有 1024 个神经元，$ p=q=1024$；\n输出层：有10个神经元，$n=10$\n\n输入层和输出层的神经元个数，是根据数据集来定的，而隐藏层的层数和每层隐藏层的神经元个数，这些都属于超参数（hyperparameter），是事先通过某种方法确定的。\n\n数据集这次采用的数据集是著名的 CIFAR-10 图像数据集，包含 60000 张 32×32 的彩色RGB图像，共有 10 类，每类有 6000 张图像。完整数据集可以从这里下载，注意选择 Python 版本，大概是 163 MB。\n下载好后解压会看到有5个训练文件和1个测试文件，还有一个说明文件（batches.meta），这个文件说明了每个数字类别（0-9）具体代表哪些类别。这几个文件都是用 cPickle 打包好的，所以载入数据也要用 cPickle 来载入。注意Python2和Python3的载入方式稍微有些不同，具体见代码。\n目前在此数据集上做的实验在没有数据增加的情况下最低的错误率是 18%，数据增加的情况下最低的错误率是 11%，都是采用的卷积神经网络（CNN）的结构。\n数据集中的图像和分类大致是这样的：\n\n\n代码以下代码的运行环境是 Python2 + Ubuntu14.04 + Jupyter Notebook。\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112113114115116117118119120121122123124125126127128129130131132133from __future__ import print_functionimport tensorflow as tfimport numpy as npimport matplotlib.pyplot as pltimport cPickle as pickle# seaborn非必需import seaborn# 如果不是在Jupyter Notebook上运行的话请注释掉下面这句%matplotlib inlinedef unpickle(filename):\t''' 解压数据 '''    with open(filename) as f:        # for python3         # d = pickle.load(f, encoding='latin1')        d = pickle.load(f)        return ddef onehot(labels):\t''' one-hot 编码 '''    n_sample = len(labels)    n_class = max(labels) + 1    onehot_labels = np.zeros((n_sample, n_class))    onehot_labels[np.arange(n_sample), labels] = 1        return onehot_labels# 读取数据data1 = unpickle('cifar-10-batches-py/data_batch_1')data2 = unpickle('cifar-10-batches-py/data_batch_2')data3 = unpickle('cifar-10-batches-py/data_batch_3')data4 = unpickle('cifar-10-batches-py/data_batch_4')data5 = unpickle('cifar-10-batches-py/data_batch_5')X_train = np.concatenate((data1['data'], data2['data'], data3['data'], data4['data'], data5['data']), axis=0)label = np.concatenate((data1['labels'], data2['labels'], data3['labels'], data4['labels'], data5['labels']), axis=0)y_train = onehot(label)test = unpickle('cifar-10-batches-py/test_batch')X_test = test['data']y_test = onehot(test['labels'])# 设置模型参数learning_rate = 0.001training_epochs = 500batch_size = 500display_step = 1n_sample = X_train.shape[0]n_input = X_train.shape[1]n_hidden_1 = 1024n_hidden_2 = 1024n_hidden_3 = 1024n_class = y_train.shape[1]x = tf.placeholder('float', [None, n_input])y = tf.placeholder('float', [None, n_class])def multiplayer_perceptron(x, weight, bias):        layer1 = tf.add(tf.matmul(x, weight['h1']), bias['h1'])    layer1 = tf.nn.relu(layer1)    layer2 = tf.add(tf.matmul(layer1, weight['h2']), bias['h2'])    layer2 = tf.nn.relu(layer2)    layer3 = tf.add(tf.matmul(layer2, weight['h3']), bias['h3'])    layer3 = tf.nn.relu(layer3)    out_layer = tf.add(tf.matmul(layer3, weight['out']), bias['out'])        return out_layerweight = &#123;    'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),    'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),     'h3': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_3])),     'out': tf.Variable(tf.random_normal([n_hidden_3, n_class]))&#125;bias = &#123;    'h1': tf.Variable(tf.random_normal([n_hidden_1])),    'h2': tf.Variable(tf.random_normal([n_hidden_2])),     'h3': tf.Variable(tf.random_normal([n_hidden_3])),     'out': tf.Variable(tf.random_normal([n_class]))&#125;# 建立模型pred = multiplayer_perceptron(x, weight, bias)# 定义损失函数cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))# 优化optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)# 初始化所有变量init = tf.initialize_all_variables()correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))# 训练模型with tf.Session() as sess:    sess.run(init)        for epoch in range(training_epochs):        avg_cost = 0        total_batch = int(n_sample / batch_size)                for i in range(total_batch):            _, c = sess.run([optimizer, cost], feed_dict=&#123;x: X_train[i*batch_size : (i+1)*batch_size, :],                                                           y: y_train[i*batch_size : (i+1)*batch_size, :]&#125;)            avg_cost += c / total_batch                plt.plot(epoch+1, avg_cost, 'co')                if epoch % display_step == 0:            print('Epoch:', '%04d' % (epoch+1), 'cost=', '&#123;:.9f&#125;'.format(avg_cost))                print('Opitimization Finished!')        # Test    acc = accuracy.eval(&#123;x: X_test, y: y_test&#125;)    print('Accuracy:', acc)        plt.xlabel('Epoch')    plt.ylabel('Cost')    plt.title('lr=%f, te=%d, bs=%d, acc=%f' % (learning_rate, training_epochs, batch_size, acc))    plt.tight_layout()    plt.savefig('cifar-10-batches-py/MLP-TF14-test.png', dpi=200)        plt.show()\n\n结果由于进行了500次迭代，结果太多，这里我就不一一列出了，完整的可以在这里连带代码一起下载，里面也包含了我测试不同超参数组合的结果图。\n下面给出本次实验的结果图：\n\n其中的缩写仍然遵照我以前博文的习惯，\n\nlr：learning rate，学习率\ntr：training epochs，训练迭代次数\nbs：batch size，batch大小\nacc：测试准确率\n\n可以看到最终的准确率是 46.98%，如前所述，目前此数据集上最好的结果是 82%，用的是对图像识别有巨大优势的卷积神经网络。当然，使用更深层的MLP也会提高准确率。\n\n一些问题\n学习率不能过大，这里使用的 0.001 已经是极限，其他参数不变的情况下，再大例如 0.01，准确率会大幅下跌，跌至 10% 左右，此时无论再怎么增加迭代次数准确率（包括训练准确率）也不会提高，一直在 10% 左右，但是损失却降得很厉害，此处还未彻底搞清楚。\n我使用sklearn也测试了一下（代码下载链接和上面一样），最终准确率 46.25%。\n本片博文只是为了说明如何使用 TensorFlow 实现MLP，本次做的实验并不一定是最优的实验结果。\n这篇博文 同样使用CIFAR10数据集但是使用CNN模型，可以和本文做个对比。\n\n\n\nEND","dateCreated":"2016-11-19T08:56:14+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-11-19T08:56:14+08:00","description":"前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。\n本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。","headline":"TensorFlow 中的多层感知器（MLP）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/11/19/tensorflow-mlp/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2016/11/19/tensorflow-mlp/","keywords":"Python, TensorFlow, Machine Learning"}</script>
     <meta name="description" content="前面有几篇博文讲了使用 TensorFlow 实现线性回归和逻辑斯蒂回归，这次来说下多层感知器（Multi-Layer Perceptron）的 TensorFlow 实现。 本篇博文的代码及结果图片等可以在这里下载，里面包含TensorFlow的实现和sklearn的实现，以及各自的结果图片。">
 <meta name="keywords" content="Python,TensorFlow,Machine Learning">
 <meta property="og:type" content="blog">
@@ -42,7 +42,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -109,7 +109,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -130,7 +130,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -418,7 +418,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -469,7 +469,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -547,7 +547,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -598,7 +598,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -680,7 +680,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

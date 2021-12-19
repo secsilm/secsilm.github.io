@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/avatar/Bastion_cute.png">
+        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png"},"articleBody":"前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。\n\n\n训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice(售价)两个变量来分别作为自变量和因变量，处理后样本个数为1140个，也就是说全部训练数据是一个11402的矩阵，部分数据如下所示：训练部分数据\n训练部分数据*\n\n模型本次使用的是线性回归模型 y=Wx+b 其中$W$为权重，$b$为偏置。具体地，$x$ 即为LotArea，$y$ 即为SalePrice。\n\n开始训练使用TensorFlow训练模型大致是这样的步骤：\n1. 设置各种超参数，例如学习率，迭代次数等；\n2. 定义变量和模型；\n3. 初始化变量;\n4. 正式开始训练.\n废话不多说上完整代码，代码里有注释：\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263from __future__ import print_function, divisionimport tensorflow as tfimport pandas as pdimport numpy as npimport matplotlib.pyplot as pltimport seaborn# 我是在Jupyter Notebook里运行的，所以需要这行%matplotlib inline# 读入数据train = pd.read_csv(\"Dataset/train.csv\")# 选取房屋面积小于１２０００的数据train = train[train['LotArea'] &lt; 12000]train_X = train['LotArea'].values.reshape(-1, 1)train_Y = train['SalePrice'].values.reshape(-1, 1)n_samples = train_X.shape[0]# 学习率learning_rate = 2# 迭代次数training_epochs = 1000# 每多少次输出一次迭代结果display_step = 50# 这个X和Y和上面的train_X,train_Y是不一样的，这里只是个占位符，# 训练开始的时候需要“喂”(feed)数据给它X = tf.placeholder(tf.float32)Y = tf.placeholder(tf.float32)# 定义模型参数W = tf.Variable(np.random.randn(), name=\"weight\", dtype=tf.float32)b = tf.Variable(np.random.randn(), name=\"bias\", dtype=tf.float32)# 定义模型pred = tf.add(tf.mul(W, X), b)# 定义损失函数cost = tf.reduce_sum(tf.pow(pred-Y, 2)) / (2 * n_samples)# 使用Adam算法，至于为什么不使用一般的梯度下降算法，一会说optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)# 初始化所有变量init = tf.initialize_all_variables()# 训练开始with tf.Session() as sess:    sess.run(init)        for epoch in range(training_epochs):        for (x, y) in zip(train_X, train_Y):            sess.run(optimizer, feed_dict=&#123;X: x, Y: y&#125;)        if (epoch + 1) % display_step == 0:            c = sess.run(cost, feed_dict=&#123;X: train_X, Y: train_Y&#125;)            print(\"Epoch:\", '%04d' % (epoch + 1), \"cost=\", \"&#123;:.3f&#125;\".format(c), \"W=\", sess.run(W), \"b=\", sess.run(b))        print(\"Optimization Finished!\")    training_cost = sess.run(cost, feed_dict=&#123;X: train_X, Y: train_Y&#125;)    print(\"Training cost=\", training_cost, \"W=\", sess.run(W), \"b=\", sess.run(b), '\\n')        # 画图    plt.plot(train_X, train_Y, 'ro', label=\"Original data\")    plt.plot(train_X, sess.run(W) * train_X + sess.run(b), label=\"Fitted line\")    plt.legend()    plt.show()\n结果如下，\n12345678910111213141516171819202122Epoch: 0050 cost= 2283274240.000 W= 20.3469 b= 12945.2Epoch: 0100 cost= 2196306176.000 W= 19.0349 b= 24402.2Epoch: 0150 cost= 2128102656.000 W= 17.8766 b= 34479.1Epoch: 0200 cost= 2074902912.000 W= 16.8604 b= 43292.1Epoch: 0250 cost= 2033546240.000 W= 15.9735 b= 50965.1Epoch: 0300 cost= 2001452160.000 W= 15.2026 b= 57622.0Epoch: 0350 cost= 1976554496.000 W= 14.5348 b= 63380.2Epoch: 0400 cost= 1957219584.000 W= 13.9577 b= 68350.4Epoch: 0450 cost= 1942167424.000 W= 13.4598 b= 72634.2Epoch: 0500 cost= 1930414208.000 W= 13.0309 b= 76322.2Epoch: 0550 cost= 1921200000.000 W= 12.6619 b= 79494.2Epoch: 0600 cost= 1913948928.000 W= 12.3445 b= 82220.2Epoch: 0650 cost= 1908209664.000 W= 12.0717 b= 84562.8Epoch: 0700 cost= 1903651840.000 W= 11.8377 b= 86572.4Epoch: 0750 cost= 1900003456.000 W= 11.6364 b= 88299.7Epoch: 0800 cost= 1897074944.000 W= 11.4638 b= 89781.0Epoch: 0850 cost= 1894714880.000 W= 11.3161 b= 91048.3Epoch: 0900 cost= 1892792320.000 W= 11.189 b= 92139.5Epoch: 0950 cost= 1891217024.000 W= 11.0795 b= 93078.3Epoch: 1000 cost= 1889932800.000 W= 10.9862 b= 93879.3Optimization Finished!Training cost= 1.88993e+09 W= 10.9862 b= 93879.3\n这里写图片描述\n\n几个问题\n在迭代次数相同的情况下，调节学习率能非常有效的改变损失的下降速度，刚开始学习率是0.001，结果非常的不好，损失比现在的大0.3e09左右，一步一步加大学习率效果显著，即使现在的２也不算大（对于这个问题），但是对于其他问题，要具体情况具体分析，这个学习率或许太过激进;\n至于优化算法为什么不选用更为常见的tf.train.GradientDescentOptimize,刚开始我也是用的这个算法，结果发现 cost, W, b 都是nan，Not a Number，后来当我每一次迭代都输出结果的时候，发现原来这几个值异常迅速的增大，导致超出了表示范围，如下,学习率为 0.001\n123456789101112131415161718192021Epoch: 0001 W= 1541.27 b= -0.811313Epoch: 0001 W= -121530.0 b= -13.6312Epoch: 0001 W= 1.33729e+07 b= 1185.87Epoch: 0001 W= -1.05648e+09 b= -110841.0Epoch: 0001 W= 9.3181e+10 b= 9.23441e+06Epoch: 0001 W= -8.717e+12 b= -8.39367e+08Epoch: 0001 W= 2.77678e+14 b= 4.59572e+10Epoch: 0001 W= -1.31328e+16 b= -1.76138e+12Epoch: 0001 W= 1.43194e+18 b= 1.27263e+14Epoch: 0001 W= -1.7716e+20 b= -1.48503e+16Epoch: 0001 W= 1.74557e+22 b= 1.64051e+18Epoch: 0001 W= -1.80845e+24 b= -1.65567e+20Epoch: 0001 W= 5.76078e+25 b= 9.54297e+21Epoch: 0001 W= -6.32776e+27 b= -5.585e+23Epoch: 0001 W= 6.40024e+29 b= 5.93388e+25Epoch: 0001 W= -3.14474e+31 b= -4.18503e+27Epoch: 0001 W= 1.4992e+33 b= 2.01299e+29Epoch: 0001 W= -1.23312e+35 b= -1.26103e+31Epoch: 0001 W= inf b= infEpoch: 0001 W= nan b= nanEpoch: 0001 W= nan b= nan\n\n\n其实就是正负跳的太厉害，而且貌似收敛不了。即使我减小学习率也是杯水车薪，后来试用了这个Adam（Adaptive Moment Estimation）算法，结果没有那个问题了，其实还有其他的算法，我还没有来得及一个一个试，如果想了解各种梯度下降算法，可以参考这篇文章：An overview of gradient descent optimization algorithms\n\n其实在这种简单的模型上，我个人觉得使用 sklearn 效率更高点（当然 TensorFlow 的定制性比较强，更为底层），我用 sklearn 实现了一次，效果很好，基本就是傻瓜式操作，效果如图，这里写图片描述\n可以看到两种方法得出的结果还是差不多的（当然TF更为繁琐些）。另外在耗时上，sklearn 也要明显快于 TF, sklearn 几乎是秒出，TF 每次迭代大概需要 11 秒。\n\n\n\nEND\n暂且就是这些，今天折腾了大半天，不容易啊，还是自己太嫩啦：）\n","dateCreated":"2016-10-22T08:53:57+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-10-22T08:53:57+08:00","description":"前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。","headline":"TensorFlow 中的线性回归","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/10/22/tensorflow-linear-regression/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://alanlee.fun/avatar/Bastion_cute.png","logo":{"@type":"ImageObject","url":"https://alanlee.fun/avatar/Bastion_cute.png"}},"url":"https://alanlee.fun/2016/10/22/tensorflow-linear-regression/","keywords":"Python, TensorFlow, Machine Learning"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。\n\n\n训练数据本次使用的训练数据是美国房价数据，做了一些预处理，完整数据可从这里下载，原始数据共有1460行８１列，其中我选用了LotArea(房屋面积)和SalePrice(售价)两个变量来分别作为自变量和因变量，处理后样本个数为1140个，也就是说全部训练数据是一个11402的矩阵，部分数据如下所示：训练部分数据\n训练部分数据*\n\n模型本次使用的是线性回归模型 y=Wx+b 其中$W$为权重，$b$为偏置。具体地，$x$ 即为LotArea，$y$ 即为SalePrice。\n\n开始训练使用TensorFlow训练模型大致是这样的步骤：\n1. 设置各种超参数，例如学习率，迭代次数等；\n2. 定义变量和模型；\n3. 初始化变量;\n4. 正式开始训练.\n废话不多说上完整代码，代码里有注释：\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263from __future__ import print_function, divisionimport tensorflow as tfimport pandas as pdimport numpy as npimport matplotlib.pyplot as pltimport seaborn# 我是在Jupyter Notebook里运行的，所以需要这行%matplotlib inline# 读入数据train = pd.read_csv(\"Dataset/train.csv\")# 选取房屋面积小于１２０００的数据train = train[train['LotArea'] &lt; 12000]train_X = train['LotArea'].values.reshape(-1, 1)train_Y = train['SalePrice'].values.reshape(-1, 1)n_samples = train_X.shape[0]# 学习率learning_rate = 2# 迭代次数training_epochs = 1000# 每多少次输出一次迭代结果display_step = 50# 这个X和Y和上面的train_X,train_Y是不一样的，这里只是个占位符，# 训练开始的时候需要“喂”(feed)数据给它X = tf.placeholder(tf.float32)Y = tf.placeholder(tf.float32)# 定义模型参数W = tf.Variable(np.random.randn(), name=\"weight\", dtype=tf.float32)b = tf.Variable(np.random.randn(), name=\"bias\", dtype=tf.float32)# 定义模型pred = tf.add(tf.mul(W, X), b)# 定义损失函数cost = tf.reduce_sum(tf.pow(pred-Y, 2)) / (2 * n_samples)# 使用Adam算法，至于为什么不使用一般的梯度下降算法，一会说optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)# 初始化所有变量init = tf.initialize_all_variables()# 训练开始with tf.Session() as sess:    sess.run(init)        for epoch in range(training_epochs):        for (x, y) in zip(train_X, train_Y):            sess.run(optimizer, feed_dict=&#123;X: x, Y: y&#125;)        if (epoch + 1) % display_step == 0:            c = sess.run(cost, feed_dict=&#123;X: train_X, Y: train_Y&#125;)            print(\"Epoch:\", '%04d' % (epoch + 1), \"cost=\", \"&#123;:.3f&#125;\".format(c), \"W=\", sess.run(W), \"b=\", sess.run(b))        print(\"Optimization Finished!\")    training_cost = sess.run(cost, feed_dict=&#123;X: train_X, Y: train_Y&#125;)    print(\"Training cost=\", training_cost, \"W=\", sess.run(W), \"b=\", sess.run(b), '\\n')        # 画图    plt.plot(train_X, train_Y, 'ro', label=\"Original data\")    plt.plot(train_X, sess.run(W) * train_X + sess.run(b), label=\"Fitted line\")    plt.legend()    plt.show()\n结果如下，\n12345678910111213141516171819202122Epoch: 0050 cost= 2283274240.000 W= 20.3469 b= 12945.2Epoch: 0100 cost= 2196306176.000 W= 19.0349 b= 24402.2Epoch: 0150 cost= 2128102656.000 W= 17.8766 b= 34479.1Epoch: 0200 cost= 2074902912.000 W= 16.8604 b= 43292.1Epoch: 0250 cost= 2033546240.000 W= 15.9735 b= 50965.1Epoch: 0300 cost= 2001452160.000 W= 15.2026 b= 57622.0Epoch: 0350 cost= 1976554496.000 W= 14.5348 b= 63380.2Epoch: 0400 cost= 1957219584.000 W= 13.9577 b= 68350.4Epoch: 0450 cost= 1942167424.000 W= 13.4598 b= 72634.2Epoch: 0500 cost= 1930414208.000 W= 13.0309 b= 76322.2Epoch: 0550 cost= 1921200000.000 W= 12.6619 b= 79494.2Epoch: 0600 cost= 1913948928.000 W= 12.3445 b= 82220.2Epoch: 0650 cost= 1908209664.000 W= 12.0717 b= 84562.8Epoch: 0700 cost= 1903651840.000 W= 11.8377 b= 86572.4Epoch: 0750 cost= 1900003456.000 W= 11.6364 b= 88299.7Epoch: 0800 cost= 1897074944.000 W= 11.4638 b= 89781.0Epoch: 0850 cost= 1894714880.000 W= 11.3161 b= 91048.3Epoch: 0900 cost= 1892792320.000 W= 11.189 b= 92139.5Epoch: 0950 cost= 1891217024.000 W= 11.0795 b= 93078.3Epoch: 1000 cost= 1889932800.000 W= 10.9862 b= 93879.3Optimization Finished!Training cost= 1.88993e+09 W= 10.9862 b= 93879.3\n这里写图片描述\n\n几个问题\n在迭代次数相同的情况下，调节学习率能非常有效的改变损失的下降速度，刚开始学习率是0.001，结果非常的不好，损失比现在的大0.3e09左右，一步一步加大学习率效果显著，即使现在的２也不算大（对于这个问题），但是对于其他问题，要具体情况具体分析，这个学习率或许太过激进;\n至于优化算法为什么不选用更为常见的tf.train.GradientDescentOptimize,刚开始我也是用的这个算法，结果发现 cost, W, b 都是nan，Not a Number，后来当我每一次迭代都输出结果的时候，发现原来这几个值异常迅速的增大，导致超出了表示范围，如下,学习率为 0.001\n123456789101112131415161718192021Epoch: 0001 W= 1541.27 b= -0.811313Epoch: 0001 W= -121530.0 b= -13.6312Epoch: 0001 W= 1.33729e+07 b= 1185.87Epoch: 0001 W= -1.05648e+09 b= -110841.0Epoch: 0001 W= 9.3181e+10 b= 9.23441e+06Epoch: 0001 W= -8.717e+12 b= -8.39367e+08Epoch: 0001 W= 2.77678e+14 b= 4.59572e+10Epoch: 0001 W= -1.31328e+16 b= -1.76138e+12Epoch: 0001 W= 1.43194e+18 b= 1.27263e+14Epoch: 0001 W= -1.7716e+20 b= -1.48503e+16Epoch: 0001 W= 1.74557e+22 b= 1.64051e+18Epoch: 0001 W= -1.80845e+24 b= -1.65567e+20Epoch: 0001 W= 5.76078e+25 b= 9.54297e+21Epoch: 0001 W= -6.32776e+27 b= -5.585e+23Epoch: 0001 W= 6.40024e+29 b= 5.93388e+25Epoch: 0001 W= -3.14474e+31 b= -4.18503e+27Epoch: 0001 W= 1.4992e+33 b= 2.01299e+29Epoch: 0001 W= -1.23312e+35 b= -1.26103e+31Epoch: 0001 W= inf b= infEpoch: 0001 W= nan b= nanEpoch: 0001 W= nan b= nan\n\n\n其实就是正负跳的太厉害，而且貌似收敛不了。即使我减小学习率也是杯水车薪，后来试用了这个Adam（Adaptive Moment Estimation）算法，结果没有那个问题了，其实还有其他的算法，我还没有来得及一个一个试，如果想了解各种梯度下降算法，可以参考这篇文章：An overview of gradient descent optimization algorithms\n\n其实在这种简单的模型上，我个人觉得使用 sklearn 效率更高点（当然 TensorFlow 的定制性比较强，更为底层），我用 sklearn 实现了一次，效果很好，基本就是傻瓜式操作，效果如图，这里写图片描述\n可以看到两种方法得出的结果还是差不多的（当然TF更为繁琐些）。另外在耗时上，sklearn 也要明显快于 TF, sklearn 几乎是秒出，TF 每次迭代大概需要 11 秒。\n\n\n\nEND\n暂且就是这些，今天折腾了大半天，不容易啊，还是自己太嫩啦：）\n","dateCreated":"2016-10-22T08:53:57+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2016-10-22T08:53:57+08:00","description":"前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。","headline":"TensorFlow 中的线性回归","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/10/22/tensorflow-linear-regression/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2016/10/22/tensorflow-linear-regression/","keywords":"Python, TensorFlow, Machine Learning"}</script>
     <meta name="description" content="前面 有篇博文 讲了讲Ubuntu环境下安装TensorFlow，今天来说一说在TensorFlow中如何进行线性回归。">
 <meta name="keywords" content="Python,TensorFlow,Machine Learning">
 <meta property="og:type" content="blog">
@@ -42,7 +42,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/avatar/Bastion_cute.png"/>
+        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
     
     
     
@@ -109,7 +109,7 @@
             >
         
         
-            <img class="header-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
         </a>
     
@@ -130,7 +130,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -406,7 +406,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -457,7 +457,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -535,7 +535,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -586,7 +586,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -668,7 +668,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="https://alanlee.fun/avatar/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

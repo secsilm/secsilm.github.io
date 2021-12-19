@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。\n\n\nWindows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我的机器上没有成功，pip 同样不成功。有兴趣的话可以参考官网和 2016 年的一篇文章 Installing XGBoost For Anaconda on Windows 来试试。\nUnofficial Windows Binaries for Python Extension Packages这个 是加州大学提供的一个非官方包列表，提供了很多 Python 包的 whl 文件下载，XGBoost 的在 这里，我自己下好了一份放在里 这里。根据你的环境下载对应的包，比如我的是 Python 3.5，Windows 10 64 位，那就选下面红框这个：\n这里写图片描述 \n然后再命令行中使用下面的语句安装：\n1pip install xgboost-0.6-cp35-cp35m-win_amd64.whl\n安装完成后使用 import xgboost 导入即可。导入完成后可能会有警告提示：\n这里写图片描述\n不过暂时不影响，这个问题已经在 GitHub 版本修复了，但是这个 whl 文件并不是最新的。\n\nUbuntupip我在 Ubuntu 上使用 pip 方式安装成功，\n12345678910111213$ pip install xgboostCollecting xgboost  Downloading xgboost-0.6a2.tar.gz (1.2MB)    100% |████████████████████████████████| 1.2MB 1.0MB/s Requirement already satisfied: numpy in /home/alan/.local/lib/python3.5/site-packages (from xgboost)Requirement already satisfied: scipy in /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)Requirement already satisfied: scikit-learn in /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)Building wheels for collected packages: xgboostRunning setup.py bdist_wheel for xgboost ... doneStored in directory: /home/alan/.cache/pip/wheels/5e/c1/d6/522af54e5cc001fad4dd855117f8bf61b11d56443e06672e26Successfully built xgboostInstalling collected packages: xgboostSuccessfully installed xgboost-0.6a2\n安装后的版本为 0.6a2。\n编译安装同样参照 官网 的安装方法：\n123git clone --recursive https://github.com/dmlc/xgboostcd xgboostmake -j4\n然后再进入 python-package 目录，使用 sudo python setup.py install 安装 Python 包。\n\nIssues#1 OSError: version &#39;GLIBCXX_3.4.20&#39; not foundUbuntu 下，在安装完成后用 import xgboost 导入的时候你可能遇到这样的问题：\n这里写图片描述\n右键在新标签页打开查看大图\n这时你可以使用 conda 安装 libgcc：\n1conda install libgcc\n然后再导入问题就应该解决了。\n其他问题可以参考 Installing XGBoost on Ubuntu 。\n\n\nEND\n","dateCreated":"2017-05-18T10:58:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2017-05-18T10:58:00+08:00","description":"关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。","headline":"XGBoost 在 Windows 10 和 Ubuntu 上的安装","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/05/18/installing-xgboost/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2017/05/18/installing-xgboost/","keywords":"Data Science, Machine Learning"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。\n\n\nWindows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我的机器上没有成功，pip 同样不成功。有兴趣的话可以参考官网和 2016 年的一篇文章 Installing XGBoost For Anaconda on Windows 来试试。\nUnofficial Windows Binaries for Python Extension Packages这个 是加州大学提供的一个非官方包列表，提供了很多 Python 包的 whl 文件下载，XGBoost 的在 这里，我自己下好了一份放在里 这里。根据你的环境下载对应的包，比如我的是 Python 3.5，Windows 10 64 位，那就选下面红框这个：\n这里写图片描述 \n然后再命令行中使用下面的语句安装：\n1pip install xgboost-0.6-cp35-cp35m-win_amd64.whl\n安装完成后使用 import xgboost 导入即可。导入完成后可能会有警告提示：\n这里写图片描述\n不过暂时不影响，这个问题已经在 GitHub 版本修复了，但是这个 whl 文件并不是最新的。\n\nUbuntupip我在 Ubuntu 上使用 pip 方式安装成功，\n12345678910111213$ pip install xgboostCollecting xgboost  Downloading xgboost-0.6a2.tar.gz (1.2MB)    100% |████████████████████████████████| 1.2MB 1.0MB/s Requirement already satisfied: numpy in /home/alan/.local/lib/python3.5/site-packages (from xgboost)Requirement already satisfied: scipy in /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)Requirement already satisfied: scikit-learn in /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)Building wheels for collected packages: xgboostRunning setup.py bdist_wheel for xgboost ... doneStored in directory: /home/alan/.cache/pip/wheels/5e/c1/d6/522af54e5cc001fad4dd855117f8bf61b11d56443e06672e26Successfully built xgboostInstalling collected packages: xgboostSuccessfully installed xgboost-0.6a2\n安装后的版本为 0.6a2。\n编译安装同样参照 官网 的安装方法：\n123git clone --recursive https://github.com/dmlc/xgboostcd xgboostmake -j4\n然后再进入 python-package 目录，使用 sudo python setup.py install 安装 Python 包。\n\nIssues#1 OSError: version &#39;GLIBCXX_3.4.20&#39; not foundUbuntu 下，在安装完成后用 import xgboost 导入的时候你可能遇到这样的问题：\n这里写图片描述\n右键在新标签页打开查看大图\n这时你可以使用 conda 安装 libgcc：\n1conda install libgcc\n然后再导入问题就应该解决了。\n其他问题可以参考 Installing XGBoost on Ubuntu 。\n\n\nEND\n","dateCreated":"2017-05-18T10:58:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2017-05-18T10:58:00+08:00","description":"关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。","headline":"XGBoost 在 Windows 10 和 Ubuntu 上的安装","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/05/18/installing-xgboost/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/05/18/installing-xgboost/","keywords":"Data Science, Machine Learning"}</script>
     <meta name="description" content="关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本">
 <meta name="keywords" content="Data Science,Machine Learning">
 <meta property="og:type" content="blog">
@@ -42,7 +42,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -109,7 +109,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -130,7 +130,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -663,7 +663,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n平常我们查看 GPU 信息，比如哪个进程在占用 GPU，占用了多少，GPU 利用率怎么样等信息，都是使用 nvidia-smi，但这些信息都是实时的，也就是说你无法查看一定时间段内的变化情况。\nnvtop（NVIDIA TOP）是一个为 NVIDIA GPU 打造的、类 htop 的任务监视器，和 nvidia-smi 功能类似，但有着比 nvidia-smi 更漂亮的外观，也弥补了 nvidia-smi 不能查看一定时间段内 GPU 变化情况的缺陷。\n先来看一张官方效果图：\n官方效果图\n我自己使用时的截图：\n实际使用截图\n那么你还满意的话，就接着看怎么安装吧。\n安装接下来的安装步骤针对的是 Ubuntu 18.04，16.04 估计也可以。\n但如果你是 19.04，那很简单，一条命令即可：\n1sudo apt install nvtop\n1. 安装显卡驱动这步我就不赘述了，我想大家应该都已经装好了。不会的话请参见 How to install the NVIDIA drivers on Ubuntu 18.04 Bionic Beaver Linux。\n2. 安装 CMake、ncurses 和 git1sudo apt install cmake libncurses5-dev libncursesw5-dev git\n3. 源码编译在开始之前，如果你使用 conda 并且已经处在一个 conda 虚拟环境中，那么请先 conda deactivate 退出环境。\n12345678910git clone https://github.com/Syllo/nvtop.gitmkdir -p nvtop/build &amp;&amp; cd nvtop/buildcmake ..# 如果报错：\"Could NOT find NVML (missing: NVML_INCLUDE_DIRS)\"# 那么请使用下面的命令# cmake .. -DNVML_RETRIEVE_HEADER_ONLINE=Truemakemake install # 需要 root 权限，如果报权限错误请加上 sudo\n至此就安装好了。\n使用通常来说，你只需要输入 nvtop 回车就行了，但是也有一些参数可以让你更改。\n1234567891011121314$ nvtop --helpnvtop version 1.0.0Available options:  -d --delay        : Select the refresh rate (1 == 0.1s)  -v --version      : Print the version and exit  -s --gpu-select   : Colon separated list of GPU IDs to monitor  -i --gpu-ignore   : Colon separated list of GPU IDs to ignore  -p --no-plot      : Disable bar plot  -r --reverse-abs  : Reverse abscissa: plot the recent data left and older on the right  -C --no-color     : No colors  -N --no-cache     : Always query the system for user names and command line information  -f --freedom-unit : Use fahrenheit  -E --encode-hide  : Set encode/decode auto hide time in seconds (default 30s, negative = always on screen)  -h --help         : Print help and exit\nEND","dateCreated":"2020-11-25T07:00:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-11-25T07:00:00+08:00","description":"\n平常我们查看 GPU 信息，比如哪个进程在占用 GPU，占用了多少，GPU 利用率怎么样等信息，都是使用 nvidia-smi，但这些信息都是实时的，也就是说你无法查看一定时间段内的变化情况。","headline":"Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/","keywords":"Ubuntu"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n平常我们查看 GPU 信息，比如哪个进程在占用 GPU，占用了多少，GPU 利用率怎么样等信息，都是使用 nvidia-smi，但这些信息都是实时的，也就是说你无法查看一定时间段内的变化情况。\nnvtop（NVIDIA TOP）是一个为 NVIDIA GPU 打造的、类 htop 的任务监视器，和 nvidia-smi 功能类似，但有着比 nvidia-smi 更漂亮的外观，也弥补了 nvidia-smi 不能查看一定时间段内 GPU 变化情况的缺陷。\n先来看一张官方效果图：\n官方效果图\n我自己使用时的截图：\n实际使用截图\n那么你还满意的话，就接着看怎么安装吧。\n安装接下来的安装步骤针对的是 Ubuntu 18.04，16.04 估计也可以。\n但如果你是 19.04，那很简单，一条命令即可：\n1sudo apt install nvtop\n1. 安装显卡驱动这步我就不赘述了，我想大家应该都已经装好了。不会的话请参见 How to install the NVIDIA drivers on Ubuntu 18.04 Bionic Beaver Linux。\n2. 安装 CMake、ncurses 和 git1sudo apt install cmake libncurses5-dev libncursesw5-dev git\n3. 源码编译在开始之前，如果你使用 conda 并且已经处在一个 conda 虚拟环境中，那么请先 conda deactivate 退出环境。\n12345678910git clone https://github.com/Syllo/nvtop.gitmkdir -p nvtop/build &amp;&amp; cd nvtop/buildcmake ..# 如果报错：\"Could NOT find NVML (missing: NVML_INCLUDE_DIRS)\"# 那么请使用下面的命令# cmake .. -DNVML_RETRIEVE_HEADER_ONLINE=Truemakemake install # 需要 root 权限，如果报权限错误请加上 sudo\n至此就安装好了。\n使用通常来说，你只需要输入 nvtop 回车就行了，但是也有一些参数可以让你更改。\n1234567891011121314$ nvtop --helpnvtop version 1.0.0Available options:  -d --delay        : Select the refresh rate (1 == 0.1s)  -v --version      : Print the version and exit  -s --gpu-select   : Colon separated list of GPU IDs to monitor  -i --gpu-ignore   : Colon separated list of GPU IDs to ignore  -p --no-plot      : Disable bar plot  -r --reverse-abs  : Reverse abscissa: plot the recent data left and older on the right  -C --no-color     : No colors  -N --no-cache     : Always query the system for user names and command line information  -f --freedom-unit : Use fahrenheit  -E --encode-hide  : Set encode/decode auto hide time in seconds (default 30s, negative = always on screen)  -h --help         : Print help and exit\nEND","dateCreated":"2020-11-25T07:00:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-11-25T07:00:00+08:00","description":"\n平常我们查看 GPU 信息，比如哪个进程在占用 GPU，占用了多少，GPU 利用率怎么样等信息，都是使用 nvidia-smi，但这些信息都是实时的，也就是说你无法查看一定时间段内的变化情况。","headline":"Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/","keywords":"Ubuntu"}</script>
     <meta name="description" content="平常我们查看 GPU 信息，比如哪个进程在占用 GPU，占用了多少，GPU 利用率怎么样等信息，都是使用 nvidia-smi，但这些信息都是实时的，也就是说你无法查看一定时间段内的变化情况。">
 <meta name="keywords" content="Ubuntu">
 <meta property="og:type" content="blog">
@@ -41,7 +41,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -108,7 +108,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -129,7 +129,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -651,7 +651,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

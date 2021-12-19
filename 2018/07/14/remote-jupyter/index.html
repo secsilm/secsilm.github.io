@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n\n注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。\n\n前言一般来说，我们都是在本地使用 Jupyter Lab，但有时候我们需要（想）在远程服务器上运行 Jupyter Lab，因为配置相对我们本地的 PC 要好点，这时候就需要在服务器上启动一个 lab，然后在本地浏览器访问。其实这方面在官方文档上已经有相关说明，而且网络上也有其他方法（端口转发），如 Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group。这两种方法不太相同，官网的实现效果是在本地浏览器输入服务器 IP + 端口，而后者的方法是采用了端口转发的方法，不管服务器的 IP 和端口是多少，最后只需要在本地浏览器输入 localhost:8888 就行，和在本地运行 Jupyter Lab 是一样的。\n本质上来说，我们需要实现的是这样一个东西：\n\n在远程服务器上启动 Jupyter Lab\n在本地浏览器上访问使用远程服务器的 Jupyter Lab，所有的计算都在远程服务器完成\n\n其实我刚开始用的是 Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group 的方法，即端口转发，但是我在成功了一次后就在也没成功了，后续连接一直报 ERROR_CONNECTION_RESET 错误，搜寻无果，无奈之下就又去官网看了看。\nERROR_CONNECTION_RESET\n官方文档是真的详细……什么加密安全都想好了，但是对我来说，我用不着这些，因为我就是在局域网内用，而且就我一个人用，也不公开，所以说流程就可以简化很多了。\n步骤你要做的很简单：\n\n【本地】登入远程服务器：ssh USER@IP -p PORT\n【远程服务器】在 ~/.jupyter/jupyter_notebook_config.json 中写入如下内容，尤其是 &quot;ip&quot;: &quot;*&quot;，这样让服务器监听所有 ip：\n 123456&#123;  \"NotebookApp\": &#123;    \"ip\": \"*\",    \"open_browser\": false  &#125;&#125;\n\n【远程服务器】启动 Jupyter Lab：jupyter lab --port LAB_PORT --no-browser\n\n【本地】打开浏览器（chrome），地址栏输入 IP:LAB_PORT 回车，done\n\n在第 2 步时，如果你想为自己的 Jupyter Lab 设置一个密码，那么你可以在终端内输入 jupyter notebook password，然后会提示你输入密码，此时输入你想要设置的密码就行，不必像其他教程那样用工具生成加密的密码，因为 Jupyter Notebook 会为你自动生成。你可以在 ~/.jupyter/jupyter_notebook_config.json 中看到类似如下的内容，其中 ***** 是一长串的加密过后的密码。\n1234567&#123;  \"NotebookApp\": &#123;    \"password\": \"sha1:*****\",    \"ip\": \"*\",    \"open_browser\": false  &#125;&#125;\n然后当你在本地浏览器输入 IP:LAB_PORT 回车时，会要求你输入密码：\njupyter lab password\n这种方法适合在本地 PC 和远程服务器在同一个局域网内的情况，对于不在局域网内的情况还不行，应该是需要在远程服务器上配置防火墙开放端口，但是由于我没有 root 权限，设置不了防火墙。\nReferences\nRunning a notebook server — Jupyter Notebook 5.5.0 documentation\nWorking with Jupyter notebook on a remote server | Oxford Protein Informatics Group\nSetting up a Jupyter Lab remote server | Kernel of Truth\n\nEND","dateCreated":"2018-07-14T10:35:34+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2018-07-14T10:35:34+08:00","description":"\n\n注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。","headline":"在本地使用远程 Jupyter Lab 服务器","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2018/07/14/remote-jupyter/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2018/07/14/remote-jupyter/","keywords":"Python"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。\n\n前言一般来说，我们都是在本地使用 Jupyter Lab，但有时候我们需要（想）在远程服务器上运行 Jupyter Lab，因为配置相对我们本地的 PC 要好点，这时候就需要在服务器上启动一个 lab，然后在本地浏览器访问。其实这方面在官方文档上已经有相关说明，而且网络上也有其他方法（端口转发），如 Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group。这两种方法不太相同，官网的实现效果是在本地浏览器输入服务器 IP + 端口，而后者的方法是采用了端口转发的方法，不管服务器的 IP 和端口是多少，最后只需要在本地浏览器输入 localhost:8888 就行，和在本地运行 Jupyter Lab 是一样的。\n本质上来说，我们需要实现的是这样一个东西：\n\n在远程服务器上启动 Jupyter Lab\n在本地浏览器上访问使用远程服务器的 Jupyter Lab，所有的计算都在远程服务器完成\n\n其实我刚开始用的是 Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group 的方法，即端口转发，但是我在成功了一次后就在也没成功了，后续连接一直报 ERROR_CONNECTION_RESET 错误，搜寻无果，无奈之下就又去官网看了看。\nERROR_CONNECTION_RESET\n官方文档是真的详细……什么加密安全都想好了，但是对我来说，我用不着这些，因为我就是在局域网内用，而且就我一个人用，也不公开，所以说流程就可以简化很多了。\n步骤你要做的很简单：\n\n【本地】登入远程服务器：ssh USER@IP -p PORT\n【远程服务器】在 ~/.jupyter/jupyter_notebook_config.json 中写入如下内容，尤其是 &quot;ip&quot;: &quot;*&quot;，这样让服务器监听所有 ip：\n 123456&#123;  \"NotebookApp\": &#123;    \"ip\": \"*\",    \"open_browser\": false  &#125;&#125;\n\n【远程服务器】启动 Jupyter Lab：jupyter lab --port LAB_PORT --no-browser\n\n【本地】打开浏览器（chrome），地址栏输入 IP:LAB_PORT 回车，done\n\n在第 2 步时，如果你想为自己的 Jupyter Lab 设置一个密码，那么你可以在终端内输入 jupyter notebook password，然后会提示你输入密码，此时输入你想要设置的密码就行，不必像其他教程那样用工具生成加密的密码，因为 Jupyter Notebook 会为你自动生成。你可以在 ~/.jupyter/jupyter_notebook_config.json 中看到类似如下的内容，其中 ***** 是一长串的加密过后的密码。\n1234567&#123;  \"NotebookApp\": &#123;    \"password\": \"sha1:*****\",    \"ip\": \"*\",    \"open_browser\": false  &#125;&#125;\n然后当你在本地浏览器输入 IP:LAB_PORT 回车时，会要求你输入密码：\njupyter lab password\n这种方法适合在本地 PC 和远程服务器在同一个局域网内的情况，对于不在局域网内的情况还不行，应该是需要在远程服务器上配置防火墙开放端口，但是由于我没有 root 权限，设置不了防火墙。\nReferences\nRunning a notebook server — Jupyter Notebook 5.5.0 documentation\nWorking with Jupyter notebook on a remote server | Oxford Protein Informatics Group\nSetting up a Jupyter Lab remote server | Kernel of Truth\n\nEND","dateCreated":"2018-07-14T10:35:34+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2018-07-14T10:35:34+08:00","description":"\n\n注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。","headline":"在本地使用远程 Jupyter Lab 服务器","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2018/07/14/remote-jupyter/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2018/07/14/remote-jupyter/","keywords":"Python"}</script>
     <meta name="description" content="注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。">
 <meta name="keywords" content="Python">
 <meta property="og:type" content="blog">
@@ -41,7 +41,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -108,7 +108,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -129,7 +129,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -666,7 +666,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

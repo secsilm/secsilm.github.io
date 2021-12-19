@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n今天在做《数理统计》关于线性回归的作业，本来用R已经做出来了，但是由于最近使用matlab很多，所以也想看看用matlab怎么做。\n\nmatlab中有很多函数可以做各种各样的回归，也有cftool工具箱可以可视化的做回归，很方便。这里选用fitlm做回归，由于多元回归和一元回归基本思想是差不多的，操作也只是参数个数的问题，所以这里用一元线性回归做例子，记录下来以备后用。\n数据选用R中的自带数据：cars数据集，是一个关于汽车速度和距离的数据，50*2的矩阵。\n  cars数据部分\n采用一元线性回归模型进行回归，公式这里就不说了，dist为因变量，speed为自变量。代码来了：\n1234567cleardata = xlsread(&apos;D:\\Program Files\\RStudio\\cars.xlsx&apos;);x = data(:, 1);y = data(:, 2);tb = table(x, y, &apos;VariableNames&apos;, &#123;&apos;speed&apos;, &apos;dist&apos;&#125;);model = fitlm(tb, &apos;dist~speed&apos;);plot(model);\nmodel里含有模型的各种参数，估计值，R2值，p值等等等等。\n123456789101112131415161718model = Linear regression model:    dist ~ 1 + speedEstimated Coefficients:                   Estimate      SE        tStat       pValue                     ________    _______    _______    __________    (Intercept)    -17.579      6.7584    -2.6011      0.012319    speed           3.9324     0.41551      9.464    1.4898e-12Number of observations: 50, Error degrees of freedom: 48Root Mean Squared Error: 15.4R-squared: 0.651,  Adjusted R-Squared 0.644F-statistic vs. constant model: 89.6, p-value = 1.49e-12\n可以看出输入形式和输出形式与R的输出及其相似。\n最后plot画出回归图。\n这里写图片描述\n好了，该吃饭去了。\n","dateCreated":"2015-12-21T04:56:15+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2015-12-21T04:56:15+08:00","description":"\n今天在做《数理统计》关于线性回归的作业，本来用R已经做出来了，但是由于最近使用matlab很多，所以也想看看用matlab怎么做。","headline":"使用 MATLAB 的 fitlm 函数进行线性回归","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2015/12/21/matlab-fitlm/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2015/12/21/matlab-fitlm/","keywords":"Machine Learning, MATLAB"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n今天在做《数理统计》关于线性回归的作业，本来用R已经做出来了，但是由于最近使用matlab很多，所以也想看看用matlab怎么做。\n\nmatlab中有很多函数可以做各种各样的回归，也有cftool工具箱可以可视化的做回归，很方便。这里选用fitlm做回归，由于多元回归和一元回归基本思想是差不多的，操作也只是参数个数的问题，所以这里用一元线性回归做例子，记录下来以备后用。\n数据选用R中的自带数据：cars数据集，是一个关于汽车速度和距离的数据，50*2的矩阵。\n  cars数据部分\n采用一元线性回归模型进行回归，公式这里就不说了，dist为因变量，speed为自变量。代码来了：\n1234567cleardata = xlsread(&apos;D:\\Program Files\\RStudio\\cars.xlsx&apos;);x = data(:, 1);y = data(:, 2);tb = table(x, y, &apos;VariableNames&apos;, &#123;&apos;speed&apos;, &apos;dist&apos;&#125;);model = fitlm(tb, &apos;dist~speed&apos;);plot(model);\nmodel里含有模型的各种参数，估计值，R2值，p值等等等等。\n123456789101112131415161718model = Linear regression model:    dist ~ 1 + speedEstimated Coefficients:                   Estimate      SE        tStat       pValue                     ________    _______    _______    __________    (Intercept)    -17.579      6.7584    -2.6011      0.012319    speed           3.9324     0.41551      9.464    1.4898e-12Number of observations: 50, Error degrees of freedom: 48Root Mean Squared Error: 15.4R-squared: 0.651,  Adjusted R-Squared 0.644F-statistic vs. constant model: 89.6, p-value = 1.49e-12\n可以看出输入形式和输出形式与R的输出及其相似。\n最后plot画出回归图。\n这里写图片描述\n好了，该吃饭去了。\n","dateCreated":"2015-12-21T04:56:15+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2015-12-21T04:56:15+08:00","description":"\n今天在做《数理统计》关于线性回归的作业，本来用R已经做出来了，但是由于最近使用matlab很多，所以也想看看用matlab怎么做。","headline":"使用 MATLAB 的 fitlm 函数进行线性回归","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2015/12/21/matlab-fitlm/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2015/12/21/matlab-fitlm/","keywords":"Machine Learning, MATLAB"}</script>
     <meta name="description" content="今天在做《数理统计》关于线性回归的作业，本来用R已经做出来了，但是由于最近使用matlab很多，所以也想看看用matlab怎么做。">
 <meta name="keywords" content="Machine Learning,MATLAB">
 <meta property="og:type" content="blog">
@@ -41,7 +41,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -108,7 +108,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -129,7 +129,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -641,7 +641,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

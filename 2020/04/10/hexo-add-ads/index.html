@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：\n\n那么什么是 adx.txt 呢？\n根据 Google 官方的描述：\n\n授权数字卖家 (ads.txt) 是一项 IAB Tech Lab 计划，有助于确保只通过您认定的授权卖家（如 AdSense）销售您的数字广告资源。创建自己的 ads.txt 文件后，您可以更好地掌控允许谁在您的网站上销售广告，并可防止向广告客户展示仿冒广告资源。我们强烈建议您使用 ads.txt 文件。它可以帮助买家识别仿冒广告资源，并可以帮助您获得更多广告客户支出，而这些支出原本可能会流向仿冒广告资源。\n\n这个文件内容形式如下：\n1google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n你不必太担心这个文件的内容，因为 Google 会帮你生成好，你下载即可。此外这个文件必须上传到网站根目录，就是说这个文件必须能够通过 your-website.com/ads.txt 访问到，其中 your-website.com 是你的主域名。\n那么对于基于 GitHub Page 的 hexo 博客，如何添加呢？\nhexo 的部署模式在此之前，我们先来看下 hexo 是如何部署博客的。\n假设 hexo 的根目录是 /hexo。\n我们在使用 hexo d -g 来部署博客时，会将 /hexo/source/ 下的 markdown 文件渲染成 html 页面，这个目录下可能会包括 _posts 目录（存放博文 md）、404.md、CNAME、about 目录（关于页面）。然后根据日期放入不同的目录中，最终这些文件就都在 /hexo/.deploy_git 目录中（假设你使用 git 部署）。\n然后 hexo 便会执行一系列 git 操作来将刚才生成的文件上传到你的 GitHub 仓库中。至此部署完成。\n添加 ads.txt那么了解了部署模式，我们很容易得出结论：直接将 ads.txt 放入 /hexo/soruce/ 目录下。\n对，方法就是这么简单，但是如果第一次搞很可能不清楚怎么弄，甚至误入歧途，例如，我在搜索解决方案的时候，看到一篇博客是这么写的：\n\n竟然说直接在 repo 里手动上传，这一听都不太靠谱。\n还有的说放在根目录的 public 目录下面。。。殊不知 public 目录是不会上传的，这点已经在 hexo 文档上写明了，而且从 .gitignore 中也可以看出来：\n\nThe public/ folder is not (and should not be) uploaded by default, make sure the .gitignore file contains public/ line.\n\nReference\nads.txt 指南 - AdSense帮助\nGitHub Pages | Hexo\n\nEND","dateCreated":"2020-04-10T09:59:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-04-10T09:59:00+08:00","description":"\n申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：","headline":"Hexo 博客添加 Google Adsense ads.txt","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/04/10/hexo-add-ads/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2020/04/10/hexo-add-ads/","keywords":"hexo"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：\n\n那么什么是 adx.txt 呢？\n根据 Google 官方的描述：\n\n授权数字卖家 (ads.txt) 是一项 IAB Tech Lab 计划，有助于确保只通过您认定的授权卖家（如 AdSense）销售您的数字广告资源。创建自己的 ads.txt 文件后，您可以更好地掌控允许谁在您的网站上销售广告，并可防止向广告客户展示仿冒广告资源。我们强烈建议您使用 ads.txt 文件。它可以帮助买家识别仿冒广告资源，并可以帮助您获得更多广告客户支出，而这些支出原本可能会流向仿冒广告资源。\n\n这个文件内容形式如下：\n1google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n你不必太担心这个文件的内容，因为 Google 会帮你生成好，你下载即可。此外这个文件必须上传到网站根目录，就是说这个文件必须能够通过 your-website.com/ads.txt 访问到，其中 your-website.com 是你的主域名。\n那么对于基于 GitHub Page 的 hexo 博客，如何添加呢？\nhexo 的部署模式在此之前，我们先来看下 hexo 是如何部署博客的。\n假设 hexo 的根目录是 /hexo。\n我们在使用 hexo d -g 来部署博客时，会将 /hexo/source/ 下的 markdown 文件渲染成 html 页面，这个目录下可能会包括 _posts 目录（存放博文 md）、404.md、CNAME、about 目录（关于页面）。然后根据日期放入不同的目录中，最终这些文件就都在 /hexo/.deploy_git 目录中（假设你使用 git 部署）。\n然后 hexo 便会执行一系列 git 操作来将刚才生成的文件上传到你的 GitHub 仓库中。至此部署完成。\n添加 ads.txt那么了解了部署模式，我们很容易得出结论：直接将 ads.txt 放入 /hexo/soruce/ 目录下。\n对，方法就是这么简单，但是如果第一次搞很可能不清楚怎么弄，甚至误入歧途，例如，我在搜索解决方案的时候，看到一篇博客是这么写的：\n\n竟然说直接在 repo 里手动上传，这一听都不太靠谱。\n还有的说放在根目录的 public 目录下面。。。殊不知 public 目录是不会上传的，这点已经在 hexo 文档上写明了，而且从 .gitignore 中也可以看出来：\n\nThe public/ folder is not (and should not be) uploaded by default, make sure the .gitignore file contains public/ line.\n\nReference\nads.txt 指南 - AdSense帮助\nGitHub Pages | Hexo\n\nEND","dateCreated":"2020-04-10T09:59:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-04-10T09:59:00+08:00","description":"\n申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：","headline":"Hexo 博客添加 Google Adsense ads.txt","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/04/10/hexo-add-ads/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/04/10/hexo-add-ads/","keywords":"hexo"}</script>
     <meta name="description" content="申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：">
 <meta name="keywords" content="hexo">
 <meta property="og:type" content="blog">
@@ -41,7 +41,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -108,7 +108,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -129,7 +129,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -661,7 +661,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

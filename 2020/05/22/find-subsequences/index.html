@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。\n例如：\n1234target = '违禁词'source = 'asdf违asdf禁aa词as违1禁2词3'# 要求的返回是wanted = ['违禁词', '违禁词'], [[4, 9, 12], [15, 17, 19]]\n刚开始我觉得这是一个寻找最长公共子序列的问题，但是尝试了一下后发现，如果 source 中有多个子序列形式的 target，最长公共子序列算法只能找到其中一个，而且一般是不能返回索引的。\n于是我自己重新写了一个程序来实现这个需求。程序应该不是最优的，欢迎提出改进。\n大致流程：\n\n将 target 扩展到 ≤ len(source) 长度。\n从 target 的第一个字符 i 开始遍历。\n如果 i 在 source 中，那么记录其索引，将其加入到当前已找到的字符串 current_found 中。计算其真实索引（基于原 source），加入到 current_indices。\n将该字符及前面的字符从 source 中删除，成为新的 source。\n如果当前已找到的字符串 current_found 和 target 相等，则就找到了一个 base_target。将相关变量置为初始状态。\n如果 source 为空或者长度小于 base_target 长度或者已不包含 base_target 中任何字符，结束。\n\n代码：\n12345678910111213141516171819202122def find_subsequences(source, target):    \"\"\"在 source 中找到所有子序列形式的 target，并返回索引。\"\"\"    base_target = target    target = base_target * (len(source) // len(base_target))    source_len = len(source)    all_found = []    current_found = ''    all_indices, current_indices = [], []    for i in target:        if i in source:            current_found += i            index = source.index(i)            current_indices.append(source_len - (len(source) - index))            source = source[(index+1):]        if current_found == base_target:            all_indices.append(current_indices)            all_found.append(base_target)            current_found = ''            current_indices = []        if not source or len(source) &lt; len(base_target) or not set(source).intersection(set(base_target)):            break    return all_found, all_indices\n还用上面的例子进行测试：\n12&gt;&gt;&gt; find_subsequences(source, target)(['违禁词', '违禁词'], [[4, 9, 12], [15, 17, 19]])\n此外，关于计算真实索引：\ncompute real index\nEND","dateCreated":"2020-05-22T11:58:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-05-22T11:58:00+08:00","description":"\n最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。","headline":"寻找所有公共子序列并返回索引","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/05/22/find-subsequences/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2020/05/22/find-subsequences/","keywords":"Python, NLP"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。\n例如：\n1234target = '违禁词'source = 'asdf违asdf禁aa词as违1禁2词3'# 要求的返回是wanted = ['违禁词', '违禁词'], [[4, 9, 12], [15, 17, 19]]\n刚开始我觉得这是一个寻找最长公共子序列的问题，但是尝试了一下后发现，如果 source 中有多个子序列形式的 target，最长公共子序列算法只能找到其中一个，而且一般是不能返回索引的。\n于是我自己重新写了一个程序来实现这个需求。程序应该不是最优的，欢迎提出改进。\n大致流程：\n\n将 target 扩展到 ≤ len(source) 长度。\n从 target 的第一个字符 i 开始遍历。\n如果 i 在 source 中，那么记录其索引，将其加入到当前已找到的字符串 current_found 中。计算其真实索引（基于原 source），加入到 current_indices。\n将该字符及前面的字符从 source 中删除，成为新的 source。\n如果当前已找到的字符串 current_found 和 target 相等，则就找到了一个 base_target。将相关变量置为初始状态。\n如果 source 为空或者长度小于 base_target 长度或者已不包含 base_target 中任何字符，结束。\n\n代码：\n12345678910111213141516171819202122def find_subsequences(source, target):    \"\"\"在 source 中找到所有子序列形式的 target，并返回索引。\"\"\"    base_target = target    target = base_target * (len(source) // len(base_target))    source_len = len(source)    all_found = []    current_found = ''    all_indices, current_indices = [], []    for i in target:        if i in source:            current_found += i            index = source.index(i)            current_indices.append(source_len - (len(source) - index))            source = source[(index+1):]        if current_found == base_target:            all_indices.append(current_indices)            all_found.append(base_target)            current_found = ''            current_indices = []        if not source or len(source) &lt; len(base_target) or not set(source).intersection(set(base_target)):            break    return all_found, all_indices\n还用上面的例子进行测试：\n12&gt;&gt;&gt; find_subsequences(source, target)(['违禁词', '违禁词'], [[4, 9, 12], [15, 17, 19]])\n此外，关于计算真实索引：\ncompute real index\nEND","dateCreated":"2020-05-22T11:58:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2020-05-22T11:58:00+08:00","description":"\n最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。","headline":"寻找所有公共子序列并返回索引","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/05/22/find-subsequences/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/05/22/find-subsequences/","keywords":"Python, NLP"}</script>
     <meta name="description" content="最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。">
 <meta name="keywords" content="Python,NLP">
 <meta property="og:type" content="blog">
@@ -40,7 +40,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -107,7 +107,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -128,7 +128,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -653,7 +653,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

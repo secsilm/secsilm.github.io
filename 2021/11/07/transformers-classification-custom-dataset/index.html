@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\n最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。\n\n背景之前只闻 transformers 超厉害超好用，但是没有实际用过。之前涉及到 bert 类模型都是直接手写或是在别人的基础上修改。但这次由于某些原因，需要快速训练一个简单的文本分类模型。其实这种场景应该挺多的，例如简单的 POC 或是临时测试某些模型。\n我的需求很简单：用我们自己的数据集，快速训练一个文本分类模型，验证想法。\n我觉得如此简单的一个需求，应该有模板代码。但实际去搜的时候发现，官方文档什么时候变得这么多这么庞大了？还多了个 Trainer API？瞬间让我想起了 Pytorch Lightning 那个坑人的同名 API。但可能是时间原因，找了一圈没找到适用于自定义数据集的代码，都是用的官方、预定义的数据集。\n所以弄完后，我决定简单写一个文章，来说下这原本应该极其容易解决的事情。\n数据假设我们数据的格式如下：\n1230 第一个句子1 第二个句子0 第三个句子\n即每一行都是 label sentence 的格式，中间空格分隔。并且我们已将数据集分成了 train.txt 和 val.txt 。\n代码加载数据集首先使用 datasets 加载数据集：\n12from datasets import load_datasetdataset = load_dataset('text', data_files=&#123;'train': 'data/train_20w.txt', 'test': 'data/val_2w.txt'&#125;)\n加载后的 dataset 是一个 DatasetDict 对象：\n12345678910DatasetDict(&#123;    train: Dataset(&#123;        features: ['text'],        num_rows: 3    &#125;)    test: Dataset(&#123;        features: ['text'],        num_rows: 3    &#125;)&#125;)\n类似 tf.data ，此后我们需要对其进行 map ，对每一个句子进行 tokenize、padding、batch、shuffle：\n1234567891011121314def tokenize_function(examples):    labels = []    texts = []    for example in examples['text']:        split = example.split(' ', maxsplit=1)        labels.append(int(split[0]))        texts.append(split[1])    tokenized = tokenizer(texts, padding='max_length', truncation=True, max_length=32)    tokenized['labels'] = labels    return tokenizedtokenized_datasets = dataset.map(tokenize_function, batched=True)train_dataset = tokenized_datasets[\"train\"].shuffle(seed=42)eval_dataset = tokenized_datasets[\"test\"].shuffle(seed=42)\n根据数据集格式不同，我们可以在 tokenize_function 中随意自定义处理过程，以得到 text 和 labels。注意 batch_size 和 max_length 也是在此处指定。处理完我们便得到了可以输入给模型的训练集和测试集。\n训练123456789model = AutoModelForSequenceClassification.from_pretrained(\"bert-base-cased\", num_labels=2, cache_dir='data/pretrained')training_args = TrainingArguments('ckpts', per_device_train_batch_size=256, num_train_epochs=5)trainer = Trainer(    model=model,    args=training_args,    train_dataset=train_dataset,    eval_dataset=eval_dataset)trainer.train()\n你可以根据情况修改训练 batchsize per_device_train_batch_size 。\n完整代码完整代码见 GitHub。\nEND","dateCreated":"2021-11-07T10:37:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2021-11-07T10:37:00+08:00","description":"\n最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。","headline":"使用 Transformers 在你自己的数据集上训练文本分类模型","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/","keywords":"NLP, Sequence Classification"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。\n\n背景之前只闻 transformers 超厉害超好用，但是没有实际用过。之前涉及到 bert 类模型都是直接手写或是在别人的基础上修改。但这次由于某些原因，需要快速训练一个简单的文本分类模型。其实这种场景应该挺多的，例如简单的 POC 或是临时测试某些模型。\n我的需求很简单：用我们自己的数据集，快速训练一个文本分类模型，验证想法。\n我觉得如此简单的一个需求，应该有模板代码。但实际去搜的时候发现，官方文档什么时候变得这么多这么庞大了？还多了个 Trainer API？瞬间让我想起了 Pytorch Lightning 那个坑人的同名 API。但可能是时间原因，找了一圈没找到适用于自定义数据集的代码，都是用的官方、预定义的数据集。\n所以弄完后，我决定简单写一个文章，来说下这原本应该极其容易解决的事情。\n数据假设我们数据的格式如下：\n1230 第一个句子1 第二个句子0 第三个句子\n即每一行都是 label sentence 的格式，中间空格分隔。并且我们已将数据集分成了 train.txt 和 val.txt 。\n代码加载数据集首先使用 datasets 加载数据集：\n12from datasets import load_datasetdataset = load_dataset('text', data_files=&#123;'train': 'data/train_20w.txt', 'test': 'data/val_2w.txt'&#125;)\n加载后的 dataset 是一个 DatasetDict 对象：\n12345678910DatasetDict(&#123;    train: Dataset(&#123;        features: ['text'],        num_rows: 3    &#125;)    test: Dataset(&#123;        features: ['text'],        num_rows: 3    &#125;)&#125;)\n类似 tf.data ，此后我们需要对其进行 map ，对每一个句子进行 tokenize、padding、batch、shuffle：\n1234567891011121314def tokenize_function(examples):    labels = []    texts = []    for example in examples['text']:        split = example.split(' ', maxsplit=1)        labels.append(int(split[0]))        texts.append(split[1])    tokenized = tokenizer(texts, padding='max_length', truncation=True, max_length=32)    tokenized['labels'] = labels    return tokenizedtokenized_datasets = dataset.map(tokenize_function, batched=True)train_dataset = tokenized_datasets[\"train\"].shuffle(seed=42)eval_dataset = tokenized_datasets[\"test\"].shuffle(seed=42)\n根据数据集格式不同，我们可以在 tokenize_function 中随意自定义处理过程，以得到 text 和 labels。注意 batch_size 和 max_length 也是在此处指定。处理完我们便得到了可以输入给模型的训练集和测试集。\n训练123456789model = AutoModelForSequenceClassification.from_pretrained(\"bert-base-cased\", num_labels=2, cache_dir='data/pretrained')training_args = TrainingArguments('ckpts', per_device_train_batch_size=256, num_train_epochs=5)trainer = Trainer(    model=model,    args=training_args,    train_dataset=train_dataset,    eval_dataset=eval_dataset)trainer.train()\n你可以根据情况修改训练 batchsize per_device_train_batch_size 。\n完整代码完整代码见 GitHub。\nEND","dateCreated":"2021-11-07T10:37:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2021-11-07T10:37:00+08:00","description":"\n最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。","headline":"使用 Transformers 在你自己的数据集上训练文本分类模型","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/","keywords":"NLP, Sequence Classification"}</script>
     <meta name="description" content="最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。">
 <meta name="keywords" content="NLP,Sequence Classification">
 <meta property="og:type" content="blog">
@@ -38,7 +38,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -105,7 +105,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -126,7 +126,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -650,7 +650,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

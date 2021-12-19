@@ -12,14 +12,14 @@
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
     
     
-        <link rel="icon" href="https://alanlee.fun/assets/images/Bastion_cute.png">
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
     
     
         
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png"},"articleBody":"\nPhoto by Martha Dominguez de Gouveia on Unsplash\n问题最近重装系统后，重新安装了 node 和 hexo。写完文章后，在本地 hexo s 后预览博客，显示正常。随即执行 hexo d -g 部署，结果打开博客后显示空白或 GitHub Page 的 404 页面，console 无任何报错。\n尝试起初以为 node 或者 hexo 没装好，或者一些依赖没装，就重新安装了一遍 node 和 hexo，结果发现没用。\n然后搜索到 V2EX 的一篇 帖子，该帖子 8 楼表示遇到过 index.html 为空的情况，是 git 子模块问题导致 html 文件没有被提交上去。于是我检查了 git 设置，没有问题。随后去 GitHub 上检查那些 html 文件是否正常。结果发现：\n所有 html 文件都是空文件。\nempty_index\n所以我的问题就是生成 html 的问题，而不是 html 文件没有被提交上的问题，不过还是感谢那位老哥。\n于是我又怀疑是某些插件没装的问题，执行了一次 npm i 后发现问题依旧。最后再次转向 Google，这不过这次目标更为明确：hexo generate empty file。于是找到了一些 hexo GitHub repo 的 issue 和 PR，其中 关键的一个信息如下：\n关键信息\n解决So，我检查了我的 node 和 hexo 版本，前者是 14.x，后者是 4.2.0 。问题明确了，是 node 版本太高了，hexo 还不支持。那么解决方案也就很简单了：\n降级 node 到 13 或者 12 。或者升级 hexo 到 4.2.1 及以上。\n这里我以降级 node 为例。如何降级呢？很简单，直接在控制面板卸载掉当前的高版本，然后 官网 重新下载一个新的旧版本（比如 13）msi 安装即可。\n最后重新执行 hexo d -g 即可，此时可以看到 GitHub repo 里的 html 文件已经不再是空文件，博客也已能够正常显示。\nhtml已正常\nThe latest is evil.\nReference\nPrevious Releases | Node.js\nhexo generates empty files · Issue #4267 · hexojs/hexo\nhexo generates empty files · Issue #4268 · hexojs/hexo\nchore: incompatible with Node 14 by curbengh · Pull Request #4285 · hexojs/hexo\n\nEND","dateCreated":"2021-02-28T10:29:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2021-02-28T10:29:00+08:00","description":"\nPhoto by Martha Dominguez de Gouveia on Unsplash","headline":"hexo 生成的 html 文件为空的问题","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/02/28/hexo-empty-html/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"Bastion_cute.png","logo":{"@type":"ImageObject","url":"Bastion_cute.png"}},"url":"https://alanlee.fun/2021/02/28/hexo-empty-html/","keywords":"hexo"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\nPhoto by Martha Dominguez de Gouveia on Unsplash\n问题最近重装系统后，重新安装了 node 和 hexo。写完文章后，在本地 hexo s 后预览博客，显示正常。随即执行 hexo d -g 部署，结果打开博客后显示空白或 GitHub Page 的 404 页面，console 无任何报错。\n尝试起初以为 node 或者 hexo 没装好，或者一些依赖没装，就重新安装了一遍 node 和 hexo，结果发现没用。\n然后搜索到 V2EX 的一篇 帖子，该帖子 8 楼表示遇到过 index.html 为空的情况，是 git 子模块问题导致 html 文件没有被提交上去。于是我检查了 git 设置，没有问题。随后去 GitHub 上检查那些 html 文件是否正常。结果发现：\n所有 html 文件都是空文件。\nempty_index\n所以我的问题就是生成 html 的问题，而不是 html 文件没有被提交上的问题，不过还是感谢那位老哥。\n于是我又怀疑是某些插件没装的问题，执行了一次 npm i 后发现问题依旧。最后再次转向 Google，这不过这次目标更为明确：hexo generate empty file。于是找到了一些 hexo GitHub repo 的 issue 和 PR，其中 关键的一个信息如下：\n关键信息\n解决So，我检查了我的 node 和 hexo 版本，前者是 14.x，后者是 4.2.0 。问题明确了，是 node 版本太高了，hexo 还不支持。那么解决方案也就很简单了：\n降级 node 到 13 或者 12 。或者升级 hexo 到 4.2.1 及以上。\n这里我以降级 node 为例。如何降级呢？很简单，直接在控制面板卸载掉当前的高版本，然后 官网 重新下载一个新的旧版本（比如 13）msi 安装即可。\n最后重新执行 hexo d -g 即可，此时可以看到 GitHub repo 里的 html 文件已经不再是空文件，博客也已能够正常显示。\nhtml已正常\nThe latest is evil.\nReference\nPrevious Releases | Node.js\nhexo generates empty files · Issue #4267 · hexojs/hexo\nhexo generates empty files · Issue #4268 · hexojs/hexo\nchore: incompatible with Node 14 by curbengh · Pull Request #4285 · hexojs/hexo\n\nEND","dateCreated":"2021-02-28T10:29:00+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2021-02-28T10:29:00+08:00","description":"\nPhoto by Martha Dominguez de Gouveia on Unsplash","headline":"hexo 生成的 html 文件为空的问题","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/02/28/hexo-empty-html/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/02/28/hexo-empty-html/","keywords":"hexo"}</script>
     <meta name="description" content="Photo by Martha Dominguez de Gouveia on Unsplash">
 <meta name="keywords" content="hexo">
 <meta property="og:type" content="blog">
@@ -42,7 +42,7 @@
         
     
     
-        <meta property="og:image" content="https://alanlee.fun/assets/images/Bastion_cute.png"/>
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
     
@@ -109,7 +109,7 @@
             >
         
         
-            <img class="header-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
         </a>
     
@@ -130,7 +130,7 @@
                     href="/#about"
                     aria-label="阅读有关作者的更多信息"
                 >
-                    <img class="sidebar-profile-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
                 </a>
                 <h4 class="sidebar-profile-name">Alan Lee</h4>
                 
@@ -656,7 +656,7 @@
             <i class="fa fa-times"></i>
         </div>
         
-            <img id="about-card-picture" src="/assets/images/Bastion_cute.png" alt="作者的图片"/>
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
         
             <h4 id="about-card-name">Alan Lee</h4>
         

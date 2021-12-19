@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://alanlee.fun/2019/10/16/bert-tokenizer/</loc>
+    
+    <lastmod>2021-12-19T07:29:11.902Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/05/08/bert-model/</loc>
+    
+    <lastmod>2021-12-19T07:26:44.747Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2017/08/20/understanding-tensorboard/</loc>
     
     <lastmod>2021-12-19T05:44:58.848Z</lastmod>
@@ -418,20 +432,6 @@
     <loc>https://alanlee.fun/2019/10/28/bisect-speed/</loc>
     
     <lastmod>2021-12-19T02:38:33.715Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2019/10/16/bert-tokenizer/</loc>
-    
-    <lastmod>2021-12-19T02:38:33.714Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2020/05/08/bert-model/</loc>
-    
-    <lastmod>2021-12-19T02:38:33.713Z</lastmod>
     
   </url>
   

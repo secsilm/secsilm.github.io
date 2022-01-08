@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/</loc>
+    
+    <lastmod>2022-01-08T02:44:31.936Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2022/01/08/introducing-upsetplot/</loc>
     
-    <lastmod>2022-01-08T02:15:00.257Z</lastmod>
+    <lastmod>2022-01-08T02:17:57.764Z</lastmod>
     
   </url>
   
@@ -26,13 +33,6 @@
     <loc>https://alanlee.fun/2017/08/20/understanding-tensorboard/</loc>
     
     <lastmod>2021-12-19T05:44:58.848Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/</loc>
-    
-    <lastmod>2021-12-19T04:30:24.664Z</lastmod>
     
   </url>
   

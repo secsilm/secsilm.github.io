@@ -4,7 +4,7 @@
   <url>
     <loc>https://alanlee.fun/2022/01/08/introducing-upsetplot/</loc>
     
-    <lastmod>2022-01-09T02:41:23.400Z</lastmod>
+    <lastmod>2022-01-10T13:59:54.115Z</lastmod>
     
   </url>
   
@@ -170,14 +170,14 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2016/10/22/tensorflow-linear-regression/</loc>
+    <loc>https://alanlee.fun/2016/10/29/tensorflow-hyperparams/</loc>
     
     <lastmod>2021-12-19T02:38:33.744Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2016/10/29/tensorflow-hyperparams/</loc>
+    <loc>https://alanlee.fun/2016/10/22/tensorflow-linear-regression/</loc>
     
     <lastmod>2021-12-19T02:38:33.744Z</lastmod>
     
@@ -226,14 +226,14 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2016/10/26/sklearn-logistics-regression-parameters/</loc>
+    <loc>https://alanlee.fun/2020/11/16/self-attentive-parser-paper/</loc>
     
     <lastmod>2021-12-19T02:38:33.738Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2020/11/16/self-attentive-parser-paper/</loc>
+    <loc>https://alanlee.fun/2016/10/26/sklearn-logistics-regression-parameters/</loc>
     
     <lastmod>2021-12-19T02:38:33.738Z</lastmod>
     
@@ -303,14 +303,14 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2018/11/17/introducing-plotly/</loc>
+    <loc>https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/</loc>
     
     <lastmod>2021-12-19T02:38:33.731Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/</loc>
+    <loc>https://alanlee.fun/2018/11/17/introducing-plotly/</loc>
     
     <lastmod>2021-12-19T02:38:33.731Z</lastmod>
     
@@ -366,13 +366,6 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2017/12/30/google-sitemap/</loc>
-    
-    <lastmod>2021-12-19T02:38:33.725Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://alanlee.fun/2021/05/01/ghost-ssl-cert/</loc>
     
     <lastmod>2021-12-19T02:38:33.725Z</lastmod>
@@ -380,14 +373,21 @@
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2020/12/17/five-years/</loc>
+    <loc>https://alanlee.fun/2017/12/30/google-sitemap/</loc>
+    
+    <lastmod>2021-12-19T02:38:33.725Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/05/22/find-subsequences/</loc>
     
     <lastmod>2021-12-19T02:38:33.724Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://alanlee.fun/2020/05/22/find-subsequences/</loc>
+    <loc>https://alanlee.fun/2020/12/17/five-years/</loc>
     
     <lastmod>2021-12-19T02:38:33.724Z</lastmod>
     

@@ -160,7 +160,8 @@ pre > code {
   cursor: text;
   overflow-x: auto;
   line-height: 1.7em;
-  font-size: 1.4rem; }
+  font-size: 1.4rem;
+  background-color: #f7f8f8; }
 
 code {
   font-size: 95%;
@@ -1476,7 +1477,7 @@ figure.highlight,
   .codeblock .gutter,
   .codeblock .code,
   .codeblock .tag {
-    background-color: inherit;
+    background-color: #f7f8f8;
     font-family: Menlo, Consolas, monospace;
     border: none;
     padding: 0;
@@ -2663,11 +2664,7 @@ a.tag--small,
     transform: translateY(-50%); }
 
 pre > code {
-  background: #f7f8f8;
   color: #333; }
-
-code {
-  background-color: #f7f8f8; }
 
 .codeblock--tabbed figcaption .tab.active {
   background: #349ef3;
@@ -2675,15 +2672,12 @@ code {
 
 figure.highlight,
 .codeblock {
-  background: #f7f8f8;
   color: #333; }
   figure.highlight figcaption,
   .codeblock figcaption {
-    background: #f7f8f8;
     color: #999999; }
   figure.highlight .gutter,
   .codeblock .gutter {
-    background: #f7f8f8;
     border-right-color: #e6e6e6; }
     figure.highlight .gutter .line,
     .codeblock .gutter .line {

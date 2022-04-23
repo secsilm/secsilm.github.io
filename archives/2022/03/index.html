@@ -336,8 +336,7 @@
             </div>
             
                 <div class="postShorten-excerpt">
-                    <!-- toc -->
-<p>zip 的默认行为及实际中带来的隐患。</p>
+                    <p>zip 的默认行为及实际中带来的隐患。<br>
                     
                         <a
                             href="/2022/03/29/python-zip-check-length/"
@@ -418,11 +417,26 @@
 <div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
         <!--SCRIPTS-->
 <script src="/assets/js/script-r5mnooectgbywbl41rzytdt5peuwb3jm7pgsesqoz02bq5pnolsyvgbstnwj.min.js"></script>
-<!--SCRIPTS END--><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+<!--SCRIPTS END-->
 
 
 
 
 
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>

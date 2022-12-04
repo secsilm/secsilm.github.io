@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://alanlee.fun/2022/12/04/install-basic-deep-learning-env/</loc>
+    
+    <lastmod>2022-12-04T04:25:59.813Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/09/19/install-ghost/</loc>
+    
+    <lastmod>2022-12-04T04:20:54.419Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2022/08/22/about-c4-dataset/</loc>
     
     <lastmod>2022-09-01T14:32:06.674Z</lastmod>
@@ -390,13 +404,6 @@
     <loc>https://alanlee.fun/2016/12/01/installing-tensorflow/</loc>
     
     <lastmod>2021-12-19T02:38:33.729Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2019/09/19/install-ghost/</loc>
-    
-    <lastmod>2021-12-19T02:38:33.728Z</lastmod>
     
   </url>
   

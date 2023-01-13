@@ -318,6 +318,61 @@
                     
                         <a
                             class="link-unstyled"
+                            href="/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                            aria-label=": 为什么我的 client CPU 和 server GPU 都很闲？"
+                        >
+                            为什么我的 client CPU 和 server GPU 都很闲？
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2023-01-13T17:32:00+08:00">
+	
+		    1月 13, 2023
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>本文分析了一个跑数据批处理任务时，client 和 server GPU 利用率都不满的问题，并对其进行了尝试和解决。最后发现是由于配置文件中的误配置引起的，改正后问题得到解决。[text-davinci-003]</p>
+                    
+                        <a
+                            href="/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 为什么我的 client CPU 和 server GPU 都很闲？"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+            <a
+                href="/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                aria-label=": 为什么我的 client CPU 和 server GPU 都很闲？"
+            >
+                <div class="postShorten-thumbnailimg">
+                    <img alt="" src="https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png"/>
+                </div>
+            </a>
+            
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
                             href="/2022/02/04/embed-altair-plot/"
                             aria-label=": 嵌入 Altair 绘图到 Hexo 博客中"
                         >
@@ -717,62 +772,6 @@
         
     </article>
     
-    
-    <article class="postShorten postShorten--thumbnailimg-right">
-        <div class="postShorten-wrap">
-            
-            <div class="postShorten-header">
-                <h1 class="postShorten-title">
-                    
-                        <a
-                            class="link-unstyled"
-                            href="/2020/05/08/bert-model/"
-                            aria-label=": BERT 是如何构建模型的"
-                        >
-                            BERT 是如何构建模型的
-                        </a>
-                    
-                </h1>
-                <div class="postShorten-meta">
-    <time datetime="2020-05-08T20:39:00+08:00">
-	
-		    5月 08, 2020
-    	
-    </time>
-    
-</div>
-
-            </div>
-            
-                <div class="postShorten-excerpt">
-                    <!-- toc -->
-<p><em>Photo by Damian Patkowski on Unsplash</em><br>
-                    
-                        <a
-                            href="/2020/05/08/bert-model/"
-                            class="postShorten-excerpt_link link"
-                            aria-label=": BERT 是如何构建模型的"
-                        >
-                            阅读全文
-                        </a>
-                        
-                    
-                </div>
-            
-        </div>
-        
-            <a
-                href="/2020/05/08/bert-model/"
-                aria-label=": BERT 是如何构建模型的"
-            >
-                <div class="postShorten-thumbnailimg">
-                    <img alt="" src="https://i.loli.net/2020/05/08/3FURPrcgIfEiC1Z.jpg"/>
-                </div>
-            </a>
-            
-        
-    </article>
-    
     <div class="pagination-bar">
     <ul class="pagination">
         
@@ -797,7 +796,7 @@
 
                 <footer id="footer" class="main-content-wrap">
     <span class="copyrights">
-        Copyrights &copy; 2022 Alan Lee. All Rights Reserved.
+        Copyrights &copy; 2023 Alan Lee. All Rights Reserved.
     </span>
 </footer>
 
@@ -847,11 +846,26 @@
 <div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
         <!--SCRIPTS-->
 <script src="/assets/js/script-r5mnooectgbywbl41rzytdt5peuwb3jm7pgsesqoz02bq5pnolsyvgbstnwj.min.js"></script>
-<!--SCRIPTS END--><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+<!--SCRIPTS END-->
 
 
 
 
 
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>

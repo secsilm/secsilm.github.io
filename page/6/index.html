@@ -317,6 +317,53 @@
                     
                         <a
                             class="link-unstyled"
+                            href="/2017/12/29/understanding-lstms/"
+                            aria-label=": 理解 LSTM 网络"
+                        >
+                            理解 LSTM 网络
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-12-29T18:58:00+08:00">
+	
+		    12月 29, 2017
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>译者注：<br>
+                    
+                        <a
+                            href="/2017/12/29/understanding-lstms/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 理解 LSTM 网络"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
                             href="/2017/12/25/export-csdn-blogs-to-md/"
                             aria-label=": 批量导出 CSDN 博客为 Markdown 文件"
                         >
@@ -722,52 +769,6 @@
         
     </article>
     
-    
-    <article class="postShorten postShorten--thumbnailimg-right">
-        <div class="postShorten-wrap">
-            
-            <div class="postShorten-header">
-                <h1 class="postShorten-title">
-                    
-                        <a
-                            class="link-unstyled"
-                            href="/2017/02/26/tensorflow-cudnn-version/"
-                            aria-label=": Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
-                        >
-                            Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法
-                        </a>
-                    
-                </h1>
-                <div class="postShorten-meta">
-    <time datetime="2017-02-26T11:45:44+08:00">
-	
-		    2月 26, 2017
-    	
-    </time>
-    
-</div>
-
-            </div>
-            
-                <div class="postShorten-excerpt">
-                    <p>由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 <a href="https://www.tensorflow.org/tutorials/deep_cnn" target="_blank" rel="noopener">TensorFlow 官方的 CNN 例子</a>的时候，总是报 <code>ImportError</code> 错误，找不到 <code>cifar10</code> 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：<a href="https://github.com/tensorflow/models" target="_blank" rel="noopener">models</a> 。</p>
-<p>但是呢，在我 <code>clone</code> 了 <code>models</code> 到本地后，按照 TensorFlow 官方的例子运行 <code>python cifar10_train.py</code> 的时候，问题又出现了……</p>
-                    
-                        <a
-                            href="/2017/02/26/tensorflow-cudnn-version/"
-                            class="postShorten-excerpt_link link"
-                            aria-label=": Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
-                        >
-                            阅读全文
-                        </a>
-                        
-                    
-                </div>
-            
-        </div>
-        
-    </article>
-    
     <div class="pagination-bar">
     <ul class="pagination">
         
@@ -803,7 +804,7 @@
 
                 <footer id="footer" class="main-content-wrap">
     <span class="copyrights">
-        Copyrights &copy; 2022 Alan Lee. All Rights Reserved.
+        Copyrights &copy; 2023 Alan Lee. All Rights Reserved.
     </span>
 </footer>
 
@@ -853,11 +854,26 @@
 <div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
         <!--SCRIPTS-->
 <script src="/assets/js/script-r5mnooectgbywbl41rzytdt5peuwb3jm7pgsesqoz02bq5pnolsyvgbstnwj.min.js"></script>
-<!--SCRIPTS END--><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+<!--SCRIPTS END-->
 
 
 
 
 
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>

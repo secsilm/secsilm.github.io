@@ -2,9 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://alanlee.fun/2023/04/27/pandas-read-excel-with-merged-cells/</loc>
+    
+    <lastmod>2023-04-27T10:23:46.735Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/05/08/bert-model/</loc>
+    
+    <lastmod>2023-04-27T10:15:01.246Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://alanlee.fun/2023/04/09/tqdm-requests/</loc>
     
-    <lastmod>2023-04-09T05:18:14.854Z</lastmod>
+    <lastmod>2023-04-09T05:10:44.935Z</lastmod>
     
   </url>
   
@@ -131,13 +145,6 @@
     <loc>https://alanlee.fun/2019/10/16/bert-tokenizer/</loc>
     
     <lastmod>2021-12-19T08:01:31.433Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://alanlee.fun/2020/05/08/bert-model/</loc>
-    
-    <lastmod>2021-12-19T07:26:44.747Z</lastmod>
     
   </url>
   

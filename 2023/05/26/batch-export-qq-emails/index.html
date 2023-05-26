@@ -6,7 +6,7 @@
     <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content="Alan Lee">
-    <title>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法 - Alan Lee</title>
+    <title>批量导出 QQ 邮箱邮件 - Alan Lee</title>
     <meta name="author" content="Alan Lee">
     
         <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,">
@@ -19,19 +19,21 @@
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。\n但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……\n\n\n运行环境运行环境是首要前提 。\n\nOS：Windows 10 家庭中文版\nCUDA：Cuda compilation tools, release 8.0, V8.0.44\ncuDNN：5.0\nTensorFlow: 1.0.0\n\npython -c &quot;import tensorflow; print(tensorflow.__version__)&quot; 的输出：\n123456I c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library cublas64_80.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library cudnn64_5.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library cufft64_80.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library nvcuda.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library curand64_80.dll locally1.0.0\n\n问题运行 python cifar10_train.py 的报错信息如下：\n12E c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\cuda\\cuda_dnn.cc:390] Loaded runtime CuDNN library: 5005 (compatibility version 5000) but source was compiled with 5105 (compatibility version 5100).  If using a binary install, upgrade your CuDNN library to match.  If building from sources, make sure the library loaded at runtime matches a compatible version specified during compile configuration.F c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\core\\kernels\\conv_ops.cc:605] Check failed: stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)\n\n解决从报错信息很明显可以看出，是 cuDNN 的版本问题，那么我只需要升级 cuDNN 版本就可以了。我现在的版本是 5.0，升级到 5.1 即可。可从 官网 下载或者从 这里 直接下载我下载好的。\n下载好后就是替换原有的 5.0 版本了。如果原先你安装 cuDNN 的时候是用将 C:\\cuda\\bin 加进 Path 环境变量的方法安装的，那么你直接用 5.1 版本文件替换原有文件应该就可以。\n但是我第一次安装的时候稍微麻烦一些，是用 此文 中的方法安装的，即将对应文件复制到对应位置，所以你在升级 cuDNN 版本的时候也要将对应文件复制到对应位置就可以了。当然，你也可以直接使用第一种方法。\n然后，再次运行 python cifar10_train.py 就可以顺畅的玩耍了。\n\n\nEND","dateCreated":"2017-02-26T11:45:44+08:00","dateModified":"2021-12-19T10:38:33+08:00","datePublished":"2017-02-26T11:45:44+08:00","description":"由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。\n但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……","headline":"Check failed stream->parent()->GetConvolveAlgorithms(&algorithms)解决办法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/","keywords":"Python, TensorFlow"}</script>
-    <meta name="description" content="由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例">
-<meta name="keywords" content="Python,TensorFlow">
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题我想导出我的 QQ 邮箱中某个文件夹下的所有文件，eml 或者 mbox 格式都行，但是我发现 QQ 邮箱网页端没这个功能，只能一封一封导出为 eml。QQ 邮箱也没有 Mac 或者 windows 客户端。然后我尝试用 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端来导出，结果发现都存在一个问题：邮件不完整，似乎只能显示近一个月内的邮件。我怀疑是这些客户端的设置没弄好，但找了一圈发现没有相关设置。\n解决方法后来我再去查看 QQ 邮箱网页端的设置时发现，有个「收取选项」设置，默认为「最近 30 天」。这下就破案了，只需改为全部即可，然后在客户端刷新或重新添加账户。\n修改「收取选项」为「最近 30 天」\n如果你想导出 QQ 邮箱中某个文件夹下的所有文件，可以尝试这个方法：\n\n在 QQ 邮箱网页端将「收取选项」设置为「全部」；\n在你的电脑上下载一个支持导出邮件的客户端，例如 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端等；\n在客户端中添加 QQ 邮箱账户，并选择要导出的文件夹；\n根据客户端的要求导出即可。\n\neml 和 mbox 格式eml 格式是一种用于存储电子邮件的文件格式，其英文全称为 “email message format”。一个 eml 文件通常包括邮件的头部信息和正文内容，可以使用邮件客户端或者文本编辑器打开。下面是一个 eml 文件的简单示例：\n12345From: [sender@example.com](mailto:sender@example.com)To: [recipient@example.com](mailto:recipient@example.com)Subject: This is a test emailThis is the body of the email.\n在 Python 中读取一个 eml 文件，可以使用 Python 内置的 email 模块。下面是一个读取 eml 文件并打印邮件头部和正文内容的 demo 代码：\n123456789import emailwith open('example.eml', 'rb') as fp:    msg = email.message_from_binary_file(fp)print('From:', msg['From'])print('To:', msg['To'])print('Subject:', msg['Subject'])print('Body:', msg.get_payload())\nmbox 格式是另一种常见的存储邮件的文件格式，其英文全称为 “mailbox format”。一个 mbox 文件通常包括多个邮件，每个邮件之间用一个特殊的分隔符隔开，可以使用邮件客户端或者文本编辑器打开。下面是一个 mbox 文件的简单示例：\n1234567891011From sender@example.com Wed May 18 13:48:45 2022Return-Path: &lt;sender@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is the body of the email.From recipient@example.com Wed May 18 14:03:10 2022Return-Path: &lt;recipient@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is another email.\n在 Python 中读取一个 mbox 文件，可以使用 Python 内置的 mailbox 模块。下面是一个读取 mbox 文件并打印每个邮件的头部和正文内容的 demo 代码：\n123456789import mailboxmbox = mailbox.mbox('example.mbox')for msg in mbox:    print('From:', msg['From'])    print('To:', msg['To'])    print('Subject:', msg['Subject'])    print('Body:', msg.get_payload())","dateCreated":"2023-05-26T09:21:00+08:00","dateModified":"2023-05-26T09:44:11+08:00","datePublished":"2023-05-26T09:21:00+08:00","description":"本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。。[ChatGPT]","headline":"批量导出 QQ 邮箱邮件","image":[null,"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/","keywords":"Misc","thumbnailUrl":"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"}</script>
+    <meta name="description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。。[ChatGPT]">
+<meta name="keywords" content="Misc">
 <meta property="og:type" content="blog">
-<meta property="og:title" content="Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法">
-<meta property="og:url" content="https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/index.html">
+<meta property="og:title" content="批量导出 QQ 邮箱邮件">
+<meta property="og:url" content="https://alanlee.fun/2023/05/26/batch-export-qq-emails/index.html">
 <meta property="og:site_name" content="Alan Lee">
-<meta property="og:description" content="由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例">
+<meta property="og:description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。。[ChatGPT]">
 <meta property="og:locale" content="zh-cn">
-<meta property="og:updated_time" content="2021-12-19T02:38:33.743Z">
+<meta property="og:image" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png">
+<meta property="og:updated_time" content="2023-05-26T01:44:11.197Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法">
-<meta name="twitter:description" content="由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例">
+<meta name="twitter:title" content="批量导出 QQ 邮箱邮件">
+<meta name="twitter:description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。。[ChatGPT]">
+<meta name="twitter:image" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png">
 <meta name="twitter:creator" content="@bluekirin93">
     
     
@@ -41,6 +43,9 @@
         <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
     
     
+    
+        <meta property="og:image" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"/>
     
     
     <!--STYLES-->
@@ -305,25 +310,33 @@
 </nav>
 
             
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png');"
+             data-behavior="4">
+            
+        </div>
+
             <div id="main" data-behavior="4"
-                 class="
-                        hasCoverMetaIn
+                 class="hasCover
+                        hasCoverMetaOut
                         ">
                 
 <article class="post">
     
     
-        <div class="post-header main-content-wrap text-left">
+        <div class="post-header main-content-wrap text-center">
     
         <h1 class="post-title">
-            Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法
+            批量导出 QQ 邮箱邮件
         </h1>
     
     
         <div class="post-meta">
-    <time datetime="2017-02-26T11:45:44+08:00">
+    <time datetime="2023-05-26T09:21:00+08:00">
 	
-		    2月 26, 2017
+		    5月 26, 2023
     	
     </time>
     
@@ -335,30 +348,26 @@
     
     <div class="post-content markdown">
         <div class="main-content-wrap">
-            <p>由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 <a href="https://www.tensorflow.org/tutorials/deep_cnn" target="_blank" rel="noopener">TensorFlow 官方的 CNN 例子</a>的时候，总是报 <code>ImportError</code> 错误，找不到 <code>cifar10</code> 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：<a href="https://github.com/tensorflow/models" target="_blank" rel="noopener">models</a> 。</p>
-<p>但是呢，在我 <code>clone</code> 了 <code>models</code> 到本地后，按照 TensorFlow 官方的例子运行 <code>python cifar10_train.py</code> 的时候，问题又出现了……</p>
-<a id="more"></a>
-<hr>
-<h1 id="运行环境"><a href="#运行环境" class="headerlink" title="运行环境"></a>运行环境</h1><p><strong>运行环境是首要前提 。</strong></p>
-<ul>
-<li>OS：Windows 10 家庭中文版</li>
-<li>CUDA：<code>Cuda compilation tools, release 8.0, V8.0.44</code></li>
-<li>cuDNN：5.0</li>
-<li>TensorFlow: 1.0.0</li>
-</ul>
-<p><code>python -c &quot;import tensorflow; print(tensorflow.__version__)&quot;</code> 的输出：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library cublas64_80.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library cudnn64_5.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library cufft64_80.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library nvcuda.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library curand64_80.dll locally</span><br><span class="line">1.0.0</span><br></pre></td></tr></table></figure>
-<hr>
-<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>运行 <code>python cifar10_train.py</code> 的报错信息如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">E c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\cuda\cuda_dnn.cc:390] Loaded runtime CuDNN library: 5005 (compatibility version 5000) but <span class="built_in">source</span> was compiled with 5105 (compatibility version 5100).  If using a binary install, upgrade your CuDNN library to match.  If building from sources, make sure the library loaded at runtime matches a compatible version specified during compile configuration.</span><br><span class="line">F c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\core\kernels\conv_ops.cc:605] Check failed: stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)</span><br></pre></td></tr></table></figure>
-<hr>
-<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>从报错信息很明显可以看出，是 cuDNN 的版本问题，那么我只需要<strong>升级 cuDNN 版本</strong>就可以了。我现在的版本是 5.0，升级到 5.1 即可。可从 <a href="https://developer.nvidia.com/rdp/cudnn-download" target="_blank" rel="noopener">官网</a> 下载或者从 <a href="http://download.csdn.net/detail/u010099080/9764330" target="_blank" rel="noopener">这里</a> 直接下载我下载好的。</p>
-<p>下载好后就是替换原有的 5.0 版本了。如果原先你安装 cuDNN 的时候是用将 <code>C:\cuda\bin</code> 加进 <code>Path</code> 环境变量的方法安装的，那么你直接用 5.1 版本文件替换原有文件应该就可以。</p>
-<p>但是我第一次安装的时候稍微麻烦一些，是用 <a href="http://blog.csdn.net/u010099080/article/details/53418159" target="_blank" rel="noopener">此文</a> 中的方法安装的，即将对应文件复制到对应位置，所以你在升级 cuDNN 版本的时候也要将对应文件复制到对应位置就可以了。当然，你也可以直接使用第一种方法。</p>
-<p>然后，再次运行 <code>python cifar10_train.py</code> 就可以顺畅的玩耍了。</p>
-<hr>
-<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#运行环境"><span class="toc-text">运行环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#问题"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#解决"><span class="toc-text">解决</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
-<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1><!-- more -->
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#问题"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解决方法"><span class="toc-text">解决方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#eml-和-mbox-格式"><span class="toc-text">eml 和 mbox 格式</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>我想导出我的 QQ 邮箱中某个文件夹下的所有文件，eml 或者 mbox 格式都行，但是我发现 QQ 邮箱网页端没这个功能，只能一封一封导出为 eml。QQ 邮箱也没有 Mac 或者 windows 客户端。然后我尝试用 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端来导出，结果发现都存在一个问题：邮件不完整，似乎只能显示近一个月内的邮件。我怀疑是这些客户端的设置没弄好，但找了一圈发现没有相关设置。</p>
+<h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>后来我再去查看 QQ 邮箱网页端的设置时发现，有个「收取选项」设置，默认为「最近 30 天」。这下就破案了，只需改为全部即可，然后在客户端刷新或重新添加账户。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png" title="修改「收取选项」为「最近 30 天」" data-caption="修改「收取选项」为「最近 30 天」" data-fancybox="default" target="_blank" rel="noopener"><img class="fig-img" src="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png" alt="修改「收取选项」为「最近 30 天」"></a><span class="caption">修改「收取选项」为「最近 30 天」</span></div>
+<p>如果你想导出 QQ 邮箱中某个文件夹下的所有文件，可以尝试这个方法：</p>
+<ol>
+<li><strong>在 QQ 邮箱网页端将「收取选项」设置为「全部」</strong>；</li>
+<li>在你的电脑上下载一个支持导出邮件的客户端，例如 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端等；</li>
+<li>在客户端中添加 QQ 邮箱账户，并选择要导出的文件夹；</li>
+<li>根据客户端的要求导出即可。</li>
+</ol>
+<h2 id="eml-和-mbox-格式"><a href="#eml-和-mbox-格式" class="headerlink" title="eml 和 mbox 格式"></a>eml 和 mbox 格式</h2><p>eml 格式是一种用于存储电子邮件的文件格式，其英文全称为 “email message format”。一个 eml 文件通常包括邮件的头部信息和正文内容，可以使用邮件客户端或者文本编辑器打开。下面是一个 eml 文件的简单示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">From: [sender@example.com](mailto:sender@example.com)</span><br><span class="line">To: [recipient@example.com](mailto:recipient@example.com)</span><br><span class="line">Subject: This <span class="keyword">is</span> a test email</span><br><span class="line"></span><br><span class="line">This <span class="keyword">is</span> the body of the email.</span><br></pre></td></tr></table></figure>
+<p>在 Python 中读取一个 eml 文件，可以使用 Python 内置的 email 模块。下面是一个读取 eml 文件并打印邮件头部和正文内容的 demo 代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> email</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> open(<span class="string">'example.eml'</span>, <span class="string">'rb'</span>) <span class="keyword">as</span> fp:</span><br><span class="line">    msg = email.message_from_binary_file(fp)</span><br><span class="line"></span><br><span class="line">print(<span class="string">'From:'</span>, msg[<span class="string">'From'</span>])</span><br><span class="line">print(<span class="string">'To:'</span>, msg[<span class="string">'To'</span>])</span><br><span class="line">print(<span class="string">'Subject:'</span>, msg[<span class="string">'Subject'</span>])</span><br><span class="line">print(<span class="string">'Body:'</span>, msg.get_payload())</span><br></pre></td></tr></table></figure>
+<p>mbox 格式是另一种常见的存储邮件的文件格式，其英文全称为 “mailbox format”。一个 mbox 文件通常包括多个邮件，每个邮件之间用一个特殊的分隔符隔开，可以使用邮件客户端或者文本编辑器打开。下面是一个 mbox 文件的简单示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">From sender@example.com Wed May <span class="number">18</span> <span class="number">13</span>:<span class="number">48</span>:<span class="number">45</span> <span class="number">2022</span></span><br><span class="line">Return-Path: &lt;sender@example.com&gt;</span><br><span class="line">X-Spam-Checker-Version: SpamAssassin <span class="number">3.4</span><span class="number">.2</span> (<span class="number">2018</span><span class="number">-09</span><span class="number">-13</span>) on example.com</span><br><span class="line">...</span><br><span class="line">This <span class="keyword">is</span> the body of the email.</span><br><span class="line"></span><br><span class="line">From recipient@example.com Wed May <span class="number">18</span> <span class="number">14</span>:<span class="number">03</span>:<span class="number">10</span> <span class="number">2022</span></span><br><span class="line">Return-Path: &lt;recipient@example.com&gt;</span><br><span class="line">X-Spam-Checker-Version: SpamAssassin <span class="number">3.4</span><span class="number">.2</span> (<span class="number">2018</span><span class="number">-09</span><span class="number">-13</span>) on example.com</span><br><span class="line">...</span><br><span class="line">This <span class="keyword">is</span> another email.</span><br></pre></td></tr></table></figure>
+<p>在 Python 中读取一个 mbox 文件，可以使用 Python 内置的 mailbox 模块。下面是一个读取 mbox 文件并打印每个邮件的头部和正文内容的 demo 代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> mailbox</span><br><span class="line"></span><br><span class="line">mbox = mailbox.mbox(<span class="string">'example.mbox'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> msg <span class="keyword">in</span> mbox:</span><br><span class="line">    print(<span class="string">'From:'</span>, msg[<span class="string">'From'</span>])</span><br><span class="line">    print(<span class="string">'To:'</span>, msg[<span class="string">'To'</span>])</span><br><span class="line">    print(<span class="string">'Subject:'</span>, msg[<span class="string">'Subject'</span>])</span><br><span class="line">    print(<span class="string">'Body:'</span>, msg.get_payload())</span><br></pre></td></tr></table></figure>
             
 
 
@@ -369,7 +378,7 @@
             <div class="post-footer-tags">
                 <span class="text-color-light text-small">标签</span><br/>
                 
-    <a class="tag tag--primary tag--small t-link" href="/tags/Python/">Python</a> <a class="tag tag--primary tag--small t-link" href="/tags/TensorFlow/">TensorFlow</a>
+    <a class="tag tag--primary tag--small t-link" href="/tags/Misc/">Misc</a>
 
             </div>
         
@@ -379,14 +388,11 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2017/03/17/tensorflow-cnn-tensorboard/"
-                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
-                    aria-label="上一篇: TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
-                >
-                    
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
                     </a>
@@ -396,9 +402,9 @@
                     
                 <a
                     class="post-action-btn btn btn--default tooltip--top"
-                    href="/2017/02/16/tensorflow-1.0/"
-                    data-tooltip="TensorFlow 1.0 发布"
-                    aria-label="下一篇: TensorFlow 1.0 发布"
+                    href="/2023/05/17/travel-international-workers-day-2023-Beijing-Wildlife-Park/"
+                    data-tooltip="2023 五一北京周边行 3/3 —— 北京野生动物园"
+                    aria-label="下一篇: 2023 五一北京周边行 3/3 —— 北京野生动物园"
                 >
                     
                         <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
@@ -423,7 +429,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                     title="分享到 Facebook"
                     aria-label="分享到 Facebook"
                 >
@@ -436,7 +442,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                     title="分享到 Twitter"
                     aria-label="分享到 Twitter"
                 >
@@ -449,7 +455,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                     title="分享到 Weibo"
                     aria-label="分享到 Weibo"
                 >
@@ -508,14 +514,11 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2017/03/17/tensorflow-cnn-tensorboard/"
-                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
-                    aria-label="上一篇: TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
-                >
-                    
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
                     </a>
@@ -525,9 +528,9 @@
                     
                 <a
                     class="post-action-btn btn btn--default tooltip--top"
-                    href="/2017/02/16/tensorflow-1.0/"
-                    data-tooltip="TensorFlow 1.0 发布"
-                    aria-label="下一篇: TensorFlow 1.0 发布"
+                    href="/2023/05/17/travel-international-workers-day-2023-Beijing-Wildlife-Park/"
+                    data-tooltip="2023 五一北京周边行 3/3 —— 北京野生动物园"
+                    aria-label="下一篇: 2023 五一北京周边行 3/3 —— 北京野生动物园"
                 >
                     
                         <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
@@ -552,7 +555,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                     title="分享到 Facebook"
                     aria-label="分享到 Facebook"
                 >
@@ -565,7 +568,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                     title="分享到 Twitter"
                     aria-label="分享到 Twitter"
                 >
@@ -578,7 +581,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                     title="分享到 Weibo"
                     aria-label="分享到 Weibo"
                 >
@@ -622,7 +625,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                         aria-label="分享到 Facebook"
                     >
                         <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
@@ -635,7 +638,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                         aria-label="分享到 Twitter"
                     >
                         <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
@@ -648,7 +651,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
                         aria-label="分享到 Weibo"
                     >
                         <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
@@ -710,11 +713,11 @@
     
         <script>
           var disqus_config = function() {
-            this.page.url = 'https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/';
+            this.page.url = 'https://alanlee.fun/2023/05/26/batch-export-qq-emails/';
             //   
-            // this.page.identifier = '2017/02/26/tensorflow-cudnn-version/';
+            // this.page.identifier = '2023/05/26/batch-export-qq-emails/';
             //   
-            this.page.identifier = 'Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法';
+            this.page.identifier = '批量导出 QQ 邮箱邮件';
           };
           (function() {
             var d = document, s = d.createElement('script');

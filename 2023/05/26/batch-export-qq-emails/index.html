@@ -19,7 +19,7 @@
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题我想导出我的 QQ 邮箱中某个文件夹下的所有文件，eml 或者 mbox 格式都行，但是我发现 QQ 邮箱网页端没这个功能，只能一封一封导出为 eml。QQ 邮箱也没有 Mac 或者 windows 客户端。然后我尝试用 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端来导出，结果发现都存在一个问题：邮件不完整，似乎只能显示近一个月内的邮件。我怀疑是这些客户端的设置没弄好，但找了一圈发现没有相关设置。\n解决方法后来我再去查看 QQ 邮箱网页端的设置时发现，有个「收取选项」设置，默认为「最近 30 天」。这下就破案了，只需改为全部即可，然后在客户端刷新或重新添加账户。\n修改「收取选项」为「最近 30 天」\n如果你想导出 QQ 邮箱中某个文件夹下的所有文件，可以尝试这个方法：\n\n在 QQ 邮箱网页端将「收取选项」设置为「全部」；\n在你的电脑上下载一个支持导出邮件的客户端，例如 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端等；\n在客户端中添加 QQ 邮箱账户，并选择要导出的文件夹；\n根据客户端的要求导出即可。\n\neml 和 mbox 格式eml 格式是一种用于存储电子邮件的文件格式，其英文全称为 “email message format”。一个 eml 文件通常包括邮件的头部信息和正文内容，可以使用邮件客户端或者文本编辑器打开。下面是一个 eml 文件的简单示例：\n12345From: [sender@example.com](mailto:sender@example.com)To: [recipient@example.com](mailto:recipient@example.com)Subject: This is a test emailThis is the body of the email.\n在 Python 中读取一个 eml 文件，可以使用 Python 内置的 email 模块。下面是一个读取 eml 文件并打印邮件头部和正文内容的 demo 代码：\n123456789import emailwith open('example.eml', 'rb') as fp:    msg = email.message_from_binary_file(fp)print('From:', msg['From'])print('To:', msg['To'])print('Subject:', msg['Subject'])print('Body:', msg.get_payload())\nmbox 格式是另一种常见的存储邮件的文件格式，其英文全称为 “mailbox format”。一个 mbox 文件通常包括多个邮件，每个邮件之间用一个特殊的分隔符隔开，可以使用邮件客户端或者文本编辑器打开。下面是一个 mbox 文件的简单示例：\n1234567891011From sender@example.com Wed May 18 13:48:45 2022Return-Path: &lt;sender@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is the body of the email.From recipient@example.com Wed May 18 14:03:10 2022Return-Path: &lt;recipient@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is another email.\n在 Python 中读取一个 mbox 文件，可以使用 Python 内置的 mailbox 模块。下面是一个读取 mbox 文件并打印每个邮件的头部和正文内容的 demo 代码：\n123456789import mailboxmbox = mailbox.mbox('example.mbox')for msg in mbox:    print('From:', msg['From'])    print('To:', msg['To'])    print('Subject:', msg['Subject'])    print('Body:', msg.get_payload())","dateCreated":"2023-05-26T09:21:00+08:00","dateModified":"2023-05-26T09:47:34+08:00","datePublished":"2023-05-26T09:21:00+08:00","description":"本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]","headline":"批量导出 QQ 邮箱邮件","image":[null,"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/","keywords":"Misc","thumbnailUrl":"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题我想导出我的 QQ 邮箱中某个文件夹下的所有文件，eml 或者 mbox 格式都行，但是我发现 QQ 邮箱网页端没这个功能，只能一封一封导出为 eml。QQ 邮箱也没有 Mac 或者 windows 客户端。然后我尝试用 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端来导出，结果发现都存在一个问题：邮件不完整，似乎只能显示近一个月内的邮件。我怀疑是这些客户端的设置没弄好，但找了一圈发现没有相关设置。\n解决方法后来我再去查看 QQ 邮箱网页端的设置时发现，有个「收取选项」设置，默认为「最近 30 天」。这下就破案了，只需改为全部即可，然后在客户端刷新或重新添加账户。\n修改「收取选项」为「最近 30 天」\n如果你想导出 QQ 邮箱中某个文件夹下的所有文件，可以尝试这个方法：\n\n在 QQ 邮箱网页端将「收取选项」设置为「全部」；\n在你的电脑上下载一个支持导出邮件的客户端，例如 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端等；\n在客户端中添加 QQ 邮箱账户，并选择要导出的文件夹；\n根据客户端的要求导出即可。\n\neml 和 mbox 格式eml 格式是一种用于存储电子邮件的文件格式，其英文全称为 “email message format”。一个 eml 文件通常包括邮件的头部信息和正文内容，可以使用邮件客户端或者文本编辑器打开。下面是一个 eml 文件的简单示例：\n12345From: [sender@example.com](mailto:sender@example.com)To: [recipient@example.com](mailto:recipient@example.com)Subject: This is a test emailThis is the body of the email.\n在 Python 中读取一个 eml 文件，可以使用 Python 内置的 email 模块。下面是一个读取 eml 文件并打印邮件头部和正文内容的 demo 代码：\n123456789import emailwith open('example.eml', 'rb') as fp:    msg = email.message_from_binary_file(fp)print('From:', msg['From'])print('To:', msg['To'])print('Subject:', msg['Subject'])print('Body:', msg.get_payload())\nmbox 格式是另一种常见的存储邮件的文件格式，其英文全称为 “mailbox format”。一个 mbox 文件通常包括多个邮件，每个邮件之间用一个特殊的分隔符隔开，可以使用邮件客户端或者文本编辑器打开。下面是一个 mbox 文件的简单示例：\n1234567891011From sender@example.com Wed May 18 13:48:45 2022Return-Path: &lt;sender@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is the body of the email.From recipient@example.com Wed May 18 14:03:10 2022Return-Path: &lt;recipient@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is another email.\n在 Python 中读取一个 mbox 文件，可以使用 Python 内置的 mailbox 模块。下面是一个读取 mbox 文件并打印每个邮件的头部和正文内容的 demo 代码：\n123456789import mailboxmbox = mailbox.mbox('example.mbox')for msg in mbox:    print('From:', msg['From'])    print('To:', msg['To'])    print('Subject:', msg['Subject'])    print('Body:', msg.get_payload())\nEND","dateCreated":"2023-05-26T09:21:00+08:00","dateModified":"2023-06-17T16:00:33+08:00","datePublished":"2023-05-26T09:21:00+08:00","description":"本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]","headline":"批量导出 QQ 邮箱邮件","image":[null,"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/","keywords":"Misc","thumbnailUrl":"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"}</script>
     <meta name="description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]">
 <meta name="keywords" content="Misc">
 <meta property="og:type" content="blog">
@@ -29,7 +29,7 @@
 <meta property="og:description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]">
 <meta property="og:locale" content="zh-cn">
 <meta property="og:image" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png">
-<meta property="og:updated_time" content="2023-05-26T01:47:34.762Z">
+<meta property="og:updated_time" content="2023-06-17T08:00:33.692Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="批量导出 QQ 邮箱邮件">
 <meta name="twitter:description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]">
@@ -349,7 +349,7 @@
     <div class="post-content markdown">
         <div class="main-content-wrap">
             <!-- excerpt --></p>
-<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#问题"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解决方法"><span class="toc-text">解决方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#eml-和-mbox-格式"><span class="toc-text">eml 和 mbox 格式</span></a></li></ol>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#问题"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解决方法"><span class="toc-text">解决方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#eml-和-mbox-格式"><span class="toc-text">eml 和 mbox 格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
 <h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>我想导出我的 QQ 邮箱中某个文件夹下的所有文件，eml 或者 mbox 格式都行，但是我发现 QQ 邮箱网页端没这个功能，只能一封一封导出为 eml。QQ 邮箱也没有 Mac 或者 windows 客户端。然后我尝试用 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端来导出，结果发现都存在一个问题：邮件不完整，似乎只能显示近一个月内的邮件。我怀疑是这些客户端的设置没弄好，但找了一圈发现没有相关设置。</p>
 <h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>后来我再去查看 QQ 邮箱网页端的设置时发现，有个「收取选项」设置，默认为「最近 30 天」。这下就破案了，只需改为全部即可，然后在客户端刷新或重新添加账户。</p>
 <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png" title="修改「收取选项」为「最近 30 天」" data-caption="修改「收取选项」为「最近 30 天」" data-fancybox="default" target="_blank" rel="noopener"><img class="fig-img" src="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png" alt="修改「收取选项」为「最近 30 天」"></a><span class="caption">修改「收取选项」为「最近 30 天」</span></div>
@@ -368,6 +368,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">From sender@example.com Wed May <span class="number">18</span> <span class="number">13</span>:<span class="number">48</span>:<span class="number">45</span> <span class="number">2022</span></span><br><span class="line">Return-Path: &lt;sender@example.com&gt;</span><br><span class="line">X-Spam-Checker-Version: SpamAssassin <span class="number">3.4</span><span class="number">.2</span> (<span class="number">2018</span><span class="number">-09</span><span class="number">-13</span>) on example.com</span><br><span class="line">...</span><br><span class="line">This <span class="keyword">is</span> the body of the email.</span><br><span class="line"></span><br><span class="line">From recipient@example.com Wed May <span class="number">18</span> <span class="number">14</span>:<span class="number">03</span>:<span class="number">10</span> <span class="number">2022</span></span><br><span class="line">Return-Path: &lt;recipient@example.com&gt;</span><br><span class="line">X-Spam-Checker-Version: SpamAssassin <span class="number">3.4</span><span class="number">.2</span> (<span class="number">2018</span><span class="number">-09</span><span class="number">-13</span>) on example.com</span><br><span class="line">...</span><br><span class="line">This <span class="keyword">is</span> another email.</span><br></pre></td></tr></table></figure>
 <p>在 Python 中读取一个 mbox 文件，可以使用 Python 内置的 mailbox 模块。下面是一个读取 mbox 文件并打印每个邮件的头部和正文内容的 demo 代码：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> mailbox</span><br><span class="line"></span><br><span class="line">mbox = mailbox.mbox(<span class="string">'example.mbox'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> msg <span class="keyword">in</span> mbox:</span><br><span class="line">    print(<span class="string">'From:'</span>, msg[<span class="string">'From'</span>])</span><br><span class="line">    print(<span class="string">'To:'</span>, msg[<span class="string">'To'</span>])</span><br><span class="line">    print(<span class="string">'Subject:'</span>, msg[<span class="string">'Subject'</span>])</span><br><span class="line">    print(<span class="string">'Body:'</span>, msg.get_payload())</span><br></pre></td></tr></table></figure>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
             
 
 
@@ -388,11 +389,14 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    <a
-                        class="post-action-btn btn btn--disabled"
-                        aria-hidden="true"
-                    >
-                        
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/06/17/xiaomi-tv-youtube/"
+                    data-tooltip="两种方法教你在小米电视上观看 YouTube"
+                    aria-label="上一篇: 两种方法教你在小米电视上观看 YouTube"
+                >
+                    
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
                     </a>
@@ -418,7 +422,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Diesen Beitrag teilen"
+                aria-label="Share this post"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -469,7 +473,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Kommentieren"
+                        aria-label="Leave a comment"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -514,11 +518,14 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    <a
-                        class="post-action-btn btn btn--disabled"
-                        aria-hidden="true"
-                    >
-                        
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/06/17/xiaomi-tv-youtube/"
+                    data-tooltip="两种方法教你在小米电视上观看 YouTube"
+                    aria-label="上一篇: 两种方法教你在小米电视上观看 YouTube"
+                >
+                    
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
                     </a>
@@ -544,7 +551,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Diesen Beitrag teilen"
+                aria-label="Share this post"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -595,7 +602,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Kommentieren"
+                        aria-label="Leave a comment"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -727,26 +734,11 @@
             s.setAttribute('data-timestamp', +new Date());
             (d.head || d.body).appendChild(s);
           })();
-        </script>
+        </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
     
 
 
 
 
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
-</body>
+    </body>
 </html>

@@ -19,7 +19,7 @@
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题我一只有个想法是在我家的小米电视上看 YouTube，之前都是手机上下载专门用来投屏 YouTube 的软件（Tubio），缺点是操作稍显复杂，清晰度不能选择，字幕投不上。经过前几天在电视上折腾小白网盘、电视家等经验，这次就想再来试下实现这个想法。\n解决方法按理来说，想要看 YouTube，就需要电视上装一个 VPN 软件和 YouTube。电视也是基于 Android 系统做的，所以还比较好实现。VPN 软件我们就可以使用和手机上一样的 ssr 或者 clash。我大概讲下我测试的两种方法。\n方法1：SSR + SmartTube这个方法是我看网上传的最多的，但是首先说下这个方法我失败了。\nSmartTube（GitHub）是一个专门用于在电视上观看 YouTube 的免广告应用，那为什么不用官方的 YouTube app 呢？因为官方的需要依赖 Google 服务框架那一套东西，比较麻烦，而这个 app 是不需要的。其有 stable 和 beta 两个版本，下载 stable 即可。\n\n下载 SSR apk 和 SmartTube apk 到 U 盘上，然后插到电视上，分别安装。\n配置好你的 SSR，测试下看能不能正常连接。我的就在这步卡住了，根本连接不了，订阅是更新成功了，但是选择节点后测试失败。\n假设你上一步成功了，安装并打开 SmartTube，能正常加载首页就表示成功了，你也可以选择登陆自己的账号，点上方的小人根据提示操作即可。\n\n方法 2：一台挂着梯子的电脑 + SmartTube这个是我成功的方法，也是我认为最方便最简洁的方法，搜索的时候在一个 YouTube 视频看到的。\n\n将电脑梯子设置为局域网可访问。\n 允许局域网连接。\n\n使用 ifconfig 或者梯子控制台界面找到电脑的 ip 和端口。\n 查看并记住你的本机地址。\n 查看并记住代理端口。\n\n在 SmartTube 上，在左侧选择 设置  ➡️ 一般  ➡️ 互联网审查  ➡️ 使用网页代理，根据提示填入刚才的 ip 和端口即可，代理类型选择 HTTP，测试一下，两个都 OK 就表示成功连接了代理。\n 设置让 SmartTube 使用网页代理。\n 填入 ip 和端口。\n\n确定退出回到首页，就可以看到能成功加载了。登录账号啥的和方法 1 相同，也可以选择清晰度和字幕，和电脑上几乎一样，非常方便。\n 首页成功加载。\n\n\n通过以上两种方法，你就可以方便地在小米电视上观看 YouTube，享受大屏幕带来的视觉效果啦～\nEND","dateCreated":"2023-06-17T16:01:00+08:00","dateModified":"2023-06-17T16:25:18+08:00","datePublished":"2023-06-17T16:01:00+08:00","description":"本文介绍了两种在小米电视上观看 YouTube 的方法：SSR + SmartTube 和一台挂着梯子的电脑 + SmartTube。通过这两种方法，用户能够方便地在小米电视上观看 YouTube，并享受大屏幕带来的视觉效果。[ChatGPT]","headline":"两种方法教你在小米电视上观看 YouTube","image":[null,"https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/","keywords":"Tools, Living, Misc","thumbnailUrl":"https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题我一直有个想法是在我家的小米电视上看 YouTube，之前都是手机上下载专门用来投屏 YouTube 的软件（Tubio），缺点是操作稍显复杂，清晰度不能选择，字幕投不上。经过前几天在电视上折腾小白网盘、电视家等经验，这次就想再来试下实现这个想法。\n解决方法按理来说，想要看 YouTube，就需要电视上装一个 VPN 软件和 YouTube。电视也是基于 Android 系统做的，所以还比较好实现。VPN 软件我们就可以使用和手机上一样的 ssr 或者 clash。我大概讲下我测试的两种方法。\n方法1：SSR + SmartTube这个方法是我看网上传的最多的，但是首先说下这个方法我失败了。\nSmartTube（GitHub）是一个专门用于在电视上观看 YouTube 的免广告应用，那为什么不用官方的 YouTube app 呢？因为官方的需要依赖 Google 服务框架那一套东西，比较麻烦，而这个 app 是不需要的。其有 stable 和 beta 两个版本，下载 stable 即可。\n\n下载 SSR apk 和 SmartTube apk 到 U 盘上，然后插到电视上，分别安装。\n配置好你的 SSR，测试下看能不能正常连接。我的就在这步卡住了，根本连接不了，订阅是更新成功了，但是选择节点后测试失败。\n假设你上一步成功了，安装并打开 SmartTube，能正常加载首页就表示成功了，你也可以选择登陆自己的账号，点上方的小人根据提示操作即可。\n\n方法 2：一台挂着梯子的电脑 + SmartTube这个是我成功的方法，也是我认为最方便最简洁的方法，搜索的时候在一个 YouTube 视频看到的。\n\n将电脑梯子设置为局域网可访问。\n 允许局域网连接。\n\n使用 ifconfig 或者梯子控制台界面找到电脑的 ip 和端口。\n 查看并记住你的本机地址。\n 查看并记住代理端口。\n\n在 SmartTube 上，在左侧选择 设置  ➡️ 一般  ➡️ 互联网审查  ➡️ 使用网页代理，根据提示填入刚才的 ip 和端口即可，代理类型选择 HTTP，测试一下，两个都 OK 就表示成功连接了代理。\n 设置让 SmartTube 使用网页代理。\n 填入 ip 和端口。\n\n确定退出回到首页，就可以看到能成功加载了。登录账号啥的和方法 1 相同，也可以选择清晰度和字幕，和电脑上几乎一样，非常方便。\n 首页成功加载。\n\n\n通过以上两种方法，你就可以方便地在小米电视上观看 YouTube，享受大屏幕带来的视觉效果啦～\nEND","dateCreated":"2023-06-17T16:01:00+08:00","dateModified":"2023-06-17T16:33:15+08:00","datePublished":"2023-06-17T16:01:00+08:00","description":"本文介绍了两种在小米电视上观看 YouTube 的方法：SSR + SmartTube 和一台挂着梯子的电脑 + SmartTube。通过这两种方法，用户能够方便地在小米电视上观看 YouTube，并享受大屏幕带来的视觉效果。[ChatGPT]","headline":"两种方法教你在小米电视上观看 YouTube","image":[null,"https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/","keywords":"Tools, Living, Misc","thumbnailUrl":"https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"}</script>
     <meta name="description" content="本文介绍了两种在小米电视上观看 YouTube 的方法：SSR + SmartTube 和一台挂着梯子的电脑 + SmartTube。通过这两种方法，用户能够方便地在小米电视上观看 YouTube，并享受大屏幕带来的视觉效果。[ChatGPT]">
 <meta name="keywords" content="Tools,Living,Misc">
 <meta property="og:type" content="blog">
@@ -34,7 +34,7 @@
 <meta property="og:image" content="https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png">
 <meta property="og:image" content="https://s2.loli.net/2023/06/17/ZnklpoJBcgeCvjV.png">
 <meta property="og:image" content="https://s2.loli.net/2023/06/17/1KdNQcvfD6HBMs8.png">
-<meta property="og:updated_time" content="2023-06-17T08:25:18.984Z">
+<meta property="og:updated_time" content="2023-06-17T08:33:15.412Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="两种方法教你在小米电视上观看 YouTube">
 <meta name="twitter:description" content="本文介绍了两种在小米电视上观看 YouTube 的方法：SSR + SmartTube 和一台挂着梯子的电脑 + SmartTube。通过这两种方法，用户能够方便地在小米电视上观看 YouTube，并享受大屏幕带来的视觉效果。[ChatGPT]">
@@ -355,7 +355,7 @@
         <div class="main-content-wrap">
             <!-- excerpt --></p>
 <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#问题"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解决方法"><span class="toc-text">解决方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#方法1：SSR-SmartTube"><span class="toc-text">方法1：SSR + SmartTube</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#方法-2：一台挂着梯子的电脑-SmartTube"><span class="toc-text">方法 2：一台挂着梯子的电脑 + SmartTube</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
-<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>我一只有个想法是在我家的小米电视上看 YouTube，之前都是手机上下载专门用来投屏 YouTube 的软件（<a href="https://tubioapp.com/" target="_blank" rel="noopener">Tubio</a>），缺点是操作稍显复杂，清晰度不能选择，字幕投不上。经过前几天在电视上折腾小白网盘、电视家等经验，这次就想再来试下实现这个想法。</p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>我一直有个想法是在我家的小米电视上看 YouTube，之前都是手机上下载专门用来投屏 YouTube 的软件（<a href="https://tubioapp.com/" target="_blank" rel="noopener">Tubio</a>），缺点是操作稍显复杂，清晰度不能选择，字幕投不上。经过前几天在电视上折腾小白网盘、电视家等经验，这次就想再来试下实现这个想法。</p>
 <h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>按理来说，想要看 YouTube，就需要电视上装一个 VPN 软件和 YouTube。电视也是基于 Android 系统做的，所以还比较好实现。VPN 软件我们就可以使用和手机上一样的 ssr 或者 clash。我大概讲下我测试的两种方法。</p>
 <h3 id="方法1：SSR-SmartTube"><a href="#方法1：SSR-SmartTube" class="headerlink" title="方法1：SSR + SmartTube"></a>方法1：SSR + SmartTube</h3><p>这个方法是我看网上传的最多的，但是首先说下这个方法我失败了。</p>
 <p><a href="https://smartyoutubetv.github.io/" target="_blank" rel="noopener">SmartTube</a>（<a href="https://github.com/yuliskov/SmartTubeNext" target="_blank" rel="noopener">GitHub</a>）是一个专门用于在电视上观看 YouTube 的免广告应用，那为什么不用官方的 YouTube app 呢？因为官方的需要依赖 Google 服务框架那一套东西，比较麻烦，而这个 app 是不需要的。其有 stable 和 beta 两个版本，下载 stable 即可。</p>
@@ -433,7 +433,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -484,7 +484,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -559,7 +559,7 @@
             <a
                 class="post-action-btn btn btn--default btn-open-shareoptions"
                 href="#btn-open-shareoptions"
-                aria-label="Share this post"
+                aria-label="Diesen Beitrag teilen"
             >
                 <i class="fa fa-share-alt" aria-hidden="true"></i>
             </a>
@@ -610,7 +610,7 @@
                     <a
                         class="post-action-btn btn btn--default"
                         href="#disqus_thread"
-                        aria-label="Leave a comment"
+                        aria-label="Kommentieren"
                     >
                         <i class="fa fa-comment"></i>
                     </a>
@@ -742,11 +742,26 @@
             s.setAttribute('data-timestamp', +new Date());
             (d.head || d.body).appendChild(s);
           })();
-        </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+        </script>
     
 
 
 
 
-    </body>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
 </html>

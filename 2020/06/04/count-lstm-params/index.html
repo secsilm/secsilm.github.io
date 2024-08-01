@@ -1,0 +1,760 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>计算 LSTM 的参数量 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n理论上的参数量\n之前翻译了 Christopher Olah 的那篇著名的 Understanding LSTM Networks，这篇文章对于整体理解 LSTM 很有帮助，但是在理解 LSTM 的参数数量这种细节方面，略有不足。本文就来补充一下，讲讲如何计算 LSTM 的参数数量。\n\n建议阅读本文前先阅读 Understanding LSTM Networks 的原文或我的译文。\n\n首先来回顾下 LSTM。一层 LSTM 如下：\nlstm layer\n这里的 $x_t$ 实际上是一个句子的 embedding（不考虑 batch 维度），shape 一般为 [seq_length, embedding_size]。图中的 $A$ 就是 cell，$x_t$ 中的词依次进入这个 cell 中进行处理。可以看到其实只有这么一个 cell，所以每次词进去处理的时候，权重是共享的，将这个过程平铺展开，就是下面这张图了：\nunrolled lstm layer\n\n实际上我觉得这里 $x_t$ 并不准确，第一个 $x_t$ 应该指的是整句话，而第二个 $x_t$ 应该指的是这句话中最后一个词，所以为了避免歧义，我认为可以将第一个 $x_t$ 重命名为 $x$，第二个仍然保留，即现在 $x$ 表示一句话，该句话有 $t+1$ 个词，$x_t$ 表示该句话的第 $t+1$ 个词，$t \\in [0, t]$。\n\n始终要记住这么多 $A$ 都是一样的，权重是一样的，$x_0$ 到 $x_t$ 是一个个词，每一次的处理都依赖前一个词的处理结果，这也是 RNN 系的网络难以像 CNN 一样并行加速的原因。同时， 这就像一个递归过程，如果把求 $h_t$ 的公式展开写，$A$ 里的权重记为 $W$，那么就会发现需要 $t$ 个 $W$ 相乘，即 $W^t$，这是非常恐怖的：\n0.9^{100} = 2.6561398887587544 \\times 10^{-5}1.1^{100} = 13780.61233982238一个不那么小的数被多次相乘之后会变得很小，一个不那么大的数被多次相乘之后会变得很大。所以，这也是普通 RNN 容易出现梯度消失/爆炸的问题的原因。\n扯远了点。\n那么 LSTM 的参数很明显了，就是这个 $A$ 中的参数。这个 $A$ 内部具体是这样的：\n\n从这张图来理解参数的数量你可能有点懵逼，一步一步来看，实际上这里面有 4 个非线性变换（3 个 门 + 1 个 tanh），每一个非线性变换说白了就是一个两层的全连接网络。重点来了，第一层是 $x_i$ 和 $h_i$ 的结合，维度就是 embedding_size + hidden_size，第二层就是输出层，维度为 hidden_size，所以该网络的参数量就是：\n1(embedding_size + hidden_size) * hidden_size + hidden_size\n一个 cell 有 4 个这样结构相同的网络，那么一个 cell 的总参数量就是直接 × 4：\n1((embedding_size + hidden_size) * hidden_size + hidden_size) * 4\n注意这 4 个权重可不是共享的，都是独立的网络。\n所以，一般来说，一层 LSTM 的参数量计算公式是：\n4[d_h(d_h + d_x) + d_h]其中 4 表示有 4 个非线性映射层，$d_h + d_x$ 即 Understanding LSTM Networks 中的 $[h_{t-1}, x_t]$ 的维度，后面的 $d_h$ 表示 bias 的数量。所以，LSTM 层的参数数量只与输入维度 $d_x$ 和输出维度 $d_h$ 相关，和普通全连接层相同。\n那么显而易见，一层双向 LSTM 的参数量就是上述公式 × 2。\nTensorFlow 中的实现在 TensorFlow 中，这些 $d_x$、$d_h$ 如何与代码对应上呢？\n我们可以如下实现一个简单的以 LSTM 为核心的网络：\n12345678import tensorflow as tfmodel = tf.keras.model.Sequential(    tf.keras.layers.Embedding(1000, 128),    tf.keras.layers.LSTM(units=64),    tf.keras.layers.Dense(10))model.summary()\n输入如下：\n1234567891011121314Model: &quot;sequential&quot;_________________________________________________________________Layer (type)                 Output Shape              Param #   =================================================================embedding_1 (Embedding)      (None, None, 128)         128000    _________________________________________________________________lstm_1 (LSTM)                (None, 64)                49408     _________________________________________________________________dense_1 (Dense)              (None, 10)                650       =================================================================Total params: 178,058Trainable params: 178,058Non-trainable params: 0_________________________________________________________________\n可以看到 TF 给出的 LSTM 层参数量是 49408。我们来根据上面的公式验证下。\n\n$d_x$：输入维度，在这里就对应于 128，就是词向量维度。\n$d_h$：输出维度，在这里就是 LSTM 的参数 64，在 TF 这里叫 units。\n\n所以，参数量就是 $4 \\times \\left[64 \\times \\left(64+128\\right) + 64 \\right] = 49408$，和 TF 给出的一样。\n另外，tf.keras.layers.LSTM() 的默认输出大小为 [batch_size, units]，就是只使用最后一个 time step 的输出。假如我们想要得到每个 time step 的输出（$h_0,\\cdots,h_t$）和最终的 cell state（$C_t$），那么我们可以指定另外两个参数 return_sequences=True 和 return_state=True：\n12345inputs = tf.random.normal([64, 100, 128])  # [batch_size, seq_length, embedding_size]whole_seq_output, final_memory_state, final_carry_state = tf.keras.layers.LSTM(64, return_sequences=True, return_state=True)(inputs)print(f&quot;&#123;whole_seq_output.shape=&#125;&quot;)print(f&quot;&#123;final_memory_state.shape=&#125;&quot;)print(f&quot;&#123;final_carry_state.shape=&#125;&quot;)\n输出：\n123whole_seq_output.shape=TensorShape([32, 100, 64])  # 100 表示有 100 个词，即 100 个 time stepfinal_memory_state.shape=TensorShape([32, 64])final_carry_state.shape=TensorShape([32, 64])\nOK，LSTM 的参数量应该挺清晰了，欢迎在评论区留下你的想法。😋\nReference\nCounting No. of Parameters in Deep Learning Models by Hand\ndeep learning - Number of parameters in an LSTM model - Data Science Stack Exchange\nmachine learning - How to calculate the number of parameters of an LSTM network? - Stack Overflow\ntensorflow - In Keras, what exactly am I configuring when I create a stateful LSTM layer with N units? - Stack Overflow\n理解 LSTM 网络 · Alan Lee\nRecurrent Neural Networks (RNN) with Keras  |  TensorFlow Core\nLSTM is dead. Long Live Transformers! - YouTube\n\nEND","dateCreated":"2020-06-04T11:10:00+08:00","dateModified":"2024-08-01T14:02:01+08:00","datePublished":"2020-06-04T11:10:00+08:00","description":"\n理论上的参数量","headline":"计算 LSTM 的参数量","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/06/04/count-lstm-params/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/06/04/count-lstm-params/","keywords":"NLP, TensorFlow"}</script>
+    <meta name="description" content="理论上的参数量">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="计算 LSTM 的参数量">
+<meta property="og:url" content="https://alanlee.fun/2020/06/04/count-lstm-params/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="理论上的参数量">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/A8appFv.png">
+<meta property="og:image" content="https://i.imgur.com/0Wik9NF.png">
+<meta property="og:image" content="https://alanlee.fun/2020/06/04/count-lstm-params/cell.png">
+<meta property="article:published_time" content="2020-06-04T03:10:00.000Z">
+<meta property="article:modified_time" content="2024-08-01T06:02:01.827Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="TensorFlow">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/A8appFv.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-2x7bpelhiyvopqwneye5egwu6juo9gxdtricfarkia0iyp4eaeuxhye3lkiu.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            计算 LSTM 的参数量
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-06-04T11:10:00+08:00">
+	
+		    2020 年 6 月 4 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%90%86%E8%AE%BA%E4%B8%8A%E7%9A%84%E5%8F%82%E6%95%B0%E9%87%8F"><span class="toc-text">理论上的参数量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TensorFlow-%E4%B8%AD%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">TensorFlow 中的实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="理论上的参数量"><a href="#理论上的参数量" class="headerlink" title="理论上的参数量"></a>理论上的参数量</h2><span id="more"></span>
+<p>之前<a href="https://alanlee.fun/2017/12/29/understanding-lstms/">翻译</a>了 Christopher Olah 的那篇著名的 <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">Understanding LSTM Networks</a>，这篇文章对于整体理解 LSTM 很有帮助，但是在理解 LSTM 的参数数量这种细节方面，略有不足。本文就来补充一下，讲讲如何计算 LSTM 的参数数量。</p>
+<blockquote>
+<p>建议阅读本文前先阅读 Understanding LSTM Networks 的<a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/">原文</a>或我的<a href="https://alanlee.fun/2017/12/29/understanding-lstms/">译文</a>。</p>
+</blockquote>
+<p>首先来回顾下 LSTM。一层 LSTM 如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/A8appFv.png" title="lstm layer" data-caption="lstm layer" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/A8appFv.png" alt="lstm layer"></a><span class="caption">lstm layer</span></div>
+<p>这里的 $x_t$ 实际上是一个句子的 embedding（不考虑 batch 维度），shape 一般为 <code>[seq_length, embedding_size]</code>。图中的 $A$ 就是 cell，$x_t$ 中的词依次进入这个 cell 中进行处理。可以看到其实只有这么一个 cell，所以每次词进去处理的时候，权重是共享的，将这个过程平铺展开，就是下面这张图了：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/0Wik9NF.png" title="unrolled lstm layer" data-caption="unrolled lstm layer" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/0Wik9NF.png" alt="unrolled lstm layer"></a><span class="caption">unrolled lstm layer</span></div>
+<blockquote>
+<p>实际上我觉得这里 $x_t$ 并不准确，第一个 $x_t$ 应该指的是整句话，而第二个 $x_t$ 应该指的是这句话中最后一个词，所以为了避免歧义，我认为可以将第一个 $x_t$ 重命名为 $x$，第二个仍然保留，即现在 $x$ 表示一句话，该句话有 $t+1$ 个词，$x_t$ 表示该句话的第 $t+1$ 个词，$t \in [0, t]$。</p>
+</blockquote>
+<p>始终要记住这么多 $A$ 都是一样的，权重是一样的，$x_0$ 到 $x_t$ 是一个个词，每一次的处理都依赖前一个词的处理结果，这也是 RNN 系的网络难以像 CNN 一样并行加速的原因。同时， 这就像一个递归过程，如果把求 $h_t$ 的公式展开写，$A$ 里的权重记为 $W$，那么就会发现需要 $t$ 个 $W$ 相乘，即 $W^t$，这是非常恐怖的：</p>
+<script type="math/tex; mode=display">0.9^{100} = 2.6561398887587544 \times 10^{-5}</script><script type="math/tex; mode=display">1.1^{100} = 13780.61233982238</script><p>一个不那么小的数被多次相乘之后会变得很小，一个不那么大的数被多次相乘之后会变得很大。所以，这也是普通 RNN 容易出现梯度消失/爆炸的问题的<a href="https://youtu.be/S27pHKBEp30?t=284">原因</a>。</p>
+<p>扯远了点。</p>
+<p>那么 LSTM 的参数很明显了，就是这个 $A$ 中的参数。这个 $A$ 内部具体是这样的：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/06/03/3UDWxmOfbr7acE4.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="cell.png" alt=""></a></div>
+<p>从这张图来理解参数的数量你可能有点懵逼，一步一步来看，实际上这里面有 4 个非线性变换（3 个 门 + 1 个 tanh），每一个非线性变换说白了就是一个两层的全连接网络。重点来了，第一层是 $x_i$ 和 $h_i$ 的结合，维度就是 <code>embedding_size + hidden_size</code>，第二层就是输出层，维度为 <code>hidden_size</code>，所以该网络的参数量就是：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(embedding_size + hidden_size) * hidden_size + hidden_size</span><br></pre></td></tr></table></figure>
+<p>一个 cell 有 4 个这样结构相同的网络，那么一个 cell 的总参数量就是直接 × 4：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">((embedding_size + hidden_size) * hidden_size + hidden_size) * <span class="number">4</span></span><br></pre></td></tr></table></figure>
+<p>注意这 4 个权重可不是共享的，都是独立的网络。</p>
+<p>所以，一般来说，一层 LSTM 的参数量计算公式是：</p>
+<script type="math/tex; mode=display">4[d_h(d_h + d_x) + d_h]</script><p>其中 4 表示有 4 个非线性映射层，$d_h + d_x$ 即 <a href="https://alanlee.fun/2017/12/29/understanding-lstms/">Understanding LSTM Networks</a> 中的 $[h_{t-1}, x_t]$ 的维度，后面的 $d_h$ 表示 bias 的数量。所以，LSTM 层的参数数量只与输入维度 $d_x$ 和输出维度 $d_h$ 相关，和普通全连接层相同。</p>
+<p>那么显而易见，一层双向 LSTM 的参数量就是上述公式 × 2。</p>
+<h2 id="TensorFlow-中的实现"><a href="#TensorFlow-中的实现" class="headerlink" title="TensorFlow 中的实现"></a>TensorFlow 中的实现</h2><p>在 TensorFlow 中，这些 $d_x$、$d_h$ 如何与代码对应上呢？</p>
+<p>我们可以如下实现一个简单的以 LSTM 为核心的网络：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</span><br><span class="line"></span><br><span class="line">model = tf.keras.model.Sequential(</span><br><span class="line">    tf.keras.layers.Embedding(<span class="number">1000</span>, <span class="number">128</span>),</span><br><span class="line">    tf.keras.layers.LSTM(units=<span class="number">64</span>),</span><br><span class="line">    tf.keras.layers.Dense(<span class="number">10</span>)</span><br><span class="line">)</span><br><span class="line">model.summary()</span><br></pre></td></tr></table></figure>
+<p>输入如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Model: <span class="string">&quot;sequential&quot;</span></span><br><span class="line">_________________________________________________________________</span><br><span class="line">Layer (<span class="built_in">type</span>)                 Output Shape              Param <span class="comment">#   </span></span><br><span class="line">=================================================================</span><br><span class="line">embedding_1 (Embedding)      (<span class="literal">None</span>, <span class="literal">None</span>, <span class="number">128</span>)         <span class="number">128000</span>    </span><br><span class="line">_________________________________________________________________</span><br><span class="line">lstm_1 (LSTM)                (<span class="literal">None</span>, <span class="number">64</span>)                <span class="number">49408</span>     </span><br><span class="line">_________________________________________________________________</span><br><span class="line">dense_1 (Dense)              (<span class="literal">None</span>, <span class="number">10</span>)                <span class="number">650</span>       </span><br><span class="line">=================================================================</span><br><span class="line">Total params: <span class="number">178</span>,058</span><br><span class="line">Trainable params: <span class="number">178</span>,058</span><br><span class="line">Non-trainable params: <span class="number">0</span></span><br><span class="line">_________________________________________________________________</span><br></pre></td></tr></table></figure>
+<p>可以看到 TF 给出的 LSTM 层参数量是 49408。我们来根据上面的公式验证下。</p>
+<ul>
+<li>$d_x$：输入维度，在这里就对应于 128，就是词向量维度。</li>
+<li>$d_h$：输出维度，在这里就是 LSTM 的参数 64，在 TF 这里叫 <code>units</code>。</li>
+</ul>
+<p>所以，参数量就是 $4 \times \left[64 \times \left(64+128\right) + 64 \right] = 49408$，和 TF 给出的一样。</p>
+<p>另外，<code>tf.keras.layers.LSTM()</code> 的默认输出大小为 <code>[batch_size, units]</code>，就是只使用最后一个 time step 的输出。假如我们想要得到每个 time step 的输出（$h_0,\cdots,h_t$）和最终的 cell state（$C_t$），那么我们可以指定另外两个参数 <code>return_sequences=True</code> 和 <code>return_state=True</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">inputs = tf.random.normal([<span class="number">64</span>, <span class="number">100</span>, <span class="number">128</span>])  <span class="comment"># [batch_size, seq_length, embedding_size]</span></span><br><span class="line">whole_seq_output, final_memory_state, final_carry_state = tf.keras.layers.LSTM(<span class="number">64</span>, return_sequences=<span class="literal">True</span>, return_state=<span class="literal">True</span>)(inputs)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;whole_seq_output.shape=&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;final_memory_state.shape=&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;final_carry_state.shape=&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">whole_seq_output.shape=TensorShape([<span class="number">32</span>, <span class="number">100</span>, <span class="number">64</span>])  <span class="comment"># 100 表示有 100 个词，即 100 个 time step</span></span><br><span class="line">final_memory_state.shape=TensorShape([<span class="number">32</span>, <span class="number">64</span>])</span><br><span class="line">final_carry_state.shape=TensorShape([<span class="number">32</span>, <span class="number">64</span>])</span><br></pre></td></tr></table></figure>
+<p>OK，LSTM 的参数量应该挺清晰了，欢迎在评论区留下你的想法。😋</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://towardsdatascience.com/counting-no-of-parameters-in-deep-learning-models-by-hand-8f1716241889#192e">Counting No. of Parameters in Deep Learning Models by Hand</a></li>
+<li><a href="https://datascience.stackexchange.com/questions/10615/number-of-parameters-in-an-lstm-model">deep learning - Number of parameters in an LSTM model - Data Science Stack Exchange</a></li>
+<li><a href="https://stackoverflow.com/questions/38080035/how-to-calculate-the-number-of-parameters-of-an-lstm-network">machine learning - How to calculate the number of parameters of an LSTM network? - Stack Overflow</a></li>
+<li><a href="https://stackoverflow.com/questions/44273249/in-keras-what-exactly-am-i-configuring-when-i-create-a-stateful-lstm-layer-wi/44277785#44277785">tensorflow - In Keras, what exactly am I configuring when I create a stateful <code>LSTM</code> layer with N <code>units</code>? - Stack Overflow</a></li>
+<li><a href="https://alanlee.fun/2017/12/29/understanding-lstms/">理解 LSTM 网络 · Alan Lee</a></li>
+<li><a href="https://www.tensorflow.org/guide/keras/rnn#bidirectional_rnns">Recurrent Neural Networks (RNN) with Keras  |  TensorFlow Core</a></li>
+<li><a href="https://www.youtube.com/watch?v=S27pHKBEp30">LSTM is dead. Long Live Transformers! - YouTube</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/07/04/pixel-check-update/"
+                    data-tooltip="Pixel 重置后卡在检查更新界面的一种解决办法"
+                    aria-label="上一篇: Pixel 重置后卡在检查更新界面的一种解决办法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/22/understanding-edit-distance/"
+                    data-tooltip="理解编辑距离"
+                    aria-label="下一篇: 理解编辑距离"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2024 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/07/04/pixel-check-update/"
+                    data-tooltip="Pixel 重置后卡在检查更新界面的一种解决办法"
+                    aria-label="上一篇: Pixel 重置后卡在检查更新界面的一种解决办法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/22/understanding-edit-distance/"
+                    data-tooltip="理解编辑距离"
+                    aria-label="下一篇: 理解编辑距离"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/06/04/count-lstm-params/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-udsrj0jjwuxgxvnhxarpdnufxztzze4ozdf5gy6ddqinwbmmzednxrnxhkxa.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/06/04/count-lstm-params/';
+              
+            this.page.identifier = '2020/06/04/count-lstm-params/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

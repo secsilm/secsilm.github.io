@@ -1,0 +1,736 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 这里 或者 PCA 的维基百科页面。\n\n\nPrincipal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. \n\n原理我在这里简单的叙述下。假设我们的数据集是 $m×n$ 的，即 $m$ 个样本，每个样本 $n$ 个属性（特征），那么我们想要将这些数据呈现在图上，以便让我们对数据有个直观的了解或者其他用途。换句话说，需要 $n&lt;=3$ ，一般来说为 2（平面） 或者 3（立体），需要一种变换来让新产生的属性可以代替原来的属性，可以通过下式来变换，Y=XW 其中 $Y$ 是变换后的新属性，$X$ 是原始属性，$W$ 是变换矩阵，而这个变换矩阵的列是 $X^TX$ 的特征向量。$Y$ 中的新变量依据该变量对原始变量的解释能力（解释的总方差）从高到低排序，那么第一个就称为第一主成分，第二个就称为第二主成分，以此类推。假如我们需要降到 3 维以便于我们可视化，那就取前三个主成分作为原始属性的代表。即假如原来每个样本有 64 个属性，那么现在每个样本就有 3 个属性，就可以绘图了。\n数据集本文使用的数据集不是完整的 MNIST 数据集，而是 scikit-learn 自带的手写数字识别数据集。\n这里写图片描述\n该数据集的信息如下：\n\n类别数：10\n每类样本数：约为180\n总样本数：1797\n特征维数：64（8*8）\n\n代码123456789101112131415161718from sklearn import datasetsfrom sklearn import decompositionimport matplotlib.pyplot as pltimport numpy as npimport seabornfrom mpl_toolkits.mplot3d import Axes3D%matplotlib notebookmnist = datasets.load_digits()X = mnist.datay = mnist.targetpca = decomposition.PCA(n_components=3)new_X = pca.fit_transform(X)fig = plt.figure()ax = fig.gca(projection=&#x27;3d&#x27;)ax.scatter(new_X[:, 0], new_X[:, 1], new_X[:, 2], c=y, cmap=plt.cm.spectral)plt.show()\n结果这里写图片描述\n这里写图片描述\n结果如上图，实际上这个图是可以来回拖动和缩放的，所以建议在本地实际运行程序。图中每个颜色代表一个数字（0-9），可以大致看出每类数字分布在相近的区域。\n此外，可以使用 pca.explained_variance_ratio_ 查看各个主成分解释的总方差：[ 0.14890594,  0.13618771,  0.11794594] ，这三个主成分解释了大约 40% 的原始信息，这个比例还是很低的，不过我们这里的目的是可视化而不是抽取信息。使用 pca.get_covariance() 得到上文提到的变换矩阵。\nTensorBoard12月7号 Google 在其开发者博客中宣布了一个开源的高维数据可视化工具：Open sourcing the Embedding Projector: a tool for visualizing high dimensional data，其中一个是在和 TensorFlow 一起使用的 TensorBoard ，另一个是独立版本，用户可以直接在网页上访问，地址在 这里（可能需要梯子）。如下图：\n这里写图片描述\n目前有 4 个数据集可以选择：Word2Vec All（71291×200），MNIST（10000×784），Word2Vec 10K（10000×200），Iris（150×4），可以选择是否用颜色标注、降维方法（T-SNE，PCA，自定义）、夜间模式、3D标签模式等。以MNIST为例，可以看到这三个主成分对原始信息的解释比例只有 25.9%。\nEND","dateCreated":"2016-12-10T07:23:02+08:00","dateModified":"2025-01-31T20:40:12+08:00","datePublished":"2016-12-10T07:23:02+08:00","description":"\n主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 这里 或者 PCA 的维基百科页面。","headline":"在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/","keywords":"Python, TensorFlow, Machine Learning, TensorBoard"}</script>
+    <meta name="description" content="主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 这里 或者 PCA 的维基百科页面。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集">
+<meta property="og:url" content="https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 这里 或者 PCA 的维基百科页面。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20161210185431105?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://img.blog.csdn.net/20161210191249002?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://img.blog.csdn.net/20161210191301331?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://img.blog.csdn.net/20161211104557988?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="article:published_time" content="2016-12-09T23:23:02.000Z">
+<meta property="article:modified_time" content="2025-01-31T12:40:12.241Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="TensorFlow">
+<meta property="article:tag" content="Machine Learning">
+<meta property="article:tag" content="TensorBoard">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20161210185431105?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-up5kkruco8iwrlnym0trl2tl6onsl3a1nnqe6thikxwmt4wejhlt1auud7fb.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2016-12-10T07:23:02+08:00">
+	
+		    2016 年 12 月 10 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text">数据集</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81"><span class="toc-text">代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C"><span class="toc-text">结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TensorBoard"><span class="toc-text">TensorBoard</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 <a href="https://my.oschina.net/gujianhan/blog/225241">这里</a> 或者 <a href="https://en.wikipedia.org/wiki/Principal_component_analysis">PCA 的维基百科页面</a>。</p>
+<span id="more"></span>
+<blockquote>
+<p>Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. </p>
+</blockquote>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>我在这里简单的叙述下。假设我们的数据集是 $m×n$ 的，即 $m$ 个样本，每个样本 $n$ 个属性（特征），那么我们想要将这些数据呈现在图上，以便让我们对数据有个直观的了解或者其他用途。换句话说，需要 $n&lt;=3$ ，一般来说为 2（平面） 或者 3（立体），需要一种变换来让新产生的属性可以代替原来的属性，可以通过下式来变换，<script type="math/tex">Y=XW</script> 其中 $Y$ 是变换后的新属性，$X$ 是原始属性，$W$ 是变换矩阵，而这个变换矩阵的列是 $X^TX$ 的特征向量。$Y$ 中的新变量依据该变量对原始变量的解释能力（解释的总方差）从高到低排序，那么第一个就称为第一主成分，第二个就称为第二主成分，以此类推。假如我们需要降到 3 维以便于我们可视化，那就取前三个主成分作为原始属性的代表。即假如原来每个样本有 64 个属性，那么现在每个样本就有 3 个属性，就可以绘图了。</p>
+<h2 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h2><p>本文使用的数据集不是完整的 MNIST 数据集，而是 <code>scikit-learn</code> 自带的手写数字识别数据集。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20161210185431105?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20161210185431105?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p>该数据集的信息如下：</p>
+<ul>
+<li>类别数：10</li>
+<li>每类样本数：约为180</li>
+<li>总样本数：1797</li>
+<li>特征维数：64（8*8）</li>
+</ul>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sklearn <span class="keyword">import</span> datasets</span><br><span class="line"><span class="keyword">from</span> sklearn <span class="keyword">import</span> decomposition</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> seaborn</span><br><span class="line"><span class="keyword">from</span> mpl_toolkits.mplot3d <span class="keyword">import</span> Axes3D</span><br><span class="line">%matplotlib notebook</span><br><span class="line"></span><br><span class="line">mnist = datasets.load_digits()</span><br><span class="line">X = mnist.data</span><br><span class="line">y = mnist.target</span><br><span class="line">pca = decomposition.PCA(n_components=<span class="number">3</span>)</span><br><span class="line">new_X = pca.fit_transform(X)</span><br><span class="line"></span><br><span class="line">fig = plt.figure()</span><br><span class="line">ax = fig.gca(projection=<span class="string">&#x27;3d&#x27;</span>)</span><br><span class="line">ax.scatter(new_X[:, <span class="number">0</span>], new_X[:, <span class="number">1</span>], new_X[:, <span class="number">2</span>], c=y, cmap=plt.cm.spectral)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<h2 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h2><div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20161210191249002?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20161210191249002?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20161210191301331?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20161210191301331?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p>结果如上图，实际上这个图是可以来回拖动和缩放的，所以建议在本地实际运行程序。图中每个颜色代表一个数字（0-9），可以大致看出每类数字分布在相近的区域。</p>
+<p>此外，可以使用 <code>pca.explained_variance_ratio_</code> 查看各个主成分解释的总方差：<code>[ 0.14890594,  0.13618771,  0.11794594]</code> ，这三个主成分解释了大约 40% 的原始信息，这个比例还是很低的，不过我们这里的目的是可视化而不是抽取信息。使用 <code>pca.get_covariance()</code> 得到上文提到的变换矩阵。</p>
+<h2 id="TensorBoard"><a href="#TensorBoard" class="headerlink" title="TensorBoard"></a>TensorBoard</h2><p>12月7号 Google 在其开发者博客中宣布了一个开源的高维数据可视化工具：<a href="https://research.googleblog.com/2016/12/open-sourcing-embedding-projector-tool.html">Open sourcing the Embedding Projector: a tool for visualizing high dimensional data</a>，其中一个是在和 TensorFlow 一起使用的 TensorBoard ，另一个是独立版本，用户可以直接在网页上访问，地址在 <a href="http://projector.tensorflow.org/">这里</a>（可能需要梯子）。如下图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20161211104557988?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20161211104557988?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p>目前有 4 个数据集可以选择：<strong>Word2Vec All</strong>（71291×200），<strong>MNIST</strong>（10000×784），<strong>Word2Vec 10K</strong>（10000×200），<strong>Iris</strong>（150×4），可以选择是否用颜色标注、降维方法（T-SNE，PCA，自定义）、夜间模式、3D标签模式等。以MNIST为例，可以看到这三个主成分对原始信息的解释比例只有 <strong>25.9%</strong>。</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorBoard/" rel="tag">TensorBoard</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                    aria-label="上一篇: TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/01/installing-tensorflow/"
+                    data-tooltip="Windows10 64 位下安装 TensorFlow - 官方原生支持"
+                    aria-label="下一篇: Windows10 64 位下安装 TensorFlow - 官方原生支持"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                    aria-label="上一篇: TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/01/installing-tensorflow/"
+                    data-tooltip="Windows10 64 位下安装 TensorFlow - 官方原生支持"
+                    aria-label="下一篇: Windows10 64 位下安装 TensorFlow - 官方原生支持"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-jziphvlngftrogrbxsqqdbg9svmfh1pnqrei6bw9mf1u6wbselbomtbmijbz.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/';
+              
+            this.page.identifier = '2016/12/10/tensorboard-mnist-pca/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

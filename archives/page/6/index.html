@@ -1,0 +1,888 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>归档 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{}</script>
+    <meta name="description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Alan Lee">
+<meta property="og:url" content="https://alanlee.fun/archives/page/6/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="hexo">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="tensorflow">
+<meta property="article:tag" content="pytorch">
+<meta property="article:tag" content="nlp">
+<meta property="article:tag" content="natural language processing">
+<meta property="article:tag" content="deep learning">
+<meta property="article:tag" content="machine learning">
+<meta property="article:tag" content="large language models">
+<meta property="article:tag" content="llms">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="1">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="1">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="1"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+    <section class="postShorten-group main-content-wrap">
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2019/09/19/install-ghost/"
+                            aria-label=": Ghost 博客平台安装和配置"
+                        >
+                            Ghost 博客平台安装和配置
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2019-09-19T07:17:00+08:00">
+	
+		    2019 年 9 月 19 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p><a href="https://ghost.org/">Ghost</a> 是一个博客发布平台，和 Hexo 等类似。本文简要介绍如何安装和配置 Ghost，环境为 Ubuntu 16.04 系统上，假设你已经拥有一个服务器和一个域名。<br>
+                    
+                        <a
+                            href="/2019/09/19/install-ghost/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": Ghost 博客平台安装和配置"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2019/08/09/sklearn-tfidf/"
+                            aria-label=": sklearn 如何计算 TFIDF"
+                        >
+                            sklearn 如何计算 TFIDF
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2019-08-09T22:07:00+08:00">
+	
+		    2019 年 8 月 9 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>文中代码见 <a href="https://gist.github.com/secsilm/79fef46e3defa33e7644d59f2401aa34">GitHub Gist</a> 或者使用 <a href="https://nbviewer.jupyter.org/gist/secsilm/79fef46e3defa33e7644d59f2401aa34">nbviewer</a> 查看。<br>
+                    
+                        <a
+                            href="/2019/08/09/sklearn-tfidf/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": sklearn 如何计算 TFIDF"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2019/04/13/understanding-pca/"
+                            aria-label=": 理解主成分分析"
+                        >
+                            理解主成分分析
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2019-04-13T10:47:00+08:00">
+	
+		    2019 年 4 月 13 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>译者注：<br>
+                    
+                        <a
+                            href="/2019/04/13/understanding-pca/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 理解主成分分析"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2019/04/10/analyzing-python-servey/"
+                            aria-label=": 各年份 Python 开发者调查结果分析汇总"
+                        >
+                            各年份 Python 开发者调查结果分析汇总
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2019-04-10T17:44:19+08:00">
+	
+		    2019 年 4 月 10 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>此文主要用于更新每年我做的 Python 开发者调查结果分析。<br>
+                    
+                        <a
+                            href="/2019/04/10/analyzing-python-servey/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 各年份 Python 开发者调查结果分析汇总"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2019/01/13/neteasemusic-year-report-2018/"
+                            aria-label=": 我的网易云音乐 2018 年度听歌报告"
+                        >
+                            我的网易云音乐 2018 年度听歌报告
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2019-01-13T10:11:40+08:00">
+	
+		    2019 年 1 月 13 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>一年又一年。<br>
+                    
+                        <a
+                            href="/2019/01/13/neteasemusic-year-report-2018/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 我的网易云音乐 2018 年度听歌报告"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/11/17/introducing-plotly/"
+                            aria-label=": Plotly 初步"
+                        >
+                            Plotly 初步
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-11-17T22:44:56+08:00">
+	
+		    2018 年 11 月 17 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2>
+                    
+                        <a
+                            href="/2018/11/17/introducing-plotly/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": Plotly 初步"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/07/18/text-classification-with-tensorflow-estimator/"
+                            aria-label=": 使用 TensorFlow Estimators 进行文本分类"
+                        >
+                            使用 TensorFlow Estimators 进行文本分类
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-07-18T18:57:19+08:00">
+	
+		    2018 年 7 月 18 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>译者注：</p>
+<ul>
+<li>本文翻译自 <a href="http://ruder.io/">Sebastian Ruder</a> 于 2018 年 4 月 16 日发表的文章 <a href="http://ruder.io/text-classification-tensorflow-estimators/">Text Classification with TensorFlow Estimators</a>，文章和 <a href="https://twitter.com/eisenjulian">Julian Eisenschlos</a> 共同撰写，原先发表在 <a href="https://medium.com/tensorflow/classifying-text-with-tensorflow-estimators-a99603033fbe">TensorFlow 博客</a>。</li>
+<li>文中括号或者引用块中的 <em>斜体字</em> 为对应的英文原文或者我自己注释的话（会标明「译者注」），否则为原文中本来就有的话。</li>
+<li>目录保留英文原文。</li>
+<li>你如果对 TensorFlow 中的 Datasets 和 Estimators 还不是很了解，那么可以参考我写的<a href="https://alanlee.fun/2017/12/22/understanding-estimators-datasets/">理解 Estimators 和 Datasets</a>。</li>
+<li>本人水平有限，如有错误欢迎指出。</li>
+</ul>
+</blockquote>
+                    
+                        <a
+                            href="/2018/07/18/text-classification-with-tensorflow-estimator/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 使用 TensorFlow Estimators 进行文本分类"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/07/14/remote-jupyter/"
+                            aria-label=": 在本地使用远程 Jupyter Lab 服务器"
+                        >
+                            在本地使用远程 Jupyter Lab 服务器
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-07-14T10:35:34+08:00">
+	
+		    2018 年 7 月 14 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看<a href="https://github.com/jupyterlab/jupyterlab">项目地址</a>。<strong>强烈推荐使用 Jupyter Lab。</strong><br>
+                    
+                        <a
+                            href="/2018/07/14/remote-jupyter/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 在本地使用远程 Jupyter Lab 服务器"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/06/04/understanding-objective-functions-in-neural-networks/"
+                            aria-label=": 理解神经网络中的目标函数"
+                        >
+                            理解神经网络中的目标函数
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-06-04T21:10:29+08:00">
+	
+		    2018 年 6 月 4 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>译者注：<br>
+                    
+                        <a
+                            href="/2018/06/04/understanding-objective-functions-in-neural-networks/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 理解神经网络中的目标函数"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/05/18/ubuntu-ssr/"
+                            aria-label=": 在 Ubuntu 上使用 SSR 梯子"
+                        >
+                            在 Ubuntu 上使用 SSR 梯子
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-05-18T17:37:06+08:00">
+	
+		    2018 年 5 月 18 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>两种方法上梯子。</p>
+                    
+                        <a
+                            href="/2018/05/18/ubuntu-ssr/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 在 Ubuntu 上使用 SSR 梯子"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+            <a
+                href="/2018/05/18/ubuntu-ssr/"
+                aria-label=": 在 Ubuntu 上使用 SSR 梯子"
+            >
+                <div class="postShorten-thumbnailimg">
+                    <img alt="" src="https://i.imgur.com/UyN5NWT.jpg"/>
+                </div>
+            </a>
+            
+        
+    </article>
+    
+    <div class="pagination-bar">
+    <ul class="pagination">
+        
+          <li class="pagination-prev">
+            <a
+                class="btn btn--default btn--small"
+                href="/archives/page/5/"
+                aria-label="上一页"
+            >
+              <i class="fa fa-angle-left text-base icon-mr"></i>
+              <span>上一页</span>
+            </a>
+          </li>
+        
+        
+          <li class="pagination-next">
+            <a
+                class="btn btn--default btn--small"
+                href="/archives/page/7/"
+                aria-label="下一页"
+            >
+              <span>下一页</span>
+              <i class="fa fa-angle-right text-base icon-ml"></i>
+            </a>
+          </li>
+        
+        <li class="pagination-number">第 6 页 共 9 页</li>
+    </ul>
+</div>
+
+</section>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

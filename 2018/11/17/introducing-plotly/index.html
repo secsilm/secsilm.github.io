@@ -1,0 +1,776 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Plotly 初步 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n简介\nPlotly 是一个用于绘制交互式图表的工具库，基于 React 和 Flask，基本功能免费，可以在 Jupyter Notebook 上进行在线或者离线绘图，支持 Python、MATLAB 和 R 等许多语言，其同类产品（Python 领域）是 bokeh，但是 plotly 绘制的图表更漂亮（个人感觉），支持类型更多（比如 bokeh 原生不支持 3D 绘图，而 plotly 支持）。我也曾经写过一篇关于嵌入 bokeh 绘图到博客的文章，但是后来还是转到了 plotly。\nPlotly 的绘图语法和一般的还是稍有不同，这篇博文主要就是讲下 plotly 绘图的基础。为了让例子不那么死板，我将我之前写的 Python 问卷调查分析的文章（下称前文）中的图重新使用 plotly 绘制，在这个过程中来学习 plotly 绘图。\n一些类型一样的图我就只展示一遍，详细的完全的重置代码见我的 GitHub 或者 nbviewer（建议使用这种方式查看，能看到图形）。\n\n自己绘图的时候建议使用 offline 模式绘图，这样不会上传到云端，除非你想分享，详见完整代码。\n\n数据在开始之前先来回顾下数据是什么样的：\ndata\n说明我就直接引用前文中的话了：\n\n数据总大小是 9506×162，即 9506 行 162 列，上图是前 5 行，每行代表一个样本，即一个参与调查的开发者。可以看到已经将一道选择题的答案拆分成多列，这一般是用于处理多选题，例如上图中的「What other language(s) do you use?」，而单选题则不用拆分，可以直接写答案，例如上图第一列。\n\n散点图 go.Scatter此图用于说明 Python 2 和 3 在开发者们中的使用比例。\n我先说下 plotly 的绘图逻辑（下同）：\n\n定义 trace，类似于 matplotlib 中的坐标轴和图形（例如折线），只管画图\n定义 layout，就是布局，标题、margin 等\n定义 data，就是一个 trace 列表，因为可能会同时绘制多个图形，例如多条折线\n使用 go.Figure 或者 go.FigureWidget 绘图，传入 data 和 layout 参数。\n\n12345678910colors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;)[:2]]py2 = go.Scatter(x=frameworks_pyver.columns, y=frameworks_pyver.loc[&#x27;Python 2&#x27;], mode=&#x27;markers&#x27;, marker=&#123;&#x27;color&#x27;: colors[0]&#125;, name=&#x27;Python 2&#x27;)py3 = go.Scatter(x=frameworks_pyver.columns, y=frameworks_pyver.loc[&#x27;Python 3&#x27;], mode=&#x27;markers&#x27;, marker=&#123;&#x27;color&#x27;: colors[1]&#125;, name=&#x27;Python 3&#x27;)data = [py2, py3]layout = go.Layout(title=&#x27;Python 2 and Python 3 Usage among Frameworks&#x27;)# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)  # 备注 1py.iplot(fig)  # 备注 2\n\n注意：我是在 Jupyter Notebook（不是 Jupyter Lab，Jupyter Lab 对 plotly 的支持不太好）中绘图的，从 plotly 3.0.0 以来，你有两种方法来在 Jupyter Notebook 中绘图：\n\n使用 go.Figure：此时需要预先使用 plotly.offline.init_notebook_mode 初始化，然后使用 plotly.offline.iplot 来绘图，也就是上面代码使用的（备注 1 和 2）。而且如果要分享或者在网站上嵌入自己绘制的图形，那么就需要使用这种方式来将图形托管在 plotly 上，然后复制嵌入代码到自己的网站，就像我现在做的这样。但是注意免费账号最多能托管 25 \n使用 go.FigureWidget：此时就不需要那些了，这是 3.0.0 的新特性，直接使用即可，即 备注 1 上面那行代码，备注 1 和 2 都可以删掉了，但是目前存在的一个问题是当绘制完关掉 notebook 后再打开，刚绘制的图就不在了\n\n\n\n\n折线图 go.Scatter此图用于说明开发者年龄和是否使用 Python 3 的关系。其实折线图和散点图用的是同一个函数，只不过 marker 不一样。\n1234567trace = go.Scatter(x=age_pyver.index, y=age_pyver[&#x27;Python 3&#x27;], marker=&#123;&#x27;color&#x27;: colors[0]&#125;, mode=&#x27;lines+markers&#x27;, line=&#123;&#x27;width&#x27;: 2&#125;, name=&#x27;Python 3&#x27;)data = [trace]layout = go.Layout(title=&quot;The developers&#x27; age VS The use ratio of Python 3&quot;)# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\n饼图 go.Pie这个图用于展示开发者中使用 Python 2 和 Python 3 的情况。\n1234567891011121314151617181920212223import plotly.graph_objs as gofrom plotly.offline import init_notebook_modeimport plotly.offline as offlinepython_version = survey_df[&#x27;which version of python do you use the most?&#x27;]counts = python_version.value_counts()labels = counts.indexvalues = counts.valuescolors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;)[:2]]trace = go.Pie(labels=labels, values=values,               marker=&#123;                   &#x27;colors&#x27;: colors               &#125;,               rotation=0,               hoverinfo=&#x27;label+value&#x27;)data = [trace]layout = &#123;    &#x27;title&#x27;: &#x27;Python 2 VS Python 3&#x27;&#125;# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\n横向柱形图 go.Bar此处用于说明使用 Python 3 和 Python 2 的开发者的国别分布。\n12345678910# 等同于 sns.countplotcolors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;, 10)]trace = go.Bar(x=count_countries.index[:10], y=count_countries[:10], marker=&#123;&#x27;color&#x27;: colors&#125;)data = [trace]layout = go.Layout(title=&#x27;Top 10 countries of # of the developers&#x27;)# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\n横向分组柱形图 go.Bar此图用于说明开发者人数最多的三个国家（美国、印度和中国）的开发者年龄构成。\n12345678colors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;, 7)]data = [go.Bar(x=three_countries.index, y=three_countries[c], marker=&#123;&#x27;color&#x27;: colors[i]&#125;, name=c)        for i, c in enumerate(three_countries.columns)]layout = go.Layout(title=&quot;Age distribution of the developers who&#x27;re from USA, India and China&quot;)# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\n纵向柱形图 go.Bar此图用于说明常用框架中使用 Python 2 和 Python 3 的比例。\n123456789101112colors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;, len(count_df))]trace = go.Bar(y=count_df.index[::-1], x=count_df.values[::-1], marker=&#123;&#x27;color&#x27;: colors[::-1]&#125;, orientation=&#x27;h&#x27;)data = [trace]layout = go.Layout(    title=&#x27;Framework Usage&#x27;,    margin=&#123;&#x27;r&#x27;: 10&#125;,    height=1000,    yaxis=&#123;&#x27;automargin&#x27;: True&#125;)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\nDistplot 图 ff.create_distplot此图用于说明 Python 2 和 3 在开发者们中的使用比例，类似于 sns.distplot，是直方图和 KDE 的混合，用于展示一个单变量的分布。\n12345import plotly.figure_factory as ffcolors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;)[:2]]fig = ff.create_distplot(hist_data=[frameworks_pyver.loc[&#x27;Python 2&#x27;], frameworks_pyver.loc[&#x27;Python 3&#x27;]], group_labels=[&#x27;Python 2&#x27;, &#x27;Python 3&#x27;], bin_size=0.05, colors=colors)# go.FigureWidget(fig)py.iplot(fig)\n\n\n面积图 go.Scatter此图用于说明做数据分析和机器学习的人常用的框架。\n1234567891011sorted_da_ml_frameworks_uses = da_ml_frameworks_uses.sort_values(by=&#x27;Data analysis&#x27;, axis=1, ascending=True)colors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;)[:2]]da = go.Scatter(x=sorted_da_ml_frameworks_uses.columns, y=sorted_da_ml_frameworks_uses.loc[&#x27;Data analysis&#x27;], fill=&#x27;tozeroy&#x27;, marker=&#123;&#x27;color&#x27;: colors[0]&#125;, name=&#x27;Python 2&#x27;)ml = go.Scatter(x=sorted_da_ml_frameworks_uses.columns, y=sorted_da_ml_frameworks_uses.loc[&#x27;Machine learning&#x27;], fill=&#x27;tozeroy&#x27;, marker=&#123;&#x27;color&#x27;: colors[1]&#125;, name=&#x27;Python 3&#x27;)data = [da, ml]layout = go.Layout(title=&#x27;Frameworks Usage among Data Analysis and Machine Learning Developers&#x27;)# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\nViolin 图 go.Violin此图是用于说明每个国家的开发者中使用 Python 3 的比例。\n123456789colors = [rgb2hex(i) for i in sns.color_palette(&#x27;rainbow&#x27;)[:2]]trace = go.Violin(x=countries_pyver_ratio[&#x27;Python 3&#x27;], meanline=&#123;&#x27;visible&#x27;: True&#125;, box=&#123;&#x27;visible&#x27;: True&#125;, fillcolor=colors[0], opacity=0.6, line=&#123;&#x27;color&#x27;: &#x27;black&#x27;&#125;)layout = go.Layout(title=&quot;Use ratio of Python 3 in the world&quot;, xaxis=&#123;&#x27;zeroline&#x27;: False&#125;)data = [trace]# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\n世界地图此图同样是用于说明每个国家的开发者中使用 Python 3 的比例，只不过是在地图上呈现。\n1234567891011121314151617181920212223242526272829303132333435data = [ dict(        type = &#x27;choropleth&#x27;,        locations = countries_pyver_ratio.index,        locationmode = &#x27;country names&#x27;,         z = countries_pyver_ratio[&#x27;Python 3&#x27;] * 100,        text = countries_pyver_ratio.index,        colorscale = &#x27;Bluered&#x27;,        autocolorscale = False,        reversescale = True,        marker = dict(            line = dict (                color = &#x27;rgb(180,180,180)&#x27;,                width = 0.5            ) ),        colorbar = dict(#             autotick = False,            ticksuffix = &#x27;%&#x27;,            title = &#x27;Percent&#x27;),      ) ]layout = dict(    title = &#x27;Python 3 in the world&#x27;,    geo = dict(        showframe = False,        showcoastlines = False,        projection = dict(            type = &#x27;equirectangular&#x27;        ),    ))# fig = go.Figure()# go.FigureWidget(data=data, layout=layout)fig = go.Figure(data=data, layout=layout)py.iplot(fig)\n\n\nEND以上只是我在前文中涉及到的图形的 plotly 重绘，其实还有其他图形没有涉及，例如 3D 散点图（这也是我放弃 bokeh 的原因）。此外除了在 Jupyter Notebook 上绘图外，plotly 还有一个用于构建数据分析 Web 应用的 Python 框架：Dash，基于 Plotly.js、React 和 Flask，接下来我会在此基础上讲一下如何使用 Dash 来构建这样一个 Web 应用。\n","dateCreated":"2018-11-17T22:44:56+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2018-11-17T22:44:56+08:00","description":"\n简介","headline":"Plotly 初步","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2018/11/17/introducing-plotly/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2018/11/17/introducing-plotly/","keywords":"Python, Data Science"}</script>
+    <meta name="description" content="简介">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Plotly 初步">
+<meta property="og:url" content="https://alanlee.fun/2018/11/17/introducing-plotly/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="简介">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/MBIZmzA.png">
+<meta property="article:published_time" content="2018-11-17T14:44:56.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.195Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Data Science">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/MBIZmzA.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Plotly 初步
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-11-17T22:44:56+08:00">
+	
+		    2018 年 11 月 17 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE"><span class="toc-text">数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%A3%E7%82%B9%E5%9B%BE-go-Scatter"><span class="toc-text">散点图 go.Scatter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%98%E7%BA%BF%E5%9B%BE-go-Scatter"><span class="toc-text">折线图 go.Scatter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A5%BC%E5%9B%BE-go-Pie"><span class="toc-text">饼图 go.Pie</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%AA%E5%90%91%E6%9F%B1%E5%BD%A2%E5%9B%BE-go-Bar"><span class="toc-text">横向柱形图 go.Bar</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%AA%E5%90%91%E5%88%86%E7%BB%84%E6%9F%B1%E5%BD%A2%E5%9B%BE-go-Bar"><span class="toc-text">横向分组柱形图 go.Bar</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%B5%E5%90%91%E6%9F%B1%E5%BD%A2%E5%9B%BE-go-Bar"><span class="toc-text">纵向柱形图 go.Bar</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Distplot-%E5%9B%BE-ff-create-distplot"><span class="toc-text">Distplot 图 ff.create_distplot</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%A2%E7%A7%AF%E5%9B%BE-go-Scatter"><span class="toc-text">面积图 go.Scatter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Violin-%E5%9B%BE-go-Violin"><span class="toc-text">Violin 图 go.Violin</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%96%E7%95%8C%E5%9C%B0%E5%9B%BE"><span class="toc-text">世界地图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><span id="more"></span>
+<p><a href="https://plot.ly">Plotly</a> 是一个用于绘制交互式图表的工具库，基于 React 和 Flask，基本功能免费，可以在 Jupyter Notebook 上进行在线或者离线绘图，支持 <a href="https://plot.ly/python/">Python</a>、MATLAB 和 R 等许多语言，其同类产品（Python 领域）是 <a href="https://bokeh.pydata.org/">bokeh</a>，但是 plotly 绘制的图表更漂亮（个人感觉），支持类型更多（比如 bokeh 原生不支持 3D 绘图，而 plotly 支持）。我也曾经写过一篇关于<a href="https://secsilm.github.io/2018/03/15/embed-bokeh-plot/">嵌入 bokeh 绘图到博客的文章</a>，但是后来还是转到了 plotly。</p>
+<p>Plotly 的绘图语法和一般的还是稍有不同，这篇博文主要就是讲下 plotly 绘图的基础。为了让例子不那么死板，我将我<a href="https://secsilm.github.io/2018/04/28/analyzing-python-survey-2017/">之前写的 Python 问卷调查分析的文章</a>（下称前文）中的图重新使用 plotly 绘制，在这个过程中来学习 plotly 绘图。</p>
+<p>一些类型一样的图我就只展示一遍，详细的完全的重置代码见<a href="https://github.com/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017-plotly-rebuild.ipynb">我的 GitHub</a> 或者 <a href="https://nbviewer.jupyter.org/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017-plotly-rebuild.ipynb">nbviewer</a>（建议使用这种方式查看，能看到图形）。</p>
+<blockquote>
+<p>自己绘图的时候建议使用 offline 模式绘图，这样不会上传到云端，除非你想分享，详见完整代码。</p>
+</blockquote>
+<h2 id="数据"><a href="#数据" class="headerlink" title="数据"></a>数据</h2><p>在开始之前先来回顾下数据是什么样的：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/MBIZmzA.png" title="data" data-caption="data" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/MBIZmzA.png" alt="data"></a><span class="caption">data</span></div>
+<p>说明我就直接引用前文中的话了：</p>
+<blockquote>
+<p>数据总大小是 9506×162，即 9506 行 162 列，上图是前 5 行，每行代表一个样本，即一个参与调查的开发者。可以看到已经将一道选择题的答案拆分成多列，这一般是用于处理多选题，例如上图中的「What other language(s) do you use?」，而单选题则不用拆分，可以直接写答案，例如上图第一列。</p>
+</blockquote>
+<h2 id="散点图-go-Scatter"><a href="#散点图-go-Scatter" class="headerlink" title="散点图 go.Scatter"></a>散点图 <code>go.Scatter</code></h2><p>此图用于说明 Python 2 和 3 在开发者们中的使用比例。</p>
+<p>我先说下 plotly 的绘图逻辑（下同）：</p>
+<ol>
+<li>定义 trace，类似于 matplotlib 中的坐标轴和图形（例如折线），只管画图</li>
+<li>定义 layout，就是布局，标题、margin 等</li>
+<li>定义 data，就是一个 trace 列表，因为可能会同时绘制多个图形，例如多条折线</li>
+<li>使用 <code>go.Figure</code> 或者 <code>go.FigureWidget</code> 绘图，传入 <code>data</code> 和 <code>layout</code> 参数。</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>)[:<span class="number">2</span>]]</span><br><span class="line"></span><br><span class="line">py2 = go.Scatter(x=frameworks_pyver.columns, y=frameworks_pyver.loc[<span class="string">&#x27;Python 2&#x27;</span>], mode=<span class="string">&#x27;markers&#x27;</span>, marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors[<span class="number">0</span>]&#125;, name=<span class="string">&#x27;Python 2&#x27;</span>)</span><br><span class="line">py3 = go.Scatter(x=frameworks_pyver.columns, y=frameworks_pyver.loc[<span class="string">&#x27;Python 3&#x27;</span>], mode=<span class="string">&#x27;markers&#x27;</span>, marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors[<span class="number">1</span>]&#125;, name=<span class="string">&#x27;Python 3&#x27;</span>)</span><br><span class="line"></span><br><span class="line">data = [py2, py3]</span><br><span class="line">layout = go.Layout(title=<span class="string">&#x27;Python 2 and Python 3 Usage among Frameworks&#x27;</span>)</span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)  <span class="comment"># 备注 1</span></span><br><span class="line">py.iplot(fig)  <span class="comment"># 备注 2</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：我是在 Jupyter Notebook（不是 Jupyter Lab，Jupyter Lab 对 plotly 的支持不太好）中绘图的，从 <a href="https://medium.com/@plotlygraphs/introducing-plotly-py-3-0-0-7bb1333f69c6">plotly 3.0.0 以来</a>，你有两种方法来在 Jupyter Notebook 中绘图：</p>
+<ul>
+<li>使用 <code>go.Figure</code>：此时需要预先使用 <code>plotly.offline.init_notebook_mode</code> 初始化，然后使用 <code>plotly.offline.iplot</code> 来绘图，也就是上面代码使用的（备注 1 和 2）。而且如果要分享或者在网站上嵌入自己绘制的图形，那么就需要使用这种方式来将图形托管在 plotly 上，然后复制嵌入代码到自己的网站，就像我现在做的这样。但是注意免费账号最多能托管 25 </li>
+<li>使用 <code>go.FigureWidget</code>：此时就不需要那些了，这是 3.0.0 的新特性，直接使用即可，即 备注 1 上面那行代码，备注 1 和 2 都可以删掉了，但是目前存在的一个问题是当绘制完关掉 notebook 后再打开，刚绘制的图就不在了</li>
+</ul>
+</blockquote>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/24.embed"></iframe>
+
+<h2 id="折线图-go-Scatter"><a href="#折线图-go-Scatter" class="headerlink" title="折线图 go.Scatter"></a>折线图 <code>go.Scatter</code></h2><p>此图用于说明开发者年龄和是否使用 Python 3 的关系。其实折线图和散点图用的是同一个函数，只不过 <code>marker</code> 不一样。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">trace = go.Scatter(x=age_pyver.index, y=age_pyver[<span class="string">&#x27;Python 3&#x27;</span>], marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors[<span class="number">0</span>]&#125;, mode=<span class="string">&#x27;lines+markers&#x27;</span>, line=&#123;<span class="string">&#x27;width&#x27;</span>: <span class="number">2</span>&#125;, name=<span class="string">&#x27;Python 3&#x27;</span>)</span><br><span class="line"></span><br><span class="line">data = [trace]</span><br><span class="line">layout = go.Layout(title=<span class="string">&quot;The developers&#x27; age VS The use ratio of Python 3&quot;</span>)</span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/38.embed"></iframe>
+
+<h2 id="饼图-go-Pie"><a href="#饼图-go-Pie" class="headerlink" title="饼图 go.Pie"></a>饼图 <code>go.Pie</code></h2><p>这个图用于展示开发者中使用 Python 2 和 Python 3 的情况。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> plotly.graph_objs <span class="keyword">as</span> go</span><br><span class="line"><span class="keyword">from</span> plotly.offline <span class="keyword">import</span> init_notebook_mode</span><br><span class="line"><span class="keyword">import</span> plotly.offline <span class="keyword">as</span> offline</span><br><span class="line"></span><br><span class="line">python_version = survey_df[<span class="string">&#x27;which version of python do you use the most?&#x27;</span>]</span><br><span class="line">counts = python_version.value_counts()</span><br><span class="line">labels = counts.index</span><br><span class="line">values = counts.values</span><br><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>)[:<span class="number">2</span>]]</span><br><span class="line"></span><br><span class="line">trace = go.Pie(labels=labels, values=values,</span><br><span class="line">               marker=&#123;</span><br><span class="line">                   <span class="string">&#x27;colors&#x27;</span>: colors</span><br><span class="line">               &#125;,</span><br><span class="line">               rotation=<span class="number">0</span>,</span><br><span class="line">               hoverinfo=<span class="string">&#x27;label+value&#x27;</span>)</span><br><span class="line">data = [trace]</span><br><span class="line">layout = &#123;</span><br><span class="line">    <span class="string">&#x27;title&#x27;</span>: <span class="string">&#x27;Python 2 VS Python 3&#x27;</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<center><iframe width="500" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/6.embed"></iframe></center>
+
+<h2 id="横向柱形图-go-Bar"><a href="#横向柱形图-go-Bar" class="headerlink" title="横向柱形图 go.Bar"></a>横向柱形图 <code>go.Bar</code></h2><p>此处用于说明使用 Python 3 和 Python 2 的开发者的国别分布。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 等同于 sns.countplot</span></span><br><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>, <span class="number">10</span>)]</span><br><span class="line"></span><br><span class="line">trace = go.Bar(x=count_countries.index[:<span class="number">10</span>], y=count_countries[:<span class="number">10</span>], marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors&#125;)</span><br><span class="line"></span><br><span class="line">data = [trace]</span><br><span class="line">layout = go.Layout(title=<span class="string">&#x27;Top 10 countries of # of the developers&#x27;</span>)</span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/44.embed"></iframe>
+
+<h2 id="横向分组柱形图-go-Bar"><a href="#横向分组柱形图-go-Bar" class="headerlink" title="横向分组柱形图 go.Bar"></a>横向分组柱形图 <code>go.Bar</code></h2><p>此图用于说明开发者人数最多的三个国家（美国、印度和中国）的开发者年龄构成。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>, <span class="number">7</span>)]</span><br><span class="line"></span><br><span class="line">data = [go.Bar(x=three_countries.index, y=three_countries[c], marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors[i]&#125;, name=c)</span><br><span class="line">        <span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="built_in">enumerate</span>(three_countries.columns)]</span><br><span class="line">layout = go.Layout(title=<span class="string">&quot;Age distribution of the developers who&#x27;re from USA, India and China&quot;</span>)</span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/42.embed"></iframe>
+
+<h2 id="纵向柱形图-go-Bar"><a href="#纵向柱形图-go-Bar" class="headerlink" title="纵向柱形图 go.Bar"></a>纵向柱形图 <code>go.Bar</code></h2><p>此图用于说明常用框架中使用 Python 2 和 Python 3 的比例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>, <span class="built_in">len</span>(count_df))]</span><br><span class="line">trace = go.Bar(y=count_df.index[::-<span class="number">1</span>], x=count_df.values[::-<span class="number">1</span>], marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors[::-<span class="number">1</span>]&#125;, orientation=<span class="string">&#x27;h&#x27;</span>)</span><br><span class="line"></span><br><span class="line">data = [trace]</span><br><span class="line">layout = go.Layout(</span><br><span class="line">    title=<span class="string">&#x27;Framework Usage&#x27;</span>,</span><br><span class="line">    margin=&#123;<span class="string">&#x27;r&#x27;</span>: <span class="number">10</span>&#125;,</span><br><span class="line">    height=<span class="number">1000</span>,</span><br><span class="line">    yaxis=&#123;<span class="string">&#x27;automargin&#x27;</span>: <span class="literal">True</span>&#125;</span><br><span class="line">)</span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="900" height="1000" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/66.embed"></iframe>
+
+<h2 id="Distplot-图-ff-create-distplot"><a href="#Distplot-图-ff-create-distplot" class="headerlink" title="Distplot 图 ff.create_distplot"></a>Distplot 图 <code>ff.create_distplot</code></h2><p>此图用于说明 Python 2 和 3 在开发者们中的使用比例，类似于 <code>sns.distplot</code>，是直方图和 <a href="https://en.wikipedia.org/wiki/Kernel_density_estimation">KDE</a> 的混合，用于展示一个单变量的分布。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> plotly.figure_factory <span class="keyword">as</span> ff</span><br><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>)[:<span class="number">2</span>]]</span><br><span class="line">fig = ff.create_distplot(hist_data=[frameworks_pyver.loc[<span class="string">&#x27;Python 2&#x27;</span>], frameworks_pyver.loc[<span class="string">&#x27;Python 3&#x27;</span>]], group_labels=[<span class="string">&#x27;Python 2&#x27;</span>, <span class="string">&#x27;Python 3&#x27;</span>], bin_size=<span class="number">0.05</span>, colors=colors)</span><br><span class="line"><span class="comment"># go.FigureWidget(fig)</span></span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/68.embed"></iframe>
+
+<h2 id="面积图-go-Scatter"><a href="#面积图-go-Scatter" class="headerlink" title="面积图 go.Scatter"></a>面积图 <code>go.Scatter</code></h2><p>此图用于说明做数据分析和机器学习的人常用的框架。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">sorted_da_ml_frameworks_uses = da_ml_frameworks_uses.sort_values(by=<span class="string">&#x27;Data analysis&#x27;</span>, axis=<span class="number">1</span>, ascending=<span class="literal">True</span>)</span><br><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>)[:<span class="number">2</span>]]</span><br><span class="line"></span><br><span class="line">da = go.Scatter(x=sorted_da_ml_frameworks_uses.columns, y=sorted_da_ml_frameworks_uses.loc[<span class="string">&#x27;Data analysis&#x27;</span>], fill=<span class="string">&#x27;tozeroy&#x27;</span>, marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors[<span class="number">0</span>]&#125;, name=<span class="string">&#x27;Python 2&#x27;</span>)</span><br><span class="line">ml = go.Scatter(x=sorted_da_ml_frameworks_uses.columns, y=sorted_da_ml_frameworks_uses.loc[<span class="string">&#x27;Machine learning&#x27;</span>], fill=<span class="string">&#x27;tozeroy&#x27;</span>, marker=&#123;<span class="string">&#x27;color&#x27;</span>: colors[<span class="number">1</span>]&#125;, name=<span class="string">&#x27;Python 3&#x27;</span>)</span><br><span class="line"></span><br><span class="line">data = [da, ml]</span><br><span class="line">layout = go.Layout(title=<span class="string">&#x27;Frameworks Usage among Data Analysis and Machine Learning Developers&#x27;</span>)</span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/32.embed"></iframe>
+
+<h2 id="Violin-图-go-Violin"><a href="#Violin-图-go-Violin" class="headerlink" title="Violin 图 go.Violin"></a>Violin 图 <code>go.Violin</code></h2><p>此图是用于说明每个国家的开发者中使用 Python 3 的比例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">colors = [rgb2hex(i) <span class="keyword">for</span> i <span class="keyword">in</span> sns.color_palette(<span class="string">&#x27;rainbow&#x27;</span>)[:<span class="number">2</span>]]</span><br><span class="line"></span><br><span class="line">trace = go.Violin(x=countries_pyver_ratio[<span class="string">&#x27;Python 3&#x27;</span>], meanline=&#123;<span class="string">&#x27;visible&#x27;</span>: <span class="literal">True</span>&#125;, box=&#123;<span class="string">&#x27;visible&#x27;</span>: <span class="literal">True</span>&#125;, fillcolor=colors[<span class="number">0</span>], opacity=<span class="number">0.6</span>, line=&#123;<span class="string">&#x27;color&#x27;</span>: <span class="string">&#x27;black&#x27;</span>&#125;)</span><br><span class="line">layout = go.Layout(title=<span class="string">&quot;Use ratio of Python 3 in the world&quot;</span>, xaxis=&#123;<span class="string">&#x27;zeroline&#x27;</span>: <span class="literal">False</span>&#125;)</span><br><span class="line"></span><br><span class="line">data = [trace]</span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/60.embed"></iframe>
+
+<h2 id="世界地图"><a href="#世界地图" class="headerlink" title="世界地图"></a>世界地图</h2><p>此图同样是用于说明每个国家的开发者中使用 Python 3 的比例，只不过是在地图上呈现。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">data = [ <span class="built_in">dict</span>(</span><br><span class="line">        <span class="built_in">type</span> = <span class="string">&#x27;choropleth&#x27;</span>,</span><br><span class="line">        locations = countries_pyver_ratio.index,</span><br><span class="line">        locationmode = <span class="string">&#x27;country names&#x27;</span>, </span><br><span class="line">        z = countries_pyver_ratio[<span class="string">&#x27;Python 3&#x27;</span>] * <span class="number">100</span>,</span><br><span class="line">        text = countries_pyver_ratio.index,</span><br><span class="line">        colorscale = <span class="string">&#x27;Bluered&#x27;</span>,</span><br><span class="line">        autocolorscale = <span class="literal">False</span>,</span><br><span class="line">        reversescale = <span class="literal">True</span>,</span><br><span class="line">        marker = <span class="built_in">dict</span>(</span><br><span class="line">            line = <span class="built_in">dict</span> (</span><br><span class="line">                color = <span class="string">&#x27;rgb(180,180,180)&#x27;</span>,</span><br><span class="line">                width = <span class="number">0.5</span></span><br><span class="line">            ) ),</span><br><span class="line">        colorbar = <span class="built_in">dict</span>(</span><br><span class="line"><span class="comment">#             autotick = False,</span></span><br><span class="line">            ticksuffix = <span class="string">&#x27;%&#x27;</span>,</span><br><span class="line">            title = <span class="string">&#x27;Percent&#x27;</span>),</span><br><span class="line">      ) ]</span><br><span class="line"></span><br><span class="line">layout = <span class="built_in">dict</span>(</span><br><span class="line">    title = <span class="string">&#x27;Python 3 in the world&#x27;</span>,</span><br><span class="line">    geo = <span class="built_in">dict</span>(</span><br><span class="line">        showframe = <span class="literal">False</span>,</span><br><span class="line">        showcoastlines = <span class="literal">False</span>,</span><br><span class="line">        projection = <span class="built_in">dict</span>(</span><br><span class="line">            <span class="built_in">type</span> = <span class="string">&#x27;equirectangular&#x27;</span></span><br><span class="line">        ),</span><br><span class="line">    )</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># fig = go.Figure()</span></span><br><span class="line"><span class="comment"># go.FigureWidget(data=data, layout=layout)</span></span><br><span class="line">fig = go.Figure(data=data, layout=layout)</span><br><span class="line">py.iplot(fig)</span><br></pre></td></tr></table></figure>
+<iframe width="800" height="500" frameborder="0" scrolling="no" src="//plot.ly/~bluekirin93/62.embed"></iframe>
+
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><p>以上只是我在前文中涉及到的图形的 plotly 重绘，其实还有其他图形没有涉及，例如 3D 散点图（这也是我放弃 bokeh 的原因）。此外除了在 Jupyter Notebook 上绘图外，plotly 还有一个用于构建数据分析 Web 应用的 Python 框架：<a href="https://plot.ly/products/dash/">Dash</a>，基于 Plotly.js、React 和 Flask，接下来我会在此基础上讲一下如何使用 Dash 来构建这样一个 Web 应用。</p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Data-Science/" rel="tag">Data Science</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/01/13/neteasemusic-year-report-2018/"
+                    data-tooltip="我的网易云音乐 2018 年度听歌报告"
+                    aria-label="上一篇: 我的网易云音乐 2018 年度听歌报告"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    data-tooltip="使用 TensorFlow Estimators 进行文本分类"
+                    aria-label="下一篇: 使用 TensorFlow Estimators 进行文本分类"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/01/13/neteasemusic-year-report-2018/"
+                    data-tooltip="我的网易云音乐 2018 年度听歌报告"
+                    aria-label="上一篇: 我的网易云音乐 2018 年度听歌报告"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    data-tooltip="使用 TensorFlow Estimators 进行文本分类"
+                    aria-label="下一篇: 使用 TensorFlow Estimators 进行文本分类"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/11/17/introducing-plotly/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2018/11/17/introducing-plotly/';
+              
+            this.page.identifier = '2018/11/17/introducing-plotly/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

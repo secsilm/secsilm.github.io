@@ -1,0 +1,478 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>归档: 2017/8 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{}</script>
+    <meta name="description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Alan Lee">
+<meta property="og:url" content="https://alanlee.fun/archives/2017/08/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="hexo">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="tensorflow">
+<meta property="article:tag" content="pytorch">
+<meta property="article:tag" content="nlp">
+<meta property="article:tag" content="natural language processing">
+<meta property="article:tag" content="deep learning">
+<meta property="article:tag" content="machine learning">
+<meta property="article:tag" content="large language models">
+<meta property="article:tag" content="llms">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="1">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="1">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="1"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+    <section class="postShorten-group main-content-wrap">
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/08/30/ensemble-methods/"
+                            aria-label=": 使用集成学习提升机器学习算法性能"
+                        >
+                            使用集成学习提升机器学习算法性能
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-08-30T18:47:00+08:00">
+	
+		    2017 年 8 月 30 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <blockquote>
+<p>译者注：这篇文章是对 PythonWeekly 推荐的一篇讲集成模型的文章的翻译，原文为 <a href="https://blog.statsbot.co/ensemble-learning-d1dcd548e936">Ensemble Learning to Improve Machine Learning Results</a>，由 Vadim Smolyakov 于 2017 年 8 月 22 日发表在 Medium 上，Vadim Smolyakov 是一名 MIT 的研究生。水平有限，如有错误，欢迎评论区或者邮件或者私信指出。建议阅读英文原文。</p>
+</blockquote>
+                    
+                        <a
+                            href="/2017/08/30/ensemble-methods/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 使用集成学习提升机器学习算法性能"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/08/20/understanding-tensorboard/"
+                            aria-label=": 理解 TensorBoard"
+                        >
+                            理解 TensorBoard
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-08-20T10:01:00+08:00">
+	
+		    2017 年 8 月 20 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p><a href="https://www.tensorflow.org/get_started/summaries_and_tensorboard">TensorBoard</a> 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 <a href="https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/">【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版</a> 和 <a href="https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/">【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集</a> 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 <a href="https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/">前者</a> 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小弟不才，如有错误，欢迎评论区指出。</p>
+                    
+                        <a
+                            href="/2017/08/20/understanding-tensorboard/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 理解 TensorBoard"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    <div class="pagination-bar">
+    <ul class="pagination">
+        
+        
+        <li class="pagination-number">第 1 页 共 1 页</li>
+    </ul>
+</div>
+
+</section>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

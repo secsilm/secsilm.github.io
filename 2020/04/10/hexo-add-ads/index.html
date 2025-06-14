@@ -1,0 +1,735 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Hexo 博客添加 Google Adsense ads.txt - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：\n\n那么什么是 adx.txt 呢？\n根据 Google 官方的描述：\n\n授权数字卖家 (ads.txt) 是一项 IAB Tech Lab 计划，有助于确保只通过您认定的授权卖家（如 AdSense）销售您的数字广告资源。创建自己的 ads.txt 文件后，您可以更好地掌控允许谁在您的网站上销售广告，并可防止向广告客户展示仿冒广告资源。我们强烈建议您使用 ads.txt 文件。它可以帮助买家识别仿冒广告资源，并可以帮助您获得更多广告客户支出，而这些支出原本可能会流向仿冒广告资源。\n\n这个文件内容形式如下：\n1google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n你不必太担心这个文件的内容，因为 Google 会帮你生成好，你下载即可。此外这个文件必须上传到网站根目录，就是说这个文件必须能够通过 your-website.com/ads.txt 访问到，其中 your-website.com 是你的主域名。\n那么对于基于 GitHub Page 的 hexo 博客，如何添加呢？\nhexo 的部署模式在此之前，我们先来看下 hexo 是如何部署博客的。\n假设 hexo 的根目录是 /hexo。\n我们在使用 hexo d -g 来部署博客时，会将 /hexo/source/ 下的 markdown 文件渲染成 html 页面，这个目录下可能会包括 _posts 目录（存放博文 md）、404.md、CNAME、about 目录（关于页面）。然后根据日期放入不同的目录中，最终这些文件就都在 /hexo/.deploy_git 目录中（假设你使用 git 部署）。\n然后 hexo 便会执行一系列 git 操作来将刚才生成的文件上传到你的 GitHub 仓库中。至此部署完成。\n添加 ads.txt那么了解了部署模式，我们很容易得出结论：直接将 ads.txt 放入 /hexo/soruce/ 目录下。\n对，方法就是这么简单，但是如果第一次搞很可能不清楚怎么弄，甚至误入歧途，例如，我在搜索解决方案的时候，看到一篇博客是这么写的：\n\n竟然说直接在 repo 里手动上传，这一听都不太靠谱。\n还有的说放在根目录的 public 目录下面。。。殊不知 public 目录是不会上传的，这点已经在 hexo 文档上写明了，而且从 .gitignore 中也可以看出来：\n\nThe public/ folder is not (and should not be) uploaded by default, make sure the .gitignore file contains public/ line.\n\nReference\nads.txt 指南 - AdSense帮助\nGitHub Pages | Hexo\n\nEND","dateCreated":"2020-04-10T09:59:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-04-10T09:59:00+08:00","description":"\n申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：","headline":"Hexo 博客添加 Google Adsense ads.txt","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/04/10/hexo-add-ads/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/04/10/hexo-add-ads/","keywords":"hexo"}</script>
+    <meta name="description" content="申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Hexo 博客添加 Google Adsense ads.txt">
+<meta property="og:url" content="https://alanlee.fun/2020/04/10/hexo-add-ads/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="申请完 Google Adsense 后，需要将一段代码和一个 ads.txt 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://alanlee.fun/2020/04/10/hexo-add-ads/add-adstxt.png">
+<meta property="og:image" content="https://alanlee.fun/2020/04/10/hexo-add-ads/error-solution.png">
+<meta property="article:published_time" content="2020-04-10T01:59:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.194Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="hexo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://alanlee.fun/2020/04/10/hexo-add-ads/add-adstxt.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Hexo 博客添加 Google Adsense ads.txt
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-04-10T09:59:00+08:00">
+	
+		    2020 年 4 月 10 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#hexo-%E7%9A%84%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%BC%8F"><span class="toc-text">hexo 的部署模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0-ads-txt"><span class="toc-text">添加 ads.txt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>申请完 Google Adsense 后，需要将一段代码和一个 <code>ads.txt</code> 文件加入到博客中。前者比较好实现，按照官方教程进行即可。如果不添加后者，你的网站仍然可以展示广告，但是会收到如下警告：<br><span id="more"></span></p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/04/10/sOaN86oBcjlTf9C.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="add-adstxt.png" alt=""></a></div>
+<p>那么什么是 <code>adx.txt</code> 呢？</p>
+<p>根据 <a href="https://support.google.com/adsense/answer/7532444?hl=zh-Hans">Google 官方的描述</a>：</p>
+<blockquote>
+<p><a href="https://iabtechlab.com/ads-txt/">授权数字卖家 (ads.txt)</a> 是一项 IAB Tech Lab 计划，有助于确保只通过您认定的授权卖家（如 AdSense）销售您的数字广告资源。创建自己的 ads.txt 文件后，您可以更好地掌控允许谁在您的网站上销售广告，并可防止向广告客户展示仿冒广告资源。我们强烈建议您使用 ads.txt 文件。它可以帮助买家识别仿冒广告资源，并可以帮助您获得更多广告客户支出，而这些支出原本可能会流向仿冒广告资源。</p>
+</blockquote>
+<p>这个文件内容形式如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0</span><br></pre></td></tr></table></figure>
+<p>你不必太担心这个文件的内容，因为 Google 会帮你生成好，你下载即可。此外这个文件必须上传到网站根目录，就是说这个文件必须能够通过 <code>your-website.com/ads.txt</code> 访问到，其中 <code>your-website.com</code> 是你的主域名。</p>
+<p>那么对于基于 GitHub Page 的 hexo 博客，如何添加呢？</p>
+<h2 id="hexo-的部署模式"><a href="#hexo-的部署模式" class="headerlink" title="hexo 的部署模式"></a>hexo 的部署模式</h2><p>在此之前，我们先来看下 hexo 是如何部署博客的。</p>
+<p>假设 hexo 的根目录是 <code>/hexo</code>。</p>
+<p>我们在使用 <code>hexo d -g</code> 来部署博客时，会将 <code>/hexo/source/</code> 下的 markdown 文件渲染成 html 页面，这个目录下可能会包括 <code>_posts</code> 目录（存放博文 md）、<code>404.md</code>、<code>CNAME</code>、<code>about</code> 目录（关于页面）。然后根据日期放入不同的目录中，最终这些文件就都在 <code>/hexo/.deploy_git</code> 目录中（假设你使用 git 部署）。</p>
+<p>然后 hexo 便会执行一系列 git 操作来将刚才生成的文件上传到你的 GitHub 仓库中。至此部署完成。</p>
+<h2 id="添加-ads-txt"><a href="#添加-ads-txt" class="headerlink" title="添加 ads.txt"></a>添加 ads.txt</h2><p>那么了解了部署模式，我们很容易得出结论：<strong>直接将 <code>ads.txt</code> 放入 <code>/hexo/soruce/</code> 目录下</strong>。</p>
+<p>对，方法就是这么简单，但是如果第一次搞很可能不清楚怎么弄，甚至误入歧途，例如，我在搜索解决方案的时候，看到一篇博客是这么写的：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/04/10/Ejqgdim97UTb8sA.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="error-solution.png" alt=""></a></div>
+<p>竟然说直接在 repo 里手动上传，这一听都不太靠谱。</p>
+<p>还有的说放在根目录的 <code>public</code> 目录下面。。。殊不知 <code>public</code> 目录是不会上传的，这点已经在 hexo 文档上写明了，而且从 <code>.gitignore</code> 中也可以看出来：</p>
+<blockquote>
+<p>The <code>public/</code> folder is not (and should not be) uploaded by default, make sure the <code>.gitignore</code> file contains <code>public/</code> line.</p>
+</blockquote>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://support.google.com/adsense/answer/7532444?hl=zh-Hans">ads.txt 指南 - AdSense帮助</a></li>
+<li><a href="https://hexo.io/docs/github-pages">GitHub Pages | Hexo</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/hexo/" rel="tag">hexo</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/08/bert-model/"
+                    data-tooltip="BERT 是如何构建模型的"
+                    aria-label="上一篇: BERT 是如何构建模型的"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/08/changes/"
+                    data-tooltip="博文变动记录"
+                    aria-label="下一篇: 博文变动记录"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/08/bert-model/"
+                    data-tooltip="BERT 是如何构建模型的"
+                    aria-label="上一篇: BERT 是如何构建模型的"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/08/changes/"
+                    data-tooltip="博文变动记录"
+                    aria-label="下一篇: 博文变动记录"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/04/10/hexo-add-ads/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/04/10/hexo-add-ads/';
+              
+            this.page.identifier = '2020/04/10/hexo-add-ads/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

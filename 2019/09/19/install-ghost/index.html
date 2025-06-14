@@ -1,0 +1,754 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Ghost 博客平台安装和配置 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n安装安装过程主要参考官方教程，下面我总结下：\n\n在系统上创建一个新用户。一般安装 Ghost 会使用一个新用户，当然这也不是必须的。创建用户可以使用 useradd 和 adduser 命令，然后使用 usermod 命令将其加到 sudo 组里，最后使用新用户登录系统。命令详细使用方法可参考其文档，假设我们创建的用户叫 price\n更新系统，安装 NGINX、MySQL、Node.js 和 Ghost-CLI\n 123456789101112131415161718sudo apt update# 安装 NGINX、MySQL# 安装 MySQL 时会弹出窗口让输入 MySQL 用户名和密码# 用户名默认 root，密码自己设置，安装 Ghost 时会用到# 如果你的系统是 18.04，那么需要额外的一些步骤# 参考 https://ghost.org/docs/install/ubuntu/#mysql-on-ubuntu-1804sudo apt install nginx mysql-server# 配置防火墙sudo ufw allow &#x27;Nginx Full&#x27;# 安装 Node.jscurl -sL https://deb.nodesource.com/setup_10.x | sudo -E bashsudo apt install nodejs# 安装 Ghost-CLIsudo npm install ghost-cli@latest -g\n\n创建安装目录，配置目录权限，安装 Ghost\n 12345678# 创建并配置目录sudo mkdir -p /var/www/ghostsudo chown price:price /var/www/ghostsudo chmod 775 /var/www/ghostcd /var/www/ghost# 安装 Ghostghost install\n\n在 ghost install 命令执行之后，首先会下载安装 ghost，然后会让你一项一项的配置 ghost，主要有一下几项：\n\n博客地址：例如 https://example.com，带上 http 或者 https，如果使用 https， Ghost 会自动帮你设置。使用 IP 地址会报错，但是这个具体怎么报错不清楚，还没遇到过，还是推荐先自己买个域名\nMySQL hostname：如果 Ghost 和 MySQL 在一个服务器上的话，这一项默认 localhost  即可\nMySQL 用户名密码：前面安装 MySQL 的时候你设置的用户名密码\nGhost 数据库名：默认即可\n是否设置一个 Ghost MySQL 用户：默认是，前提是你前面提供的 MySQL 用户是 root 用户\n是否设置 NGINX：默认是\n是否设置 SSL：如果你前面提供的博客地址是 https，那么就选是，Ghost 会自动帮你用 Let’s Encrypt 设置 SSL。你也可以之后手动执行 ghost setup ssl 来设置\n你的邮箱：输入你的邮箱地址，万一你的证书有问题（比如到期了），Let’s Encrypt 就会通知你，这个是和上面的 SSL 相关的\n是否设置 systemd：默认是\n是否启动 Ghost：默认是\n\n\n\n至此，安装工作全部完成，顺利的话就可以输入你的博客地址进入博客了，也可以使用 ghost ls 来查看你的博客是否在运行。\n配置Ghost 安装好启动后，就可以输入你的博客地址进入博客了，在你的博客地址后加上 /ghost 进入博客后台页面。第一次进入需要先创建一个新作者（用户），然后就可以进行编辑发表文章了。Ghost 后台里面有很多项可以配置，下面我说下如何实现一些常用的功能。\n代码高亮代码高亮可以使用 Prism JS 库和 Ghost 的 Code injection 来实现，后者中的代码会加入到每个页面中。\n具体做法是将 Prism 的 js（实现代码高亮） 和 css（主题） 地址分别插入到 Code injection 中的 foorter 和 header 中。地址可以使用 Cloudflare 提供的 CDN 地址。\n对于 js 来说，需要至少两个：一个核心 js 和 N 个特定语言相关的 js。如果你只需要 Python 语法高亮，那么只用添加 Python 的 js 即可。首先将核心 js 放在最上面，然后依次放入你需要的语言的 js，例如我想要实现 bash 和 Python 的语法高亮，那么在 footer 中内容如下：\n123&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/prism.min.js&quot; integrity=&quot;sha256-NFZVyNmS1YlmiklazBA+TALYJlJtZj/y/i/oADk6CVE=&quot; crossorigin=&quot;anonymous&quot;&gt;&lt;/script&gt;&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-bash.min.js&quot; integrity=&quot;sha256-0W9ddRPtgrjvZVUxGhU/ShLxFi3WGNV2T7A7bBTuDWo=&quot; crossorigin=&quot;anonymous&quot;&gt;&lt;/script&gt;&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-python.min.js&quot; integrity=&quot;sha256-zXSwQE9cCZ8HHjjOoy6sDGyl5/3i2VFAxU8XxJWfhC0=&quot; crossorigin=&quot;anonymous&quot;&gt;&lt;/script&gt;\n对于 css 来说，指定了背景主题。Prism 提供 8 种主题，为了能够直观看到每个主题的样子，我汇总起来做了一个图如下，你可以选择你想要的放入 header 即可：主题预览例如：\n1&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/themes/prism-tomorrow.min.css&quot; integrity=&quot;sha256-xevuwyBEb2ZYh4nDhj0g3Z/rDBnM569hg9Vq6gEw/Sg=&quot; crossorigin=&quot;anonymous&quot; /&gt;\n123456import numpy as npimport pandas as pd# numpy 随机数a = np.random.rand(5, 4)df = pd.DataFrame(a, columns=list(&#x27;ABCD&#x27;))\n数学公式数学公式一般使用 MathJax 来渲染，同样将如下代码放入 Code injection 即可：\n1&lt;script src=&#x27;https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML&#x27; async&gt;&lt;/script&gt;\n这样会自动时刻保持最新版本。\nE = mc^2加密博客站点实际上是为博客设置一个密码，只能输入密码访问，并且会取消一切 SEO 优化。在 SETTINGS -&gt; General -&gt; ADVANCED SETTINGS 处启用 Make this site private  即可。\n邮箱配置邮箱配置较长，放在了一篇单独博文中，参见使用 Mailgun 配置 Ghost 邮箱一文。\nReference\nAdding code highlighting to Ghost blog\nPrism\nHow to Add Syntax Highlighting to Ghost | Biron Themes\nprism - cdnjs.com - The best FOSS CDN for web related libraries to speed up your websites!\nMathJax | Beautiful math in all browsers.\n\nEND","dateCreated":"2019-09-19T07:17:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2019-09-19T07:17:00+08:00","description":"Ghost 是一个博客发布平台，和 Hexo 等类似。本文简要介绍如何安装和配置 Ghost，环境为 Ubuntu 16.04 系统上，假设你已经拥有一个服务器和一个域名。","headline":"Ghost 博客平台安装和配置","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2019/09/19/install-ghost/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2019/09/19/install-ghost/","keywords":"Ghost"}</script>
+    <meta name="description" content="Ghost 是一个博客发布平台，和 Hexo 等类似。本文简要介绍如何安装和配置 Ghost，环境为 Ubuntu 16.04 系统上，假设你已经拥有一个服务器和一个域名。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Ghost 博客平台安装和配置">
+<meta property="og:url" content="https://alanlee.fun/2019/09/19/install-ghost/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Ghost 是一个博客发布平台，和 Hexo 等类似。本文简要介绍如何安装和配置 Ghost，环境为 Ubuntu 16.04 系统上，假设你已经拥有一个服务器和一个域名。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2019/09/20/XpGoEDWAUyQHgCw.png">
+<meta property="og:image" content="https://i.loli.net/2019/09/20/z4LWEVjhd69bcQY.png">
+<meta property="article:published_time" content="2019-09-18T23:17:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.194Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Ghost">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2019/09/20/XpGoEDWAUyQHgCw.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Ghost 博客平台安装和配置
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-09-19T07:17:00+08:00">
+	
+		    2019 年 9 月 19 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85"><span class="toc-text">安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE"><span class="toc-text">配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E9%AB%98%E4%BA%AE"><span class="toc-text">代码高亮</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E5%AD%A6%E5%85%AC%E5%BC%8F"><span class="toc-text">数学公式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86%E5%8D%9A%E5%AE%A2%E7%AB%99%E7%82%B9"><span class="toc-text">加密博客站点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%82%AE%E7%AE%B1%E9%85%8D%E7%BD%AE"><span class="toc-text">邮箱配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>安装过程主要参考<a href="https://ghost.org/docs/install/ubuntu/">官方教程</a>，下面我总结下：</p>
+<ol>
+<li>在系统上创建一个新用户。一般安装 Ghost 会使用一个新用户，当然这也不是必须的。创建用户可以使用 <code>useradd</code> 和 <code>adduser</code> 命令，然后使用 <code>usermod</code> 命令将其加到 <code>sudo</code> 组里，最后使用新用户登录系统。命令详细使用方法可参考其文档，假设我们创建的用户叫 <code>price</code></li>
+<li><p>更新系统，安装 NGINX、MySQL、Node.js 和 Ghost-CLI</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 NGINX、MySQL</span></span><br><span class="line"><span class="comment"># 安装 MySQL 时会弹出窗口让输入 MySQL 用户名和密码</span></span><br><span class="line"><span class="comment"># 用户名默认 root，密码自己设置，安装 Ghost 时会用到</span></span><br><span class="line"><span class="comment"># 如果你的系统是 18.04，那么需要额外的一些步骤</span></span><br><span class="line"><span class="comment"># 参考 https://ghost.org/docs/install/ubuntu/#mysql-on-ubuntu-1804</span></span><br><span class="line">sudo apt install nginx mysql-server</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置防火墙</span></span><br><span class="line">sudo ufw allow <span class="string">&#x27;Nginx Full&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 Node.js</span></span><br><span class="line">curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash</span><br><span class="line">sudo apt install nodejs</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 Ghost-CLI</span></span><br><span class="line">sudo npm install ghost-cli@latest -g</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建安装目录，配置目录权限，安装 Ghost</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建并配置目录</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> -p /var/www/ghost</span><br><span class="line">sudo <span class="built_in">chown</span> price:price /var/www/ghost</span><br><span class="line">sudo <span class="built_in">chmod</span> 775 /var/www/ghost</span><br><span class="line"><span class="built_in">cd</span> /var/www/ghost</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 Ghost</span></span><br><span class="line">ghost install</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在 <code>ghost install</code> 命令执行之后，首先会下载安装 ghost，然后会让你一项一项的配置 ghost，主要有一下几项：</p>
+<ul>
+<li>博客地址：例如 <code>https://example.com</code>，带上 http 或者 https，如果使用 https， Ghost 会自动帮你设置。使用 IP 地址会报错，但是这个具体怎么报错不清楚，还没遇到过，还是推荐先自己买个域名</li>
+<li>MySQL hostname：如果 Ghost 和 MySQL 在一个服务器上的话，这一项默认 <code>localhost</code>  即可</li>
+<li>MySQL 用户名密码：前面安装 MySQL 的时候你设置的用户名密码</li>
+<li>Ghost 数据库名：默认即可</li>
+<li>是否设置一个 Ghost MySQL 用户：默认是，前提是你前面提供的 MySQL 用户是 root 用户</li>
+<li>是否设置 NGINX：默认是</li>
+<li>是否设置 SSL：如果你前面提供的博客地址是 <code>https</code>，那么就选是，Ghost 会自动帮你用 <a href="https://letsencrypt.org/">Let’s Encrypt</a> 设置 SSL。你也可以之后手动执行 <code>ghost setup ssl</code> 来设置</li>
+<li>你的邮箱：输入你的邮箱地址，万一你的证书有问题（比如到期了），Let’s Encrypt 就会通知你，这个是和上面的 SSL 相关的</li>
+<li>是否设置 systemd：默认是</li>
+<li>是否启动 Ghost：默认是</li>
+</ul>
+</li>
+</ol>
+<p>至此，安装工作全部完成，顺利的话就可以输入你的博客地址进入博客了，也可以使用 <code>ghost ls</code> 来查看你的博客是否在运行。</p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>Ghost 安装好启动后，就可以输入你的博客地址进入博客了，在你的博客地址后加上 <code>/ghost</code> 进入博客后台页面。第一次进入需要先创建一个新作者（用户），然后就可以进行编辑发表文章了。<br><div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2019/09/20/XpGoEDWAUyQHgCw.png" title="Ghost 后台" data-caption="Ghost 后台" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2019/09/20/XpGoEDWAUyQHgCw.png" alt="Ghost 后台"></a><span class="caption">Ghost 后台</span></div><br>里面有很多项可以配置，下面我说下如何实现一些常用的功能。</p>
+<h3 id="代码高亮"><a href="#代码高亮" class="headerlink" title="代码高亮"></a>代码高亮</h3><p>代码高亮可以使用 <a href="https://prismjs.com/">Prism</a> JS 库和 Ghost 的 Code injection 来实现，后者中的代码会加入到每个页面中。</p>
+<p>具体做法是将 Prism 的 js（实现代码高亮） 和 css（主题） 地址分别插入到 Code injection 中的 foorter 和 header 中。地址可以使用 Cloudflare 提供的 <a href="https://cdnjs.com/libraries/prism">CDN 地址</a>。</p>
+<p>对于 js 来说，需要至少两个：一个核心 js 和 N 个特定语言相关的 js。如果你只需要 Python 语法高亮，那么只用添加 Python 的 js 即可。首先将核心 js 放在最上面，然后依次放入你需要的语言的 js，例如我想要实现 bash 和 Python 的语法高亮，那么在 footer 中内容如下：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/prism.min.js&quot;</span> <span class="attr">integrity</span>=<span class="string">&quot;sha256-NFZVyNmS1YlmiklazBA+TALYJlJtZj/y/i/oADk6CVE=&quot;</span> <span class="attr">crossorigin</span>=<span class="string">&quot;anonymous&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-bash.min.js&quot;</span> <span class="attr">integrity</span>=<span class="string">&quot;sha256-0W9ddRPtgrjvZVUxGhU/ShLxFi3WGNV2T7A7bBTuDWo=&quot;</span> <span class="attr">crossorigin</span>=<span class="string">&quot;anonymous&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-python.min.js&quot;</span> <span class="attr">integrity</span>=<span class="string">&quot;sha256-zXSwQE9cCZ8HHjjOoy6sDGyl5/3i2VFAxU8XxJWfhC0=&quot;</span> <span class="attr">crossorigin</span>=<span class="string">&quot;anonymous&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>对于 css 来说，指定了背景主题。Prism 提供 8 种主题，为了能够直观看到每个主题的样子，我汇总起来做了一个图如下，你可以选择你想要的放入 header 即可：<br><div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2019/09/20/z4LWEVjhd69bcQY.png" title="主题预览" data-caption="主题预览" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2019/09/20/z4LWEVjhd69bcQY.png" alt="主题预览"></a><span class="caption">主题预览</span></div><br>例如：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;stylesheet&quot;</span> <span class="attr">href</span>=<span class="string">&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/themes/prism-tomorrow.min.css&quot;</span> <span class="attr">integrity</span>=<span class="string">&quot;sha256-xevuwyBEb2ZYh4nDhj0g3Z/rDBnM569hg9Vq6gEw/Sg=&quot;</span> <span class="attr">crossorigin</span>=<span class="string">&quot;anonymous&quot;</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"></span><br><span class="line"><span class="comment"># numpy 随机数</span></span><br><span class="line">a = np.random.rand(<span class="number">5</span>, <span class="number">4</span>)</span><br><span class="line">df = pd.DataFrame(a, columns=<span class="built_in">list</span>(<span class="string">&#x27;ABCD&#x27;</span>))</span><br></pre></td></tr></table></figure>
+<h3 id="数学公式"><a href="#数学公式" class="headerlink" title="数学公式"></a>数学公式</h3><p>数学公式一般使用 <a href="https://www.mathjax.org/">MathJax</a> 来渲染，同样将如下代码放入 Code injection 即可：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&#x27;https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML&#x27;</span> <span class="attr">async</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>这样会自动时刻保持最新版本。</p>
+<script type="math/tex; mode=display">E = mc^2</script><h3 id="加密博客站点"><a href="#加密博客站点" class="headerlink" title="加密博客站点"></a>加密博客站点</h3><p>实际上是为博客设置一个密码，只能输入密码访问，并且会取消一切 SEO 优化。在 <code>SETTINGS -&gt; General -&gt; ADVANCED SETTINGS</code> 处启用 <code>Make this site private</code>  即可。</p>
+<h3 id="邮箱配置"><a href="#邮箱配置" class="headerlink" title="邮箱配置"></a>邮箱配置</h3><p>邮箱配置较长，放在了一篇单独博文中，参见<a href="/2019/09/20/config-ghost-mail-with-mailgun/">使用 Mailgun 配置 Ghost 邮箱</a>一文。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://www.grzegorowski.com/adding-code-highlighting-to-ghost-blog">Adding code highlighting to Ghost blog</a></li>
+<li><a href="https://prismjs.com/#basic-usage">Prism</a></li>
+<li><a href="https://bironthemes.com/blog/how-to-add-syntax-highlighting-to-ghost/">How to Add Syntax Highlighting to Ghost | Biron Themes</a></li>
+<li><a href="https://cdnjs.com/libraries/prism">prism - cdnjs.com - The best FOSS CDN for web related libraries to speed up your websites!</a></li>
+<li><a href="https://www.mathjax.org/#gettingstarted">MathJax | Beautiful math in all browsers.</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Ghost/" rel="tag">Ghost</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/16/bert-tokenizer/"
+                    data-tooltip="BERT 是如何分词的"
+                    aria-label="上一篇: BERT 是如何分词的"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/08/09/sklearn-tfidf/"
+                    data-tooltip="sklearn 如何计算 TFIDF"
+                    aria-label="下一篇: sklearn 如何计算 TFIDF"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/09/19/install-ghost/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/09/19/install-ghost/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/09/19/install-ghost/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/16/bert-tokenizer/"
+                    data-tooltip="BERT 是如何分词的"
+                    aria-label="上一篇: BERT 是如何分词的"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/08/09/sklearn-tfidf/"
+                    data-tooltip="sklearn 如何计算 TFIDF"
+                    aria-label="下一篇: sklearn 如何计算 TFIDF"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/09/19/install-ghost/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/09/19/install-ghost/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/09/19/install-ghost/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/09/19/install-ghost/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/09/19/install-ghost/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/09/19/install-ghost/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2019/09/19/install-ghost/';
+              
+            this.page.identifier = '2019/09/19/install-ghost/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

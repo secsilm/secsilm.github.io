@@ -1,0 +1,771 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>在 Ubuntu 上使用 SSR 梯子 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n引言过去两年左右我基本上都是使用 SS 梯子，Windows 上的客户端使用的就是 shadowsocks，Ubuntu 上使用 shadowsocks-qt5。然而最近换成了 SSR（也就是俗称的酸酸乳，shadowsocksr），SS 和 SSR 这其中的爱恨纠葛我就不再赘述，有兴趣的可自行百度或者 Google。Windows 上仍然有好用的客户端 shadowsocksr，但是 Ubuntu 上一直没有找到合适的好用的客户端。由于最近没有再使用 Ubuntu，这个问题也一直悬而未决，直到这几天重新试图去解决这个旧问题，终于有所突破了，特记录下来以备后查。\n本文主要有两种方法：\n\n方法 1：该方法是基于命令行的，主要参考 我在ubuntu18.04使用ssr的过程 一文，方法大同小异，基本是一样的，主要有以下几个步骤：\n\n下载并安装 SSR 客户端\n配置服务器信息\n启动 SSR\n\n\n方法 2：使用 electron-ssr 客户端\n\n\n方法 1下载并安装 SSR 客户端下载和安装客户端（一个 shell 脚本）主要有以下几步：\n\n下载 SSR：wget http://www.texfox.com/ssr\n将其加到 $PATH 环境变量里（不必和我一样的目录，只要保证 SSR 文件能在 PATH 里找到即可）：sudo mv ssr /usr/local/bin\n加入可执行权限：sudo chmod 766 /usr/local/bin/ssr\n安装：ssr install\n\n为了防止各种原因在第一步的时候下载不到文件，我自己备份了一份，你可以点击这里下载。\n配置服务器信息安装完成后，按道理直接使用\n1ssr config\n即可完成配置，但是在我这里却报错了：\n\n12No protocol specifiedUnable to init server: 无法连接： 拒绝连接\n这一步实际上就是配置服务器信息，所以既然这样不行，那我就直接找到修改对应的配置文件。这个配置文件的路径是 /usr/local/share/shadowsocksr/config.json，我们可以手动打开并将自己的服务器信息添加进去即可。\n\n启动 SSR这一步很简单，直接执行下面的命令就可以了：\n1ssr start\n停止和查看帮助：\n12ssr stopssr help\n然后你就可以打开浏览器上网了。Firefox 浏览器需要在「首选项 → 常规 → 网络代理设置 → 设置」中选择「手动代理配置」，然后填入你的本地监听地址和端口，以及选择 SOCKS5：\n\n至于 Chrome，网上很多人都说需要使用 SwitchyOmega 插件，但是我直接打开浏览器就能上外网，所以并没有使用该插件，如果你上不了网的话可以将在 Firefox 中配置的信息在系统设置中配置一下。\n方法 2方法 1 没有使用图形化界面，erguotou520 做了一个界面：electron-ssr，方法 2 就是使用这个软件来使用代理，和 Windows 下的客户端很相似，使用过程也基本一样。\n首先在这里下载最新的 deb 安装包，例如我下载的是 electron-ssr_0.2.3_amd64.deb，然后使用下面的命令安装：\n1sudo dpkg -i electron-ssr_0.2.3_amd64.deb\n完成后打开该软件，如果你有订阅地址的话就可以很方便的添加服务器信息了，直接复制订阅地址然后更新就行了：\n\n剩下的就和 Windows 版的一样了，系统代理模式、更新 PAC、添加服务器、扫描二维码和开机自启等都有，如果想要在终端中使用代理，那么在配置中选中 http 代理：\n\n然后在终端中执行下面命令即可，其中的端口就是上图中的端口：\n1export http_proxy=&quot;http://127.0.0.1:12333&quot;\n然后可以使用 curl www.google.com 来测试是否成功使用代理。\nReferences\n我在ubuntu18.04使用ssr的过程 - CSDN博客\n\nEND","dateCreated":"2018-05-18T17:37:06+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2018-05-18T17:37:06+08:00","description":"两种方法上梯子。","headline":"在 Ubuntu 上使用 SSR 梯子","image":[null,"https://i.imgur.com/UyN5NWT.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2018/05/18/ubuntu-ssr/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2018/05/18/ubuntu-ssr/","keywords":"Ubuntu","thumbnailUrl":"https://i.imgur.com/UyN5NWT.jpg"}</script>
+    <meta name="description" content="两种方法上梯子。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="在 Ubuntu 上使用 SSR 梯子">
+<meta property="og:url" content="https://alanlee.fun/2018/05/18/ubuntu-ssr/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="两种方法上梯子。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/qK7IXJQ.jpg">
+<meta property="og:image" content="https://i.imgur.com/pXHD6Fu.jpg">
+<meta property="og:image" content="https://i.imgur.com/swAwhON.jpg">
+<meta property="og:image" content="https://i.imgur.com/hpzcLbt.jpg">
+<meta property="og:image" content="https://i.imgur.com/kzGCihK.jpg">
+<meta property="article:published_time" content="2018-05-18T09:37:06.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.200Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Ubuntu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/qK7IXJQ.jpg">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://i.imgur.com/UyN5NWT.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://i.imgur.com/UyN5NWT.jpg"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('https://i.imgur.com/UyN5NWT.jpg');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            在 Ubuntu 上使用 SSR 梯子
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-05-18T17:37:06+08:00">
+	
+		    2018 年 5 月 18 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-1"><span class="toc-text">方法 1</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%B9%B6%E5%AE%89%E8%A3%85-SSR-%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-text">下载并安装 SSR 客户端</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%BF%A1%E6%81%AF"><span class="toc-text">配置服务器信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8-SSR"><span class="toc-text">启动 SSR</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-2"><span class="toc-text">方法 2</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-text">References</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>过去两年左右我基本上都是使用 SS 梯子，Windows 上的客户端使用的就是 <a href="https://github.com/shadowsocks/shadowsocks-windows">shadowsocks</a>，Ubuntu 上使用 <a href="https://github.com/shadowsocks/shadowsocks-qt5">shadowsocks-qt5</a>。然而最近换成了 SSR（也就是俗称的酸酸乳，shadowsocksr），SS 和 SSR 这其中的爱恨纠葛我就不再赘述，有兴趣的可自行百度或者 Google。Windows 上仍然有好用的客户端 <a href="https://github.com/shadowsocksrr/shadowsocksr-csharp/releases">shadowsocksr</a>，但是 Ubuntu 上一直没有找到合适的好用的客户端。由于最近没有再使用 Ubuntu，这个问题也一直悬而未决，直到这几天重新试图去解决这个旧问题，终于有所突破了，特记录下来以备后查。</p>
+<p>本文主要有两种方法：</p>
+<ul>
+<li><p>方法 1：该方法是基于命令行的，主要参考 <a href="https://blog.csdn.net/u010658816/article/details/79344970">我在ubuntu18.04使用ssr的过程</a> 一文，方法大同小异，基本是一样的，主要有以下几个步骤：</p>
+<ol>
+<li>下载并安装 SSR 客户端</li>
+<li>配置服务器信息</li>
+<li>启动 SSR</li>
+</ol>
+</li>
+<li><p>方法 2：使用 <a href="https://github.com/erguotou520/electron-ssr">electron-ssr</a> 客户端</p>
+</li>
+</ul>
+<h2 id="方法-1"><a href="#方法-1" class="headerlink" title="方法 1"></a>方法 1</h2><h3 id="下载并安装-SSR-客户端"><a href="#下载并安装-SSR-客户端" class="headerlink" title="下载并安装 SSR 客户端"></a>下载并安装 SSR 客户端</h3><p>下载和安装客户端（一个 shell 脚本）主要有以下几步：</p>
+<ol>
+<li>下载 SSR：<code>wget http://www.texfox.com/ssr</code></li>
+<li>将其加到 <code>$PATH</code> 环境变量里（不必和我一样的目录，只要保证 SSR 文件能在 <code>PATH</code> 里找到即可）：<code>sudo mv ssr /usr/local/bin</code></li>
+<li>加入可执行权限：<code>sudo chmod 766 /usr/local/bin/ssr</code></li>
+<li>安装：<code>ssr install</code></li>
+</ol>
+<p>为了防止各种原因在第一步的时候下载不到文件，我自己备份了一份，你可以点击<a href="https://drive.google.com/open?id=1S2PxUXEIsK7ZLMlAnaEIC9_eq_JVw7vZ">这里</a>下载。</p>
+<h3 id="配置服务器信息"><a href="#配置服务器信息" class="headerlink" title="配置服务器信息"></a>配置服务器信息</h3><p>安装完成后，按道理直接使用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssr config</span><br></pre></td></tr></table></figure>
+<p>即可完成配置，但是在我这里却报错了：</p>
+<p><img src="https://i.imgur.com/qK7IXJQ.jpg" alt=""></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">No protocol specified</span><br><span class="line">Unable to init server: 无法连接： 拒绝连接</span><br></pre></td></tr></table></figure>
+<p>这一步实际上就是配置服务器信息，所以既然这样不行，那我就直接找到修改对应的配置文件。这个配置文件的路径是 <code>/usr/local/share/shadowsocksr/config.json</code>，我们可以手动打开并将自己的服务器信息添加进去即可。</p>
+<p><img src="https://i.imgur.com/pXHD6Fu.jpg" alt=""></p>
+<h3 id="启动-SSR"><a href="#启动-SSR" class="headerlink" title="启动 SSR"></a>启动 SSR</h3><p>这一步很简单，直接执行下面的命令就可以了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssr start</span><br></pre></td></tr></table></figure>
+<p>停止和查看帮助：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ssr stop</span><br><span class="line">ssr help</span><br></pre></td></tr></table></figure>
+<p>然后你就可以打开浏览器上网了。Firefox 浏览器需要在「首选项 → 常规 → 网络代理设置 → 设置」中选择「手动代理配置」，然后填入你的本地监听地址和端口，以及选择 SOCKS5：</p>
+<p><img src="https://i.imgur.com/swAwhON.jpg" alt=""></p>
+<p>至于 Chrome，网上很多人都说需要使用 SwitchyOmega 插件，但是我直接打开浏览器就能上外网，所以并没有使用该插件，如果你上不了网的话可以将在 Firefox 中配置的信息在系统设置中配置一下。</p>
+<h2 id="方法-2"><a href="#方法-2" class="headerlink" title="方法 2"></a>方法 2</h2><p>方法 1 没有使用图形化界面，<a href="https://github.com/erguotou520">erguotou520</a> 做了一个界面：<a href="https://github.com/erguotou520/electron-ssr">electron-ssr</a>，方法 2 就是使用这个软件来使用代理，和 Windows 下的客户端很相似，使用过程也基本一样。</p>
+<p>首先在<a href="https://github.com/erguotou520/electron-ssr/releases">这里</a>下载最新的 deb 安装包，例如我下载的是 <a href="https://github.com/erguotou520/electron-ssr/releases/download/v0.2.3/electron-ssr_0.2.3_amd64.deb">electron-ssr_0.2.3_amd64.deb</a>，然后使用下面的命令安装：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo dpkg -i electron-ssr_0.2.3_amd64.deb</span><br></pre></td></tr></table></figure>
+<p>完成后打开该软件，如果你有订阅地址的话就可以很方便的添加服务器信息了，直接复制订阅地址然后更新就行了：</p>
+<p><img src="https://i.imgur.com/hpzcLbt.jpg" alt=""></p>
+<p>剩下的就和 Windows 版的一样了，系统代理模式、更新 PAC、添加服务器、扫描二维码和开机自启等都有，如果想要在终端中使用代理，那么在配置中选中 http 代理：</p>
+<p><img src="https://i.imgur.com/kzGCihK.jpg" alt=""></p>
+<p>然后在终端中执行下面命令即可，其中的端口就是上图中的端口：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export http_proxy=&quot;http://127.0.0.1:12333&quot;</span><br></pre></td></tr></table></figure>
+<p>然后可以使用 <code>curl www.google.com</code> 来测试是否成功使用代理。</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
+<li><a href="https://blog.csdn.net/u010658816/article/details/79344970">我在ubuntu18.04使用ssr的过程 - CSDN博客</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Ubuntu/" rel="tag">Ubuntu</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/06/04/understanding-objective-functions-in-neural-networks/"
+                    data-tooltip="理解神经网络中的目标函数"
+                    aria-label="上一篇: 理解神经网络中的目标函数"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/04/28/analyzing-python-survey-2017/"
+                    data-tooltip="2017 Python 问卷调查结果初步分析"
+                    aria-label="下一篇: 2017 Python 问卷调查结果初步分析"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/06/04/understanding-objective-functions-in-neural-networks/"
+                    data-tooltip="理解神经网络中的目标函数"
+                    aria-label="上一篇: 理解神经网络中的目标函数"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/04/28/analyzing-python-survey-2017/"
+                    data-tooltip="2017 Python 问卷调查结果初步分析"
+                    aria-label="下一篇: 2017 Python 问卷调查结果初步分析"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/05/18/ubuntu-ssr/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2018/05/18/ubuntu-ssr/';
+              
+            this.page.identifier = '2018/05/18/ubuntu-ssr/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

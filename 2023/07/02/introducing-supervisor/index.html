@@ -1,0 +1,804 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Supervisor 简易指南 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n日常开发的时候，我们可能经常需要同时运行或维护多个程序（服务），时间一长可能就记不住了，运行命令都不一定能记得。而且一旦服务器崩了或者其他意外情况，这些服务还得手动去启动，很是麻烦（当然你也可以使用 init 等来设置开机自启）。这时就需要一个页面来统一管理了。\nSupervisor 登场！\nSupervisor 是一个用于管理和监控进程的工具，使用 Python 开发，可以确保在出现意外情况时，进程能够持续运行，并在失败后自动重启，通常用于监控服务器进程，如 Web 服务器和应用程序服务器。\nPros：\n\n自动重启：当进程意外退出或崩溃时，Supervisor 会自动重启进程，确保进程持续运行，减少因意外情况导致的服务中断时间。\n监控和日志：Supervisor 可以监控进程的状态，并提供详细的日志和报告。\n配置简单：配置文件采用 INI 格式，使用简单，可以根据需要定义进程的启动命令、运行参数、日志路径等。\n多进程管理：Supervisor 可以同时管理多个进程，可以方便地添加、删除和管理多个进程。\nWeb 界面：Supervisor 提供了一个简单易用的 Web 界面，用户可以通过浏览器直观地查看和管理进程，包括启动、停止、重启和查看日志等操作。\n\nCons：\n\nWeb 界面过于粗糙，只有启停、查看日志等操作，进程 CPU 占用、内存使用等都没有。\n\n不过说起来这是我第二次使用 supervisor 了，第一次还是几年前，东西都忘了。这次使用的时候查了好多资料才正常跑起来，所以为了方便下一次使用，以及有需要的同道们，特此记录一下，后面有什么新的需要记录的再更新。\n安装Supervisor 是一个 python package，所以对 pythonista 来说，安装方式再熟悉不过了：\n1pip install supervisor\n配置配置文件用来配置 supervisor 本身的一些设置以及你要添加的程序，一般叫 supervisord.conf 。如果你启动的时候没有用 -c 来指定配置文件的地址，那么 supervisor 会自动按照以下顺序来寻找：\n\n../etc/supervisord.conf (Relative to the executable)\n../supervisord.conf (Relative to the executable)\n$CWD/supervisord.conf\n$CWD/etc/supervisord.conf\n/etc/supervisord.conf\n/etc/supervisor/supervisord.conf (since Supervisor 3.3.0)\n\n可配置项很多，我一般不会从头写，都是基于默认配置来修改。我们可以用 echo_supervisord_conf &gt; supervisord.conf 来将默认配置写到 supervisord.conf 中。\n如果在语句后直接添加注释，那么必须与语句隔一个空格。比如❌ &quot;a=b;comment&quot;✔️ &quot;a=b ;comment&quot;\n\n下面我就讲下和默认配置不一样的地方。\ninet_http_server1234[inet_http_server]         ; inet (TCP) server disabled by defaultport=*:9001        ; ip_address:port specifier, *:port for all ifaceusername=your_username              ; default is no username (open server)password=your_password               ; default is no password (open server)\n这个 section 与后面的 web 界面以及 supervisorctl 与 supervisord 的通信有关。默认是只能本地连接（localhost），而且没有用户名密码，如果需要从其他服务器上访问 web，那么则需要使用 * 来指定允许所有 ip 访问。为了安全考虑建议设置用户名密码。\nsupervisorctl12345[supervisorctl]serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socketserverurl=http://127.0.0.1:9001 ; use an http:// url to specify an inet socketusername=liyajun              ; should be same as in [*_http_server] if setpassword=liyajun123                ; should be same as in [*_http_server] if set\n这里就是配置 supervisorctl 与 supervisord 通信的地方。主要是 serverurl （端口）与用户名密码需要和上面配置的一致，否则会出现拒绝链接或者认证失败的错误。\nprogram:x12345678910[program:your_program_name]command=your_program_run_commandprocess_name=%(program_name)sdirectory=your_program_run_dirautostart=trueautorestart=unexpectedredirect_stderr=truestdout_logfile=your_program_log      ; stdout log path, NONE for none; default AUTOstdout_logfile_maxbytes=50MB   ; max # logfile bytes b4 rotation (default 50MB)stdout_logfile_backups=10     ; # of stdout logfile backups (0 means none, default 10)\n这个 section 就是重头戏了，我们在这里配置需要启动的程序，一个配置文件可以有多个这个 section。\n\n[program:your_program_name] ：your_program_name 就是你的程序名字，想叫什么就叫什么，别太离谱就行。\ncommand ：你的程序的执行命令，你平常怎么执行的这里就怎么写，但是 executable 最好写绝对地址，比如你用 python app.py 来执行程序，那么这个 python 最好写成绝对地址，尤其你有多个 python 环境时。你可以用 which python 来查看绝对地址。\nprocess_name ：默认就是程序名（your_program_name），这个名字会在 web 界面上显示。\ndirectory ：指定运行时需要 cd 到的目录（工作目录），也即你的程序文件所在的目录。\nautostart ：是否在 supervisord 启动时启动程序。\nautorestart ：是否在程序退出时自动重启。有三个值可选：\nfalse ：不自动重启。\nunexpected ：默认值。当 exit code 不在预料之内时，重启。什么叫不在预料之内？这个值是由 exitcodes 指定的，默认为 0。\ntrue ：无论如何都自动重启。\n\n\nredirect_stderr ：是否将 stderr redirect 到 stdout。\nstdout_logfile ：stdout 日志文件。\nstdout_logfile_maxbytes ：单个日志文件的最大大小。\nstdout_logfile_backups ：保留多少份日志文件。\n\n启动1supervisord -c supervisord.conf\n更新配置文件当我们更新了配置文件后，需要让 supervisor 也更新一下，我在网上查到的说是需要先 reread 再 update，但是我查询了文档，文档是这么写的：\nreread：\n\nReload the daemon’s configuration files, without add/remove (no restarts)\n\nupdate：\n\nReload config and add/remove as necessary, and will restart affected programs\n\n很明显 update 已经做了 reread 的工作，而且还会 restart。\n所以更新配置文件后，只需执行 update 即可更新 supervisor：\n1supervisorctl update\n如果你的配置文件移动了位置，那么需要重启 supervisord：\n\n查询 supervisord PID：supervisorctl pid 。\n杀死 supervisord 进程：kill supervisord_pid 。\n用新配置文件启动 supervisord：supervisord -c new_supervisord.conf 。\n\nWeb 管理界面前面提到过有一个 web 管理界面，根据 inet_http_server 的配置，使用相应的 ip 和端口在浏览器上访问即可，默认是 9001 端口。界面样式如下：\nSupervisor web 管理界面。\n在这个界面上可以看到所有已配置程序的状态，可以启停和查看日志，直接点击 Name 列可以查看最后几行的日志，而点击 Tail -f * 可以看到实时日志，不过这个在我这里特别慢，不知道为社么。\nsupervisord 与 supervisorctl刚才我们用了 supervisord 和 supervisorctl 两个命令，你可能会疑惑这两个有什么区别。其实我们一般使用的时候，用前者启动 supervisor 主程序，用后者来管理我们自己所添加的 program。所以 supervisord 就像个后台的 server，而 supervisorctl 是一个前台的 client，有很多 action（subcommand）可以执行，比如上面的 update 和 reread 就是两个 action。而 supervisord 是没有的。\nsupervisorctl 常用的 action 有：\n\nstatus ：查看 program 状态。\nupdate ：更新配置文件并重启相关 program。\npid ：获取 supervisord 的 PID。\n\n其他不是很常用，感兴趣的可以去文档查看。\nEND","dateCreated":"2023-07-02T08:26:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2023-07-02T08:26:00+08:00","description":"这篇文章介绍了 Supervisor 的功能和优势，它是一个用于管理和监控进程的工具，可以确保进程持续运行并在意外情况下自动重启。它具有简单的配置、多进程管理和提供 Web 界面等特点。虽然 Web 界面有限，但是对于同时运行和维护多个程序的需求非常实用。[ChatGPT]","headline":"Supervisor 简易指南","image":[null,"https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/07/02/introducing-supervisor/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/07/02/introducing-supervisor/","keywords":"Python, Ubuntu","thumbnailUrl":"https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png"}</script>
+    <meta name="description" content="这篇文章介绍了 Supervisor 的功能和优势，它是一个用于管理和监控进程的工具，可以确保进程持续运行并在意外情况下自动重启。它具有简单的配置、多进程管理和提供 Web 界面等特点。虽然 Web 界面有限，但是对于同时运行和维护多个程序的需求非常实用。[ChatGPT]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Supervisor 简易指南">
+<meta property="og:url" content="https://alanlee.fun/2023/07/02/introducing-supervisor/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="这篇文章介绍了 Supervisor 的功能和优势，它是一个用于管理和监控进程的工具，可以确保进程持续运行并在意外情况下自动重启。它具有简单的配置、多进程管理和提供 Web 界面等特点。虽然 Web 界面有限，但是对于同时运行和维护多个程序的需求非常实用。[ChatGPT]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png">
+<meta property="article:published_time" content="2023-07-02T00:26:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.195Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Ubuntu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            Supervisor 简易指南
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-07-02T08:26:00+08:00">
+	
+		    2023 年 7 月 2 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85"><span class="toc-text">安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE"><span class="toc-text">配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#inet-http-server"><span class="toc-text">inet_http_server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#supervisorctl"><span class="toc-text">supervisorctl</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#program-x"><span class="toc-text">program:x</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8"><span class="toc-text">启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">更新配置文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Web-%E7%AE%A1%E7%90%86%E7%95%8C%E9%9D%A2"><span class="toc-text">Web 管理界面</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#supervisord-%E4%B8%8E-supervisorctl"><span class="toc-text">supervisord 与 supervisorctl</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>日常开发的时候，我们可能经常需要同时运行或维护多个程序（服务），时间一长可能就记不住了，运行命令都不一定能记得。而且一旦服务器崩了或者其他意外情况，这些服务还得手动去启动，很是麻烦（当然你也可以使用 <code>init</code> 等来设置开机自启）。这时就需要一个页面来统一管理了。</p>
+<p>Supervisor 登场！</p>
+<p>Supervisor 是一个用于管理和监控进程的工具，使用 Python 开发，可以确保在出现意外情况时，进程能够持续运行，并在失败后自动重启，通常用于监控服务器进程，如 Web 服务器和应用程序服务器。</p>
+<p>Pros：</p>
+<ol>
+<li>自动重启：当进程意外退出或崩溃时，Supervisor 会自动重启进程，确保进程持续运行，减少因意外情况导致的服务中断时间。</li>
+<li>监控和日志：Supervisor 可以监控进程的状态，并提供详细的日志和报告。</li>
+<li>配置简单：配置文件采用 INI 格式，使用简单，可以根据需要定义进程的启动命令、运行参数、日志路径等。</li>
+<li>多进程管理：Supervisor 可以同时管理多个进程，可以方便地添加、删除和管理多个进程。</li>
+<li>Web 界面：Supervisor 提供了一个简单易用的 Web 界面，用户可以通过浏览器直观地查看和管理进程，包括启动、停止、重启和查看日志等操作。</li>
+</ol>
+<p>Cons：</p>
+<ol>
+<li>Web 界面过于粗糙，只有启停、查看日志等操作，进程 CPU 占用、内存使用等都没有。</li>
+</ol>
+<p>不过说起来这是我第二次使用 supervisor 了，第一次还是几年前，东西都忘了。这次使用的时候查了好多资料才正常跑起来，所以为了方便下一次使用，以及有需要的同道们，特此记录一下，后面有什么新的需要记录的再更新。</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>Supervisor 是一个 python package，所以对 pythonista 来说，安装方式再熟悉不过了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install supervisor</span><br></pre></td></tr></table></figure>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>配置文件用来配置 supervisor 本身的一些设置以及你要添加的程序，一般叫 <code>supervisord.conf</code> 。如果你启动的时候没有用 <code>-c</code> 来指定配置文件的地址，那么 supervisor 会自动按照以下顺序来寻找：</p>
+<ol>
+<li><code>../etc/supervisord.conf</code> (Relative to the executable)</li>
+<li><code>../supervisord.conf</code> (Relative to the executable)</li>
+<li><code>$CWD/supervisord.conf</code></li>
+<li><code>$CWD/etc/supervisord.conf</code></li>
+<li><code>/etc/supervisord.conf</code></li>
+<li><code>/etc/supervisor/supervisord.conf</code> (since Supervisor 3.3.0)</li>
+</ol>
+<p>可配置项很多，我一般不会从头写，都是基于默认配置来修改。我们可以用 <code>echo_supervisord_conf &gt; supervisord.conf</code> 来将默认配置写到 <code>supervisord.conf</code> 中。</p>
+<div class="alert warning"><p>如果在语句后直接添加注释，那么必须与语句隔一个空格。比如<br>❌ <code>&quot;a=b;comment&quot;</code><br>✔️ <code>&quot;a=b ;comment&quot;</code></p>
+</div>
+<p>下面我就讲下和默认配置不一样的地方。</p>
+<h3 id="inet-http-server"><a href="#inet-http-server" class="headerlink" title="inet_http_server"></a><code>inet_http_server</code></h3><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[inet_http_server]</span>         <span class="comment">; inet (TCP) server disabled by default</span></span><br><span class="line"><span class="attr">port</span>=*:<span class="number">9001</span>        <span class="comment">; ip_address:port specifier, *:port for all iface</span></span><br><span class="line"><span class="attr">username</span>=your_username              <span class="comment">; default is no username (open server)</span></span><br><span class="line"><span class="attr">password</span>=your_password               <span class="comment">; default is no password (open server)</span></span><br></pre></td></tr></table></figure>
+<p>这个 section 与后面的 web 界面以及 supervisorctl 与 supervisord 的通信有关。默认是只能本地连接（localhost），而且没有用户名密码，如果需要从其他服务器上访问 web，那么则需要使用 <code>*</code> 来指定允许所有 ip 访问。为了安全考虑建议设置用户名密码。</p>
+<h3 id="supervisorctl"><a href="#supervisorctl" class="headerlink" title="supervisorctl"></a><code>supervisorctl</code></h3><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[supervisorctl]</span></span><br><span class="line"><span class="attr">serverurl</span>=unix:///tmp/supervisor.sock <span class="comment">; use a unix:// URL  for a unix socket</span></span><br><span class="line"><span class="attr">serverurl</span>=http://<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">9001</span> <span class="comment">; use an http:// url to specify an inet socket</span></span><br><span class="line"><span class="attr">username</span>=liyajun              <span class="comment">; should be same as in [*_http_server] if set</span></span><br><span class="line"><span class="attr">password</span>=liyajun123                <span class="comment">; should be same as in [*_http_server] if set</span></span><br></pre></td></tr></table></figure>
+<p>这里就是配置 supervisorctl 与 supervisord 通信的地方。主要是 <code>serverurl</code> （端口）与用户名密码需要和上面配置的一致，否则会出现拒绝链接或者认证失败的错误。</p>
+<h3 id="program-x"><a href="#program-x" class="headerlink" title="program:x"></a><code>program:x</code></h3><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[program:your_program_name]</span></span><br><span class="line"><span class="attr">command</span>=your_program_run_command</span><br><span class="line"><span class="attr">process_name</span>=%(program_name)s</span><br><span class="line"><span class="attr">directory</span>=your_program_run_dir</span><br><span class="line"><span class="attr">autostart</span>=<span class="literal">true</span></span><br><span class="line"><span class="attr">autorestart</span>=unexpected</span><br><span class="line"><span class="attr">redirect_stderr</span>=<span class="literal">true</span></span><br><span class="line"><span class="attr">stdout_logfile</span>=your_program_log      <span class="comment">; stdout log path, NONE for none; default AUTO</span></span><br><span class="line"><span class="attr">stdout_logfile_maxbytes</span>=<span class="number">50</span>MB   <span class="comment">; max # logfile bytes b4 rotation (default 50MB)</span></span><br><span class="line"><span class="attr">stdout_logfile_backups</span>=<span class="number">10</span>     <span class="comment">; # of stdout logfile backups (0 means none, default 10)</span></span><br></pre></td></tr></table></figure>
+<p>这个 section 就是重头戏了，我们在这里配置需要启动的程序，一个配置文件可以有多个这个 section。</p>
+<ul>
+<li><code>[program:your_program_name]</code> ：<code>your_program_name</code> 就是你的程序名字，想叫什么就叫什么，别太离谱就行。</li>
+<li><code>command</code> ：你的程序的执行命令，你平常怎么执行的这里就怎么写，但是 executable 最好写绝对地址，比如你用 <code>python app.py</code> 来执行程序，那么这个 <code>python</code> 最好写成绝对地址，尤其你有多个 python 环境时。你可以用 <code>which python</code> 来查看绝对地址。</li>
+<li><code>process_name</code> ：默认就是程序名（<code>your_program_name</code>），这个名字会在 web 界面上显示。</li>
+<li><code>directory</code> ：指定运行时需要 cd 到的目录（工作目录），也即你的程序文件所在的目录。</li>
+<li><code>autostart</code> ：是否在 supervisord 启动时启动程序。</li>
+<li><code>autorestart</code> ：是否在程序退出时自动重启。有三个值可选：<ul>
+<li><code>false</code> ：不自动重启。</li>
+<li><code>unexpected</code> ：默认值。当 exit code 不在预料之内时，重启。什么叫不在预料之内？这个值是由 <code>exitcodes</code> 指定的，默认为 0。</li>
+<li><code>true</code> ：无论如何都自动重启。</li>
+</ul>
+</li>
+<li><code>redirect_stderr</code> ：是否将 stderr redirect 到 stdout。</li>
+<li><code>stdout_logfile</code> ：stdout 日志文件。</li>
+<li><code>stdout_logfile_maxbytes</code> ：单个日志文件的最大大小。</li>
+<li><code>stdout_logfile_backups</code> ：保留多少份日志文件。</li>
+</ul>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">supervisord -c supervisord.conf</span><br></pre></td></tr></table></figure>
+<h2 id="更新配置文件"><a href="#更新配置文件" class="headerlink" title="更新配置文件"></a>更新配置文件</h2><p>当我们更新了配置文件后，需要让 supervisor 也更新一下，我在网上查到的说是需要先 reread 再 update，但是我查询了<a href="http://supervisord.org/running.html#supervisorctl-actions">文档</a>，文档是这么写的：</p>
+<p><code>reread</code>：</p>
+<blockquote>
+<p>Reload the daemon’s configuration files, without add/remove (no restarts)</p>
+</blockquote>
+<p><code>update</code>：</p>
+<blockquote>
+<p>Reload config and add/remove as necessary, and will restart affected programs</p>
+</blockquote>
+<p>很明显 update 已经做了 reread 的工作，而且还会 restart。</p>
+<p>所以更新配置文件后，<strong>只需执行 <code>update</code></strong> 即可更新 supervisor：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">supervisorctl update</span><br></pre></td></tr></table></figure>
+<p>如果你的配置文件移动了位置，那么需要重启 supervisord：</p>
+<ol>
+<li>查询 supervisord PID：<code>supervisorctl pid</code> 。</li>
+<li>杀死 supervisord 进程：<code>kill supervisord_pid</code> 。</li>
+<li>用新配置文件启动 supervisord：<code>supervisord -c new_supervisord.conf</code> 。</li>
+</ol>
+<h2 id="Web-管理界面"><a href="#Web-管理界面" class="headerlink" title="Web 管理界面"></a>Web 管理界面</h2><p>前面提到过有一个 web 管理界面，根据 <code>inet_http_server</code> 的配置，使用相应的 ip 和端口在浏览器上访问即可，默认是 9001 端口。界面样式如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png" title="Supervisor web 管理界面。" data-caption="Supervisor web 管理界面。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/07/02/jqBiGRF5dEwTusA.png" alt="Supervisor web 管理界面。"></a><span class="caption">Supervisor web 管理界面。</span></div>
+<p>在这个界面上可以看到所有已配置程序的状态，可以启停和查看日志，直接点击 Name 列可以查看最后几行的日志，而点击 <code>Tail -f *</code> 可以看到实时日志，不过这个在我这里特别慢，不知道为社么。</p>
+<h2 id="supervisord-与-supervisorctl"><a href="#supervisord-与-supervisorctl" class="headerlink" title="supervisord 与 supervisorctl"></a><code>supervisord</code> 与 <code>supervisorctl</code></h2><p>刚才我们用了 supervisord 和 supervisorctl 两个命令，你可能会疑惑这两个有什么区别。其实我们一般使用的时候，用前者启动 supervisor 主程序，用后者来管理我们自己所添加的 program。所以 supervisord 就像个后台的 server，而 supervisorctl 是一个前台的 client，有很多 <a href="http://supervisord.org/running.html#supervisorctl-actions">action</a>（subcommand）可以执行，比如上面的 update 和 reread 就是两个 action。而 supervisord 是没有的。</p>
+<p>supervisorctl 常用的 action 有：</p>
+<ul>
+<li><code>status</code> ：查看 program 状态。</li>
+<li><code>update</code> ：更新配置文件并重启相关 program。</li>
+<li><code>pid</code> ：获取 supervisord 的 PID。</li>
+</ul>
+<p>其他不是很常用，感兴趣的可以去<a href="http://supervisord.org/running.html#supervisorctl-actions">文档</a>查看。</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Ubuntu/" rel="tag">Ubuntu</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/23/llama1/"
+                    data-tooltip="关于 LLaMA 1"
+                    aria-label="上一篇: 关于 LLaMA 1"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/06/17/xiaomi-tv-youtube/"
+                    data-tooltip="两种方法教你在小米电视上观看 YouTube"
+                    aria-label="下一篇: 两种方法教你在小米电视上观看 YouTube"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/23/llama1/"
+                    data-tooltip="关于 LLaMA 1"
+                    aria-label="上一篇: 关于 LLaMA 1"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/06/17/xiaomi-tv-youtube/"
+                    data-tooltip="两种方法教你在小米电视上观看 YouTube"
+                    aria-label="下一篇: 两种方法教你在小米电视上观看 YouTube"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/07/02/introducing-supervisor/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2023/07/02/introducing-supervisor/';
+              
+            this.page.identifier = '2023/07/02/introducing-supervisor/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

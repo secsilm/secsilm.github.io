@@ -1,0 +1,728 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Disqus 有评论但没显示的一种解决方案 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题前段时间将博客的主题从 hexo-theme-tranquilpeak 换到了 hexo-theme-archer，虽然一些功能上没有原主题好，比如侧边栏目录，但是新主题更为简洁清爽，自定义程度比较高，语法上也支持“扩展的” markdown 语法，比如支持如下 image 语法，居中显示，可显示注释：\n1&#123;% image fancybox center /path/to/image &quot;图片注释&quot; %&#125;\n而且很重要一点，twitter 分享很友好，有预览：\nTwitter 分享截图\n但后来使用过程中发现，原来文章中的 disqus 评论不见了，但 disqus 评论框是能够正常加载的。而且在其他页面上是能够看到这些文章的评论数的，但是点进去却又显示不出来。\n可以看到这些文章都是有评论的\n但是点进去又看不到评论\n而且在控制台可以看到有很多 disqus 相关链接的 404 报错。\n解决由于原主题上 disqus 是正常的，所以我去找了找原主题的 disqus 相关代码，其中有段代码是这样的：\n1this.page.identifier = &quot;&lt;%- page.title %&gt;&quot;;\n而新主题的相关代码是这样的：\n12345    &lt;% if (post.disqusIdentifier) &#123; %&gt;this.page.identifier = &#x27;&lt;%= post.disqusIdentifier %&gt;&#x27;;    &lt;% &#125; else &#123; %&gt;this.page.identifier = &#x27;&lt;%= post.path %&gt;&#x27;;    &lt;% &#125; %&gt;\n虽然我不太懂 js 代码，但是差不多也能看出来这段定义的 this.page.identifier 和原主题还是很不一样的。一个是 title，一个是 disqusIdentifier 或者 path。这显然差距是很大的，结合前面说的链接 404 错误，应该就是这里出了问题，identifier 变了，用现在新的 identifier 去找，当然找不到了。\n所以我尝试将新主题的 this.page.identifier 直接改为：\n1this.page.identifier = &#x27;&lt;%= post.title %&gt;&#x27;;\n然后 hexo s，duang！果然就可以了！\nProblem Solved!\nEND","dateCreated":"2022-04-23T11:29:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2022-04-23T11:29:00+08:00","description":"换了博客主题后，发现原来文章的 disqus 评论不见了。原来是 identifier 的问题。","headline":"Disqus 有评论但没显示的一种解决方案","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2022/04/23/disqus-comments-not-showing/","keywords":"hexo"}</script>
+    <meta name="description" content="换了博客主题后，发现原来文章的 disqus 评论不见了。原来是 identifier 的问题。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Disqus 有评论但没显示的一种解决方案">
+<meta property="og:url" content="https://alanlee.fun/2022/04/23/disqus-comments-not-showing/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="换了博客主题后，发现原来文章的 disqus 评论不见了。原来是 identifier 的问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2022/04/23/d8TNcCUrKoxGWZg.png">
+<meta property="og:image" content="https://s2.loli.net/2022/04/23/v8cC6lTu1IyLgZM.png">
+<meta property="og:image" content="https://s2.loli.net/2022/04/23/E1IpRdCmT5MXqol.png">
+<meta property="og:image" content="https://s2.loli.net/2022/04/23/cnBpjfYWe96GZax.png">
+<meta property="article:published_time" content="2022-04-23T03:29:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.192Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="hexo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2022/04/23/d8TNcCUrKoxGWZg.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Disqus 有评论但没显示的一种解决方案
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2022-04-23T11:29:00+08:00">
+	
+		    2022 年 4 月 23 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3"><span class="toc-text">解决</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>前段时间将博客的主题从 <a href="https://github.com/LouisBarranqueiro/hexo-theme-tranquilpeak">hexo-theme-tranquilpeak</a> 换到了 <a href="https://github.com/fi3ework/hexo-theme-archer">hexo-theme-archer</a>，虽然一些功能上没有原主题好，比如侧边栏目录，但是新主题更为简洁清爽，自定义程度比较高，语法上也支持“扩展的” markdown 语法，比如支持如下 image 语法，居中显示，可显示注释：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;% image fancybox center /path/to/image &quot;图片注释&quot; %&#125;</span><br></pre></td></tr></table></figure>
+<p>而且很重要一点，twitter 分享很友好，有预览：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/04/23/d8TNcCUrKoxGWZg.png" title="Twitter 分享截图" data-caption="Twitter 分享截图" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/04/23/d8TNcCUrKoxGWZg.png" alt="Twitter 分享截图"></a><span class="caption">Twitter 分享截图</span></div>
+<p>但后来使用过程中发现，原来文章中的 disqus 评论不见了，但 disqus 评论框是能够正常加载的。而且在其他页面上是能够看到这些文章的评论数的，但是点进去却又显示不出来。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/04/23/v8cC6lTu1IyLgZM.png" title="可以看到这些文章都是有评论的" data-caption="可以看到这些文章都是有评论的" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/04/23/v8cC6lTu1IyLgZM.png" alt="可以看到这些文章都是有评论的"></a><span class="caption">可以看到这些文章都是有评论的</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/04/23/E1IpRdCmT5MXqol.png" title="但是点进去又看不到评论" data-caption="但是点进去又看不到评论" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/04/23/E1IpRdCmT5MXqol.png" alt="但是点进去又看不到评论"></a><span class="caption">但是点进去又看不到评论</span></div>
+<p>而且在控制台可以看到有很多 disqus 相关链接的 404 报错。</p>
+<h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>由于原主题上 disqus 是正常的，所以我去找了找原主题的 <a href="https://github.com/fi3ework/hexo-theme-archer/blob/master/layout/_partial/comment/disqus.ejs">disqus 相关代码</a>，其中有段代码是这样的：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">this</span>.<span class="property">page</span>.<span class="property">identifier</span> = <span class="string">&quot;&lt;%- page.title %&gt;&quot;</span>;</span><br></pre></td></tr></table></figure>
+<p>而新主题的<a href="https://github.com/LouisBarranqueiro/hexo-theme-tranquilpeak/blob/5780b9a612021cf317a7a06b40b919fbe12dabed/layout/_partial/script.ejs#L9-L27">相关代码</a>是这样的：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">    &lt;% <span class="keyword">if</span> (post.<span class="property">disqusIdentifier</span>) &#123; %&gt;</span><br><span class="line"><span class="variable language_">this</span>.<span class="property">page</span>.<span class="property">identifier</span> = <span class="string">&#x27;&lt;%= post.disqusIdentifier %&gt;&#x27;</span>;</span><br><span class="line">    &lt;% &#125; <span class="keyword">else</span> &#123; %&gt;</span><br><span class="line"><span class="variable language_">this</span>.<span class="property">page</span>.<span class="property">identifier</span> = <span class="string">&#x27;&lt;%= post.path %&gt;&#x27;</span>;</span><br><span class="line">    &lt;% &#125; %&gt;</span><br></pre></td></tr></table></figure>
+<p>虽然我不太懂 js 代码，但是差不多也能看出来这段定义的 <code>this.page.identifier</code> 和原主题还是很不一样的。一个是 <code>title</code>，一个是 <code>disqusIdentifier</code> 或者 <code>path</code>。这显然差距是很大的，结合前面说的链接 404 错误，应该就是这里出了问题，identifier 变了，用现在新的 identifier 去找，当然找不到了。</p>
+<p>所以我尝试<strong>将新主题的 <code>this.page.identifier</code> 直接改为</strong>：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">this</span>.<span class="property">page</span>.<span class="property">identifier</span> = <span class="string">&#x27;&lt;%= post.title %&gt;&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p>然后 <code>hexo s</code>，duang！果然就可以了！</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/04/23/cnBpjfYWe96GZax.png" title="Problem Solved!" data-caption="Problem Solved!" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/04/23/cnBpjfYWe96GZax.png" alt="Problem Solved!"></a><span class="caption">Problem Solved!</span></div>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/hexo/" rel="tag">hexo</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/08/22/about-c4-dataset/"
+                    data-tooltip="关于 C4 数据集"
+                    aria-label="上一篇: 关于 C4 数据集"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/03/29/python-zip-check-length/"
+                    data-tooltip="沉默的代价 —— 来自 zip 的教训"
+                    aria-label="下一篇: 沉默的代价 —— 来自 zip 的教训"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/08/22/about-c4-dataset/"
+                    data-tooltip="关于 C4 数据集"
+                    aria-label="上一篇: 关于 C4 数据集"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/03/29/python-zip-check-length/"
+                    data-tooltip="沉默的代价 —— 来自 zip 的教训"
+                    aria-label="下一篇: 沉默的代价 —— 来自 zip 的教训"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/04/23/disqus-comments-not-showing/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2022/04/23/disqus-comments-not-showing/';
+              
+            this.page.identifier = '2022/04/23/disqus-comments-not-showing/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

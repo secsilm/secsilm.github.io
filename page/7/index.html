@@ -1,0 +1,886 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"Website","@id":"https://alanlee.fun","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"name":"Alan Lee","description":"Machine Learning, Deep Learning, NLP","url":"https://alanlee.fun","keywords":"hexo, python, tensorflow, pytorch, nlp, natural language processing, deep learning, machine learning, large language models, llms"}</script>
+    <meta name="description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Alan Lee">
+<meta property="og:url" content="https://alanlee.fun/page/7/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="hexo">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="tensorflow">
+<meta property="article:tag" content="pytorch">
+<meta property="article:tag" content="nlp">
+<meta property="article:tag" content="natural language processing">
+<meta property="article:tag" content="deep learning">
+<meta property="article:tag" content="machine learning">
+<meta property="article:tag" content="large language models">
+<meta property="article:tag" content="llms">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="1">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="1">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="1"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                <section class="postShorten-group main-content-wrap">
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/04/28/analyzing-python-survey-2017/"
+                            aria-label=": 2017 Python 问卷调查结果初步分析"
+                        >
+                            2017 Python 问卷调查结果初步分析
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-04-28T15:37:04+08:00">
+	
+		    2018 年 4 月 28 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2>
+                    
+                        <a
+                            href="/2018/04/28/analyzing-python-survey-2017/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 2017 Python 问卷调查结果初步分析"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/03/15/embed-bokeh-plot/"
+                            aria-label=": 嵌入 bokeh 绘图到 hexo 博客中"
+                        >
+                            嵌入 bokeh 绘图到 hexo 博客中
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-03-15T15:57:45+08:00">
+	
+		    2018 年 3 月 15 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p><link href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.css" rel="stylesheet" type="text/css"></p>
+<p><link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.css" type="text/css" /></p>
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.js"></script>
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.js"></script>
+
+<!-- toc -->
+<p><a href="https://bokeh.pydata.org/en/latest/">Bokeh</a> 是一个 Python 交互式可视化库，主要用于绘制面向浏览器的交互式图表，D3.js 的风格，Anaconda 出品。关注这个库很久了，我知道的 Python 中用于创建这种交互式图表的库好用的不是很多，还有个 <a href="https://plot.ly/">plotly</a> 也不错，同时支持 Python 和 R，只不过是收费的，免费的有很多限制。</p>
+                    
+                        <a
+                            href="/2018/03/15/embed-bokeh-plot/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 嵌入 bokeh 绘图到 hexo 博客中"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/03/09/using-https-namecheap-hexo/"
+                            aria-label=": 使用 CloudFlare 为 hexo 博客实现 HTTPS"
+                        >
+                            使用 CloudFlare 为 hexo 博客实现 HTTPS
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-03-09T21:34:53+08:00">
+	
+		    2018 年 3 月 9 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>过了个年，好久没更博客了，忙着各种事。<br>
+                    
+                        <a
+                            href="/2018/03/09/using-https-namecheap-hexo/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 使用 CloudFlare 为 hexo 博客实现 HTTPS"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2018/01/03/neteasemusic-year-report-2017/"
+                            aria-label=": 我的网易云音乐 2017 年度听歌报告"
+                        >
+                            我的网易云音乐 2017 年度听歌报告
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2018-01-03T16:15:30+08:00">
+	
+		    2018 年 1 月 3 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>又是一年，最近网易云音乐推出了年度听歌报告，来看看我的报告吧，也是记录下来和以后做个比较 😄<br>
+                    
+                        <a
+                            href="/2018/01/03/neteasemusic-year-report-2017/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 我的网易云音乐 2017 年度听歌报告"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/12/30/google-sitemap/"
+                            aria-label=": Google sitemap 不允许的网址的解决办法"
+                        >
+                            Google sitemap 不允许的网址的解决办法
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-12-30T11:20:47+08:00">
+	
+		    2017 年 12 月 30 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p><link
+    href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.css"
+    rel="stylesheet" type="text/css"></p>
+<p><link
+    href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.css"
+    rel="stylesheet" type="text/css"></p>
+<link
+    href="https://cdn.pydata.org/bokeh/release/bokeh-tables-0.12.14.min.css"
+    rel="stylesheet" type="text/css">
+
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.js"></script>
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.js"></script>
+
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2>
+                    
+                        <a
+                            href="/2017/12/30/google-sitemap/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": Google sitemap 不允许的网址的解决办法"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/12/29/understanding-lstms/"
+                            aria-label=": 理解 LSTM 网络"
+                        >
+                            理解 LSTM 网络
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-12-29T18:58:00+08:00">
+	
+		    2017 年 12 月 29 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>译者注：<br>
+                    
+                        <a
+                            href="/2017/12/29/understanding-lstms/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 理解 LSTM 网络"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/12/25/export-csdn-blogs-to-md/"
+                            aria-label=": 批量导出 CSDN 博客为 Markdown 文件"
+                        >
+                            批量导出 CSDN 博客为 Markdown 文件
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-12-25T09:27:18+08:00">
+	
+		    2017 年 12 月 25 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：<a href="https://www.v2ex.com/t/416648#reply35">CSDN 博客又挂了。。。 - V2EX</a>。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞<br>
+                    
+                        <a
+                            href="/2017/12/25/export-csdn-blogs-to-md/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 批量导出 CSDN 博客为 Markdown 文件"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/12/22/understanding-estimators-datasets/"
+                            aria-label=": 理解 Estimators 和 Datasets"
+                        >
+                            理解 Estimators 和 Datasets
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-12-22T18:30:15+08:00">
+	
+		    2017 年 12 月 22 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>Google 在 2017 年 9 月 12 号的博文 <a href="https://developers.googleblog.com/2017/09/introducing-tensorflow-datasets.html">Introduction to TensorFlow Datasets and Estimators</a> 中介绍了新引入的两个新特性 <a href="https://www.tensorflow.org/programmers_guide/datasets">Datasets</a> 和 <a href="https://www.tensorflow.org/programmers_guide/estimators">Estimators</a>：<br>
+                    
+                        <a
+                            href="/2017/12/22/understanding-estimators-datasets/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 理解 Estimators 和 Datasets"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/10/08/gradient-descent-methods/"
+                            aria-label=": 梯度下降优化算法概述"
+                        >
+                            梯度下降优化算法概述
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-10-08T21:41:00+08:00">
+	
+		    2017 年 10 月 8 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<blockquote>
+<p>原文作者简介：<a href="http://ruder.io/">Sebastian Ruder</a> 是我非常喜欢的一个博客作者，是 NLP 方向的博士生，目前供职于一家做 NLP 相关服务的爱尔兰公司 <a href="http://aylien.com/">AYLIEN</a>，博客主要是写机器学习、NLP 和深度学习相关的文章。<br>
+                    
+                        <a
+                            href="/2017/10/08/gradient-descent-methods/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 梯度下降优化算法概述"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/08/30/ensemble-methods/"
+                            aria-label=": 使用集成学习提升机器学习算法性能"
+                        >
+                            使用集成学习提升机器学习算法性能
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-08-30T18:47:00+08:00">
+	
+		    2017 年 8 月 30 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <blockquote>
+<p>译者注：这篇文章是对 PythonWeekly 推荐的一篇讲集成模型的文章的翻译，原文为 <a href="https://blog.statsbot.co/ensemble-learning-d1dcd548e936">Ensemble Learning to Improve Machine Learning Results</a>，由 Vadim Smolyakov 于 2017 年 8 月 22 日发表在 Medium 上，Vadim Smolyakov 是一名 MIT 的研究生。水平有限，如有错误，欢迎评论区或者邮件或者私信指出。建议阅读英文原文。</p>
+</blockquote>
+                    
+                        <a
+                            href="/2017/08/30/ensemble-methods/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 使用集成学习提升机器学习算法性能"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    <div class="pagination-bar">
+    <ul class="pagination">
+        
+          <li class="pagination-prev">
+            <a
+                class="btn btn--default btn--small"
+                href="/page/6/"
+                aria-label="上一页"
+            >
+              <i class="fa fa-angle-left text-base icon-mr"></i>
+              <span>上一页</span>
+            </a>
+          </li>
+        
+        
+          <li class="pagination-next">
+            <a
+                class="btn btn--default btn--small"
+                href="/page/8/"
+                aria-label="下一页"
+            >
+              <span>下一页</span>
+              <i class="fa fa-angle-right text-base icon-ml"></i>
+            </a>
+          </li>
+        
+        <li class="pagination-number">第 7 页 共 9 页</li>
+    </ul>
+</div>
+
+</section>
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

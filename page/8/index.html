@@ -1,0 +1,913 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"Website","@id":"https://alanlee.fun","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"name":"Alan Lee","description":"Machine Learning, Deep Learning, NLP","url":"https://alanlee.fun","keywords":"hexo, python, tensorflow, pytorch, nlp, natural language processing, deep learning, machine learning, large language models, llms"}</script>
+    <meta name="description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Alan Lee">
+<meta property="og:url" content="https://alanlee.fun/page/8/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Machine Learning, Deep Learning, NLP">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="hexo">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="tensorflow">
+<meta property="article:tag" content="pytorch">
+<meta property="article:tag" content="nlp">
+<meta property="article:tag" content="natural language processing">
+<meta property="article:tag" content="deep learning">
+<meta property="article:tag" content="machine learning">
+<meta property="article:tag" content="large language models">
+<meta property="article:tag" content="llms">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="1">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="1">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="1"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                <section class="postShorten-group main-content-wrap">
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/08/20/understanding-tensorboard/"
+                            aria-label=": 理解 TensorBoard"
+                        >
+                            理解 TensorBoard
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-08-20T10:01:00+08:00">
+	
+		    2017 年 8 月 20 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p><a href="https://www.tensorflow.org/get_started/summaries_and_tensorboard">TensorBoard</a> 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 <a href="https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/">【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版</a> 和 <a href="https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/">【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集</a> 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 <a href="https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/">前者</a> 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小弟不才，如有错误，欢迎评论区指出。</p>
+                    
+                        <a
+                            href="/2017/08/20/understanding-tensorboard/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 理解 TensorBoard"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/06/02/tensorflow-DNNRegressor/"
+                            aria-label=": TensorFlow DNNRegressor 的简单使用"
+                        >
+                            TensorFlow DNNRegressor 的简单使用
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-06-02T22:03:00+08:00">
+	
+		    2017 年 6 月 2 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p><code>tf.contrib.learn.DNNRegressor</code> 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。<br>
+                    
+                        <a
+                            href="/2017/06/02/tensorflow-DNNRegressor/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": TensorFlow DNNRegressor 的简单使用"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/05/18/installing-xgboost/"
+                            aria-label=": XGBoost 在 Windows 10 和 Ubuntu 上的安装"
+                        >
+                            XGBoost 在 Windows 10 和 Ubuntu 上的安装
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-05-18T10:58:00+08:00">
+	
+		    2017 年 5 月 18 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>关于什么是 <code>XGBoost</code>，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 <a href="https://arxiv.org/abs/1603.02754">XGBoost: A Scalable Tree Boosting System</a> ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 <code>XGBoost</code> 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。</p>
+                    
+                        <a
+                            href="/2017/05/18/installing-xgboost/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": XGBoost 在 Windows 10 和 Ubuntu 上的安装"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/03/29/understanding-svd/"
+                            aria-label=": 奇异值分解 SVD 的数学解释"
+                        >
+                            奇异值分解 SVD 的数学解释
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-03-29T12:33:00+08:00">
+	
+		    2017 年 3 月 29 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>奇异值分解（Singular Value Decomposition，SVD）是一种矩阵分解（Matrix Decomposition）的方法。除此之外，矩阵分解还有很多方法，例如特征分解（Eigendecomposition）、LU分解（LU decomposition）、QR分解（QR decomposition）和极分解（Polar decomposition）等。这篇文章主要说下奇异值分解，这个方法在机器学习的一些算法里占有重要地位。<br>
+                    
+                        <a
+                            href="/2017/03/29/understanding-svd/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 奇异值分解 SVD 的数学解释"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/03/17/tensorflow-cnn-tensorboard/"
+                            aria-label=": TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
+                        >
+                            TensorFlow 中的卷积神经网络 CNN - TensorBoard 版
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-03-17T10:57:00+08:00">
+	
+		    2017 年 3 月 17 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p><a href="http://blog.csdn.net/u010099080/article/details/53906810">前面</a> 写了一篇用 TensorFlow 实现 CNN 的文章，没有实现 TensorBoard，这篇来加上 TensorBoard 的实现，代码可以从 <a href="http://download.csdn.net/detail/u010099080/9781711">这里</a> 下载。</p>
+                    
+                        <a
+                            href="/2017/03/17/tensorflow-cnn-tensorboard/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/02/26/tensorflow-cudnn-version/"
+                            aria-label=": Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
+                        >
+                            Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-02-26T11:45:44+08:00">
+	
+		    2017 年 2 月 26 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 <a href="https://www.tensorflow.org/tutorials/deep_cnn">TensorFlow 官方的 CNN 例子</a>的时候，总是报 <code>ImportError</code> 错误，找不到 <code>cifar10</code> 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：<a href="https://github.com/tensorflow/models">models</a> 。</p>
+<p>但是呢，在我 <code>clone</code> 了 <code>models</code> 到本地后，按照 TensorFlow 官方的例子运行 <code>python cifar10_train.py</code> 的时候，问题又出现了……</p>
+                    
+                        <a
+                            href="/2017/02/26/tensorflow-cudnn-version/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2017/02/16/tensorflow-1.0/"
+                            aria-label=": TensorFlow 1.0 发布"
+                        >
+                            TensorFlow 1.0 发布
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2017-02-16T10:46:55+08:00">
+	
+		    2017 年 2 月 16 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p>前面写了 <a href="https://secsilm.github.io/2016/12/01/installing-tensorflow/">TensorFlow 在Windows上的安装教程</a>，当时版本还是 0.12 。</p>
+<p>NOW</p>
+<p>首届 <a href="https://events.withgoogle.com/tensorflow-dev-summit/watch-the-videos/#content">TensorFlow 开发者大会</a>（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，<strong>TensorFlow 1.0</strong> 版本发布。Google Research Blog 也于昨天在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html">博客</a> 中公布了这一消息。</p>
+                    
+                        <a
+                            href="/2017/02/16/tensorflow-1.0/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": TensorFlow 1.0 发布"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                            aria-label=": TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                        >
+                            TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2016-12-28T12:13:13+08:00">
+	
+		    2016 年 12 月 28 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p><a href="http://blog.csdn.net/u010099080/article/details/53234227">前面</a> 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 <strong>46.98%</strong>。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。</p>
+<p>本文代码基于 <a href="https://www.tensorflow.org/tutorials/deep_cnn/">TensorFlow 的官方文档</a> 做了些许修改，完整代码及结果图片可从 <a href="http://download.csdn.net/download/u010099080/9723302">这里</a> 下载。</p>
+<p><a href="http://blog.csdn.net/u010099080/article/details/62882006">这篇</a> 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。</p>
+                    
+                        <a
+                            href="/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2016/12/10/tensorboard-mnist-pca/"
+                            aria-label=": 在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
+                        >
+                            在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2016-12-10T07:23:02+08:00">
+	
+		    2016 年 12 月 10 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <!-- toc -->
+<p>主成分分析（PCA）是一种常用的数据降维方法，可以将高维数据在二维或者三维可视化呈现。具体原理我在这里就不再详述，网上有很多教程都不错，可以参考 <a href="https://my.oschina.net/gujianhan/blog/225241">这里</a> 或者 <a href="https://en.wikipedia.org/wiki/Principal_component_analysis">PCA 的维基百科页面</a>。</p>
+                    
+                        <a
+                            href="/2016/12/10/tensorboard-mnist-pca/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": 在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-right">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2016/12/01/installing-tensorflow/"
+                            aria-label=": Windows10 64 位下安装 TensorFlow - 官方原生支持"
+                        >
+                            Windows10 64 位下安装 TensorFlow - 官方原生支持
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2016-12-01T09:11:00+08:00">
+	
+		    2016 年 12 月 1 日
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-excerpt">
+                    <p><a href="http://localhost:4000/2016/08/27/ubuntu-installing-tensorflow/">之前</a> 写过一篇在 ubuntu 下安装 TensorFlow 的教程，那个时候 TensorFlow 官方还不支持 Windows 系统，虽然可以通过其他方法安装，但是终究不是原生的，而且安装过程繁琐易错。好消息是，Google官方在11月29号的开发者博客中宣布新的版本（0.12）将 <a href="https://developers.googleblog.com/2016/11/tensorflow-0-12-adds-support-for-windows.html">增加对Windows的支持</a>，我11月30号知道的，立马就安装试了试，安装过程非常简单，不过也有一些需要手动调整。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/0lbB25k.png" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/0lbB25k.png" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<hr>
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><p>这里我会列出对本文的更新。</p>
+<ul>
+<li>2017 年 3 月 1 日：cuDNN 版本从 5.0 升级到 5.1 版本，更新 cuda 和 cudnn 下载地址。</li>
+<li>2017 年 3 月 20 日：标记 <em>安装前准备</em> 中的第五条 <em>确保你安装了 VS2015 或者 2013 或者 2010。</em> 为存疑。这是我之前在 TensorFlow 官网看到的，但是现在去翻了翻找不到了。如果有同学没有安装 VS 就把 TensorFlow 安装成功了的话，请在下方评论区说明下，到时候我会将这个要求标记为删除。谢谢。</li>
+<li>2017 年 3 月 26 日：更新 TensorFlow 安装命令。</li>
+<li>2017 年 4 月 18 日：<ul>
+<li><em>安装前准备</em>  第五条标记为删除，经过我再次试验发现不需要 VS 的支持。</li>
+<li>增加问题 <code>Cannot remove entries from nonexistent file</code> 的解决办法。</li>
+</ul>
+</li>
+<li>2017 年 7 月 20 日：增加问题 <code>ImportError: DLL load failed: 找不到指定的模块。</code> 、<code>ImportError: No module named &#39;_pywrap_tensorflow_internal&#39;</code> 和 <code>ImportError: No module named &#39;tensorflow.python.pywrap_tensorflow_internal</code> 的时候` 的解决办法。</li>
+<li>2017 年 7 月 31日：更新关于 Python 版本的说明，TensorFlow 从 1.2 开始在 Windows 上支持 Python 3.6。感谢评论区 @Vince_Ace 提供的信息。</li>
+<li>2017 年 8 月 20 日：TensorFlow 1.3 发布，更新 cuDNN 版本说明。感谢评论区 @myseth1023 提供的信息。</li>
+<li>2017 年 8 月 21 日：删除 <em>安装cuDNN</em> 中容易误导人的部分（关于添加环境变量）。</li>
+<li>2018 年 3 月 12 日：TensorFlow 1.6 发布，更新相关说明，详细发布说明参考 <a href="https://github.com/tensorflow/tensorflow/releases/tag/v1.6.0">Release TensorFlow 1.6.0</a>。</li>
+<li>2018 年 3 月 18 日：增加问题 #4 及其解决办法。</li>
+<li>2019 年 4 月 5 日：增加问题 #5 及其解决办法（针对 TensorFlow 1.13）。</li>
+</ul>
+<hr>
+<h2 id="安装前准备"><a href="#安装前准备" class="headerlink" title="安装前准备"></a>安装前准备</h2><p>TensorFlow 有两个版本：<strong>CPU</strong> 版本和 <strong>GPU</strong> 版本。GPU 版本需要 <strong>CUDA</strong> 和 <strong>cuDNN</strong> 的支持，CPU 版本不需要。如果你要安装 GPU 版本，<strong>请先确认你的显卡支持 CUDA</strong>。我安装的是 GPU 版本，采用 <strong>pip 安装方式</strong>，所以就以 GPU 安装为例，CPU 版本只不过不需要安装 CUDA 和 cuDNN。</p>
+<ol>
+<li>在 <a href="https://developer.nvidia.com/cuda-gpus">这里</a> 确认你的显卡支持 CUDA。</li>
+<li>确保你的 Python 版本是 <strong>3.5</strong> 64 位及以上。（TensorFlow 从 1.2 开始支持 Python 3.6，之前的<strong>官方</strong>是不支持的）</li>
+<li>确保你有稳定的网络连接。</li>
+<li>确保你的 pip 版本 &gt;= 8.1。用 <code>pip -V</code> 查看当前 <code>pip</code> 版本，用 <code>python -m pip install -U pip</code> 升级<code>pip</code> 。</li>
+<li><del>确保你安装了 VS2015 或者 2013 或者 2010。此条非必须，删除。</del></li>
+</ol>
+<p>此外，建议安装 Anaconda，因为这个集成了很多科学计算所必需的库，能够避免很多依赖问题，安装教程可以参考 <a href="http://blog.csdn.net/u010099080/article/details/52333935">这里</a>。</p>
+<p>以上条件符合，那么恭喜你可以开始下载 CUDA 和 cuDNN 的安装包了，注意版本号会由于 TensorFlow 不同版本有变化，此处请结合下面的<a href="http://blog.csdn.net/u010099080/article/details/53418159#%E5%AE%89%E8%A3%85-cuda">安装 CUDA</a> 和<a href="http://blog.csdn.net/u010099080/article/details/53418159#%E5%AE%89%E8%A3%85-cudnn">安装 cuDNN</a> 说明）。</p>
+<hr>
+<h2 id="安装-TensorFlow"><a href="#安装-TensorFlow" class="headerlink" title="安装 TensorFlow"></a>安装 TensorFlow</h2><p>由于 Google 那帮人已经把 TensorFlow 打成了一个 pip 安装包，所以现在可以用正常安装包的方式安装 TensorFlow 了，就是进入命令行执行下面这一条简单的语句：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># GPU版本</span><br><span class="line">pip3 install --upgrade tensorflow-gpu</span><br><span class="line"></span><br><span class="line"># CPU版本</span><br><span class="line">pip3 install --upgrade tensorflow</span><br></pre></td></tr></table></figure></p>
+<p>然后就开始安装了，速度视网速而定。</p>
+<p>安装网之后你试着在 Python 中<code>import tensorflow</code>会告诉你没有找到 CUDA 和 cuDNN，所以下一步就是安装这两个东西。</p>
+<hr>
+<h2 id="安装-CUDA"><a href="#安装-CUDA" class="headerlink" title="安装 CUDA"></a>安装 CUDA</h2><blockquote>
+<ul>
+<li>TensorFlow 1.6：CUDA 9.0</li>
+<li>TensorFlow 1.13.1：CUDA 10.0</li>
+</ul>
+</blockquote>
+<p>这个也是很简单的，<strong>首先根据上面的版本去<a href="https://developer.nvidia.com/cuda-toolkit-archive">官网</a>下载对应的安装包（~ 1.4 GB）</strong>。下载完那个 exe 文件就是 CUDA 的安装程序，直接双击执行就可以了，就像安装正常的其他软件一样，安装过程屏幕可能会闪烁，不要紧，而且安装时间有点长。</p>
+<p>安装完之后系统变量会自动为你添加上，这个不用管。</p>
+<p>测试一下是否安装成功，命令行输入 <code>nvcc -V</code> ，看到版本信息就表示安装成功了。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/Qjk8FSf.png" title="nvcc" data-caption="nvcc" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/Qjk8FSf.png" alt="nvcc"></a><span class="caption">nvcc</span></div>
+<hr>
+<!-- toc -->
+<h2 id="安装-cuDNN"><a href="#安装-cuDNN" class="headerlink" title="安装 cuDNN"></a>安装 cuDNN</h2>
+                    
+                        <a
+                            href="/2016/12/01/installing-tensorflow/"
+                            class="postShorten-excerpt_link link"
+                            aria-label=": Windows10 64 位下安装 TensorFlow - 官方原生支持"
+                        >
+                            阅读全文
+                        </a>
+                        
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    <div class="pagination-bar">
+    <ul class="pagination">
+        
+          <li class="pagination-prev">
+            <a
+                class="btn btn--default btn--small"
+                href="/page/7/"
+                aria-label="上一页"
+            >
+              <i class="fa fa-angle-left text-base icon-mr"></i>
+              <span>上一页</span>
+            </a>
+          </li>
+        
+        
+          <li class="pagination-next">
+            <a
+                class="btn btn--default btn--small"
+                href="/page/9/"
+                aria-label="下一页"
+            >
+              <span>下一页</span>
+              <i class="fa fa-angle-right text-base icon-ml"></i>
+            </a>
+          </li>
+        
+        <li class="pagination-number">第 8 页 共 9 页</li>
+    </ul>
+</div>
+
+</section>
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

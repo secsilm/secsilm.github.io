@@ -1,0 +1,751 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>批量导出 CSDN 博客为 Markdown 文件 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\nCSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞\n内容为王，站搭起来了，就需要内容来充实。但是我的文章都在 CSDN 上，手动一篇一篇导过来太慢，而且 hexo 的文章需要在头部添加 Front-matter，所以这样一来工作量就更大了，所以考虑用 Python 把文章都爬过来，然后统一添加 Front-matter。\n完整程序源码在 secsilm/csdn2md: Export csdn blogs to markdown files.。\n\nNote：你的文章必须是使用 markdown 写的，不然无法使用本文方法导出。\n\n思路对于单篇文章，CSDN 有导出为 markdown 的功能，如下图：\n导出单篇文章\n但是这样费时费力，所以我们需要找到当我们点击编辑按钮时，网页向服务器发送的请求地址，这样我们就可以直接获取到博客内容，也就可以重新写入到 markdown 文件了。\n我们在文章页按F12调出开发者工具，切换到Network选项卡，然后点击编辑，可以看到如下几个请求：\n三个请求\nwebspeeds无关，那么剩下两个，从名字可以很快看出来我们需要的是第二个：\n1http://write.blog.csdn.net/mdeditor/getArticle?id=53418159&amp;username=u010099080\n可以看到需要两个参数：id和username，id就是文章 id，这个很好获取，可以在文章地址中找到。username则是你的用户名，也可以在你的博客地址中找到。\n下面我们看下请求头：\n请求头\n可以看到其实也没啥特别的，其中Cookie是一会儿我们需要的，你可以将此复制到一个 txt 文件（假设名字叫cookies.txt）中以备后用。由于 cookie 字符串是存在一个文件中的，所以需要一个函数来解析成dict：\n12345678910111213141516def read_and_parse_cookies(cookie_file):    &quot;&quot;&quot;读取并解析 cookies。    Args:        cookie_file: 含有 cookies 字符串的 txt 文件名    Returns:        一个字典形式的 cookies    &quot;&quot;&quot;    with open(cookie_file, &#x27;r&#x27;) as f:        cookies_str = f.readline()    cookies_dict = &#123;&#125;    for item in cookies_str.split(&quot;;&quot;):        k, v = item.split(&quot;=&quot;, maxsplit=1)        cookies_dict[k.strip()] = v.strip()    return cookies_dict\n那么现在我们就可以使用requests来发起请求：\n1234567base_url = &#x27;http://write.blog.csdn.net/mdeditor/getArticle&#x27;params = &#123;    &#x27;id&#x27;: article_id,    &#x27;username&#x27;: username&#125;# 根据文章 id 获取文章数据r = requests.get(base_url, params=params, cookies=cookies)\n再从开发者工具看下请求返回值：\nResponse\n基本上囊括了一篇文章的所有信息了，而我们只需要里面的markdowncontent、title和create。而且返回的数据是 json 格式，我们可以用json.loads()来解析成dict格式，方便我们写入文件：\n1data = json.loads(r.text, strict=False)\n最后由于我是要导入到 hexo 站点中，所以需要加 Front-matter，所以在获取到文章内容后，需要先把定义好的 Front-matter 加到文章内容里，一起写入文件：\n123456789101112if hexo:hexo_str = &#x27;---\\ntitle: &#123;title&#125;\\ndate: &#123;date&#125;\\ntags:\\n---\\n\\n&#x27;.format(    title=title, date=data[&#x27;data&#x27;][&#x27;create&#x27;])# Windows 下文件名中的非法字符forbidden = [&#x27;\\\\&#x27;, &#x27;/&#x27;, &#x27;:&#x27;, &#x27;*&#x27;, &#x27;?&#x27;, &#x27;&quot;&#x27;, &#x27;&lt;&#x27;, &#x27;&gt;&#x27;, &#x27;|&#x27;]# 如果文章名含有非法字符，那么使用其 id 作为 md 文件名if any([c in repr(title) for c in forbidden]):    with open(os.path.join(md_dir, article_id + &#x27;.md&#x27;), &#x27;w&#x27;, encoding=&#x27;utf8&#x27;) as f:        f.write(hexo_str + data[&#x27;data&#x27;][&#x27;markdowncontent&#x27;])else:    with open(os.path.join(md_dir, title + &#x27;.md&#x27;), &#x27;w&#x27;, encoding=&#x27;utf8&#x27;) as f:        f.write(hexo_str + data[&#x27;data&#x27;][&#x27;markdowncontent&#x27;])\n至于如何通过文章列表获取文章 id，这个比较简单，我就不赘述了，大家可以直接看源码。\nUsage程序使用fire来从命令行接收参数，如何使用fire请参考 Python 自动生成命令行工具 - fire 简介 · Lee’s Space Station。我们可以使用如下命令来查看帮助：\n1python csdn2md.py -- --help\n输出：\n12345678910111213141516Type:        functionString form: &lt;function to_md_files at 0x000001CACC8C5E18&gt;File:        d:\\chromedownload\\mdfiles\\csdn2md.pyLine:        47Docstring:   导出为 Markdown 文件。Args:    total_pages: 博客文章在摘要模式下的总页数    filename: 含有 cookies 字符串的 txt 文件名    start: 从 start 页开始导出 (default: &#123;1&#125;)    stop: 到 stop 页停止 (default: &#123;None&#125;)    hexo: 是否添加 hexo 文章头部字符串（default: &#123;True&#125;）    md_dir: md 文件导出目录，默认为当前目录（default: .）Usage:       csdn2md.py USERNAME TOTAL_PAGES COOKIE_FILE [START] [STOP] [HEXO] [MD_DIR]             csdn2md.py --username USERNAME --total-pages TOTAL_PAGES --cookie-file COOKIE_FILE [--start START] [--stop STOP] [--hexo HEXO] [--md-dir MD_DIR]\n从帮助可以看出，你需要提供用户名username、博客总页数total-pages和 cookie 文件名cookie-file，可选参数为start、stop（默认为None，即一直到博客文章最后一页）、hexo和md-dir。\n例如，你需要导出博客的第一页文章到当前目录下的mdfiles目录，你的博客总页数为3，那么只需要执行如下命令：\n1python csdn2md.py --username u010099080 --total-pages 3 --cookie-file cookies.txt --stop 1 --md-dir mdfiles\n控制台输出：\n12345678910111213141516172017-12-25 11:54:08 INFO: Page 12017-12-25 11:54:08 INFO: Exporting 【TensorFlow】理解 Estimators 和 Datasets ...2017-12-25 11:54:08 INFO: Exporting Windows 10 资源管理器黑色风格 ...2017-12-25 11:54:09 INFO: Exporting 梯度下降优化算法概述 ...2017-12-25 11:54:09 INFO: Exporting 使用集成学习提升机器学习算法性能 ...2017-12-25 11:54:09 INFO: Exporting 【TensorFlow | TensorBoard】理解 TensorBoard ...2017-12-25 11:54:09 INFO: Exporting 【Python】Numpy 中的 shuffle VS permutation ...2017-12-25 11:54:09 INFO: Exporting 【TensorFlow】DNNRegressor 的简单使用 ...2017-12-25 11:54:09 INFO: Exporting XGBoost 在 Windows 10 和 Ubuntu 上的安装 ...2017-12-25 11:54:10 INFO: Exporting 【Python】自动生成命令行工具 - fire 简介 ...2017-12-25 11:54:10 INFO: Exporting 奇异值分解 SVD 的数学解释 ...2017-12-25 11:54:10 INFO: Exporting 【Python】统计字符串中英文、空格、数字、标点个数 ...2017-12-25 11:54:10 INFO: Exporting 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 ...2017-12-25 11:54:10 INFO: Exporting 使用 tree 命令格式化输出目录结构 ...2017-12-25 11:54:11 INFO: Exporting VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法 ...2017-12-25 11:54:11 INFO: Exporting 【Python】numpy 中的 copy 问题详解 ...2017-12-25 11:54:11 INFO: Done!\nmdfiles文件夹：\nmdfiles\nEND当然，导出的文件中 Front-matter 中的 tags 还是需要自己添加，因为我想自己再重新加标签而不是使用原来的标签，如果你想使用原来的标签，那么只需把请求返回 json 数据中的categories提取出来加进去即可。\nMerry Christmas! 😄\n","dateCreated":"2017-12-25T09:27:18+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2017-12-25T09:27:18+08:00","description":"\nCSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞","headline":"批量导出 CSDN 博客为 Markdown 文件","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/","keywords":"Python"}</script>
+    <meta name="description" content="CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="批量导出 CSDN 博客为 Markdown 文件">
+<meta property="og:url" content="https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：CSDN 博客又挂了。。。 - V2EX。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/6aLaZPS.gif">
+<meta property="og:image" content="https://i.imgur.com/Sg4Bb5w.png">
+<meta property="og:image" content="https://i.imgur.com/gAkWlzs.png">
+<meta property="og:image" content="https://i.imgur.com/VPMrb7Q.png">
+<meta property="og:image" content="https://i.imgur.com/UK5pcCz.png">
+<meta property="article:published_time" content="2017-12-25T01:27:18.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.193Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/6aLaZPS.gif">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            批量导出 CSDN 博客为 Markdown 文件
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-12-25T09:27:18+08:00">
+	
+		    2017 年 12 月 25 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%9D%E8%B7%AF"><span class="toc-text">思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Usage"><span class="toc-text">Usage</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>CSDN 真是💊，经常性的不能访问，而且如果不用广告插件的话页面简直不能看，前段时间又挂了，发了个帖子吐槽了一下：<a href="https://www.v2ex.com/t/416648#reply35">CSDN 博客又挂了。。。 - V2EX</a>。本来也考虑过自己做个，看了好久，但是由于自己对网站相关的不太懂，看着教程又复杂，就没弄了。CSDN 这次挂真让我铁了心弄自己的网站，然后用了一个下午搭起来了，随后又陆陆续续改了改主题配置之类的，弄这个还是我最近第一次一两点才睡，后来还感冒了 😞<br><span id="more"></span></p>
+<p>内容为王，站搭起来了，就需要内容来充实。但是我的文章都在 CSDN 上，手动一篇一篇导过来太慢，而且 hexo 的文章需要在头部添加 <a href="https://hexo.io/zh-cn/docs/front-matter.html">Front-matter</a>，所以这样一来工作量就更大了，所以考虑用 Python 把文章都爬过来，然后统一添加 Front-matter。</p>
+<p>完整程序源码在 <a href="https://github.com/secsilm/csdn2md">secsilm/csdn2md: Export csdn blogs to markdown files.</a>。</p>
+<blockquote>
+<p>Note：你的文章必须是使用 markdown 写的，不然无法使用本文方法导出。</p>
+</blockquote>
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><p>对于单篇文章，CSDN 有导出为 markdown 的功能，如下图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/6aLaZPS.gif" title="导出单篇文章" data-caption="导出单篇文章" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/6aLaZPS.gif" alt="导出单篇文章"></a><span class="caption">导出单篇文章</span></div>
+<p>但是这样费时费力，所以我们需要找到当我们点击<code>编辑</code>按钮时，网页向服务器发送的请求地址，这样我们就可以直接获取到博客内容，也就可以重新写入到 markdown 文件了。</p>
+<p>我们在文章页按<code>F12</code>调出开发者工具，切换到<code>Network</code>选项卡，然后点击<code>编辑</code>，可以看到如下几个请求：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/Sg4Bb5w.png" title="三个请求" data-caption="三个请求" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/Sg4Bb5w.png" alt="三个请求"></a><span class="caption">三个请求</span></div>
+<p><code>webspeeds</code>无关，那么剩下两个，从名字可以很快看出来我们需要的是第二个：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://write.blog.csdn.net/mdeditor/getArticle?id=53418159&amp;username=u010099080</span><br></pre></td></tr></table></figure>
+<p>可以看到需要两个参数：<code>id</code>和<code>username</code>，<code>id</code>就是文章 id，这个很好获取，可以在文章地址中找到。<code>username</code>则是你的用户名，也可以在你的博客地址中找到。</p>
+<p>下面我们看下请求头：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/gAkWlzs.png" title="请求头" data-caption="请求头" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/gAkWlzs.png" alt="请求头"></a><span class="caption">请求头</span></div>
+<p>可以看到其实也没啥特别的，其中<code>Cookie</code>是一会儿我们需要的，你可以将此复制到一个 txt 文件（假设名字叫<code>cookies.txt</code>）中以备后用。由于 cookie 字符串是存在一个文件中的，所以需要一个函数来解析成<code>dict</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">read_and_parse_cookies</span>(<span class="params">cookie_file</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;读取并解析 cookies。</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Args:</span></span><br><span class="line"><span class="string">        cookie_file: 含有 cookies 字符串的 txt 文件名</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns:</span></span><br><span class="line"><span class="string">        一个字典形式的 cookies</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(cookie_file, <span class="string">&#x27;r&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        cookies_str = f.readline()</span><br><span class="line">    cookies_dict = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> cookies_str.split(<span class="string">&quot;;&quot;</span>):</span><br><span class="line">        k, v = item.split(<span class="string">&quot;=&quot;</span>, maxsplit=<span class="number">1</span>)</span><br><span class="line">        cookies_dict[k.strip()] = v.strip()</span><br><span class="line">    <span class="keyword">return</span> cookies_dict</span><br></pre></td></tr></table></figure>
+<p>那么现在我们就可以使用<code>requests</code>来发起请求：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">base_url = <span class="string">&#x27;http://write.blog.csdn.net/mdeditor/getArticle&#x27;</span></span><br><span class="line">params = &#123;</span><br><span class="line">    <span class="string">&#x27;id&#x27;</span>: article_id,</span><br><span class="line">    <span class="string">&#x27;username&#x27;</span>: username</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment"># 根据文章 id 获取文章数据</span></span><br><span class="line">r = requests.get(base_url, params=params, cookies=cookies)</span><br></pre></td></tr></table></figure>
+<p>再从开发者工具看下请求返回值：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/VPMrb7Q.png" title="Response" data-caption="Response" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/VPMrb7Q.png" alt="Response"></a><span class="caption">Response</span></div>
+<p>基本上囊括了一篇文章的所有信息了，而我们只需要里面的<code>markdowncontent</code>、<code>title</code>和<code>create</code>。而且返回的数据是 json 格式，我们可以用<code>json.loads()</code>来解析成<code>dict</code>格式，方便我们写入文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">data = json.loads(r.text, strict=<span class="literal">False</span>)</span><br></pre></td></tr></table></figure>
+<p>最后由于我是要导入到 hexo 站点中，所以需要加 Front-matter，所以在获取到文章内容后，需要先把定义好的 Front-matter 加到文章内容里，一起写入文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> hexo:</span><br><span class="line">hexo_str = <span class="string">&#x27;---\ntitle: &#123;title&#125;\ndate: &#123;date&#125;\ntags:\n---\n\n&#x27;</span>.<span class="built_in">format</span>(</span><br><span class="line">    title=title, date=data[<span class="string">&#x27;data&#x27;</span>][<span class="string">&#x27;create&#x27;</span>])</span><br><span class="line"><span class="comment"># Windows 下文件名中的非法字符</span></span><br><span class="line">forbidden = [<span class="string">&#x27;\\&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;:&#x27;</span>, <span class="string">&#x27;*&#x27;</span>, <span class="string">&#x27;?&#x27;</span>, <span class="string">&#x27;&quot;&#x27;</span>, <span class="string">&#x27;&lt;&#x27;</span>, <span class="string">&#x27;&gt;&#x27;</span>, <span class="string">&#x27;|&#x27;</span>]</span><br><span class="line"><span class="comment"># 如果文章名含有非法字符，那么使用其 id 作为 md 文件名</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">any</span>([c <span class="keyword">in</span> <span class="built_in">repr</span>(title) <span class="keyword">for</span> c <span class="keyword">in</span> forbidden]):</span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(os.path.join(md_dir, article_id + <span class="string">&#x27;.md&#x27;</span>), <span class="string">&#x27;w&#x27;</span>, encoding=<span class="string">&#x27;utf8&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        f.write(hexo_str + data[<span class="string">&#x27;data&#x27;</span>][<span class="string">&#x27;markdowncontent&#x27;</span>])</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(os.path.join(md_dir, title + <span class="string">&#x27;.md&#x27;</span>), <span class="string">&#x27;w&#x27;</span>, encoding=<span class="string">&#x27;utf8&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        f.write(hexo_str + data[<span class="string">&#x27;data&#x27;</span>][<span class="string">&#x27;markdowncontent&#x27;</span>])</span><br></pre></td></tr></table></figure>
+<p>至于如何通过文章列表获取文章 id，这个比较简单，我就不赘述了，大家可以直接看源码。</p>
+<h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>程序使用<code>fire</code>来从命令行接收参数，如何使用<code>fire</code>请参考 <a href="https://secsilm.github.io/2017/04/22/python-fire/#%E6%9B%B4%E6%96%B0">Python 自动生成命令行工具 - fire 简介 · Lee’s Space Station</a>。我们可以使用如下命令来查看帮助：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python csdn2md.py -- --<span class="built_in">help</span></span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Type:        <span class="keyword">function</span></span><br><span class="line">String form: &lt;<span class="keyword">function</span> to_md_files at 0x000001CACC8C5E18&gt;</span><br><span class="line">File:        d:\chromedownload\mdfiles\csdn2md.py</span><br><span class="line">Line:        47</span><br><span class="line">Docstring:   导出为 Markdown 文件。</span><br><span class="line"></span><br><span class="line">Args:</span><br><span class="line">    total_pages: 博客文章在摘要模式下的总页数</span><br><span class="line">    filename: 含有 cookies 字符串的 txt 文件名</span><br><span class="line">    start: 从 start 页开始导出 (default: &#123;1&#125;)</span><br><span class="line">    stop: 到 stop 页停止 (default: &#123;None&#125;)</span><br><span class="line">    hexo: 是否添加 hexo 文章头部字符串（default: &#123;True&#125;）</span><br><span class="line">    md_dir: md 文件导出目录，默认为当前目录（default: .）</span><br><span class="line"></span><br><span class="line">Usage:       csdn2md.py USERNAME TOTAL_PAGES COOKIE_FILE [START] [STOP] [HEXO] [MD_DIR]</span><br><span class="line">             csdn2md.py --username USERNAME --total-pages TOTAL_PAGES --cookie-file COOKIE_FILE [--start START] [--stop STOP] [--hexo HEXO] [--md-dir MD_DIR]</span><br></pre></td></tr></table></figure>
+<p>从帮助可以看出，你需要提供用户名<code>username</code>、博客总页数<code>total-pages</code>和 cookie 文件名<code>cookie-file</code>，可选参数为<code>start</code>、<code>stop</code>（默认为<code>None</code>，即一直到博客文章最后一页）、<code>hexo</code>和<code>md-dir</code>。</p>
+<p>例如，你需要导出博客的第一页文章到当前目录下的<code>mdfiles</code>目录，你的博客总页数为<code>3</code>，那么只需要执行如下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python csdn2md.py --username u010099080 --total-pages 3 --cookie-file cookies.txt --stop 1 --md-dir mdfiles</span><br></pre></td></tr></table></figure>
+<p>控制台输出：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">2017-12-25 11:54:08 INFO: Page 1</span><br><span class="line">2017-12-25 11:54:08 INFO: Exporting 【TensorFlow】理解 Estimators 和 Datasets ...</span><br><span class="line">2017-12-25 11:54:08 INFO: Exporting Windows 10 资源管理器黑色风格 ...</span><br><span class="line">2017-12-25 11:54:09 INFO: Exporting 梯度下降优化算法概述 ...</span><br><span class="line">2017-12-25 11:54:09 INFO: Exporting 使用集成学习提升机器学习算法性能 ...</span><br><span class="line">2017-12-25 11:54:09 INFO: Exporting 【TensorFlow | TensorBoard】理解 TensorBoard ...</span><br><span class="line">2017-12-25 11:54:09 INFO: Exporting 【Python】Numpy 中的 shuffle VS permutation ...</span><br><span class="line">2017-12-25 11:54:09 INFO: Exporting 【TensorFlow】DNNRegressor 的简单使用 ...</span><br><span class="line">2017-12-25 11:54:09 INFO: Exporting XGBoost 在 Windows 10 和 Ubuntu 上的安装 ...</span><br><span class="line">2017-12-25 11:54:10 INFO: Exporting 【Python】自动生成命令行工具 - fire 简介 ...</span><br><span class="line">2017-12-25 11:54:10 INFO: Exporting 奇异值分解 SVD 的数学解释 ...</span><br><span class="line">2017-12-25 11:54:10 INFO: Exporting 【Python】统计字符串中英文、空格、数字、标点个数 ...</span><br><span class="line">2017-12-25 11:54:10 INFO: Exporting 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 ...</span><br><span class="line">2017-12-25 11:54:10 INFO: Exporting 使用 tree 命令格式化输出目录结构 ...</span><br><span class="line">2017-12-25 11:54:11 INFO: Exporting VSCode Markdown PDF 导出成PDF报 phantomjs binary does not exist 错误的解决办法 ...</span><br><span class="line">2017-12-25 11:54:11 INFO: Exporting 【Python】numpy 中的 copy 问题详解 ...</span><br><span class="line">2017-12-25 11:54:11 INFO: Done!</span><br></pre></td></tr></table></figure>
+<p><code>mdfiles</code>文件夹：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/UK5pcCz.png" title="mdfiles" data-caption="mdfiles" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/UK5pcCz.png" alt="mdfiles"></a><span class="caption">mdfiles</span></div>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><p>当然，导出的文件中 Front-matter 中的 <code>tags</code> 还是需要自己添加，因为我想自己再重新加标签而不是使用原来的标签，如果你想使用原来的标签，那么只需把请求返回 json 数据中的<code>categories</code>提取出来加进去即可。</p>
+<p>Merry Christmas! 😄</p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/12/29/understanding-lstms/"
+                    data-tooltip="理解 LSTM 网络"
+                    aria-label="上一篇: 理解 LSTM 网络"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/12/22/understanding-estimators-datasets/"
+                    data-tooltip="理解 Estimators 和 Datasets"
+                    aria-label="下一篇: 理解 Estimators 和 Datasets"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/12/29/understanding-lstms/"
+                    data-tooltip="理解 LSTM 网络"
+                    aria-label="上一篇: 理解 LSTM 网络"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/12/22/understanding-estimators-datasets/"
+                    data-tooltip="理解 Estimators 和 Datasets"
+                    aria-label="下一篇: 理解 Estimators 和 Datasets"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/';
+              
+            this.page.identifier = '2017/12/25/export-csdn-blogs-to-md/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

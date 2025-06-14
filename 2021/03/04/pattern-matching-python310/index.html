@@ -1,0 +1,779 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Python 3.10 的新功能：模式匹配 Pattern Matching - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n简介2021 年 3 月 2 日的时候，Guido 发推说 3.10.0a6 出来了，文档也已经有了，4 月 5 日会释出 a7，5 月 3 日出 b1。\nguido-twitter\n推文中还特别提到「With Pattern Matching」，这是 3.10 的一个重磅功能，于去年 9 月 12 日在 PEP 634 提出。\n之前我一直听说会有这个功能，但是没怎么仔细了解过。Pattern Matching 这个名字给我的第一印象，是模式识别和正则表达式混合的那种感觉，我想正则不是有了吗，应该不会是正则。那难道是模式识别？Python 要真正称为 AI Python 了吗，直接内置 ML？\n直到 Guido 这个推，我才去仔细看了下文档，才发现，(⊙o⊙)？，too young。根本不是那回事，什么 AI Python，什么正则，都是浮云。\n原来是一个加强版的 switch ……\n我们从安装 Python 3.10.0a6 开始，一步一步看看这个 Pattern Matching 是何方神圣。\n安装 Python 3.10.0a6官方 其实已经释出了该版本的 docker 镜像，想要快速体验的话可以直接 pull。\n但此处我们要从 source 安装，使用上述 docker 镜像的可以直接跳过这部分。\n此处我们使用 Ubuntu 18.04 的 docker 镜像，可以直接使用如下命令 pull：\n1docker pull ubuntu:18.04\n假设我们已经预先从 官网 下载好 Python 3.10.0a6 的压缩包，放到了 host 的 /home/alan/download/ 目录，然后我们使用如下命令启动 Ubuntu 镜像：\n12# 网速原因，此处直接使用 -v 将压缩包挂载到容器docker run -it -v /home/alan/download/:/root/ ubuntu:18.04 bash\n进入容器后，依次执行下列命令，即可安装 Python 3.10.0a6：\n12345678910cd /root/tar -xzvf Python-3.10.0a6.tgzcd Python-3.10.0a6apt updateapt-get install -y make build-essential libssl-dev zlib1g-dev \\       libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \\       libncurses5-dev libncursesw5-dev xz-utils tk-dev./configure --enable-optimizations --with-ensurepip=installmake -j 8  # 大约需要十几分钟make altinstall  # 不替换系统 Python\n\n其中，Python-3.10.0a6.tgz 里的目录结构如下：\n\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112113114$ tree Python-3.10.0a6/ -d -L 2Python-3.10.0a6/|-- Doc|   |-- c-api|   |-- data|   |-- distributing|   |-- distutils|   |-- extending|   |-- faq|   |-- howto|   |-- includes|   |-- install|   |-- installing|   |-- library|   |-- reference|   |-- tools|   |-- tutorial|   |-- using|   `-- whatsnew|-- Grammar|-- Include|   |-- cpython|   `-- internal|-- Lib|   |-- asyncio|   |-- collections|   |-- concurrent|   |-- ctypes|   |-- curses|   |-- dbm|   |-- distutils|   |-- email|   |-- encodings|   |-- ensurepip|   |-- html|   |-- http|   |-- idlelib|   |-- importlib|   |-- json|   |-- lib2to3|   |-- logging|   |-- msilib|   |-- multiprocessing|   |-- pydoc_data|   |-- site-packages|   |-- sqlite3|   |-- test|   |-- tkinter|   |-- turtledemo|   |-- unittest|   |-- urllib|   |-- venv|   |-- wsgiref|   |-- xml|   |-- xmlrpc|   `-- zoneinfo|-- Mac|   |-- BuildScript|   |-- IDLE|   |-- Icons|   |-- PythonLauncher|   |-- Resources|   `-- Tools|-- Misc|-- Modules|   |-- _blake2|   |-- _ctypes|   |-- _decimal|   |-- _io|   |-- _multiprocessing|   |-- _sha3|   |-- _sqlite|   |-- _ssl|   |-- _xxtestfuzz|   |-- cjkcodecs|   |-- clinic|   `-- expat|-- Objects|   |-- clinic|   `-- stringlib|-- PC|   |-- clinic|   |-- icons|   `-- layout|-- PCbuild|-- Parser|-- Programs|-- Python|   `-- clinic|-- Tools|   |-- buildbot|   |-- c-analyzer|   |-- ccbench|   |-- clinic|   |-- demo|   |-- freeze|   |-- gdb|   |-- i18n|   |-- importbench|   |-- iobench|   |-- msi|   |-- nuget|   |-- peg_generator|   |-- pynche|   |-- scripts|   |-- ssl|   |-- stringbench|   |-- test2to3|   |-- tz|   |-- unicode|   `-- unittestgui`-- m4110 directories\n\n\n\n完成后，Python 3.10.0a6 就已经安装到系统中，直接命令行输入 python3.10 回车即可进入解释器。\n\n语法Pattern Matching 的全称是 Structural Pattern Matching（以下简称 SPM），中文可以翻为「结构模式匹配」，先搁置 Structural，先看后面的 pattern matching。\n基础语法123456789match subject:    case &lt;pattern_1&gt;:        &lt;action_1&gt;    case &lt;pattern_2&gt;:        &lt;action_2&gt;    case &lt;pattern_3&gt;:        &lt;action_3&gt;    case _:        &lt;action_wildcard&gt;\n这就是 SPM 的语法了，很熟悉对不对？其实本质上就是 switch 语句。就是看 subject 和下面的哪一个 case 的 pattern 能匹配得上（顺序依次匹配），就执行该 case 下的 action。最后一个 case 的 pattern 是 _ ，表示 default，就是如果前面的都没匹配上，那么就执行该 case ，可以看作是兜底的。那么如果你没写这个兜底的 case 呢？那就是 no-op，什么也不会执行。\n例如，根据不同的 http status 返回不同的 message：\n123456789101112def http_error(status):    match status:        case 400:            return &quot;Bad request&quot;        case 401 | 403 | 404:            return &quot;Not allowed&quot;        case 404:            return &quot;Not found&quot;        case 418:            return &quot;I&#x27;m a teapot&quot;        case _:            return &quot;Something&#x27;s wrong with the Internet&quot;\n如果 status 是 400，就会返回 &quot;Bad request&quot; ，如果是 500 ，就走到最后一个兜底的 case ，返回 &quot;Something&#39;s wrong with the Internet&quot; 。那如果没有最后一个 case ，那么该函数什么也不会返回，或者准确来说，返回 None 。\n上述代码中另一个值得注意的是这句： case 401 | 403 | 404: ， | 在这里同样表示或。\nStructural？OK，现在我们来谈谈 structural。语法在哪里体现到了 structural 呢？看文档中下面这句话：\n\nusing data with type and shape (the subject)\n\nsubject 是带有 type 和 shape 的，就是说 subject 是带有结构的，事先声明好 pattern 的结构。例如 subject 可以是一个 list 、 tuple 、 class 、 list of class 等等。\n具体例子：\ntuple ：\n123456789101112# point 是一个 (x, y) tuplematch point:    case (0, 0):        print(&quot;Origin&quot;)    case (0, y):        print(f&quot;Y=&#123;y&#125;&quot;)    case (x, 0):        print(f&quot;X=&#123;x&#125;&quot;)    case (x, y):        print(f&quot;X=&#123;x&#125;, Y=&#123;y&#125;&quot;)    case _:        raise ValueError(&quot;Not a point&quot;)\nclass ：\n12345678910111213141516class Point:    x: int    y: intdef location(point):    match point:        case Point(x=0, y=0):            print(&quot;Origin is the point&#x27;s location.&quot;)        case Point(x=0, y=y):            print(f&quot;Y=&#123;y&#125; and the point is on the y-axis.&quot;)        case Point(x=x, y=0):            print(f&quot;X=&#123;x&#125; and the point is on the x-axis.&quot;)        case Point():            print(&quot;The point is located somewhere else on the plane.&quot;)        case _:            print(&quot;Not a point&quot;)\n嵌套结构 list of class ：\n1234567891011match points:    case []:        print(&quot;No points in the list.&quot;)    case [Point(0, 0)]:        print(&quot;The origin is the only point in the list.&quot;)    case [Point(x, y)]:        print(f&quot;A single point &#123;x&#125;, &#123;y&#125; is in the list.&quot;)    case [Point(0, y1), Point(0, y2)]:        print(f&quot;Two points on the Y axis at &#123;y1&#125;, &#123;y2&#125; are in the list.&quot;)    case _:        print(&quot;Something else is found in the list.&quot;)\n甚至还可以是 dict （Mapping pattern）：\n123456789def dict_test(d):    match d:        case &#123;&#x27;a&#x27;: 1&#125;:            return True        case &#123;&#x27;a&#x27;: 1, &#x27;b&#x27;: 2&#125;:            return Falsedict_test(&#123;&#x27;a&#x27;: 1&#125;)# True\n但使用 dict 作为 pattern 的时候要特别注意，pattern 只匹配其包含的 key，额外的 key 会被忽略，即 all(pattern[key] == subject[key] for key in pattern) ，以 pattern 的 key 为依据。例如下面的例子：\n12dict_test(&#123;&#x27;a&#x27;: 1, &#x27;b&#x27;: 1&#125;)# 仍然返回 True，因为第一个 case 只检查 &#x27;a&#x27; 这个 key 的值\n此外需要注意的是，即使 case 的 pattern 的 type 和 shape 与 subject 对不上，那也不会报错，只不过不会 match 而已。\nA guard？就像 Python 中常见的 A if B else C 的模式，此处也有这么一种存在：\n12345match point:    case Point(x=x, y=y) if x == y:        print(f&quot;The point is located on the diagonal Y=X at &#123;x&#125;.&quot;)    case Point(x=x, y=y):        print(f&quot;Point is not on the diagonal.&quot;)\n需要注意的是，原文档中 Point(x=x, y=y) 写的是 Point(x, y) ，其实这样写的话是会报错的：\n123456Traceback (most recent call last):  File &quot;/root/test.py&quot;, line 69, in &lt;module&gt;    guard_test(point)  File &quot;/root/test.py&quot;, line 39, in guard_test    case Point(x, y) if x == y:TypeError: Point() accepts 0 positional sub-patterns (2 given)\n因为 Point 类不是 dataclass，也没有设置 __match_args__ ，所以不能直接使用位置参数，文档中相关表述如下：\n\nYou can use positional parameters with some builtin classes that provide an ordering for their attributes (e.g. dataclasses). You can also define a specific position for attributes in patterns by setting the __match_args__ special attribute in your classes.\n\n但如果非要写成 Point(x, y) ，可以将 Point 类改成 dataclass 即可：\n123456from dataclasses import dataclass@dataclassclass Point:    x: int    y: int\n此外关于执行顺序：\n\nNote that value capture happens before the guard is evaluated\n\n如果我没理解错的话，就是先判断 pattern， True 的话再判断 guard，正常逻辑。subject 就像是一个人（本身也有主语的意思），一个个 case 就像一个个门， subject 想要看看自己能进入哪扇门，就要通过每扇门的检查。先检查你是不是个人，再检查你是不是我想要的那个人。guard 是最后一道防线。\n总结总结起来，还是我上面说的，加强版的 switch：逻辑或、structural（支持多种类型）、guard。应该使用场景挺多的，干掉一大堆 if 指日可待，再也不用羡慕 Java 等的 switch 了。\nReference\nPython 3 Installation &amp; Setup Guide – Real Python\nWhat’s New In Python 3.10 — Python 3.10.0a6 documentation\n4. More Control Flow Tools — Python 3.10.0a6 documentation\nMailman 3 [python-committers] [RELEASE] Python 3.10.0a6 is available, now with 100% more pattern matching - python-committers - python.org\n\nEND","dateCreated":"2021-03-04T21:19:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2021-03-04T21:19:00+08:00","description":"2021 年 3 月 2 日的时候，Guido 发推说 3.10.0a6 出来了，文档也已经有了，4 月 5 日会释出 a7，5 月 3 日出 b1。本文先介绍一下最新版 Python 的安装，然后来看下这个模式匹配新功能。","headline":"Python 3.10 的新功能：模式匹配 Pattern Matching","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/03/04/pattern-matching-python310/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/03/04/pattern-matching-python310/","keywords":"Python"}</script>
+    <meta name="description" content="2021 年 3 月 2 日的时候，Guido 发推说 3.10.0a6 出来了，文档也已经有了，4 月 5 日会释出 a7，5 月 3 日出 b1。本文先介绍一下最新版 Python 的安装，然后来看下这个模式匹配新功能。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Python 3.10 的新功能：模式匹配 Pattern Matching">
+<meta property="og:url" content="https://alanlee.fun/2021/03/04/pattern-matching-python310/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="2021 年 3 月 2 日的时候，Guido 发推说 3.10.0a6 出来了，文档也已经有了，4 月 5 日会释出 a7，5 月 3 日出 b1。本文先介绍一下最新版 Python 的安装，然后来看下这个模式匹配新功能。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2021/03/04/wLZiV64fDnHmkbj.png">
+<meta property="og:image" content="https://alanlee.fun/2021/03/04/pattern-matching-python310/python3.10a6">
+<meta property="article:published_time" content="2021-03-04T13:19:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.197Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2021/03/04/wLZiV64fDnHmkbj.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Python 3.10 的新功能：模式匹配 Pattern Matching
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-03-04T21:19:00+08:00">
+	
+		    2021 年 3 月 4 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Python-3-10-0a6"><span class="toc-text">安装 Python 3.10.0a6</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95"><span class="toc-text">语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95"><span class="toc-text">基础语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Structural%EF%BC%9F"><span class="toc-text">Structural？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#A-guard%EF%BC%9F"><span class="toc-text">A guard？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>2021 年 3 月 2 日的时候，Guido 发推说 3.10.0a6 出来了，文档也已经有了，4 月 5 日会释出 a7，5 月 3 日出 b1。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/03/04/wLZiV64fDnHmkbj.png" title="guido-twitter" data-caption="guido-twitter" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/03/04/wLZiV64fDnHmkbj.png" alt="guido-twitter"></a><span class="caption">guido-twitter</span></div>
+<p>推文中还特别提到「With Pattern Matching」，这是 3.10 的一个重磅功能，于去年 9 月 12 日在 <a href="https://www.python.org/dev/peps/pep-0634/">PEP 634</a> 提出。</p>
+<p>之前我一直听说会有这个功能，但是没怎么仔细了解过。Pattern Matching 这个名字给我的第一印象，是模式识别和正则表达式混合的那种感觉，我想正则不是有了吗，应该不会是正则。那难道是模式识别？Python 要真正称为 AI Python 了吗，直接内置 ML？</p>
+<p>直到 Guido 这个推，我才去仔细看了下文档，才发现，(⊙o⊙)？，too young。根本不是那回事，什么 AI Python，什么正则，都是浮云。</p>
+<p><strong>原来是一个加强版的 switch ……</strong></p>
+<p>我们从安装 Python 3.10.0a6 开始，一步一步看看这个 Pattern Matching 是何方神圣。</p>
+<h2 id="安装-Python-3-10-0a6"><a href="#安装-Python-3-10-0a6" class="headerlink" title="安装 Python 3.10.0a6"></a>安装 Python 3.10.0a6</h2><p><a href="https://hub.docker.com/_/python">官方</a> 其实已经释出了该版本的 docker 镜像，想要快速体验的话可以直接 pull。</p>
+<p>但此处我们要从 source 安装，使用上述 docker 镜像的可以直接跳过这部分。</p>
+<p>此处我们使用 Ubuntu 18.04 的 docker 镜像，可以直接使用如下命令 pull：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull ubuntu:18.04</span><br></pre></td></tr></table></figure>
+<p>假设我们已经预先从 <a href="https://www.python.org/downloads/release/python-3100a6/">官网</a> 下载好 Python 3.10.0a6 的压缩包，放到了 host 的 <code>/home/alan/download/</code> 目录，然后我们使用如下命令启动 Ubuntu 镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 网速原因，此处直接使用 -v 将压缩包挂载到容器</span></span><br><span class="line">docker run -it -v /home/alan/download/:/root/ ubuntu:18.04 bash</span><br></pre></td></tr></table></figure>
+<p>进入容器后，依次执行下列命令，即可安装 Python 3.10.0a6：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /root/</span><br><span class="line">tar -xzvf Python-3.10.0a6.tgz</span><br><span class="line"><span class="built_in">cd</span> Python-3.10.0a6</span><br><span class="line">apt update</span><br><span class="line">apt-get install -y make build-essential libssl-dev zlib1g-dev \</span><br><span class="line">       libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \</span><br><span class="line">       libncurses5-dev libncursesw5-dev xz-utils tk-dev</span><br><span class="line">./configure --enable-optimizations --with-ensurepip=install</span><br><span class="line">make -j 8  <span class="comment"># 大约需要十几分钟</span></span><br><span class="line">make altinstall  <span class="comment"># 不替换系统 Python</span></span><br></pre></td></tr></table></figure>
+<details>
+<summary>其中，Python-3.10.0a6.tgz 里的目录结构如下：</summary>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line">$ tree Python-3.10.0a6/ -d -L 2</span><br><span class="line">Python-3.10.0a6/</span><br><span class="line">|-- Doc</span><br><span class="line">|   |-- c-api</span><br><span class="line">|   |-- data</span><br><span class="line">|   |-- distributing</span><br><span class="line">|   |-- distutils</span><br><span class="line">|   |-- extending</span><br><span class="line">|   |-- faq</span><br><span class="line">|   |-- howto</span><br><span class="line">|   |-- includes</span><br><span class="line">|   |-- install</span><br><span class="line">|   |-- installing</span><br><span class="line">|   |-- library</span><br><span class="line">|   |-- reference</span><br><span class="line">|   |-- tools</span><br><span class="line">|   |-- tutorial</span><br><span class="line">|   |-- using</span><br><span class="line">|   `-- whatsnew</span><br><span class="line">|-- Grammar</span><br><span class="line">|-- Include</span><br><span class="line">|   |-- cpython</span><br><span class="line">|   `-- internal</span><br><span class="line">|-- Lib</span><br><span class="line">|   |-- asyncio</span><br><span class="line">|   |-- collections</span><br><span class="line">|   |-- concurrent</span><br><span class="line">|   |-- ctypes</span><br><span class="line">|   |-- curses</span><br><span class="line">|   |-- dbm</span><br><span class="line">|   |-- distutils</span><br><span class="line">|   |-- email</span><br><span class="line">|   |-- encodings</span><br><span class="line">|   |-- ensurepip</span><br><span class="line">|   |-- html</span><br><span class="line">|   |-- http</span><br><span class="line">|   |-- idlelib</span><br><span class="line">|   |-- importlib</span><br><span class="line">|   |-- json</span><br><span class="line">|   |-- lib2to3</span><br><span class="line">|   |-- logging</span><br><span class="line">|   |-- msilib</span><br><span class="line">|   |-- multiprocessing</span><br><span class="line">|   |-- pydoc_data</span><br><span class="line">|   |-- site-packages</span><br><span class="line">|   |-- sqlite3</span><br><span class="line">|   |-- <span class="built_in">test</span></span><br><span class="line">|   |-- tkinter</span><br><span class="line">|   |-- turtledemo</span><br><span class="line">|   |-- unittest</span><br><span class="line">|   |-- urllib</span><br><span class="line">|   |-- venv</span><br><span class="line">|   |-- wsgiref</span><br><span class="line">|   |-- xml</span><br><span class="line">|   |-- xmlrpc</span><br><span class="line">|   `-- zoneinfo</span><br><span class="line">|-- Mac</span><br><span class="line">|   |-- BuildScript</span><br><span class="line">|   |-- IDLE</span><br><span class="line">|   |-- Icons</span><br><span class="line">|   |-- PythonLauncher</span><br><span class="line">|   |-- Resources</span><br><span class="line">|   `-- Tools</span><br><span class="line">|-- Misc</span><br><span class="line">|-- Modules</span><br><span class="line">|   |-- _blake2</span><br><span class="line">|   |-- _ctypes</span><br><span class="line">|   |-- _decimal</span><br><span class="line">|   |-- _io</span><br><span class="line">|   |-- _multiprocessing</span><br><span class="line">|   |-- _sha3</span><br><span class="line">|   |-- _sqlite</span><br><span class="line">|   |-- _ssl</span><br><span class="line">|   |-- _xxtestfuzz</span><br><span class="line">|   |-- cjkcodecs</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   `-- expat</span><br><span class="line">|-- Objects</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   `-- stringlib</span><br><span class="line">|-- PC</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   |-- icons</span><br><span class="line">|   `-- layout</span><br><span class="line">|-- PCbuild</span><br><span class="line">|-- Parser</span><br><span class="line">|-- Programs</span><br><span class="line">|-- Python</span><br><span class="line">|   `-- clinic</span><br><span class="line">|-- Tools</span><br><span class="line">|   |-- buildbot</span><br><span class="line">|   |-- c-analyzer</span><br><span class="line">|   |-- ccbench</span><br><span class="line">|   |-- clinic</span><br><span class="line">|   |-- demo</span><br><span class="line">|   |-- freeze</span><br><span class="line">|   |-- gdb</span><br><span class="line">|   |-- i18n</span><br><span class="line">|   |-- importbench</span><br><span class="line">|   |-- iobench</span><br><span class="line">|   |-- msi</span><br><span class="line">|   |-- nuget</span><br><span class="line">|   |-- peg_generator</span><br><span class="line">|   |-- pynche</span><br><span class="line">|   |-- scripts</span><br><span class="line">|   |-- ssl</span><br><span class="line">|   |-- stringbench</span><br><span class="line">|   |-- test2to3</span><br><span class="line">|   |-- tz</span><br><span class="line">|   |-- unicode</span><br><span class="line">|   `-- unittestgui</span><br><span class="line">`-- m4</span><br><span class="line"></span><br><span class="line">110 directories</span><br></pre></td></tr></table></figure>
+
+</details>
+
+<p>完成后，Python 3.10.0a6 就已经安装到系统中，直接命令行输入 <code>python3.10</code> 回车即可进入解释器。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/03/04/qJs8NrP2WoigyFK.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="python3.10a6" alt=""></a></div>
+<h2 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h2><p>Pattern Matching 的全称是 Structural Pattern Matching（以下简称 SPM），中文可以翻为「结构模式匹配」，先搁置 Structural，先看后面的 pattern matching。</p>
+<h3 id="基础语法"><a href="#基础语法" class="headerlink" title="基础语法"></a>基础语法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">match</span> subject:</span><br><span class="line">    <span class="keyword">case</span> &lt;pattern_1&gt;:</span><br><span class="line">        &lt;action_1&gt;</span><br><span class="line">    <span class="keyword">case</span> &lt;pattern_2&gt;:</span><br><span class="line">        &lt;action_2&gt;</span><br><span class="line">    <span class="keyword">case</span> &lt;pattern_3&gt;:</span><br><span class="line">        &lt;action_3&gt;</span><br><span class="line">    <span class="keyword">case</span> _:</span><br><span class="line">        &lt;action_wildcard&gt;</span><br></pre></td></tr></table></figure>
+<p>这就是 SPM 的语法了，很熟悉对不对？其实本质上就是 switch 语句。就是看 <code>subject</code> 和下面的哪一个 <code>case</code> 的 pattern 能匹配得上（顺序依次匹配），就执行该 <code>case</code> 下的 action。最后一个 <code>case</code> 的 pattern 是 <code>_</code> ，表示 default，就是如果前面的都没匹配上，那么就执行该 <code>case</code> ，可以看作是兜底的。那么如果你没写这个兜底的 <code>case</code> 呢？那就是 no-op，什么也不会执行。</p>
+<p>例如，根据不同的 http status 返回不同的 message：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">http_error</span>(<span class="params">status</span>):</span><br><span class="line">    <span class="keyword">match</span> status:</span><br><span class="line">        <span class="keyword">case</span> <span class="number">400</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Bad request&quot;</span></span><br><span class="line">        <span class="keyword">case</span> <span class="number">401</span> | <span class="number">403</span> | <span class="number">404</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Not allowed&quot;</span></span><br><span class="line">        <span class="keyword">case</span> <span class="number">404</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Not found&quot;</span></span><br><span class="line">        <span class="keyword">case</span> <span class="number">418</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;I&#x27;m a teapot&quot;</span></span><br><span class="line">        <span class="keyword">case</span> _:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Something&#x27;s wrong with the Internet&quot;</span></span><br></pre></td></tr></table></figure>
+<p>如果 <code>status</code> 是 <code>400</code>，就会返回 <code>&quot;Bad request&quot;</code> ，如果是 <code>500</code> ，就走到最后一个兜底的 <code>case</code> ，返回 <code>&quot;Something&#39;s wrong with the Internet&quot;</code> 。那如果没有最后一个 <code>case</code> ，那么该函数什么也不会返回，或者准确来说，返回 <code>None</code> 。</p>
+<p>上述代码中另一个值得注意的是这句： <code>case 401 | 403 | 404:</code> ， <code>|</code> 在这里同样表示或。</p>
+<h3 id="Structural？"><a href="#Structural？" class="headerlink" title="Structural？"></a>Structural？</h3><p>OK，现在我们来谈谈 structural。语法在哪里体现到了 structural 呢？看文档中下面这句话：</p>
+<blockquote>
+<p>using data with type and shape (the <code>subject</code>)</p>
+</blockquote>
+<p><code>subject</code> 是带有 type 和 shape 的，就是说 <code>subject</code> 是带有结构的，事先声明好 pattern 的结构。例如 <code>subject</code> 可以是一个 <code>list</code> 、 <code>tuple</code> 、 <code>class</code> 、 <code>list of class</code> 等等。</p>
+<p>具体例子：</p>
+<p><code>tuple</code> ：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># point 是一个 (x, y) tuple</span></span><br><span class="line"><span class="keyword">match</span> point:</span><br><span class="line">    <span class="keyword">case</span> (<span class="number">0</span>, <span class="number">0</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Origin&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> (<span class="number">0</span>, y):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Y=<span class="subst">&#123;y&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> (x, <span class="number">0</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;X=<span class="subst">&#123;x&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> (x, y):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;X=<span class="subst">&#123;x&#125;</span>, Y=<span class="subst">&#123;y&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> _:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">&quot;Not a point&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p><code>class</code> ：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Point</span>:</span><br><span class="line">    x: <span class="built_in">int</span></span><br><span class="line">    y: <span class="built_in">int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">location</span>(<span class="params">point</span>):</span><br><span class="line">    <span class="keyword">match</span> point:</span><br><span class="line">        <span class="keyword">case</span> Point(x=<span class="number">0</span>, y=<span class="number">0</span>):</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Origin is the point&#x27;s location.&quot;</span>)</span><br><span class="line">        <span class="keyword">case</span> Point(x=<span class="number">0</span>, y=y):</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;Y=<span class="subst">&#123;y&#125;</span> and the point is on the y-axis.&quot;</span>)</span><br><span class="line">        <span class="keyword">case</span> Point(x=x, y=<span class="number">0</span>):</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;X=<span class="subst">&#123;x&#125;</span> and the point is on the x-axis.&quot;</span>)</span><br><span class="line">        <span class="keyword">case</span> Point():</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;The point is located somewhere else on the plane.&quot;</span>)</span><br><span class="line">        <span class="keyword">case</span> _:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Not a point&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>嵌套结构 <code>list of class</code> ：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">match</span> points:</span><br><span class="line">    <span class="keyword">case</span> []:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;No points in the list.&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> [Point(<span class="number">0</span>, <span class="number">0</span>)]:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;The origin is the only point in the list.&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> [Point(x, y)]:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;A single point <span class="subst">&#123;x&#125;</span>, <span class="subst">&#123;y&#125;</span> is in the list.&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> [Point(<span class="number">0</span>, y1), Point(<span class="number">0</span>, y2)]:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Two points on the Y axis at <span class="subst">&#123;y1&#125;</span>, <span class="subst">&#123;y2&#125;</span> are in the list.&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> _:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Something else is found in the list.&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>甚至还可以是 <code>dict</code> （<a href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Mapping"><code>Mapping</code></a> pattern）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dict_test</span>(<span class="params">d</span>):</span><br><span class="line">    <span class="keyword">match</span> d:</span><br><span class="line">        <span class="keyword">case</span> &#123;<span class="string">&#x27;a&#x27;</span>: <span class="number">1</span>&#125;:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        <span class="keyword">case</span> &#123;<span class="string">&#x27;a&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;b&#x27;</span>: <span class="number">2</span>&#125;:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">dict_test(&#123;<span class="string">&#x27;a&#x27;</span>: <span class="number">1</span>&#125;)</span><br><span class="line"><span class="comment"># True</span></span><br></pre></td></tr></table></figure>
+<p>但使用 <code>dict</code> 作为 pattern 的时候要特别注意，pattern 只匹配其包含的 key，额外的 key 会被忽略，即 <code>all(pattern[key] == subject[key] for key in pattern)</code> ，以 pattern 的 key 为依据。例如下面的例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dict_test(&#123;<span class="string">&#x27;a&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;b&#x27;</span>: <span class="number">1</span>&#125;)</span><br><span class="line"><span class="comment"># 仍然返回 True，因为第一个 case 只检查 &#x27;a&#x27; 这个 key 的值</span></span><br></pre></td></tr></table></figure>
+<p>此外需要注意的是，即使 <code>case</code> 的 pattern 的 type 和 shape 与 <code>subject</code> 对不上，那也不会报错，只不过不会 match 而已。</p>
+<h3 id="A-guard？"><a href="#A-guard？" class="headerlink" title="A guard？"></a>A guard？</h3><p>就像 Python 中常见的 <code>A if B else C</code> 的模式，此处也有这么一种存在：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">match</span> point:</span><br><span class="line">    <span class="keyword">case</span> Point(x=x, y=y) <span class="keyword">if</span> x == y:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;The point is located on the diagonal Y=X at <span class="subst">&#123;x&#125;</span>.&quot;</span>)</span><br><span class="line">    <span class="keyword">case</span> Point(x=x, y=y):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Point is not on the diagonal.&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，原文档中 <code>Point(x=x, y=y)</code> 写的是 <code>Point(x, y)</code> ，其实这样写的话是会报错的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">&quot;/root/test.py&quot;</span>, line <span class="number">69</span>, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">    guard_test(point)</span><br><span class="line">  File <span class="string">&quot;/root/test.py&quot;</span>, line <span class="number">39</span>, <span class="keyword">in</span> guard_test</span><br><span class="line">    <span class="keyword">case</span> Point(x, y) <span class="keyword">if</span> x == y:</span><br><span class="line">TypeError: Point() accepts <span class="number">0</span> positional sub-patterns (<span class="number">2</span> given)</span><br></pre></td></tr></table></figure>
+<p>因为 <code>Point</code> 类不是 dataclass，也没有设置 <code>__match_args__</code> ，所以不能直接使用位置参数，文档中相关表述如下：</p>
+<blockquote>
+<p>You can use positional parameters with some builtin classes that provide an ordering for their attributes (e.g. dataclasses). You can also define a specific position for attributes in patterns by setting the <code>__match_args__</code> special attribute in your classes.</p>
+</blockquote>
+<p>但如果非要写成 <code>Point(x, y)</code> ，可以将 <code>Point</code> 类改成 dataclass 即可：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Point</span>:</span><br><span class="line">    x: <span class="built_in">int</span></span><br><span class="line">    y: <span class="built_in">int</span></span><br></pre></td></tr></table></figure>
+<p>此外关于执行顺序：</p>
+<blockquote>
+<p>Note that value capture happens before the guard is evaluated</p>
+</blockquote>
+<p>如果我没理解错的话，就是先判断 pattern， <code>True</code> 的话再判断 guard，正常逻辑。<code>subject</code> 就像是一个人（本身也有主语的意思），一个个 <code>case</code> 就像一个个门， <code>subject</code> 想要看看自己能进入哪扇门，就要通过每扇门的检查。先检查你是不是个人，再检查你是不是我想要的那个人。guard 是最后一道防线。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总结起来，还是我上面说的，加强版的 switch：逻辑或、structural（支持多种类型）、guard。应该使用场景挺多的，干掉一大堆 <code>if</code> 指日可待，再也不用羡慕 Java 等的 switch 了。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://realpython.com/installing-python/#how-to-build-python-from-source-code">Python 3 Installation &amp; Setup Guide – Real Python</a></li>
+<li><a href="https://docs.python.org/3.10/whatsnew/3.10.html#pep-634-structural-pattern-matching">What’s New In Python 3.10 — Python 3.10.0a6 documentation</a></li>
+<li><a href="https://docs.python.org/3.10/tutorial/controlflow.html#match-statements">4. More Control Flow Tools — Python 3.10.0a6 documentation</a></li>
+<li><a href="https://mail.python.org/archives/list/python-committers@python.org/message/VGZDQ5TFMSWEQZS6HNDLDJQ7GAASGUUB/">Mailman 3 [python-committers] [RELEASE] Python 3.10.0a6 is available, now with 100% more pattern matching - python-committers - python.org</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/01/ghost-ssl-cert/"
+                    data-tooltip="Ghost SSL 证书过期的解决办法"
+                    aria-label="上一篇: Ghost SSL 证书过期的解决办法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/02/28/hexo-empty-html/"
+                    data-tooltip="hexo 生成的 html 文件为空的问题"
+                    aria-label="下一篇: hexo 生成的 html 文件为空的问题"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/01/ghost-ssl-cert/"
+                    data-tooltip="Ghost SSL 证书过期的解决办法"
+                    aria-label="上一篇: Ghost SSL 证书过期的解决办法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/02/28/hexo-empty-html/"
+                    data-tooltip="hexo 生成的 html 文件为空的问题"
+                    aria-label="下一篇: hexo 生成的 html 文件为空的问题"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/03/04/pattern-matching-python310/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2021/03/04/pattern-matching-python310/';
+              
+            this.page.identifier = '2021/03/04/pattern-matching-python310/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

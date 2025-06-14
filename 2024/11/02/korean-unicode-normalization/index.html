@@ -1,0 +1,758 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>记一个韩文字符规范化的坑 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\nNLP 中，经常要对字符串进行预处理，再送给模型。常在河边走，哪能不湿鞋。这不前段时间就因为这个预处理，出了大问题。\n一切都乱了我们做的是新闻处理，会涉及新闻分类、去重等操作。国庆假期回来，同事反馈，韩语的内容分类，一下全都不对了！全都被分到了某几个分类中。\n怎么回事我们有个 embedding 服务，负责给输入的文本生成向量，以备后面给其他服务使用，比如向量搜索。这个服务是支持多语言的。有天我在休假中，领导发来消息说发现同一文本的全角和半角形式，相似度比较低。我上线看了下，确实是，当时想这也太傻了。不过解决不复杂，直接统一转成半角形式就行了。\n搜了下，网上大部分是硬编码的形式转的，固定范围的 unicode 码位减去一个常量就得到了相应的半角形式。我觉得不太优雅，想到了 unicodedata 这个库，当时 bert tokenizer 还用这个库来规范化文本，用的是 NFD，我所用的模型又是 bert 系的，所以我就直接用了 NFKD。由于是在日文上发现的，所以我也测试日语上的效果，以及中文、阿拉伯文等。没什么问题，就更新了。\n结果后来问题就出来了。NFD 在韩语上有大问题，韩语向量一下就全不对了。\nUnicode 规范化为了能够比较任意两个字符串是否等价，具体来说就是二进制是否相等，有了规范化形式（Normalization Form）这个概念。有很多字符看起来的样子和它实际的样子是不一样的，比如带有重音字符的字母，看起来是一个字符，但实际上是由重音字符和相应字母组成的。\nUnicode 文本有 4 种规范化方法，这 4 种方法区别在于使用哪种分解方法（canonical decomposition 和 compatibility decomposition）以及是否进行组合：\n\ncompatibility 这个单词中明明没有 K，那为什么是 KD 和 KC 呢？这是为了避免 compatibility 的 C 与 canonical 和 composition 的 C 混淆，所以用了 K 来指代 compatibility。\n\n分解方式有两种：canonical decomposition 和 compatibility decomposition，也就是有无 K 的区别。两种分解方式都是将字符串分解为他们的等价形式，前者的分解结果，在外观上尽量与原始字符串一致（这里的一致指的是在字符串被正确渲染时，看起来是一样的），语义上也是一致的。而后者则是忽略外观，只找到语义上等价的字符串。典型的兼容分解有：\n\n全角转半角。\n上下标转成普通数字字母，比如上标 $^2$ 转成普通的 2。\n\n简单来说，带 C 的都多一个组合的步骤，带 D 的都只有分解步骤，带 K 的都会进行兼容性处理（比如全角转半角、上下标转为对应的字母数字）。\n以下是几个示例：\n123456789101112131415161718192021222324252627282930In [24]: def normalize(text: str):    ...:     res = unicodedata.normalize(&#x27;NFC&#x27;, text)    ...:     print(f&quot;NFC: &#123;res!r&#125;, len=&#123;len(res)&#125;&quot;)    ...:     res = unicodedata.normalize(&#x27;NFD&#x27;, text)    ...:     print(f&quot;NFD: &#123;res!r&#125;, len=&#123;len(res)&#125;&quot;)    ...:     res = unicodedata.normalize(&#x27;NFKC&#x27;, text)    ...:     print(f&quot;NFKC: &#123;res!r&#125;, len=&#123;len(res)&#125;&quot;)    ...:     res = unicodedata.normalize(&#x27;NFKC&#x27;, text)    ...:     print(f&quot;NFKD: &#123;res!r&#125;, len=&#123;len(res)&#125;&quot;)# 全角 1In [25]: normalize(&#x27;１&#x27;)NFC: &#x27;１&#x27;, len=1NFD: &#x27;１&#x27;, len=1NFKC: &#x27;1&#x27;, len=1NFKD: &#x27;1&#x27;, len=1# 下标 mIn [26]: normalize(&#x27;ₘ&#x27;)NFC: &#x27;ₘ&#x27;, len=1NFD: &#x27;ₘ&#x27;, len=1NFKC: &#x27;m&#x27;, len=1NFKD: &#x27;m&#x27;, len=1# 圆圈 1In [27]: normalize(&#x27;①&#x27;)NFC: &#x27;①&#x27;, len=1NFD: &#x27;①&#x27;, len=1NFKC: &#x27;1&#x27;, len=1NFKD: &#x27;1&#x27;, len=1\n韩语怎么特殊了我们再来看两个例子：\n\n前面不是说了尽量保持外观一致吗？怎么韩文这里看起来完全变了呢？下面的 e 就没问题（虽然实际上也是被分解成了两个字符）。那是因为：\n\nThere are also special rules to fully decompose Hangul syllables.\n\n韩文就是这么特殊，韩文是由音节组成的，没错，就是类似我们的拼音，所以他们是直接用拼音写字的。具体来说，가 是一个预组合的韩文字符，由以下部分组成：\n\n初声：ᄀ (U+1100, HANGUL CHOSEONG KIYEOK)\n中声：ᅡ (U+1161, HANGUL JUNGSEONG A)\n\n所以会看到被分开了。但是如果你把输出复制到网页上，也就是 &#39;가&#39; ，你就又发现，看起来好像又一致了，这就是上面说的渲染的问题。\n而韩文的 NFKD 和 NFD 的结果是一样的，所以就导致所有韩文都被分解成他们的音节了，导致 embedding 模型出错，几乎全都判成相似了。比如下面的两句话：\n1234567891011121314151617181920sents = [    &#x27;오늘 날씨가 좋다&#x27;,         # 今天天气很好    &#x27;나는 영화를 보러 가고 싶다&#x27;  # 我想去看电影]print(f&quot;lens: &#123;list(map(len, sents))&#125;&quot;)embeddings = model.encode(sents)print(cos_sim(embeddings, embeddings))# lens: [9, 15]# tensor([[1.0000, 0.1595],#         [0.1595, 1.0000]])normalized_sents = [unicodedata.normalize(&#x27;NFD&#x27;, sent) for sent in sents]print(f&quot;lens: &#123;list(map(len, normalized_sents))&#125;&quot;)embeddings = model.encode(normalized_sents)print(cos_sim(embeddings, embeddings))# lens: [19, 30]# tensor([[1.0000, 0.9953],#         [0.9953, 1.0000]])\n可以看到原始句子的相似度很低，这是正常的，然而 NFD 规范化后，相似度都快到 1 了。\nReferences\nUAX #15: Unicode Normalization Forms\nFAQ - Normalization\n\nEND","dateCreated":"2024-11-02T22:49:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2024-11-02T22:49:00+08:00","description":"在多语言文本处理时，作者因使用 NFKD 规范化导致韩文字符被过度分解，影响了文本分类效果。这篇博文分享了 Unicode 规范化在韩文上的坑点，并提醒在 NLP 任务中需谨慎选择字符规范化方式。[ChatGPT 4o]","headline":"记一个韩文字符规范化的坑","image":[null,"https://s2.loli.net/2024/11/03/quEiVmHkdbpAjSU.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2024/11/02/korean-unicode-normalization/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2024/11/02/korean-unicode-normalization/","keywords":"Python, NLP","thumbnailUrl":"https://s2.loli.net/2024/11/03/quEiVmHkdbpAjSU.png"}</script>
+    <meta name="description" content="在多语言文本处理时，作者因使用 NFKD 规范化导致韩文字符被过度分解，影响了文本分类效果。这篇博文分享了 Unicode 规范化在韩文上的坑点，并提醒在 NLP 任务中需谨慎选择字符规范化方式。[ChatGPT 4o]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="记一个韩文字符规范化的坑">
+<meta property="og:url" content="https://alanlee.fun/2024/11/02/korean-unicode-normalization/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="在多语言文本处理时，作者因使用 NFKD 规范化导致韩文字符被过度分解，影响了文本分类效果。这篇博文分享了 Unicode 规范化在韩文上的坑点，并提醒在 NLP 任务中需谨慎选择字符规范化方式。[ChatGPT 4o]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://alanlee.fun/2024/11/02/korean-unicode-normalization/Source%EF%BC%9A[Unicode%20%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3](https://www.unicode.org/reports/tr15/#Normalization_Forms_Table)">
+<meta property="og:image" content="https://s2.loli.net/2024/11/02/oXuzUxJl182YtZB.png">
+<meta property="article:published_time" content="2024-11-02T14:49:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.195Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="NLP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://alanlee.fun/2024/11/02/korean-unicode-normalization/Source%EF%BC%9A[Unicode%20%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3](https://www.unicode.org/reports/tr15/#Normalization_Forms_Table)">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2024/11/03/quEiVmHkdbpAjSU.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2024/11/03/quEiVmHkdbpAjSU.png"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2024/11/03/quEiVmHkdbpAjSU.png');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            记一个韩文字符规范化的坑
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2024-11-02T22:49:00+08:00">
+	
+		    2024 年 11 月 2 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E5%88%87%E9%83%BD%E4%B9%B1%E4%BA%86"><span class="toc-text">一切都乱了</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%8E%E4%B9%88%E5%9B%9E%E4%BA%8B"><span class="toc-text">怎么回事</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Unicode-%E8%A7%84%E8%8C%83%E5%8C%96"><span class="toc-text">Unicode 规范化</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9F%A9%E8%AF%AD%E6%80%8E%E4%B9%88%E7%89%B9%E6%AE%8A%E4%BA%86"><span class="toc-text">韩语怎么特殊了</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#References"><span class="toc-text">References</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>NLP 中，经常要对字符串进行预处理，再送给模型。常在河边走，哪能不湿鞋。这不前段时间就因为这个预处理，出了大问题。</p>
+<h1 id="一切都乱了"><a href="#一切都乱了" class="headerlink" title="一切都乱了"></a>一切都乱了</h1><p>我们做的是新闻处理，会涉及新闻分类、去重等操作。国庆假期回来，同事反馈，韩语的内容分类，一下全都不对了！全都被分到了某几个分类中。</p>
+<h1 id="怎么回事"><a href="#怎么回事" class="headerlink" title="怎么回事"></a>怎么回事</h1><p>我们有个 embedding 服务，负责给输入的文本生成向量，以备后面给其他服务使用，比如向量搜索。这个服务是支持多语言的。有天我在休假中，领导发来消息说发现同一文本的全角和半角形式，相似度比较低。我上线看了下，确实是，当时想这也太傻了。不过解决不复杂，直接统一转成半角形式就行了。</p>
+<p>搜了下，网上大部分是硬编码的形式转的，固定范围的 unicode 码位减去一个常量就得到了相应的半角形式。我觉得不太优雅，想到了 unicodedata 这个库，当时 bert tokenizer 还用这个库来规范化文本，用的是 NFD，我所用的模型又是 bert 系的，所以我就直接用了 NFKD。由于是在日文上发现的，所以我也测试日语上的效果，以及中文、阿拉伯文等。没什么问题，就更新了。</p>
+<p>结果后来问题就出来了。NFD 在韩语上有大问题，韩语向量一下就全不对了。</p>
+<h1 id="Unicode-规范化"><a href="#Unicode-规范化" class="headerlink" title="Unicode 规范化"></a>Unicode 规范化</h1><p>为了能够比较任意两个字符串是否等价，具体来说就是二进制是否相等，有了规范化形式（Normalization Form）这个概念。有很多字符看起来的样子和它实际的样子是不一样的，比如带有重音字符的字母，看起来是一个字符，但实际上是由重音字符和相应字母组成的。</p>
+<p>Unicode 文本有 4 种规范化方法，这 4 种方法区别在于使用哪种分解方法（canonical decomposition 和 compatibility decomposition）以及是否进行组合：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/11/02/uMtYDhbjHOv6Wwn.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="Source：[Unicode 官方文档](https://www.unicode.org/reports/tr15/#Normalization_Forms_Table)" alt=""></a></div>
+<div class="alert info"><p><code>compatibility</code> 这个单词中明明没有 K，那为什么是 KD 和 KC 呢？这是为了避免 compatibility 的 C 与 canonical 和 composition 的 C 混淆，所以用了 K 来指代 compatibility。</p>
+</div>
+<p>分解方式有两种：canonical decomposition 和 compatibility decomposition，也就是有无 K 的区别。两种分解方式都是将字符串分解为他们的等价形式，前者的分解结果，在外观上尽量与原始字符串一致（这里的一致指的是在字符串被正确渲染时，看起来是一样的），语义上也是一致的。而后者则是忽略外观，只找到语义上等价的字符串。典型的兼容分解有：</p>
+<ul>
+<li>全角转半角。</li>
+<li>上下标转成普通数字字母，比如上标 $^2$ 转成普通的 2。</li>
+</ul>
+<p>简单来说，带 C 的都多一个组合的步骤，带 D 的都只有分解步骤，带 K 的都会进行兼容性处理（比如全角转半角、上下标转为对应的字母数字）。</p>
+<p>以下是几个示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">24</span>]: <span class="keyword">def</span> <span class="title function_">normalize</span>(<span class="params">text: <span class="built_in">str</span></span>):</span><br><span class="line">    ...:     res = unicodedata.normalize(<span class="string">&#x27;NFC&#x27;</span>, text)</span><br><span class="line">    ...:     <span class="built_in">print</span>(<span class="string">f&quot;NFC: <span class="subst">&#123;res!r&#125;</span>, len=<span class="subst">&#123;<span class="built_in">len</span>(res)&#125;</span>&quot;</span>)</span><br><span class="line">    ...:     res = unicodedata.normalize(<span class="string">&#x27;NFD&#x27;</span>, text)</span><br><span class="line">    ...:     <span class="built_in">print</span>(<span class="string">f&quot;NFD: <span class="subst">&#123;res!r&#125;</span>, len=<span class="subst">&#123;<span class="built_in">len</span>(res)&#125;</span>&quot;</span>)</span><br><span class="line">    ...:     res = unicodedata.normalize(<span class="string">&#x27;NFKC&#x27;</span>, text)</span><br><span class="line">    ...:     <span class="built_in">print</span>(<span class="string">f&quot;NFKC: <span class="subst">&#123;res!r&#125;</span>, len=<span class="subst">&#123;<span class="built_in">len</span>(res)&#125;</span>&quot;</span>)</span><br><span class="line">    ...:     res = unicodedata.normalize(<span class="string">&#x27;NFKC&#x27;</span>, text)</span><br><span class="line">    ...:     <span class="built_in">print</span>(<span class="string">f&quot;NFKD: <span class="subst">&#123;res!r&#125;</span>, len=<span class="subst">&#123;<span class="built_in">len</span>(res)&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 全角 1</span></span><br><span class="line">In [<span class="number">25</span>]: normalize(<span class="string">&#x27;１&#x27;</span>)</span><br><span class="line">NFC: <span class="string">&#x27;１&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFD: <span class="string">&#x27;１&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFKC: <span class="string">&#x27;1&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFKD: <span class="string">&#x27;1&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 下标 m</span></span><br><span class="line">In [<span class="number">26</span>]: normalize(<span class="string">&#x27;ₘ&#x27;</span>)</span><br><span class="line">NFC: <span class="string">&#x27;ₘ&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFD: <span class="string">&#x27;ₘ&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFKC: <span class="string">&#x27;m&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFKD: <span class="string">&#x27;m&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 圆圈 1</span></span><br><span class="line">In [<span class="number">27</span>]: normalize(<span class="string">&#x27;①&#x27;</span>)</span><br><span class="line">NFC: <span class="string">&#x27;①&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFD: <span class="string">&#x27;①&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFKC: <span class="string">&#x27;1&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br><span class="line">NFKD: <span class="string">&#x27;1&#x27;</span>, <span class="built_in">len</span>=<span class="number">1</span></span><br></pre></td></tr></table></figure>
+<h1 id="韩语怎么特殊了"><a href="#韩语怎么特殊了" class="headerlink" title="韩语怎么特殊了"></a>韩语怎么特殊了</h1><p>我们再来看两个例子：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/11/02/oXuzUxJl182YtZB.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2024/11/02/oXuzUxJl182YtZB.png" alt=""></a></div>
+<p>前面不是说了尽量保持外观一致吗？怎么韩文这里看起来完全变了呢？下面的 e 就没问题（虽然实际上也是被分解成了两个字符）。那是因为：</p>
+<blockquote>
+<p>There are also special rules to fully decompose Hangul syllables.</p>
+</blockquote>
+<p>韩文就是这么特殊，韩文是由音节组成的，没错，就是类似我们的拼音，所以他们是直接用拼音写字的。具体来说，<code>가</code> 是一个<strong>预组合</strong>的韩文字符，由以下部分组成：</p>
+<ul>
+<li><strong>初声</strong>：ᄀ (U+1100, HANGUL CHOSEONG KIYEOK)</li>
+<li><strong>中声</strong>：ᅡ (U+1161, HANGUL JUNGSEONG A)</li>
+</ul>
+<p>所以会看到被分开了。但是如果你把输出复制到网页上，也就是 <code>&#39;가&#39;</code> ，你就又发现，看起来好像又一致了，这就是上面说的渲染的问题。</p>
+<p>而韩文的 NFKD 和 NFD 的结果是一样的，所以就导致所有韩文都被分解成他们的音节了，导致 embedding 模型出错，几乎全都判成相似了。比如下面的两句话：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">sents = [</span><br><span class="line">    <span class="string">&#x27;오늘 날씨가 좋다&#x27;</span>,         <span class="comment"># 今天天气很好</span></span><br><span class="line">    <span class="string">&#x27;나는 영화를 보러 가고 싶다&#x27;</span>  <span class="comment"># 我想去看电影</span></span><br><span class="line">]</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;lens: <span class="subst">&#123;<span class="built_in">list</span>(<span class="built_in">map</span>(<span class="built_in">len</span>, sents))&#125;</span>&quot;</span>)</span><br><span class="line">embeddings = model.encode(sents)</span><br><span class="line"><span class="built_in">print</span>(cos_sim(embeddings, embeddings))</span><br><span class="line"></span><br><span class="line"><span class="comment"># lens: [9, 15]</span></span><br><span class="line"><span class="comment"># tensor([[1.0000, 0.1595],</span></span><br><span class="line"><span class="comment">#         [0.1595, 1.0000]])</span></span><br><span class="line"></span><br><span class="line">normalized_sents = [unicodedata.normalize(<span class="string">&#x27;NFD&#x27;</span>, sent) <span class="keyword">for</span> sent <span class="keyword">in</span> sents]</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;lens: <span class="subst">&#123;<span class="built_in">list</span>(<span class="built_in">map</span>(<span class="built_in">len</span>, normalized_sents))&#125;</span>&quot;</span>)</span><br><span class="line">embeddings = model.encode(normalized_sents)</span><br><span class="line"><span class="built_in">print</span>(cos_sim(embeddings, embeddings))</span><br><span class="line"></span><br><span class="line"><span class="comment"># lens: [19, 30]</span></span><br><span class="line"><span class="comment"># tensor([[1.0000, 0.9953],</span></span><br><span class="line"><span class="comment">#         [0.9953, 1.0000]])</span></span><br></pre></td></tr></table></figure>
+<p>可以看到原始句子的相似度很低，这是正常的，然而 <strong>NFD 规范化后，相似度都快到 1 了</strong>。</p>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><a href="https://www.unicode.org/reports/tr15/">UAX #15: Unicode Normalization Forms</a></li>
+<li><a href="https://www.unicode.org/faq/normalization.html">FAQ - Normalization</a></li>
+</ul>
+<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/11/03/my-home-purchase-story/"
+                    data-tooltip="买房记"
+                    aria-label="上一篇: 买房记"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/07/05/deploy-hexo-with-github-action/"
+                    data-tooltip="使用 GitHub Actions 自动发布 Hexo 博客"
+                    aria-label="下一篇: 使用 GitHub Actions 自动发布 Hexo 博客"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/11/03/my-home-purchase-story/"
+                    data-tooltip="买房记"
+                    aria-label="上一篇: 买房记"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/07/05/deploy-hexo-with-github-action/"
+                    data-tooltip="使用 GitHub Actions 自动发布 Hexo 博客"
+                    aria-label="下一篇: 使用 GitHub Actions 自动发布 Hexo 博客"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/11/02/korean-unicode-normalization/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2024/11/02/korean-unicode-normalization/';
+              
+            this.page.identifier = '2024/11/02/korean-unicode-normalization/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

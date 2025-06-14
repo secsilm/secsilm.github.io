@@ -1,0 +1,720 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Lemmatization VS Stemming - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"简单来说，两者都是对词的归一化，但 Stemming（中文一般译为词干提取，以下简称 stem）更为简单、快速一些，通常会使用一种启发式方法去掉一个词的结尾。 Lemmatization（中文一般译为词形还原，以下简称 lemma）更为「智能」一些，上下文相关，有一个 vocab，不在其中的词不会被处理：\n\nReturns the input word unchanged if it cannot be found in WordNet.  —— nltk.stem.wordnet — NLTK 3.5 documentation\n\n例如\n\n对于 better，stem 的结果仍然是 better，但是 lemma 结果是 good。\n对于 meeting，在没有上下文的情况下，既可以指名词会议，也可以是动词 meet 的 ing 形式。在 in our last meeting 和 We are meeting again tomorrow 这两句话中，lemma 就更能选择一个正确的结果。\n\nnltk 中，这两者都在 nltk.stem 中，常见的有这么几种：PorterStemmer、SnowballStemmer 和 WordNetLemmatizer。其中 WordNetLemmatizer 是通过 pos 来获取上下文信息的，pos 可以使用 nltk.pos_tag(nltk.word_tokenize(&#39;YOUR SENTENCE&#39;)) 来获得。\n下面以几个例子了解下：\n123456789101112131415161718192021222324252627282930313233343536373839def test_stemmer(word: str, pos=&#x27;n&#x27;):    porter = nltk.stem.PorterStemmer()    snowball = nltk.stem.SnowballStemmer(&#x27;english&#x27;)    wordnet = nltk.stem.WordNetLemmatizer()        print(f&quot;Origin: &#123;word&#125;&quot;)    print(&#x27;----------------------&#x27;)    print(f&quot;PorterStemmer: &#123;porter.stem(word)&#125;&quot;)    print(f&quot;SnowballStemmer: &#123;snowball.stem(word)&#125;&quot;)    print(f&quot;WordNetLemmatizer: &#123;wordnet.lemmatize(word, pos=pos)&#125;&quot;)  # pos 的默认值是 n，即名词test_stemmer(&#x27;apples&#x27;, pos=&#x27;n&#x27;)# Origin: apples# ----------------------# PorterStemmer: appl# SnowballStemmer: appl# WordNetLemmatizer: appletest_stemmer(&#x27;better&#x27;, pos=&#x27;a&#x27;)# Origin: better# ----------------------# PorterStemmer: better# SnowballStemmer: better# WordNetLemmatizer: goodtest_stemmer(&#x27;meeting&#x27;, pos=&#x27;n&#x27;)# Origin: meeting# ----------------------# PorterStemmer: meet# SnowballStemmer: meet# WordNetLemmatizer: meetingtest_stemmer(&#x27;meeting&#x27;, pos=&#x27;v&#x27;)# Origin: meeting# ----------------------# PorterStemmer: meet# SnowballStemmer: meet# WordNetLemmatizer: meet\nReference\npython - What is the difference between lemmatization vs stemming? - Stack Overflow\nnlp - Stemmers vs Lemmatizers - Stack Overflow\n\nEND","dateCreated":"2021-02-25T21:05:19+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2021-02-25T21:05:19+08:00","description":"简单来说，两者都是对词的归一化，但 Stemming（中文一般译为词干提取，以下简称 stem）更为简单、快速一些，通常会使用一种启发式方法去掉一个词的结尾。 Lemmatization（中文一般译为词形还原，以下简称 lemma）更为「智能」一些，上下文相关，有一个 vocab，不在其中的词不会被处理：","headline":"Lemmatization VS Stemming","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/","keywords":"NLP"}</script>
+    <meta name="description" content="简单来说，两者都是对词的归一化，但 Stemming（中文一般译为词干提取，以下简称 stem）更为简单、快速一些，通常会使用一种启发式方法去掉一个词的结尾。 Lemmatization（中文一般译为词形还原，以下简称 lemma）更为「智能」一些，上下文相关，有一个 vocab，不在其中的词不会被处理：">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Lemmatization VS Stemming">
+<meta property="og:url" content="https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="简单来说，两者都是对词的归一化，但 Stemming（中文一般译为词干提取，以下简称 stem）更为简单、快速一些，通常会使用一种启发式方法去掉一个词的结尾。 Lemmatization（中文一般译为词形还原，以下简称 lemma）更为「智能」一些，上下文相关，有一个 vocab，不在其中的词不会被处理：">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-25T13:05:19.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.196Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="NLP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Lemmatization VS Stemming
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-02-25T21:05:19+08:00">
+	
+		    2021 年 2 月 25 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>简单来说，两者都是对词的归一化，但 Stemming（中文一般译为词干提取，以下简称 stem）更为简单、快速一些，通常会使用一种启发式方法去掉一个词的结尾。 Lemmatization（中文一般译为词形还原，以下简称 lemma）更为「智能」一些，上下文相关，有一个 vocab，不在其中的词不会被处理：<br><span id="more"></span></p>
+<blockquote>
+<p>Returns the input word unchanged if it cannot be found in WordNet.  —— <a href="https://www.nltk.org/_modules/nltk/stem/wordnet.html">nltk.stem.wordnet — NLTK 3.5 documentation</a></p>
+</blockquote>
+<p>例如</p>
+<ul>
+<li>对于 <code>better</code>，stem 的结果仍然是 <code>better</code>，但是 lemma 结果是 <code>good</code>。</li>
+<li>对于 <code>meeting</code>，在没有上下文的情况下，既可以指名词会议，也可以是动词 <code>meet</code> 的 ing 形式。在 <code>in our last meeting</code> 和 <code>We are meeting again tomorrow</code> 这两句话中，lemma 就更能选择一个正确的结果。</li>
+</ul>
+<p>nltk 中，这两者都在 <code>nltk.stem</code> 中，常见的有这么几种：<code>PorterStemmer</code>、<code>SnowballStemmer</code> 和 <code>WordNetLemmatizer</code>。其中 <code>WordNetLemmatizer</code> 是通过 pos 来获取上下文信息的，pos 可以使用 <code>nltk.pos_tag(nltk.word_tokenize(&#39;YOUR SENTENCE&#39;))</code> 来获得。</p>
+<p>下面以几个例子了解下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">test_stemmer</span>(<span class="params">word: <span class="built_in">str</span>, pos=<span class="string">&#x27;n&#x27;</span></span>):</span><br><span class="line">    porter = nltk.stem.PorterStemmer()</span><br><span class="line">    snowball = nltk.stem.SnowballStemmer(<span class="string">&#x27;english&#x27;</span>)</span><br><span class="line">    wordnet = nltk.stem.WordNetLemmatizer()</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Origin: <span class="subst">&#123;word&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;----------------------&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;PorterStemmer: <span class="subst">&#123;porter.stem(word)&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;SnowballStemmer: <span class="subst">&#123;snowball.stem(word)&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;WordNetLemmatizer: <span class="subst">&#123;wordnet.lemmatize(word, pos=pos)&#125;</span>&quot;</span>)  <span class="comment"># pos 的默认值是 n，即名词</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">test_stemmer(<span class="string">&#x27;apples&#x27;</span>, pos=<span class="string">&#x27;n&#x27;</span>)</span><br><span class="line"><span class="comment"># Origin: apples</span></span><br><span class="line"><span class="comment"># ----------------------</span></span><br><span class="line"><span class="comment"># PorterStemmer: appl</span></span><br><span class="line"><span class="comment"># SnowballStemmer: appl</span></span><br><span class="line"><span class="comment"># WordNetLemmatizer: apple</span></span><br><span class="line"></span><br><span class="line">test_stemmer(<span class="string">&#x27;better&#x27;</span>, pos=<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line"><span class="comment"># Origin: better</span></span><br><span class="line"><span class="comment"># ----------------------</span></span><br><span class="line"><span class="comment"># PorterStemmer: better</span></span><br><span class="line"><span class="comment"># SnowballStemmer: better</span></span><br><span class="line"><span class="comment"># WordNetLemmatizer: good</span></span><br><span class="line"></span><br><span class="line">test_stemmer(<span class="string">&#x27;meeting&#x27;</span>, pos=<span class="string">&#x27;n&#x27;</span>)</span><br><span class="line"><span class="comment"># Origin: meeting</span></span><br><span class="line"><span class="comment"># ----------------------</span></span><br><span class="line"><span class="comment"># PorterStemmer: meet</span></span><br><span class="line"><span class="comment"># SnowballStemmer: meet</span></span><br><span class="line"><span class="comment"># WordNetLemmatizer: meeting</span></span><br><span class="line"></span><br><span class="line">test_stemmer(<span class="string">&#x27;meeting&#x27;</span>, pos=<span class="string">&#x27;v&#x27;</span>)</span><br><span class="line"><span class="comment"># Origin: meeting</span></span><br><span class="line"><span class="comment"># ----------------------</span></span><br><span class="line"><span class="comment"># PorterStemmer: meet</span></span><br><span class="line"><span class="comment"># SnowballStemmer: meet</span></span><br><span class="line"><span class="comment"># WordNetLemmatizer: meet</span></span><br></pre></td></tr></table></figure>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://stackoverflow.com/questions/1787110/what-is-the-difference-between-lemmatization-vs-stemming?noredirect=1&amp;lq=1">python - What is the difference between lemmatization vs stemming? - Stack Overflow</a></li>
+<li><a href="https://stackoverflow.com/questions/17317418/stemmers-vs-lemmatizers">nlp - Stemmers vs Lemmatizers - Stack Overflow</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/02/28/hexo-empty-html/"
+                    data-tooltip="hexo 生成的 html 文件为空的问题"
+                    aria-label="上一篇: hexo 生成的 html 文件为空的问题"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/12/17/five-years/"
+                    data-tooltip="博客五年"
+                    aria-label="下一篇: 博客五年"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/02/28/hexo-empty-html/"
+                    data-tooltip="hexo 生成的 html 文件为空的问题"
+                    aria-label="上一篇: hexo 生成的 html 文件为空的问题"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/12/17/five-years/"
+                    data-tooltip="博客五年"
+                    aria-label="下一篇: 博客五年"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/';
+              
+            this.page.identifier = '2021/02/25/lemmatization-vs-stemming/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

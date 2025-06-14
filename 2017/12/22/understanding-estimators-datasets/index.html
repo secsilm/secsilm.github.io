@@ -1,0 +1,829 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>理解 Estimators 和 Datasets - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\nGoogle 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：\n\nDatasets：创建一个输入管道（input pipelines）来为你的模型读取数据，在这个 pipelines 中你可以做一些数据预处理，尽量都使用 TensorFlow 自己的函数，即 tf 开头的函数（比如 tf.reshape），这样可以提高程序执行效率。\n\nEstimators：这是模型的核心部分，而 Estimators 的核心部分则是一个 model_fn 函数（后面会细讲），你在这个函数中定义你的模型架构，输入是特征和标签，输出是一个定义好的 estimator。\n\n\ntensorflow architecture  \nTensorFlow 架构，图自 Google Developers Blog\n实际上这两个特性并不是第一次引入，只不过之前是放在 tf.contrib 里，而这次是引入到了 TensorFlow 核心组件中，意味着可以在生产环境中使用。我 6 月份的时候也写过一篇博文简单说了下 tf.contrib.learn.DNNRegressor 的使用，实际上这就是 Estimators 内置的一个模型（estimator）。这两个都是高层 API，也就是说为了创建一个模型你不用再写一些很底层的代码（比如定义权重偏置项），可以像 scikit-learn 和 Keras 那样很轻松的几行代码创建一个模型，便于快速实现。\n本篇博文就是试图将这两个高层 API 结合起来，使用 TensorFlow 的数据格式 TFRecords 来实现一个在 CIFAR-10 数据集上的 CNN 模型。完整代码可在我的 GitHub 上找到。\n\nNote：本篇博文中的模型并不是结果最好的模型，仅仅是为了展示如何将 Estimators 和 Datasets 结合起来使用。\n\n更新我会在这里列出对本文的更新。\n\n2018 年 5 月 1 日：增加使用已训练的模型进行预测的 demo。\n\n用法你可以使用 python cifar10_estimator_dataset.py --help 来查看可选参数：\n123456789101112131415161718192021222324       USAGE: cifar10_estimator_dataset.py [flags]flags:cifar10_estimator_dataset.py:  --batch_size: Batch size    (default: &#x27;64&#x27;)    (an integer)  --dropout_rate: Dropout rate    (default: &#x27;0.5&#x27;)    (a number)  --eval_dataset: Filename of evaluation dataset    (default: &#x27;eval.tfrecords&#x27;)  --learning_rate: Learning rate    (default: &#x27;0.001&#x27;)    (a number)  --model_dir: Filename of testing dataset    (default: &#x27;models/cifar10_cnn_model&#x27;)  --num_epochs: Number of training epochs    (default: &#x27;10&#x27;)    (an integer)  --test_dataset: Filename of testing dataset    (default: &#x27;test.tfrecords&#x27;)  --train_dataset: Filename of training dataset    (default: &#x27;train.tfrecords&#x27;)\nTFRecords 和 TensorBoard 文件（包括我做的所有 run）较大，没有放到 GitHub 上，你可以从百度盘上获取：\n\nTFRecords（133.4 MB），密码：dp7u\nTensorBoard（1.45 GB），密码：6885\n\n模型架构为了让大家对模型架构先有个清晰地了解，我先把 TensorBoard （不熟悉 TensorBoard 的话可以参考这里）中显示的模型架构图贴出来（数据集我也就不介绍了，这是个很常用的数据集，如有不熟悉的可以参看这里）：\ncnn model  \n模型架构\n可以看到两层卷积层，两层池化层，两层 BN 层，一层 dropout，三层全连接层（DENSE）。\n读取数据集在给模型「喂」数据的时候，我们的流程大概是这样的：\n\n创建一个 Dataset 对象来表示我们的数据集，有多种方法可以创建一个 Dataset 对象，我说几个比较常用的：\n\ntf.data.Dataset.from_tensor_slices()：这种方法适合于你的数据集是 numpy 数组类型的。\ntf.data.TFRecordDataset()：这是本文所使用的方法，适合于你的数据集是 TFRecords 类型的。\ntf.data.TextLineDataset()：适合于你的数据集是 txt 格式的。\n\n\n对数据集进行一些预处理：\n\nDataset.map()：和普通的 map 函数一样，对数据集进行一些变换，例如图像数据集的类型转换（uint8 -&gt; float32）以及 reshape 等。\nDataset.shuffle()：打乱数据集\nDataset.batch()：将数据集切分为特定大小的 batch\nDataset.repeat()：将数据集重复多次。如果不使用这个方法，在第一次遍历到数据集的结尾的时候，会抛出一个 tf.errors.OutOfRangeError 异常，表示数据集已经遍历完毕。但是实际中我们可能需要对数据集迭代训练不止一次，这时候就要用 repeat() 来重复数据集多次。如果不加任何参数，那么表示重复数据集无穷多次。\n\n\n使用 Iterator 的 get_next() 方法来每次获取一个 batch 的数据（假如你是使用 mini-batch 训练的话）。目前 TensorFlow 提供四种 Iterator（详细见 Creating an iterator）：\n\none-shot：这是本文程序所使用的方法，使用 Dataset.make_one_shot_iterator() 来创建，不需要初始化。官方有这么一句话：Note: Currently, one-shot iterators are the only type that is easily usable with an Estimator. 不过呢，我也发现外国友人 Peter Roelants 写了个例子将下面的 initializable Iterator 和 Estimator 一起使用，见 Example using TensorFlow Estimator, Experiment &amp; Dataset on MNIST data。\ninitializable：使用 Dataset.make_initializable_iterator() 创建，需要使用 iterator.initializer 初始化。该方式可以允许你自定义数据集，例如你的数据集是 range(0, max_value)，这里面 max_value 是一个 Tensor，在初始化的时候你需要赋值。\nreinitializable：这是种比较复杂的方式，简单来说也就是使你可以从多个不同的 Dataset 对象获取数据，详细可见 Creating an iterator。\nfeedable：同样比较复杂，当然更灵活，可以针对不同的 Dataset 对象和 tf.Session.run 使用不同的 Iterator，详细可见 Creating an iterator。\n\n\n\n在 Estimator 中，我们输入必须是一个函数，这个函数必须返回特征和标签（或者只有特征），所以我们需要把上面的内容写到一个函数中。因为训练输入和验证输入是不一样的，所以需要两个输入函数：train_input_fn 和 eval_input_fn。为了保持文章简洁，我下面只列出 train_input_fn，eval_input_fn 和其大同小异。\n\n此处我使用了 tf.data.TFRecordDataset，所以你需要将你的数据集写成 TFRecords 格式，比如 train.tfrecords。TFRecords 格式每行表示一个样本（record），关于如何将数据集写成 TFRecords 格式，我将在另一篇博文中说明。\n\n12345678910111213def train_input_fn():    &#x27;&#x27;&#x27;    训练输入函数，返回一个 batch 的 features 和 labels    &#x27;&#x27;&#x27;    train_dataset = tf.data.TFRecordDataset(FLAGS.train_dataset)    train_dataset = train_dataset.map(parser)    # num_epochs 为整个数据集的迭代次数    train_dataset = train_dataset.repeat(FLAGS.num_epochs)    train_dataset = train_dataset.batch(FLAGS.batch_size)    train_iterator = train_dataset.make_one_shot_iterator()    features, labels = train_iterator.get_next()    return features, labels\n而其中的 map 函数的参数 parser 也是一个函数，用于将图片和标签从 TFRecords 中解析出来。\n12345678910def parser(record):    keys_to_features = &#123;        &#x27;image_raw&#x27;: tf.FixedLenFeature((), tf.string),        &#x27;label&#x27;: tf.FixedLenFeature((), tf.int64)    &#125;    parsed = tf.parse_single_example(record, keys_to_features)    image = tf.decode_raw(parsed[&#x27;image_raw&#x27;], tf.uint8)    image = tf.cast(image, tf.float32)    label = tf.cast(parsed[&#x27;label&#x27;], tf.int32)    return image, label\n到此，关于模型的 input pipeline 就差不多结束了。下面就是模型的核心部分了：定义一个模型函数 model_fn。\n定义模型函数上面是定义了 input pipeline，那么现在该来定义模型架构了。模型大致架构就是上面的模型架构图。该函数需要返回一个定义好的 tf.estimator.EstimatorSpec 对象，对于不同的 mode，所必须提供的参数是不一样的：\n\n训练模式，即 mode == tf.estimator.ModeKeys.TRAIN，必须提供的是 loss 和 train_op。\n验证模式，即 mode == tf.estimator.ModeKeys.EVAL，必须提供的是 loss。\n预测模式，即 mode == tf.estimator.ModeKeys.PREDICT，必须提供的是 predicitions。\n\n\n为保持文章简洁，我省略了一些重复性代码。\n\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657def cifar_model_fn(features, labels, mode):    &quot;&quot;&quot;Model function for cifar10 model&quot;&quot;&quot;    # 输入层    x = tf.reshape(features, [-1, 32, 32, 3])    # 第一层卷积层    x = tf.layers.conv2d(inputs=x, filters=64, kernel_size=[                             3, 3], padding=&#x27;same&#x27;, activation=tf.nn.relu, name=&#x27;CONV1&#x27;)    x = tf.layers.batch_normalization(        inputs=x, training=mode == tf.estimator.ModeKeys.TRAIN, name=&#x27;BN1&#x27;)    # 第一层池化层    x = tf.layers.max_pooling2d(inputs=x, pool_size=[                                    3, 3], strides=2, padding=&#x27;same&#x27;, name=&#x27;POOL1&#x27;)        # 你可以添加更多的卷积层和池化层 ……    # 全连接层    x = tf.reshape(x, [-1, 8 * 8 * 128])    x = tf.layers.dense(inputs=x, units=512, activation=tf.nn.relu, name=&#x27;DENSE1&#x27;)    # 你可以添加更多的全连接层 ……    logits = tf.layers.dense(inputs=x, units=10, name=&#x27;FINAL&#x27;)    # 预测    predictions = &#123;        &#x27;classes&#x27;: tf.argmax(input=logits, axis=1, name=&#x27;classes&#x27;),        &#x27;probabilities&#x27;: tf.nn.softmax(logits, name=&#x27;softmax_tensor&#x27;)    &#125;    if mode == tf.estimator.ModeKeys.PREDICT:        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)    # 计算损失（对于 TRAIN 和 EVAL 模式）    onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=10)    loss = tf.losses.softmax_cross_entropy(onehot_labels, logits, scope=&#x27;LOSS&#x27;)        # 评估方法    accuracy, update_op = tf.metrics.accuracy(        labels=labels, predictions=predictions[&#x27;classes&#x27;], name=&#x27;accuracy&#x27;)    batch_acc = tf.reduce_mean(tf.cast(        tf.equal(tf.cast(labels, tf.int64), predictions[&#x27;classes&#x27;]), tf.float32))    tf.summary.scalar(&#x27;batch_acc&#x27;, batch_acc)    tf.summary.scalar(&#x27;streaming_acc&#x27;, update_op)    # 训练配置（对于 TRAIN 模式）    if mode == tf.estimator.ModeKeys.TRAIN:        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)        optimizer = tf.train.RMSPropOptimizer(learning_rate=FLAGS.learning_rate)        with tf.control_dependencies(update_ops):            train_op = optimizer.minimize(                loss=loss, global_step=tf.train.get_global_step())        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)    eval_metric_ops = &#123;        &#x27;accuracy&#x27;: (accuracy, update_op)    &#125;    return tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)\n至此，input pipeline 和模型都已经定义好了，下一步就是实际的 run 了。\nRun首先我们需要创建一个 tf.estimator.Estimator 对象：\n12cifar10_classifier = tf.estimator.Estimator(        model_fn=cifar_model_fn, model_dir=FLAGS.model_dir)\n其中 model_dir 是用于存放模型文件和 TensorBoard 文件的目录。\n然后开始训练和验证：\n12cifar10_classifier.train(input_fn=train_input_fn)eval_results = cifar10_classifier.evaluate(input_fn=eval_input_fn)\n程序结束后你便可以在你的 model_dir 里看到类似如下的文件结构：\nmodel_dir\nmodel_dir 中的文件结构\n然后你可以使用 tensorboard --logdir=/your/model/dir（Linux 中你可能需要使用 python -m tensorboard.main --logdir=/your/model/dir）来在 TensorBoard 中查看训练信息，默认只有 SCALARS 和 GRAPHS 面板是有效的，你也可以自己使用 tf.summary 来手动添加 summary 信息。\nscalars\nSCALARS 面板\ngraphs\nGRAPHS 面板\n使用训练好的模型进行预测在训练好模型之后，模型文件已经保存到了 FLAGS.model_dir 中，那么在对新样本进行预测时只需要调用 estimator 的 predict() 方法进行预测就行了。\n12345678910111213141516171819def infer(argv=None):    &#x27;&#x27;&#x27;Run the inference and return the result.&#x27;&#x27;&#x27;    config = tf.estimator.RunConfig()    config = config.replace(model_dir=FLAGS.saved_model_dir)    estimator = get_estimator(config)    predict_input_fn = tf.estimator.inputs.numpy_input_fn(        x=load_image(), shuffle=False)    result = estimator.predict(input_fn=predict_input_fn)    for r in result:        print(r)def load_image():    &#x27;&#x27;&#x27;Load image into numpy array.&#x27;&#x27;&#x27;    images = np.zeros((10, 3072), dtype=&#x27;float32&#x27;)    for i, file in enumerate(Path(&#x27;predict-images/&#x27;).glob(&#x27;*.png&#x27;)):        image = np.array(Image.open(file)).reshape(3072)        images[i, :] = image    return images\n这是主要的两个函数，完整代码见 cifar10_estimator_dataset_predict.py。\n有几点需要说明：\n\n我把要预测的图片放在了 predict-images/ 文件夹下，你可以自由更改这个地址。\n这里我使用了 tf.estimator.inputs.numpy_input_fn() 来作为预测的输入函数，该函数可以直接接受 numpy array 作为输入。除此之外，你还可以像 cifar10_estimator_dataset.py 中的 train_input_fn() 一样，使用 tf.data.Dataset.from_tensor_slices() 或者 tf.data.TFRecordDataset()，再结合 Dataset.make_one_shot_iterator() 来定义一个预测输入函数。\n\n用法很简单，假设你的模型文件放在 models/cifar10 下，那么在命令行执行下面的语句即可：\n1python cifar10_estimator_dataset_predict.py --saved_model_dir models/cifar10\n--saved_model_dir 的默认值是 models/adam。\n执行完后可以看到类似下面这样的输出结果，当然下面的结果很差，由于时间有限我也没有过多的调模型，这里只是说明下过程：\npredict\nSummary总的来说，使用 Datasets 和 Estimators 来训练模型大致就是这么几个步骤：\n\n定义输入函数，在函数中对你的数据集做一些必要的预处理，返回 features 和 labels。\n定义模型函数，返回 tf.estimator.EstimatorSpec 对象。\n使用模型函数创建 tf.estimator.Estimator 对象。\n使用创建好的对象 train and evaluate。\n\nNotes关于 num_epochs如果你设置 num_epochs 为比如说 30，然而你在训练的时候看到类似如下的控制台输出：\n123456INFO:tensorflow:global_step/sec: 0.476364INFO:tensorflow:loss = 0.137512, step = 14901 (209.924 sec)INFO:tensorflow:global_step/sec: 0.477139INFO:tensorflow:loss = 0.0203241, step = 15001 (209.583 sec)INFO:tensorflow:global_step/sec: 0.477511INFO:tensorflow:loss = 0.132834, step = 15101 (209.419 sec)\n你可以看到 step 已经上万了，这是因为这里的 step 指的是一个 batch 的训练迭代，而 num_epochs 设为 30 意味着你要把整个训练集遍历 30 次（也是我们通常的做法）。也就是说，假如你有 50000 个样本，batch 大小为 50，那么你的数据集将被切分为 1000 个 batch，也就是遍历一遍数据集需要 1000 step，所以说 num_epochs 为 30 时，你的程序需要到 step=30000 才会训练结束。所以切记 num_epochs 表示的是整个训练集的迭代次数。\nReferences\nIntroduction to TensorFlow Datasets and Estimators\nImporting Data | TensorFlow\nCreating Estimators in tf.estimator | TensorFlow\nExample using TensorFlow Estimator, Experiment &amp; Dataset on MNIST data\nHigher-Level APIs in TensorFlow – Onfido Tech – Medium\n\nEND","dateCreated":"2017-12-22T18:30:15+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2017-12-22T18:30:15+08:00","description":"\nGoogle 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：","headline":"理解 Estimators 和 Datasets","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/12/22/understanding-estimators-datasets/","keywords":"TensorFlow"}</script>
+    <meta name="description" content="Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="理解 Estimators 和 Datasets">
+<meta property="og:url" content="https://alanlee.fun/2017/12/22/understanding-estimators-datasets/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Google 在 2017 年 9 月 12 号的博文 Introduction to TensorFlow Datasets and Estimators 中介绍了新引入的两个新特性 Datasets 和 Estimators：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/CSw2x5g.png">
+<meta property="og:image" content="https://i.imgur.com/D1Qz5it.png">
+<meta property="og:image" content="https://i.imgur.com/ZIO86mY.png">
+<meta property="og:image" content="https://i.imgur.com/mjtQ8Da.png">
+<meta property="og:image" content="https://i.imgur.com/p9aHnKU.png">
+<meta property="og:image" content="https://i.imgur.com/4IHRVip.png">
+<meta property="article:published_time" content="2017-12-22T10:30:15.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.200Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="TensorFlow">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/CSw2x5g.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            理解 Estimators 和 Datasets
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-12-22T18:30:15+08:00">
+	
+		    2017 年 12 月 22 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0"><span class="toc-text">更新</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8%E6%B3%95"><span class="toc-text">用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%9E%8B%E6%9E%B6%E6%9E%84"><span class="toc-text">模型架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text">读取数据集</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89%E6%A8%A1%E5%9E%8B%E5%87%BD%E6%95%B0"><span class="toc-text">定义模型函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Run"><span class="toc-text">Run</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%AE%AD%E7%BB%83%E5%A5%BD%E7%9A%84%E6%A8%A1%E5%9E%8B%E8%BF%9B%E8%A1%8C%E9%A2%84%E6%B5%8B"><span class="toc-text">使用训练好的模型进行预测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Notes"><span class="toc-text">Notes</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E-num-epochs"><span class="toc-text">关于 num_epochs</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-text">References</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>Google 在 2017 年 9 月 12 号的博文 <a href="https://developers.googleblog.com/2017/09/introducing-tensorflow-datasets.html">Introduction to TensorFlow Datasets and Estimators</a> 中介绍了新引入的两个新特性 <a href="https://www.tensorflow.org/programmers_guide/datasets">Datasets</a> 和 <a href="https://www.tensorflow.org/programmers_guide/estimators">Estimators</a>：<br><span id="more"></span></p>
+<ul>
+<li><p>Datasets：创建一个输入管道（input pipelines）来为你的模型读取数据，在这个 pipelines 中你可以做一些数据预处理，尽量都使用 TensorFlow 自己的函数，即 <code>tf</code> 开头的函数（比如 <code>tf.reshape</code>），这样可以提高程序执行效率。</p>
+</li>
+<li><p>Estimators：这是模型的核心部分，而 Estimators 的核心部分则是一个 <code>model_fn</code> 函数（后面会细讲），你在这个函数中定义你的模型架构，输入是特征和标签，输出是一个定义好的 estimator。</p>
+</li>
+</ul>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/CSw2x5g.png" title="tensorflow architecture" data-caption="tensorflow architecture" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/CSw2x5g.png" alt="tensorflow architecture"></a><span class="caption">tensorflow architecture</span></div>  
+<p><em>TensorFlow 架构，图自 <a href="https://developers.googleblog.com/2017/09/introducing-tensorflow-datasets.html">Google Developers Blog</a></em></p>
+<p>实际上这两个特性并不是第一次引入，只不过之前是放在 <code>tf.contrib</code> 里，而这次是引入到了 TensorFlow 核心组件中，意味着可以在生产环境中使用。我 6 月份的时候也写过一篇<a href="http://blog.csdn.net/u010099080/article/details/72824899">博文</a>简单说了下 <code>tf.contrib.learn.DNNRegressor</code> 的使用，实际上这就是 Estimators 内置的一个模型（estimator）。这两个都是高层 API，也就是说为了创建一个模型你不用再写一些很底层的代码（比如定义权重偏置项），可以像 scikit-learn 和 Keras 那样很轻松的几行代码创建一个模型，便于快速实现。</p>
+<p>本篇博文就是试图将这两个高层 API 结合起来，使用 TensorFlow 的数据格式 TFRecords 来实现一个在 <a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10</a> 数据集上的 CNN 模型。完整代码可在<a href="">我的 GitHub</a> 上找到。</p>
+<blockquote>
+<p>Note：本篇博文中的模型并不是结果最好的模型，仅仅是为了展示如何将 Estimators 和 Datasets 结合起来使用。</p>
+</blockquote>
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><p>我会在这里列出对本文的更新。</p>
+<ul>
+<li>2018 年 5 月 1 日：增加使用已训练的模型进行预测的 demo。</li>
+</ul>
+<h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><p>你可以使用 <code>python cifar10_estimator_dataset.py --help</code> 来查看可选参数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">       USAGE: cifar10_estimator_dataset.py [flags]</span><br><span class="line">flags:</span><br><span class="line"></span><br><span class="line">cifar10_estimator_dataset.py:</span><br><span class="line">  --batch_size: Batch size</span><br><span class="line">    (default: &#x27;64&#x27;)</span><br><span class="line">    (an integer)</span><br><span class="line">  --dropout_rate: Dropout rate</span><br><span class="line">    (default: &#x27;0.5&#x27;)</span><br><span class="line">    (a number)</span><br><span class="line">  --eval_dataset: Filename of evaluation dataset</span><br><span class="line">    (default: &#x27;eval.tfrecords&#x27;)</span><br><span class="line">  --learning_rate: Learning rate</span><br><span class="line">    (default: &#x27;0.001&#x27;)</span><br><span class="line">    (a number)</span><br><span class="line">  --model_dir: Filename of testing dataset</span><br><span class="line">    (default: &#x27;models/cifar10_cnn_model&#x27;)</span><br><span class="line">  --num_epochs: Number of training epochs</span><br><span class="line">    (default: &#x27;10&#x27;)</span><br><span class="line">    (an integer)</span><br><span class="line">  --test_dataset: Filename of testing dataset</span><br><span class="line">    (default: &#x27;test.tfrecords&#x27;)</span><br><span class="line">  --train_dataset: Filename of training dataset</span><br><span class="line">    (default: &#x27;train.tfrecords&#x27;)</span><br></pre></td></tr></table></figure>
+<p>TFRecords 和 TensorBoard 文件（包括我做的所有 run）较大，没有放到 GitHub 上，你可以从百度盘上获取：</p>
+<ul>
+<li><a href="https://pan.baidu.com/s/1jImZOGY">TFRecords</a>（133.4 MB），密码：<code>dp7u</code></li>
+<li><a href="https://pan.baidu.com/s/1dFew7SH">TensorBoard</a>（1.45 GB），密码：<code>6885</code></li>
+</ul>
+<h2 id="模型架构"><a href="#模型架构" class="headerlink" title="模型架构"></a>模型架构</h2><p>为了让大家对模型架构先有个清晰地了解，我先把 TensorBoard （不熟悉 TensorBoard 的话可以参考<a href="http://blog.csdn.net/u010099080/article/details/77426577">这里</a>）中显示的模型架构图贴出来（数据集我也就不介绍了，这是个很常用的数据集，如有不熟悉的可以参看<a href="http://blog.csdn.net/u010099080/article/details/53906810#%E6%95%B0%E6%8D%AE%E9%9B%86">这里</a>）：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/D1Qz5it.png" title="cnn model" data-caption="cnn model" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/D1Qz5it.png" alt="cnn model"></a><span class="caption">cnn model</span></div>  
+<p><em>模型架构</em></p>
+<p>可以看到两层卷积层，两层池化层，两层 BN 层，一层 dropout，三层全连接层（<code>DENSE</code>）。</p>
+<h2 id="读取数据集"><a href="#读取数据集" class="headerlink" title="读取数据集"></a>读取数据集</h2><p>在给模型「喂」数据的时候，我们的流程大概是这样的：</p>
+<ol>
+<li><p>创建一个 <code>Dataset</code> 对象来表示我们的数据集，有多种方法可以创建一个 <code>Dataset</code> 对象，我说几个比较常用的：</p>
+<ul>
+<li><code>tf.data.Dataset.from_tensor_slices()</code>：这种方法适合于你的数据集是 numpy 数组类型的。</li>
+<li><strong><code>tf.data.TFRecordDataset()</code></strong>：<strong>这是本文所使用的方法</strong>，适合于你的数据集是 TFRecords 类型的。</li>
+<li><code>tf.data.TextLineDataset()</code>：适合于你的数据集是 txt 格式的。</li>
+</ul>
+</li>
+<li><p>对数据集进行一些预处理：</p>
+<ul>
+<li><code>Dataset.map()</code>：和普通的 <code>map</code> 函数一样，对数据集进行一些变换，例如图像数据集的类型转换（uint8 -&gt; float32）以及 <code>reshape</code> 等。</li>
+<li><code>Dataset.shuffle()</code>：打乱数据集</li>
+<li><code>Dataset.batch()</code>：将数据集切分为特定大小的 batch</li>
+<li><code>Dataset.repeat()</code>：将数据集重复多次。如果不使用这个方法，在第一次遍历到数据集的结尾的时候，会抛出一个 <code>tf.errors.OutOfRangeError</code> 异常，表示数据集已经遍历完毕。但是实际中我们可能需要对数据集迭代训练不止一次，这时候就要用 <code>repeat()</code> 来重复数据集多次。如果不加任何参数，那么表示重复数据集无穷多次。</li>
+</ul>
+</li>
+<li><p>使用 <code>Iterator</code> 的 <code>get_next()</code> 方法来每次获取一个 batch 的数据（假如你是使用 mini-batch 训练的话）。目前 TensorFlow 提供四种 <code>Iterator</code>（详细见 <a href="https://www.tensorflow.org/programmers_guide/datasets#creating_an_iterator">Creating an iterator</a>）：</p>
+<ul>
+<li><strong>one-shot</strong>：<strong>这是本文程序所使用的方法</strong>，使用 <code>Dataset.make_one_shot_iterator()</code> 来创建，不需要初始化。官方有这么一句话：<em>Note: Currently, one-shot iterators are the only type that is easily usable with an Estimator.</em> 不过呢，我也发现外国友人 Peter Roelants 写了个例子将下面的 initializable Iterator 和 Estimator 一起使用，见 <a href="https://gist.github.com/peterroelants/9956ec93a07ca4e9ba5bc415b014bcca">Example using TensorFlow Estimator, Experiment &amp; Dataset on MNIST data</a>。</li>
+<li>initializable：使用 <code>Dataset.make_initializable_iterator()</code> 创建，需要使用 <code>iterator.initializer</code> 初始化。该方式可以允许你自定义数据集，例如你的数据集是 <code>range(0, max_value)</code>，这里面 <code>max_value</code> 是一个 <code>Tensor</code>，在初始化的时候你需要赋值。</li>
+<li>reinitializable：这是种比较复杂的方式，简单来说也就是使你可以从多个不同的 <code>Dataset</code> 对象获取数据，详细可见 <a href="https://www.tensorflow.org/programmers_guide/datasets#creating_an_iterator">Creating an iterator</a>。</li>
+<li>feedable：同样比较复杂，当然更灵活，可以针对不同的 <code>Dataset</code> 对象和 <code>tf.Session.run</code> 使用不同的 <code>Iterator</code>，详细可见 <a href="https://www.tensorflow.org/programmers_guide/datasets#creating_an_iterator">Creating an iterator</a>。</li>
+</ul>
+</li>
+</ol>
+<p>在 Estimator 中，我们输入必须是一个函数，这个函数必须返回特征和标签（或者只有特征），所以我们需要把上面的内容写到一个函数中。因为训练输入和验证输入是不一样的，所以需要两个输入函数：<code>train_input_fn</code> 和 <code>eval_input_fn</code>。为了保持文章简洁，我下面只列出 <code>train_input_fn</code>，<code>eval_input_fn</code> 和其大同小异。</p>
+<blockquote>
+<p>此处我使用了 <code>tf.data.TFRecordDataset</code>，所以你需要将你的数据集写成 TFRecords 格式，比如 <code>train.tfrecords</code>。TFRecords 格式每行表示一个样本（record），关于如何将数据集写成 TFRecords 格式，我将在另一篇博文中说明。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">train_input_fn</span>():</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">    训练输入函数，返回一个 batch 的 features 和 labels</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line">    train_dataset = tf.data.TFRecordDataset(FLAGS.train_dataset)</span><br><span class="line">    train_dataset = train_dataset.<span class="built_in">map</span>(parser)</span><br><span class="line">    <span class="comment"># num_epochs 为整个数据集的迭代次数</span></span><br><span class="line">    train_dataset = train_dataset.repeat(FLAGS.num_epochs)</span><br><span class="line">    train_dataset = train_dataset.batch(FLAGS.batch_size)</span><br><span class="line">    train_iterator = train_dataset.make_one_shot_iterator()</span><br><span class="line"></span><br><span class="line">    features, labels = train_iterator.get_next()</span><br><span class="line">    <span class="keyword">return</span> features, labels</span><br></pre></td></tr></table></figure>
+<p>而其中的 <code>map</code> 函数的参数 <code>parser</code> 也是一个函数，用于将图片和标签从 TFRecords 中解析出来。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">parser</span>(<span class="params">record</span>):</span><br><span class="line">    keys_to_features = &#123;</span><br><span class="line">        <span class="string">&#x27;image_raw&#x27;</span>: tf.FixedLenFeature((), tf.string),</span><br><span class="line">        <span class="string">&#x27;label&#x27;</span>: tf.FixedLenFeature((), tf.int64)</span><br><span class="line">    &#125;</span><br><span class="line">    parsed = tf.parse_single_example(record, keys_to_features)</span><br><span class="line">    image = tf.decode_raw(parsed[<span class="string">&#x27;image_raw&#x27;</span>], tf.uint8)</span><br><span class="line">    image = tf.cast(image, tf.float32)</span><br><span class="line">    label = tf.cast(parsed[<span class="string">&#x27;label&#x27;</span>], tf.int32)</span><br><span class="line">    <span class="keyword">return</span> image, label</span><br></pre></td></tr></table></figure>
+<p>到此，关于模型的 input pipeline 就差不多结束了。下面就是模型的核心部分了：定义一个模型函数 <code>model_fn</code>。</p>
+<h2 id="定义模型函数"><a href="#定义模型函数" class="headerlink" title="定义模型函数"></a>定义模型函数</h2><p>上面是定义了 input pipeline，那么现在该来定义模型架构了。模型大致架构就是上面的模型架构图。该函数需要返回一个定义好的 <code>tf.estimator.EstimatorSpec</code> 对象，对于不同的 <code>mode</code>，所必须提供的参数是不一样的：</p>
+<ul>
+<li>训练模式，即 <code>mode == tf.estimator.ModeKeys.TRAIN</code>，必须提供的是 <code>loss</code> 和 <code>train_op</code>。</li>
+<li>验证模式，即 <code>mode == tf.estimator.ModeKeys.EVAL</code>，必须提供的是 <code>loss</code>。</li>
+<li>预测模式，即 <code>mode == tf.estimator.ModeKeys.PREDICT</code>，必须提供的是 <code>predicitions</code>。</li>
+</ul>
+<blockquote>
+<p>为保持文章简洁，我省略了一些重复性代码。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">cifar_model_fn</span>(<span class="params">features, labels, mode</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Model function for cifar10 model&quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># 输入层</span></span><br><span class="line">    x = tf.reshape(features, [-<span class="number">1</span>, <span class="number">32</span>, <span class="number">32</span>, <span class="number">3</span>])</span><br><span class="line">    <span class="comment"># 第一层卷积层</span></span><br><span class="line">    x = tf.layers.conv2d(inputs=x, filters=<span class="number">64</span>, kernel_size=[</span><br><span class="line">                             <span class="number">3</span>, <span class="number">3</span>], padding=<span class="string">&#x27;same&#x27;</span>, activation=tf.nn.relu, name=<span class="string">&#x27;CONV1&#x27;</span>)</span><br><span class="line">    x = tf.layers.batch_normalization(</span><br><span class="line">        inputs=x, training=mode == tf.estimator.ModeKeys.TRAIN, name=<span class="string">&#x27;BN1&#x27;</span>)</span><br><span class="line">    <span class="comment"># 第一层池化层</span></span><br><span class="line">    x = tf.layers.max_pooling2d(inputs=x, pool_size=[</span><br><span class="line">                                    <span class="number">3</span>, <span class="number">3</span>], strides=<span class="number">2</span>, padding=<span class="string">&#x27;same&#x27;</span>, name=<span class="string">&#x27;POOL1&#x27;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 你可以添加更多的卷积层和池化层 ……</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 全连接层</span></span><br><span class="line">    x = tf.reshape(x, [-<span class="number">1</span>, <span class="number">8</span> * <span class="number">8</span> * <span class="number">128</span>])</span><br><span class="line">    x = tf.layers.dense(inputs=x, units=<span class="number">512</span>, activation=tf.nn.relu, name=<span class="string">&#x27;DENSE1&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 你可以添加更多的全连接层 ……</span></span><br><span class="line"></span><br><span class="line">    logits = tf.layers.dense(inputs=x, units=<span class="number">10</span>, name=<span class="string">&#x27;FINAL&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 预测</span></span><br><span class="line">    predictions = &#123;</span><br><span class="line">        <span class="string">&#x27;classes&#x27;</span>: tf.argmax(<span class="built_in">input</span>=logits, axis=<span class="number">1</span>, name=<span class="string">&#x27;classes&#x27;</span>),</span><br><span class="line">        <span class="string">&#x27;probabilities&#x27;</span>: tf.nn.softmax(logits, name=<span class="string">&#x27;softmax_tensor&#x27;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> mode == tf.estimator.ModeKeys.PREDICT:</span><br><span class="line">        <span class="keyword">return</span> tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 计算损失（对于 TRAIN 和 EVAL 模式）</span></span><br><span class="line">    onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=<span class="number">10</span>)</span><br><span class="line">    loss = tf.losses.softmax_cross_entropy(onehot_labels, logits, scope=<span class="string">&#x27;LOSS&#x27;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 评估方法</span></span><br><span class="line">    accuracy, update_op = tf.metrics.accuracy(</span><br><span class="line">        labels=labels, predictions=predictions[<span class="string">&#x27;classes&#x27;</span>], name=<span class="string">&#x27;accuracy&#x27;</span>)</span><br><span class="line">    batch_acc = tf.reduce_mean(tf.cast(</span><br><span class="line">        tf.equal(tf.cast(labels, tf.int64), predictions[<span class="string">&#x27;classes&#x27;</span>]), tf.float32))</span><br><span class="line">    tf.summary.scalar(<span class="string">&#x27;batch_acc&#x27;</span>, batch_acc)</span><br><span class="line">    tf.summary.scalar(<span class="string">&#x27;streaming_acc&#x27;</span>, update_op)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 训练配置（对于 TRAIN 模式）</span></span><br><span class="line">    <span class="keyword">if</span> mode == tf.estimator.ModeKeys.TRAIN:</span><br><span class="line">        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)</span><br><span class="line">        optimizer = tf.train.RMSPropOptimizer(learning_rate=FLAGS.learning_rate)</span><br><span class="line">        <span class="keyword">with</span> tf.control_dependencies(update_ops):</span><br><span class="line">            train_op = optimizer.minimize(</span><br><span class="line">                loss=loss, global_step=tf.train.get_global_step())</span><br><span class="line">        <span class="keyword">return</span> tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)</span><br><span class="line"></span><br><span class="line">    eval_metric_ops = &#123;</span><br><span class="line">        <span class="string">&#x27;accuracy&#x27;</span>: (accuracy, update_op)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)</span><br></pre></td></tr></table></figure>
+<p>至此，input pipeline 和模型都已经定义好了，下一步就是实际的 run 了。</p>
+<h2 id="Run"><a href="#Run" class="headerlink" title="Run"></a>Run</h2><p>首先我们需要创建一个 <code>tf.estimator.Estimator</code> 对象：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cifar10_classifier = tf.estimator.Estimator(</span><br><span class="line">        model_fn=cifar_model_fn, model_dir=FLAGS.model_dir)</span><br></pre></td></tr></table></figure>
+<p>其中 <code>model_dir</code> 是用于存放模型文件和 TensorBoard 文件的目录。</p>
+<p>然后开始训练和验证：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cifar10_classifier.train(input_fn=train_input_fn)</span><br><span class="line">eval_results = cifar10_classifier.evaluate(input_fn=eval_input_fn)</span><br></pre></td></tr></table></figure>
+<p>程序结束后你便可以在你的 <code>model_dir</code> 里看到类似如下的文件结构：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/ZIO86mY.png" title="model_dir" data-caption="model_dir" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/ZIO86mY.png" alt="model_dir"></a><span class="caption">model_dir</span></div>
+<p><em><code>model_dir</code> 中的文件结构</em></p>
+<p>然后你可以使用 <code>tensorboard --logdir=/your/model/dir</code>（Linux 中你可能需要使用 <code>python -m tensorboard.main --logdir=/your/model/dir</code>）来在 TensorBoard 中查看训练信息，默认只有 <code>SCALARS</code> 和 <code>GRAPHS</code> 面板是有效的，你也可以自己使用 <code>tf.summary</code> 来手动添加 summary 信息。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/mjtQ8Da.png" title="scalars" data-caption="scalars" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/mjtQ8Da.png" alt="scalars"></a><span class="caption">scalars</span></div>
+<p><em>SCALARS 面板</em></p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/p9aHnKU.png" title="graphs" data-caption="graphs" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/p9aHnKU.png" alt="graphs"></a><span class="caption">graphs</span></div>
+<p><em>GRAPHS 面板</em></p>
+<h2 id="使用训练好的模型进行预测"><a href="#使用训练好的模型进行预测" class="headerlink" title="使用训练好的模型进行预测"></a>使用训练好的模型进行预测</h2><p>在训练好模型之后，模型文件已经保存到了 <code>FLAGS.model_dir</code> 中，那么在对新样本进行预测时只需要调用 estimator 的 <code>predict()</code> 方法进行预测就行了。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">infer</span>(<span class="params">argv=<span class="literal">None</span></span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;Run the inference and return the result.&#x27;&#x27;&#x27;</span></span><br><span class="line">    config = tf.estimator.RunConfig()</span><br><span class="line">    config = config.replace(model_dir=FLAGS.saved_model_dir)</span><br><span class="line">    estimator = get_estimator(config)</span><br><span class="line">    predict_input_fn = tf.estimator.inputs.numpy_input_fn(</span><br><span class="line">        x=load_image(), shuffle=<span class="literal">False</span>)</span><br><span class="line">    result = estimator.predict(input_fn=predict_input_fn)</span><br><span class="line">    <span class="keyword">for</span> r <span class="keyword">in</span> result:</span><br><span class="line">        <span class="built_in">print</span>(r)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">load_image</span>():</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;Load image into numpy array.&#x27;&#x27;&#x27;</span></span><br><span class="line">    images = np.zeros((<span class="number">10</span>, <span class="number">3072</span>), dtype=<span class="string">&#x27;float32&#x27;</span>)</span><br><span class="line">    <span class="keyword">for</span> i, file <span class="keyword">in</span> <span class="built_in">enumerate</span>(Path(<span class="string">&#x27;predict-images/&#x27;</span>).glob(<span class="string">&#x27;*.png&#x27;</span>)):</span><br><span class="line">        image = np.array(Image.<span class="built_in">open</span>(file)).reshape(<span class="number">3072</span>)</span><br><span class="line">        images[i, :] = image</span><br><span class="line">    <span class="keyword">return</span> images</span><br></pre></td></tr></table></figure>
+<p>这是主要的两个函数，完整代码见 <a href="understaing-datasets-estimators-tfrecords/cifar10_estimator_dataset_predict.py"><code>cifar10_estimator_dataset_predict.py</code></a>。</p>
+<p>有几点需要说明：</p>
+<ul>
+<li>我把要预测的图片放在了 <code>predict-images/</code> 文件夹下，你可以自由更改这个地址。</li>
+<li>这里我使用了 <code>tf.estimator.inputs.numpy_input_fn()</code> 来作为预测的输入函数，该函数可以直接接受 numpy array 作为输入。除此之外，你还可以像 <a href="https://github.com/secsilm/understaing-datasets-estimators-tfrecords/blob/master/cifar10_estimator_dataset.py#L150"><code>cifar10_estimator_dataset.py</code> 中的 <code>train_input_fn()</code></a> 一样，使用 <code>tf.data.Dataset.from_tensor_slices()</code> 或者 <code>tf.data.TFRecordDataset()</code>，再结合 <code>Dataset.make_one_shot_iterator()</code> 来定义一个预测输入函数。</li>
+</ul>
+<p>用法很简单，假设你的模型文件放在 <code>models/cifar10</code> 下，那么在命令行执行下面的语句即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python cifar10_estimator_dataset_predict.py --saved_model_dir models/cifar10</span><br></pre></td></tr></table></figure>
+<p><code>--saved_model_dir</code> 的默认值是 <code>models/adam</code>。</p>
+<p>执行完后可以看到类似下面这样的输出结果，当然下面的结果很差，由于时间有限我也没有过多的调模型，这里只是说明下过程：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/4IHRVip.png" title="predict" data-caption="predict" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/4IHRVip.png" alt="predict"></a><span class="caption">predict</span></div>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>总的来说，使用 Datasets 和 Estimators 来训练模型大致就是这么几个步骤：</p>
+<ol>
+<li>定义输入函数，在函数中对你的数据集做一些必要的预处理，返回 features 和 labels。</li>
+<li>定义模型函数，返回 <code>tf.estimator.EstimatorSpec</code> 对象。</li>
+<li>使用模型函数创建 <code>tf.estimator.Estimator</code> 对象。</li>
+<li>使用创建好的对象 train and evaluate。</li>
+</ol>
+<h2 id="Notes"><a href="#Notes" class="headerlink" title="Notes"></a>Notes</h2><h3 id="关于-num-epochs"><a href="#关于-num-epochs" class="headerlink" title="关于 num_epochs"></a>关于 <code>num_epochs</code></h3><p>如果你设置 <code>num_epochs</code> 为比如说 30，然而你在训练的时候看到类似如下的控制台输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">INFO:tensorflow:global_step/sec: 0.476364</span><br><span class="line">INFO:tensorflow:loss = 0.137512, step = 14901 (209.924 sec)</span><br><span class="line">INFO:tensorflow:global_step/sec: 0.477139</span><br><span class="line">INFO:tensorflow:loss = 0.0203241, step = 15001 (209.583 sec)</span><br><span class="line">INFO:tensorflow:global_step/sec: 0.477511</span><br><span class="line">INFO:tensorflow:loss = 0.132834, step = 15101 (209.419 sec)</span><br></pre></td></tr></table></figure>
+<p>你可以看到 <code>step</code> 已经上万了，这是因为这里的 <code>step</code> 指的是一个 batch 的训练迭代，而 <code>num_epochs</code> 设为 30 意味着你要把整个训练集遍历 30 次（也是我们通常的做法）。也就是说，假如你有 50000 个样本，batch 大小为 50，那么你的数据集将被切分为 1000 个 batch，也就是遍历一遍数据集需要 1000 step，所以说 <code>num_epochs</code> 为 30 时，你的程序需要到 <code>step=30000</code> 才会训练结束。所以切记 <code>num_epochs</code> 表示的是整个训练集的迭代次数。</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ol>
+<li><a href="https://developers.googleblog.com/2017/09/introducing-tensorflow-datasets.html">Introduction to TensorFlow Datasets and Estimators</a></li>
+<li><a href="https://www.tensorflow.org/programmers_guide/datasets">Importing Data | TensorFlow</a></li>
+<li><a href="https://www.tensorflow.org/extend/estimators">Creating Estimators in tf.estimator | TensorFlow</a></li>
+<li><a href="https://gist.github.com/peterroelants/9956ec93a07ca4e9ba5bc415b014bcca">Example using TensorFlow Estimator, Experiment &amp; Dataset on MNIST data</a></li>
+<li><a href="https://medium.com/onfido-tech/higher-level-apis-in-tensorflow-67bfb602e6c0">Higher-Level APIs in TensorFlow – Onfido Tech – Medium</a></li>
+</ol>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/12/25/export-csdn-blogs-to-md/"
+                    data-tooltip="批量导出 CSDN 博客为 Markdown 文件"
+                    aria-label="上一篇: 批量导出 CSDN 博客为 Markdown 文件"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/10/08/gradient-descent-methods/"
+                    data-tooltip="梯度下降优化算法概述"
+                    aria-label="下一篇: 梯度下降优化算法概述"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/12/25/export-csdn-blogs-to-md/"
+                    data-tooltip="批量导出 CSDN 博客为 Markdown 文件"
+                    aria-label="上一篇: 批量导出 CSDN 博客为 Markdown 文件"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/10/08/gradient-descent-methods/"
+                    data-tooltip="梯度下降优化算法概述"
+                    aria-label="下一篇: 梯度下降优化算法概述"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/12/22/understanding-estimators-datasets/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2017/12/22/understanding-estimators-datasets/';
+              
+            this.page.identifier = '2017/12/22/understanding-estimators-datasets/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

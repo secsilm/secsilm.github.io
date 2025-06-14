@@ -1,0 +1,740 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>二分查找真的很快吗 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。\n有多种方法来完成这个题目，大部分人第一反应都是二分查找。我喜欢从实践出发来想问题。我有几个问题：\n\n二分查找真的很快吗？如果快，快多少？\n实际中我们应该怎么写才能更好地完成这个题目？\n\n本文就是来回答这两个问题的。我不会在本文中赘述二分查找的思想原理，不了解的同学可以先出门搜索了解以下。\n来点硬的，直接来跑一下结果。你可以在 colab 中自己试验一下。\n代码我们这里测试了 4 种方法，如下：\n1234567891011121314151617181920212223242526272829303132333435363738394041424344def recursive(a, low, high, x):    &#x27;&#x27;&#x27;递归写法&#x27;&#x27;&#x27;    middle = int((low + high) / 2)    if high &gt;= low:        if a[middle] == x:            return middle        elif a[middle] &gt; x:            return recursive(a, low, middle - 1, x)        else:            return recursive(a, middle + 1, high, x)    if x &lt; a[middle]:        return middle    if x &gt; a[middle]:        return middle + 1def whileloop(a, x):    &#x27;&#x27;&#x27;while 循环写法&#x27;&#x27;&#x27;    low = 0    high = len(a) - 1    while low &lt;= high:        middle = int((low + high) / 2)        if a[middle] &lt; x:            low = middle + 1        elif a[middle] &gt; x:            high = middle - 1        else:            return middle    if x &lt; a[middle]:        return middle    if x &gt; a[middle]:        return middle + 1def forloop(a, x):    &#x27;&#x27;&#x27;for 循环写法&#x27;&#x27;&#x27;    for idx, item in enumerate(a):        if item &gt;= x:            return idxdef builtin_bisect(a, x):    &#x27;&#x27;&#x27;使用内置的 bisect&#x27;&#x27;&#x27;    return bisect.bisect_left(a, x)\n共进行 3 次测试，各次 a 的长度为 $10^3$、$10^6$ 和 $10^9$，x 为长度的 0.67，测试 CPU 环境为 Intel(R) Xeon(R) CPU @ 2.00GHz，Python 版本为 Python 3.6.8，就是 colab 的环境：\n123456789101112131415161718192021222324252627282930313233343536373839recursive_times = []whileloop_times = []forloop_times = []builtin_times = []lengths = [int(1e3), int(1e6), int(1e9)]for i in lengths:    a = range(i)    x = 0.67 * i    print(i)    start = time.time()    _ = recursive(a, 0, i - 1, x)    cost = time.time() - start    recursive_times.append(cost)    start = time.time()    _ = whileloop(a, x)    cost = time.time() - start    whileloop_times.append(cost)    start = time.time()    _ = forloop(a, x)    cost = time.time() - start    forloop_times.append(cost)    start = time.time()    _ = builtin_bisect(a, x)    cost = time.time() - start    builtin_times.append(cost)fig = plt.figure(figsize=(15, 8))plt.plot(range(3), [i * 1000 for i in recursive_times], &#x27;-o&#x27;, label=&quot;recursive&quot;)plt.plot(range(3), [i * 1000 for i in whileloop_times], &#x27;-o&#x27;, label=&quot;whileloop&quot;)plt.plot(range(3), [i * 1000 for i in forloop_times], &#x27;-o&#x27;, label=&quot;forloop&quot;)plt.plot(range(3), [i * 1000 for i in builtin_times], &#x27;-o&#x27;, label=&quot;builtin_bisect&quot;)plt.xticks([0, 1, 2], [3, 6, 9])plt.xlabel(&quot;length/10^&quot;)plt.ylabel(&quot;COST/ms&quot;)plt.legend()plt.grid(True)\n测试结果：\n测试结果\n可以看到随着数组长度的扩大，for 循环方法消耗的时间也非常非常快的增长，而其他方法波动很小。具体而言，数组长度变为原来的 1000 倍，for 循环方法耗时也变为原来的 1000 倍左右，而其他方法的耗时变为原来的 1-3 倍左右。\n暂且除去 for 循环，如果我们细看在 $10^3$、$10^6$ 和 $10^9$ 处的图，可以看到剩余三个方法之间的差距，递归耗时均最高：\n\n\n\n实际上 bisect 内部实现用的就是 while 循环的方法，代码很短，我直接贴过来（吐槽下官方代码竟然没有很好的格式化）：\n123456789101112131415161718def bisect_left(a, x, lo=0, hi=None):    &quot;&quot;&quot;Return the index where to insert item x in list a, assuming a is sorted.    The return value i is such that all e in a[:i] have e &lt; x, and all e in    a[i:] have e &gt;= x.  So if x already appears in the list, a.insert(x) will    insert just before the leftmost x already there.    Optional args lo (default 0) and hi (default len(a)) bound the    slice of a to be searched.    &quot;&quot;&quot;    if lo &lt; 0:        raise ValueError(&#x27;lo must be non-negative&#x27;)    if hi is None:        hi = len(a)    while lo &lt; hi:        mid = (lo+hi)//2        if a[mid] &lt; x: lo = mid+1        else: hi = mid    return lo\n详细的测试时间数据如下：\n1234recursive_times=[1.5735626220703125e-05, 2.5272369384765625e-05, 4.553794860839844e-05]whileloop_times=[6.67572021484375e-06, 1.1205673217773438e-05, 1.8358230590820312e-05]forloop_times=[4.982948303222656e-05, 0.058376312255859375, 58.462812423706055]builtin_times=[6.4373016357421875e-06, 1.9311904907226562e-05, 2.4557113647460938e-05]\n到此时我们回答了第一个问题，二分查找真的很快！ 在数组长度较小时，差距还不是那么的明显。但是随着数组长度扩大，差距简直指数级扩大，差距甚至几百万倍。\n至于第二个问题，我认为的答案是尽可能使用内置库，这些都是经过了很多优化，速度和稳定性都有保证，写起来还简单粗暴，何乐而不为呢？\n写完感觉一篇废话 😂\nReference\ncpython/bisect.py at 3.6 · python/cpython\n8.6. bisect — Array bisection algorithm — Python 3.6.9 documentation\n\nEND","dateCreated":"2019-10-28T20:39:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2019-10-28T20:39:00+08:00","description":"\n很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。","headline":"二分查找真的很快吗","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2019/10/28/bisect-speed/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2019/10/28/bisect-speed/","keywords":"Python"}</script>
+    <meta name="description" content="很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="二分查找真的很快吗">
+<meta property="og:url" content="https://alanlee.fun/2019/10/28/bisect-speed/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="很常见的一个题目：给定升序排序数组 a，查找 a 中大于等于 x 的第一个数的索引。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvY3lQZ0xTc2x6NktUdk1vLnBuZw?x-oss-process=image/format,png">
+<meta property="og:image" content="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvRDF5YWU0ckxtelNiS3FwLnBuZw?x-oss-process=image/format,png">
+<meta property="og:image" content="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvUFNRb0V1UjJoakdrVGZlLnBuZw?x-oss-process=image/format,png">
+<meta property="og:image" content="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvc3lrOERqZ2NHVnpyNmZ3LnBuZw?x-oss-process=image/format,png">
+<meta property="article:published_time" content="2019-10-28T12:39:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.192Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvY3lQZ0xTc2x6NktUdk1vLnBuZw?x-oss-process=image/format,png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            二分查找真的很快吗
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-10-28T20:39:00+08:00">
+	
+		    2019 年 10 月 28 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81"><span class="toc-text">代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>很常见的一个题目：给定升序排序数组 <code>a</code>，查找 <code>a</code> 中大于等于 <code>x</code> 的第一个数的索引。<br><span id="more"></span></p>
+<p>有多种方法来完成这个题目，大部分人第一反应都是二分查找。我喜欢从实践出发来想问题。我有几个问题：</p>
+<ol>
+<li>二分查找真的很快吗？如果快，快多少？</li>
+<li>实际中我们应该怎么写才能更好地完成这个题目？</li>
+</ol>
+<p>本文就是来回答这两个问题的。我不会在本文中赘述<a href="https://zh.wikipedia.org/wiki/%E4%BA%8C%E5%88%86%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95">二分查找的思想原理</a>，不了解的同学可以先出门搜索了解以下。</p>
+<p>来点硬的，直接来跑一下结果。你可以在 <a href="https://colab.research.google.com/drive/1murjpTGQ_crxSkBYjzz0_VDy2ONIxAnh">colab</a> 中自己试验一下。</p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>我们这里测试了 4 种方法，如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">recursive</span>(<span class="params">a, low, high, x</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;递归写法&#x27;&#x27;&#x27;</span></span><br><span class="line">    middle = <span class="built_in">int</span>((low + high) / <span class="number">2</span>)</span><br><span class="line">    <span class="keyword">if</span> high &gt;= low:</span><br><span class="line">        <span class="keyword">if</span> a[middle] == x:</span><br><span class="line">            <span class="keyword">return</span> middle</span><br><span class="line">        <span class="keyword">elif</span> a[middle] &gt; x:</span><br><span class="line">            <span class="keyword">return</span> recursive(a, low, middle - <span class="number">1</span>, x)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> recursive(a, middle + <span class="number">1</span>, high, x)</span><br><span class="line">    <span class="keyword">if</span> x &lt; a[middle]:</span><br><span class="line">        <span class="keyword">return</span> middle</span><br><span class="line">    <span class="keyword">if</span> x &gt; a[middle]:</span><br><span class="line">        <span class="keyword">return</span> middle + <span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">whileloop</span>(<span class="params">a, x</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;while 循环写法&#x27;&#x27;&#x27;</span></span><br><span class="line">    low = <span class="number">0</span></span><br><span class="line">    high = <span class="built_in">len</span>(a) - <span class="number">1</span></span><br><span class="line">    <span class="keyword">while</span> low &lt;= high:</span><br><span class="line">        middle = <span class="built_in">int</span>((low + high) / <span class="number">2</span>)</span><br><span class="line">        <span class="keyword">if</span> a[middle] &lt; x:</span><br><span class="line">            low = middle + <span class="number">1</span></span><br><span class="line">        <span class="keyword">elif</span> a[middle] &gt; x:</span><br><span class="line">            high = middle - <span class="number">1</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> middle</span><br><span class="line">    <span class="keyword">if</span> x &lt; a[middle]:</span><br><span class="line">        <span class="keyword">return</span> middle</span><br><span class="line">    <span class="keyword">if</span> x &gt; a[middle]:</span><br><span class="line">        <span class="keyword">return</span> middle + <span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">forloop</span>(<span class="params">a, x</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;for 循环写法&#x27;&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> idx, item <span class="keyword">in</span> <span class="built_in">enumerate</span>(a):</span><br><span class="line">        <span class="keyword">if</span> item &gt;= x:</span><br><span class="line">            <span class="keyword">return</span> idx</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">builtin_bisect</span>(<span class="params">a, x</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;使用内置的 bisect&#x27;&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">return</span> bisect.bisect_left(a, x)</span><br></pre></td></tr></table></figure>
+<p>共进行 3 次测试，各次 <code>a</code> 的长度为 $10^3$、$10^6$ 和 $10^9$，<code>x</code> 为长度的 0.67，测试 CPU 环境为 Intel(R) Xeon(R) CPU @ 2.00GHz，Python 版本为 Python 3.6.8，就是 colab 的环境：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">recursive_times = []</span><br><span class="line">whileloop_times = []</span><br><span class="line">forloop_times = []</span><br><span class="line">builtin_times = []</span><br><span class="line">lengths = [<span class="built_in">int</span>(<span class="number">1e3</span>), <span class="built_in">int</span>(<span class="number">1e6</span>), <span class="built_in">int</span>(<span class="number">1e9</span>)]</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> lengths:</span><br><span class="line">    a = <span class="built_in">range</span>(i)</span><br><span class="line">    x = <span class="number">0.67</span> * i</span><br><span class="line">    <span class="built_in">print</span>(i)</span><br><span class="line">    start = time.time()</span><br><span class="line">    _ = recursive(a, <span class="number">0</span>, i - <span class="number">1</span>, x)</span><br><span class="line">    cost = time.time() - start</span><br><span class="line">    recursive_times.append(cost)</span><br><span class="line"></span><br><span class="line">    start = time.time()</span><br><span class="line">    _ = whileloop(a, x)</span><br><span class="line">    cost = time.time() - start</span><br><span class="line">    whileloop_times.append(cost)</span><br><span class="line"></span><br><span class="line">    start = time.time()</span><br><span class="line">    _ = forloop(a, x)</span><br><span class="line">    cost = time.time() - start</span><br><span class="line">    forloop_times.append(cost)</span><br><span class="line"></span><br><span class="line">    start = time.time()</span><br><span class="line">    _ = builtin_bisect(a, x)</span><br><span class="line">    cost = time.time() - start</span><br><span class="line">    builtin_times.append(cost)</span><br><span class="line"></span><br><span class="line">fig = plt.figure(figsize=(<span class="number">15</span>, <span class="number">8</span>))</span><br><span class="line">plt.plot(<span class="built_in">range</span>(<span class="number">3</span>), [i * <span class="number">1000</span> <span class="keyword">for</span> i <span class="keyword">in</span> recursive_times], <span class="string">&#x27;-o&#x27;</span>, label=<span class="string">&quot;recursive&quot;</span>)</span><br><span class="line">plt.plot(<span class="built_in">range</span>(<span class="number">3</span>), [i * <span class="number">1000</span> <span class="keyword">for</span> i <span class="keyword">in</span> whileloop_times], <span class="string">&#x27;-o&#x27;</span>, label=<span class="string">&quot;whileloop&quot;</span>)</span><br><span class="line">plt.plot(<span class="built_in">range</span>(<span class="number">3</span>), [i * <span class="number">1000</span> <span class="keyword">for</span> i <span class="keyword">in</span> forloop_times], <span class="string">&#x27;-o&#x27;</span>, label=<span class="string">&quot;forloop&quot;</span>)</span><br><span class="line">plt.plot(<span class="built_in">range</span>(<span class="number">3</span>), [i * <span class="number">1000</span> <span class="keyword">for</span> i <span class="keyword">in</span> builtin_times], <span class="string">&#x27;-o&#x27;</span>, label=<span class="string">&quot;builtin_bisect&quot;</span>)</span><br><span class="line">plt.xticks([<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>], [<span class="number">3</span>, <span class="number">6</span>, <span class="number">9</span>])</span><br><span class="line">plt.xlabel(<span class="string">&quot;length/10^&quot;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&quot;COST/ms&quot;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.grid(<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
+<p>测试结果：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvY3lQZ0xTc2x6NktUdk1vLnBuZw?x-oss-process=image/format,png" title="测试结果" data-caption="测试结果" data-fancybox="default"><img class="fig-img" src="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvY3lQZ0xTc2x6NktUdk1vLnBuZw?x-oss-process=image/format,png" alt="测试结果"></a><span class="caption">测试结果</span></div>
+<p>可以看到随着数组长度的扩大，for 循环方法消耗的时间也非常非常快的增长，而其他方法波动很小。具体而言，数组长度变为原来的 1000 倍，for 循环方法耗时也变为原来的 1000 倍左右，而其他方法的耗时变为原来的 1-3 倍左右。</p>
+<p>暂且除去 for 循环，如果我们细看在 $10^3$、$10^6$ 和 $10^9$ 处的图，可以看到剩余三个方法之间的差距，递归耗时均最高：</p>
+<div class="figure center" style="width:3;"><a class="fancybox" href="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvRDF5YWU0ckxtelNiS3FwLnBuZw?x-oss-process=image/format,png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvRDF5YWU0ckxtelNiS3FwLnBuZw?x-oss-process=image/format,png" style="width:3;"alt=""></a></div>
+<div class="figure center" style="width:6;"><a class="fancybox" href="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvUFNRb0V1UjJoakdrVGZlLnBuZw?x-oss-process=image/format,png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvUFNRb0V1UjJoakdrVGZlLnBuZw?x-oss-process=image/format,png" style="width:6;"alt=""></a></div>
+<div class="figure center" style="width:9;"><a class="fancybox" href="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvc3lrOERqZ2NHVnpyNmZ3LnBuZw?x-oss-process=image/format,png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pLmxvbGkubmV0LzIwMTkvMTAvMjgvc3lrOERqZ2NHVnpyNmZ3LnBuZw?x-oss-process=image/format,png" style="width:9;"alt=""></a></div>
+<p>实际上 <code>bisect</code> 内部实现用的就是 while 循环的方法，代码很短，我直接贴过来（吐槽下官方代码竟然没有很好的格式化）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">bisect_left</span>(<span class="params">a, x, lo=<span class="number">0</span>, hi=<span class="literal">None</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Return the index where to insert item x in list a, assuming a is sorted.</span></span><br><span class="line"><span class="string">    The return value i is such that all e in a[:i] have e &lt; x, and all e in</span></span><br><span class="line"><span class="string">    a[i:] have e &gt;= x.  So if x already appears in the list, a.insert(x) will</span></span><br><span class="line"><span class="string">    insert just before the leftmost x already there.</span></span><br><span class="line"><span class="string">    Optional args lo (default 0) and hi (default len(a)) bound the</span></span><br><span class="line"><span class="string">    slice of a to be searched.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> lo &lt; <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">&#x27;lo must be non-negative&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> hi <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        hi = <span class="built_in">len</span>(a)</span><br><span class="line">    <span class="keyword">while</span> lo &lt; hi:</span><br><span class="line">        mid = (lo+hi)//<span class="number">2</span></span><br><span class="line">        <span class="keyword">if</span> a[mid] &lt; x: lo = mid+<span class="number">1</span></span><br><span class="line">        <span class="keyword">else</span>: hi = mid</span><br><span class="line">    <span class="keyword">return</span> lo</span><br></pre></td></tr></table></figure>
+<p>详细的测试时间数据如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">recursive_times=[1.5735626220703125e-05, 2.5272369384765625e-05, 4.553794860839844e-05]</span><br><span class="line">whileloop_times=[6.67572021484375e-06, 1.1205673217773438e-05, 1.8358230590820312e-05]</span><br><span class="line">forloop_times=[4.982948303222656e-05, 0.058376312255859375, 58.462812423706055]</span><br><span class="line">builtin_times=[6.4373016357421875e-06, 1.9311904907226562e-05, 2.4557113647460938e-05]</span><br></pre></td></tr></table></figure>
+<p>到此时我们回答了第一个问题，<strong>二分查找真的很快！</strong> 在数组长度较小时，差距还不是那么的明显。但是随着数组长度扩大，差距简直指数级扩大，差距甚至几百万倍。</p>
+<p>至于第二个问题，我认为的答案是尽可能使用内置库，这些都是经过了很多优化，速度和稳定性都有保证，写起来还简单粗暴，何乐而不为呢？</p>
+<p><em>写完感觉一篇废话 😂</em></p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://github.com/python/cpython/blob/3.6/Lib/bisect.py#L67-L86">cpython/bisect.py at 3.6 · python/cpython</a></li>
+<li><a href="https://docs.python.org/3.6/library/bisect.html">8.6. bisect — Array bisection algorithm — Python 3.6.9 documentation</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/03/15/meet-label-studio/"
+                    data-tooltip="试用开源标注平台 Label Studio"
+                    aria-label="上一篇: 试用开源标注平台 Label Studio"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/16/bert-tokenizer/"
+                    data-tooltip="BERT 是如何分词的"
+                    aria-label="下一篇: BERT 是如何分词的"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/10/28/bisect-speed/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/10/28/bisect-speed/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/10/28/bisect-speed/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/03/15/meet-label-studio/"
+                    data-tooltip="试用开源标注平台 Label Studio"
+                    aria-label="上一篇: 试用开源标注平台 Label Studio"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/16/bert-tokenizer/"
+                    data-tooltip="BERT 是如何分词的"
+                    aria-label="下一篇: BERT 是如何分词的"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/10/28/bisect-speed/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/10/28/bisect-speed/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/10/28/bisect-speed/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/10/28/bisect-speed/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/10/28/bisect-speed/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/10/28/bisect-speed/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2019/10/28/bisect-speed/';
+              
+            this.page.identifier = '2019/10/28/bisect-speed/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

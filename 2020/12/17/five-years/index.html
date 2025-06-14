@@ -1,0 +1,732 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>博客五年 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n为什么开始已经忘了第一次接触博客是什么时候了，但是对我写作影响最大的应该就是 Sebastian Ruder 了，尤其是写作风格和那种精致感，当然我现在也没达到那种精致感，但也是我的方向。他的博客从开始一直追到现在，一开始隔段时间就手动去翻，后来关注他的 twitter，一有新的 post 他就会发推，这点上我也是学了下，哈哈哈。再然后关注了他的 newsletter，虽然不经常更，但是更一次就是精品，我的 reading list 里很多文章都是从那里来的。同时也用 feedly 和早期的即刻来订阅 RSS。也见证了他的博客从原来不知道什么平台换成了 Ghost。我的另一个生活类博客 The North Cloud Gate 就是受此影响搞了一个 Ghost。\n我相信写博客的初衷都是为了记录，当笔记用。当你花了一番功夫解决了一个问题的时候，你会想把这个过程后者解决方法记下来，无论是方便自己查阅，还是方便他人查阅，都是很有益处的。\n那么，开始写了的话，就有在哪写的问题了。国内大的博客平台就 CSDN、博客园、简书等，CSDN 和博客园是比较符合主题的，简书不太像，感觉偏文一点。然后就在 CSDN 和博客园两者选，起初好像是觉得 CSDN 太花哨，就选了博客园，就诞生了我的第一篇博文，写于 2015 年 5 月19 日的 MATLAB画图自动确定坐标范围（GUI）。\nMATLAB画图自动确定坐标范围（GUI）\n现在看看这文章感觉就是好青涩，有比较多的生活化语言😂。当时还在做本科毕设，用 MATLAB 可视化线性代数的一些原理，所以当时都在鼓捣 MATLAB 做 GUI 相关的。\n但是后来转向 CSDN 了，原因就忘了，可能是觉得 CSDN 的编辑更好用点？CSDN 上第一篇博文同样是关于 MATLAB 的，写于 2019 年 9 月 22 日的 用 MATLAB 将多个文件夹内的某些文件汇总到另一个文件夹。这个汇总文件的需求，是为了学习 Python 的，结果是用 MATLAB 写的🤣这篇博文存在着和上面同样的问题。\n用 MATLAB 将多个文件夹内的某些文件汇总到另一个文件夹\n想想刚开始的时候，写博客真的是耗费很多精力，虽说现在也是，但是那时对整个流程还不怎么熟悉，还在探索阶段，那时也刚开始学习使用 markdown。经常一写就到中午 12 点或者晚上 12 点。那时也没想着能坚持到现在这么久，目前为止 CSDN 上已经有了 61 篇博文了，均原创或者翻译。\n其实写博客，对我而言，不在乎你写了多少篇，而在于你是否输出了有价值的文章，是否给这个世界带了一点不同，是否 make some difference，他人是否能通过你的文章学习到一些不一样或者有意义的东西，数量并不那么重要，质量才是第一位的。这些都是目标，希望自己能无限逼近这个目标。\n如果要写，就要写点不一样的。\n成长与烦恼写博客不是一件容易的事，写好博客就更不是一件容易的事。这里的不容易有两层含义：输出好文不容易，持续输出不容易。\n要写好一篇文章，基本要经历以下过程：\n\n所以，写好一篇博文并不容易。\n写好一篇博文不容易，耗时长，所以更新频率并不会太高，不会为了发文而发文。像 Sebastian Ruder、Christopher Olah、Martin Heinz 和董伟明等这些我觉得比较好的博主，更新频率都不高，甚至有的都做不到持续输出，有的上一次发文还是 2018 年。\n因为长大了。\n你会有更多的技术以外的事，家庭、生活、工作，都有无数让你分心的事情。每个人都有其难过之事，我也有，而且相当难过。\n我得到了什么物质上说实话确实没得到什么。虽然说 CSND 博客阅读量有 130 万 +，但是鉴于 CSDN 的盈利方法，我一分都得不到。\n但是除了物质上呢？\n从写作的本质 —— 记录出发，我得到的就是把我的大部分想法能够以文字方式记录下来，以便日后翻找。总结复习确实很重要，向前走的太多，也要记得回头看。随时翻翻自己之前写的东西，还能温故而知新，何乐而不为。如果有困惑者评论了你的文章，你也可以助之解惑，也算是一件好事。当然如果赞同者能点个赞，那更是开心。\n我还能继续写吗？我希望能。\nGood luck to me, good luck to us.\nEND","dateCreated":"2020-12-17T21:00:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-12-17T21:00:00+08:00","description":"写博客以来的心路历程。","headline":"博客五年","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/12/17/five-years/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/12/17/five-years/","keywords":"Living"}</script>
+    <meta name="description" content="写博客以来的心路历程。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="博客五年">
+<meta property="og:url" content="https://alanlee.fun/2020/12/17/five-years/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="写博客以来的心路历程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/12/17/XtiphYqmvUxBcMy.png">
+<meta property="og:image" content="https://i.loli.net/2020/12/17/IVidMGnA7Qv1OBY.png">
+<meta property="og:image" content="https://alanlee.fun/2020/12/17/five-years/how-to-write-a-good-blog__3_.png">
+<meta property="article:published_time" content="2020-12-17T13:00:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.194Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Living">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/12/17/XtiphYqmvUxBcMy.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            博客五年
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-12-17T21:00:00+08:00">
+	
+		    2020 年 12 月 17 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BC%80%E5%A7%8B"><span class="toc-text">为什么开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E9%95%BF%E4%B8%8E%E7%83%A6%E6%81%BC"><span class="toc-text">成长与烦恼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E5%BE%97%E5%88%B0%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-text">我得到了什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="为什么开始"><a href="#为什么开始" class="headerlink" title="为什么开始"></a>为什么开始</h2><p>已经忘了第一次接触博客是什么时候了，但是对我写作影响最大的应该就是 <a href="https://ruder.io/">Sebastian Ruder</a> 了，尤其是写作风格和那种精致感，当然我现在也没达到那种精致感，但也是我的方向。他的博客从开始一直追到现在，一开始隔段时间就手动去翻，后来关注他的 twitter，一有新的 post 他就会发推，这点上我也是学了下，哈哈哈。再然后关注了他的 newsletter，虽然不经常更，但是更一次就是精品，我的 reading list 里很多文章都是从那里来的。同时也用 feedly 和早期的即刻来订阅 RSS。也见证了他的博客从原来不知道什么平台换成了 Ghost。我的另一个生活类博客 <a href="https://northcloudgate.com/">The North Cloud Gate</a> 就是受此影响搞了一个 Ghost。</p>
+<p>我相信写博客的初衷都是为了记录，当笔记用。当你花了一番功夫解决了一个问题的时候，你会想把这个过程后者解决方法记下来，无论是方便自己查阅，还是方便他人查阅，都是很有益处的。</p>
+<p>那么，开始写了的话，就有在哪写的问题了。国内大的博客平台就 CSDN、博客园、简书等，CSDN 和博客园是比较符合主题的，简书不太像，感觉偏文一点。然后就在 CSDN 和博客园两者选，起初好像是觉得 CSDN 太花哨，就选了博客园，就诞生了我的第一篇博文，写于 2015 年 5 月19 日的 <a href="https://www.cnblogs.com/lyjwf/p/4515973.html">MATLAB画图自动确定坐标范围（GUI）</a>。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/12/17/XtiphYqmvUxBcMy.png" title="MATLAB画图自动确定坐标范围（GUI）" data-caption="MATLAB画图自动确定坐标范围（GUI）" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/12/17/XtiphYqmvUxBcMy.png" alt="MATLAB画图自动确定坐标范围（GUI）"></a><span class="caption">MATLAB画图自动确定坐标范围（GUI）</span></div>
+<p>现在看看这文章感觉就是好青涩，有比较多的生活化语言😂。当时还在做本科毕设，用 MATLAB 可视化线性代数的一些原理，所以当时都在鼓捣 MATLAB 做 GUI 相关的。</p>
+<p>但是后来转向 CSDN 了，原因就忘了，可能是觉得 CSDN 的编辑更好用点？CSDN 上第一篇博文同样是关于 MATLAB 的，写于 2019 年 9 月 22 日的 <a href="https://secsilm.blog.csdn.net/article/details/48659513">用 MATLAB 将多个文件夹内的某些文件汇总到另一个文件夹</a>。这个汇总文件的需求，是为了学习 Python 的，结果是用 MATLAB 写的🤣这篇博文存在着和上面同样的问题。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/12/17/IVidMGnA7Qv1OBY.png" title="用 MATLAB 将多个文件夹内的某些文件汇总到另一个文件夹" data-caption="用 MATLAB 将多个文件夹内的某些文件汇总到另一个文件夹" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/12/17/IVidMGnA7Qv1OBY.png" alt="用 MATLAB 将多个文件夹内的某些文件汇总到另一个文件夹"></a><span class="caption">用 MATLAB 将多个文件夹内的某些文件汇总到另一个文件夹</span></div>
+<p>想想刚开始的时候，写博客真的是耗费很多精力，虽说现在也是，但是那时对整个流程还不怎么熟悉，还在探索阶段，那时也刚开始学习使用 markdown。经常一写就到中午 12 点或者晚上 12 点。那时也没想着能坚持到现在这么久，目前为止 CSDN 上已经有了 61 篇博文了，均原创或者翻译。</p>
+<p>其实写博客，对我而言，不在乎你写了多少篇，而在于你是否输出了有价值的文章，是否给这个世界带了一点不同，是否 make some difference，他人是否能通过你的文章学习到一些不一样或者有意义的东西，数量并不那么重要，质量才是第一位的。这些都是目标，希望自己能无限逼近这个目标。</p>
+<p>如果要写，就要写点不一样的。</p>
+<h2 id="成长与烦恼"><a href="#成长与烦恼" class="headerlink" title="成长与烦恼"></a>成长与烦恼</h2><p>写博客不是一件容易的事，写好博客就更不是一件容易的事。这里的不容易有两层含义：输出好文不容易，持续输出不容易。</p>
+<p>要写好一篇文章，基本要经历以下过程：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/12/17/EpOnoHkywszM2Be.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="how-to-write-a-good-blog__3_.png" alt=""></a></div>
+<p>所以，写好一篇博文并不容易。</p>
+<p>写好一篇博文不容易，耗时长，所以更新频率并不会太高，不会为了发文而发文。像 Sebastian Ruder、Christopher Olah、Martin Heinz 和董伟明等这些我觉得比较好的博主，更新频率都不高，甚至有的都做不到持续输出，有的上一次发文还是 2018 年。</p>
+<p>因为长大了。</p>
+<p>你会有更多的技术以外的事，家庭、生活、工作，都有无数让你分心的事情。每个人都有其难过之事，我也有，而且相当难过。</p>
+<h2 id="我得到了什么"><a href="#我得到了什么" class="headerlink" title="我得到了什么"></a>我得到了什么</h2><p>物质上说实话确实没得到什么。虽然说 CSND 博客阅读量有 130 万 +，但是鉴于 CSDN 的盈利方法，我一分都得不到。</p>
+<p>但是除了物质上呢？</p>
+<p>从写作的本质 —— 记录出发，我得到的就是把我的大部分想法能够以文字方式记录下来，以便日后翻找。总结复习确实很重要，向前走的太多，也要记得回头看。随时翻翻自己之前写的东西，还能温故而知新，何乐而不为。如果有困惑者评论了你的文章，你也可以助之解惑，也算是一件好事。当然如果赞同者能点个赞，那更是开心。</p>
+<p>我还能继续写吗？我希望能。</p>
+<p>Good luck to me, good luck to us.</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Living/" rel="tag">Living</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/02/25/lemmatization-vs-stemming/"
+                    data-tooltip="Lemmatization VS Stemming"
+                    aria-label="上一篇: Lemmatization VS Stemming"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/30/pyconchina2020/"
+                    data-tooltip="PyCon China 2020 参会感受"
+                    aria-label="下一篇: PyCon China 2020 参会感受"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/12/17/five-years/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/12/17/five-years/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/12/17/five-years/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/02/25/lemmatization-vs-stemming/"
+                    data-tooltip="Lemmatization VS Stemming"
+                    aria-label="上一篇: Lemmatization VS Stemming"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/30/pyconchina2020/"
+                    data-tooltip="PyCon China 2020 参会感受"
+                    aria-label="下一篇: PyCon China 2020 参会感受"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/12/17/five-years/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/12/17/five-years/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/12/17/five-years/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/12/17/five-years/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/12/17/five-years/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/12/17/five-years/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/12/17/five-years/';
+              
+            this.page.identifier = '2020/12/17/five-years/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

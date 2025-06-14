@@ -1,0 +1,752 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>tqdm+requests：显示下载速度 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\nIntroduction在进行大规模数据爬取和下载时，经常需要下载大文件，这时候就需要一个可以显示下载进度和速度的工具，以便于我们能够更好地掌控下载的情况，同时也可以避免下载过程中出现问题导致浪费时间和流量。\n因此，我们需要一个可以显示下载进度和速度的工具，以便于我们更好地掌控下载的情况，避免浪费时间和流量。\n本文将介绍在 Python 中如何使用 tqdm 和 requests 来实现下载进度和速度的显示。\nHow要使用 tqdm 和 requests 来显示下载进度和速度，我们需要先安装 tqdm 和 requests 模块。安装方法如下（如已安装请跳过）：\n1pip install tqdm requests\n安装完成后，我们可以使用以下代码来下载文件并显示下载进度和速度：\n12345678910111213141516171819202122232425262728293031from pathlib import Pathimport requestsfrom tqdm import tqdmdef download(url, folder=&quot;./&quot;, headers=None) -&gt; str:    &quot;&quot;&quot;下载文件并显示进度和速度。&quot;&quot;&quot;    Path(folder).mkdir(exist_ok=True, parents=True)    local_filepath = Path(folder) / url.split(&quot;/&quot;)[-1]    headers = headers or &#123;        &quot;user-agent&quot;: &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36&quot;    &#125;    with requests.get(url, stream=True, headers=headers) as r:        r.raise_for_status()        size = int(r.headers[&quot;Content-Length&quot;])        chunk_size = 8192        # 重点。        with tqdm(            unit=&quot;B&quot;,            # 1            unit_scale=True,     # 2            unit_divisor=1024,   # 3            miniters=1,          # 4            desc=f&quot;Downloading &#123;local_filepath.name&#125;&quot;,  # 5            total=size,          # 6        ) as pbar:            with open(local_filepath, &quot;wb&quot;) as f:                for chunk in r.iter_content(chunk_size=chunk_size):                    f.write(chunk)                    pbar.update(len(chunk))  # 7    return local_filepath\n这段代码的核心是 tqdm，我们使用 tqdm 来创建进度条，然后在循环中更新进度条，实现了下载进度和速度的显示。详细解释如下：\n\nunit=&quot;B&quot;：将进度条的单位设置为字节。\nunit_scale=True：开启自动缩放功能，根据文件大小自动转换为 KB、MB、GB 等单位，默认是用 SI 公制单位（即 1000 进制），如果想使用二进制单位，则可以指定下面的 unit_divisor 。\nunit_divisor=1024：设置单位缩放的除数为1024，即二进制单位。\nminiters=1：设置进度条更新的最小步数。对于小文件，进度条可能会更新得太频繁，这个参数可以控制更新频率。\ndesc=&quot;Downloading&quot;：设置进度条的描述。\ntotal=size：设置要下载的文件的总大小，这个值从HTTP响应的 Content-Length 头部获取。\npbar.update(len(chunk))：更新进度条，显示已下载的数据大小。len(chunk)表示当前下载的数据块大小（单位为字节）。\n\n效果如下：\n效果图。\nAlternative又是设置一堆 tqdm 参数又是需要在循环中增加 update 语句，可能有些人会觉得稍显麻烦，有点侵入性，那我这里有一个不那么麻烦的的近似方法：\n12345678910111213141516171819202122def download(url, folder) -&gt; str:    &quot;&quot;&quot;一个近似方法。&quot;&quot;&quot;    Path(folder).mkdir(exist_ok=True, parents=True)    local_filepath = Path(folder) / url.split(&quot;/&quot;)[-1]    if local_filepath.exists():        logger.warning(f&quot;&#123;local_filepath&#125; exists, skip.&quot;)        return local_filepath    with requests.get(url, stream=True, headers=headers) as r:        r.raise_for_status()        size = int(r.headers[&quot;Content-Length&quot;])        chunk_size = 8192        # 重点。        n_chunks = (size + chunk_size - 1) // chunk_size        with open(local_filepath, &quot;wb&quot;) as f:            for chunk in tqdm(                r.iter_content(chunk_size=chunk_size),                total=n_chunks,                # 1                unit=&quot;KB&quot;,                     # 2                unit_scale=chunk_size / 1024,  # 3            ):                f.write(chunk)    return local_filepath\n这个程序只需要在原来的 r.iter_content() 外像平常一样包一层 tqdm，然后设置较少的参数即可，省掉了一些参数和 update 语句：\n\ntotal=n_chunks：由于我们是分块下载的，一个很明显的思路是 total 我们只需要设置为总的块数即可，和深度学习中的 batch 类似。\nunit=&quot;KB&quot;：这里我们门强制让其使用 KB 为单位，而不是自动转换。\nunit_scale=chunk_size / 1024 ：由于 total 设置的是块的数量，默认速度就会显示每秒多少个块，但是我们想让其显示每秒多少 B 或者 KB 之类的，这里我们就用这个参数来让块数 ⨉ 块大小得出来 B 数，然后再除以 1024 的到 KB 数。如果你想得到 MB 数，只需再除以 1024，并设置 unit=&quot;MB&quot;即可。\n\n为什么说这是“近似”做法呢？这是因为我们 unit_scale 直接乘的是块大小，然而每次得到的数据量并不一定是块大小这么大，最后一个块可能会偏小。道理很简单，把 10 按块大小为 3 拆分，最后一个块大小为 1。但是由于我们的块大小不会太大，这个影响微乎其微。\nThoughts进度和速度显示可能是很多程序员忽略的一个问题，但是我觉得非常重要，可以说 you always need ETA(tqdm)。但是在使用的时候要注意刚开始的速度可能并不准确，尤其是任务队列中的处理时间不尽相同时。\nReference\ntqdm.tqdm - tqdm documentation\ntqdm/tqdm_requests.py at master · tqdm/tqdm · GitHub\n\nEND","dateCreated":"2023-04-09T11:57:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2023-04-09T11:57:00+08:00","description":"本文介绍了如何使用 Python 中的 tqdm 和 requests 模块来显示下载进度和速度。通过创建进度条并在循环中更新进度条，实现了下载进度和速度的显示。此外，本文还提供了一个近似方法，省略了一些参数和 update 语句。[Notion AI]","headline":"tqdm+requests：显示下载速度","image":[null,"https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/04/09/tqdm-requests/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/04/09/tqdm-requests/","keywords":"Python","thumbnailUrl":"https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png"}</script>
+    <meta name="description" content="本文介绍了如何使用 Python 中的 tqdm 和 requests 模块来显示下载进度和速度。通过创建进度条并在循环中更新进度条，实现了下载进度和速度的显示。此外，本文还提供了一个近似方法，省略了一些参数和 update 语句。[Notion AI]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="tqdm+requests：显示下载速度">
+<meta property="og:url" content="https://alanlee.fun/2023/04/09/tqdm-requests/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文介绍了如何使用 Python 中的 tqdm 和 requests 模块来显示下载进度和速度。通过创建进度条并在循环中更新进度条，实现了下载进度和速度的显示。此外，本文还提供了一个近似方法，省略了一些参数和 update 语句。[Notion AI]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png">
+<meta property="article:published_time" content="2023-04-09T03:57:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.199Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            tqdm+requests：显示下载速度
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-04-09T11:57:00+08:00">
+	
+		    2023 年 4 月 9 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Introduction"><span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How"><span class="toc-text">How</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Alternative"><span class="toc-text">Alternative</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Thoughts"><span class="toc-text">Thoughts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>在进行大规模数据爬取和下载时，经常需要下载大文件，这时候就需要一个可以显示下载进度和速度的工具，以便于我们能够更好地掌控下载的情况，同时也可以避免下载过程中出现问题导致浪费时间和流量。</p>
+<p>因此，我们需要一个可以显示下载进度和速度的工具，以便于我们更好地掌控下载的情况，避免浪费时间和流量。</p>
+<p>本文将介绍在 Python 中如何使用 tqdm 和 requests 来实现下载进度和速度的显示。</p>
+<h2 id="How"><a href="#How" class="headerlink" title="How"></a>How</h2><p>要使用 tqdm 和 requests 来显示下载进度和速度，我们需要先安装 tqdm 和 requests 模块。安装方法如下（如已安装请跳过）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install tqdm requests</span><br></pre></td></tr></table></figure>
+<p>安装完成后，我们可以使用以下代码来下载文件并显示下载进度和速度：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">from</span> tqdm <span class="keyword">import</span> tqdm</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">download</span>(<span class="params">url, folder=<span class="string">&quot;./&quot;</span>, headers=<span class="literal">None</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;下载文件并显示进度和速度。&quot;&quot;&quot;</span></span><br><span class="line">    Path(folder).mkdir(exist_ok=<span class="literal">True</span>, parents=<span class="literal">True</span>)</span><br><span class="line">    local_filepath = Path(folder) / url.split(<span class="string">&quot;/&quot;</span>)[-<span class="number">1</span>]</span><br><span class="line">    headers = headers <span class="keyword">or</span> &#123;</span><br><span class="line">        <span class="string">&quot;user-agent&quot;</span>: <span class="string">&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">with</span> requests.get(url, stream=<span class="literal">True</span>, headers=headers) <span class="keyword">as</span> r:</span><br><span class="line">        r.raise_for_status()</span><br><span class="line">        size = <span class="built_in">int</span>(r.headers[<span class="string">&quot;Content-Length&quot;</span>])</span><br><span class="line">        chunk_size = <span class="number">8192</span></span><br><span class="line">        <span class="comment"># 重点。</span></span><br><span class="line">        <span class="keyword">with</span> tqdm(</span><br><span class="line">            unit=<span class="string">&quot;B&quot;</span>,            <span class="comment"># 1</span></span><br><span class="line">            unit_scale=<span class="literal">True</span>,     <span class="comment"># 2</span></span><br><span class="line">            unit_divisor=<span class="number">1024</span>,   <span class="comment"># 3</span></span><br><span class="line">            miniters=<span class="number">1</span>,          <span class="comment"># 4</span></span><br><span class="line">            desc=<span class="string">f&quot;Downloading <span class="subst">&#123;local_filepath.name&#125;</span>&quot;</span>,  <span class="comment"># 5</span></span><br><span class="line">            total=size,          <span class="comment"># 6</span></span><br><span class="line">        ) <span class="keyword">as</span> pbar:</span><br><span class="line">            <span class="keyword">with</span> <span class="built_in">open</span>(local_filepath, <span class="string">&quot;wb&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">                <span class="keyword">for</span> chunk <span class="keyword">in</span> r.iter_content(chunk_size=chunk_size):</span><br><span class="line">                    f.write(chunk)</span><br><span class="line">                    pbar.update(<span class="built_in">len</span>(chunk))  <span class="comment"># 7</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> local_filepath</span><br></pre></td></tr></table></figure>
+<p>这段代码的核心是 tqdm，我们使用 tqdm 来创建进度条，然后在循环中更新进度条，实现了下载进度和速度的显示。详细解释如下：</p>
+<ol>
+<li><code>unit=&quot;B&quot;</code>：将进度条的单位设置为字节。</li>
+<li><code>unit_scale=True</code>：开启自动缩放功能，根据文件大小自动转换为 KB、MB、GB 等单位，默认是用 SI 公制单位（即 1000 进制），如果想使用二进制单位，则可以指定下面的 <code>unit_divisor</code> 。</li>
+<li><code>unit_divisor=1024</code>：设置单位缩放的除数为1024，即二进制单位。</li>
+<li><code>miniters=1</code>：设置进度条更新的最小步数。对于小文件，进度条可能会更新得太频繁，这个参数可以控制更新频率。</li>
+<li><code>desc=&quot;Downloading&quot;</code>：设置进度条的描述。</li>
+<li><code>total=size</code>：设置要下载的文件的总大小，这个值从HTTP响应的 <code>Content-Length</code> 头部获取。</li>
+<li><code>pbar.update(len(chunk))</code>：更新进度条，显示已下载的数据大小。<code>len(chunk)</code>表示当前下载的数据块大小（单位为字节）。</li>
+</ol>
+<p>效果如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png" title="效果图。" data-caption="效果图。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/04/09/T1VfJ3MNlEBK5Uz.png" alt="效果图。"></a><span class="caption">效果图。</span></div>
+<h2 id="Alternative"><a href="#Alternative" class="headerlink" title="Alternative"></a>Alternative</h2><p>又是设置一堆 tqdm 参数又是需要在循环中增加 update 语句，可能有些人会觉得稍显麻烦，有点侵入性，那我这里有一个不那么麻烦的的近似方法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">download</span>(<span class="params">url, folder</span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;一个近似方法。&quot;&quot;&quot;</span></span><br><span class="line">    Path(folder).mkdir(exist_ok=<span class="literal">True</span>, parents=<span class="literal">True</span>)</span><br><span class="line">    local_filepath = Path(folder) / url.split(<span class="string">&quot;/&quot;</span>)[-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">if</span> local_filepath.exists():</span><br><span class="line">        logger.warning(<span class="string">f&quot;<span class="subst">&#123;local_filepath&#125;</span> exists, skip.&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> local_filepath</span><br><span class="line">    <span class="keyword">with</span> requests.get(url, stream=<span class="literal">True</span>, headers=headers) <span class="keyword">as</span> r:</span><br><span class="line">        r.raise_for_status()</span><br><span class="line">        size = <span class="built_in">int</span>(r.headers[<span class="string">&quot;Content-Length&quot;</span>])</span><br><span class="line">        chunk_size = <span class="number">8192</span></span><br><span class="line">        <span class="comment"># 重点。</span></span><br><span class="line">        n_chunks = (size + chunk_size - <span class="number">1</span>) // chunk_size</span><br><span class="line">        <span class="keyword">with</span> <span class="built_in">open</span>(local_filepath, <span class="string">&quot;wb&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">            <span class="keyword">for</span> chunk <span class="keyword">in</span> tqdm(</span><br><span class="line">                r.iter_content(chunk_size=chunk_size),</span><br><span class="line">                total=n_chunks,                <span class="comment"># 1</span></span><br><span class="line">                unit=<span class="string">&quot;KB&quot;</span>,                     <span class="comment"># 2</span></span><br><span class="line">                unit_scale=chunk_size / <span class="number">1024</span>,  <span class="comment"># 3</span></span><br><span class="line">            ):</span><br><span class="line">                f.write(chunk)</span><br><span class="line">    <span class="keyword">return</span> local_filepath</span><br></pre></td></tr></table></figure>
+<p>这个程序只需要在原来的 <code>r.iter_content()</code> 外像平常一样包一层 tqdm，然后设置较少的参数即可，省掉了一些参数和 update 语句：</p>
+<ol>
+<li><code>total=n_chunks</code>：由于我们是分块下载的，一个很明显的思路是 total 我们只需要设置为总的块数即可，和深度学习中的 batch 类似。</li>
+<li><code>unit=&quot;KB&quot;</code>：这里我们门强制让其使用 <code>KB</code> 为单位，而不是自动转换。</li>
+<li><code>unit_scale=chunk_size / 1024</code> ：由于 total 设置的是块的数量，默认速度就会显示每秒多少个块，但是我们想让其显示每秒多少 B 或者 KB 之类的，这里我们就用这个参数来让块数 ⨉ 块大小得出来 B 数，然后再除以 1024 的到 KB 数。如果你想得到 MB 数，只需再除以 1024，并设置 <code>unit=&quot;MB&quot;</code>即可。</li>
+</ol>
+<p>为什么说这是“近似”做法呢？这是因为我们 <code>unit_scale</code> 直接乘的是块大小，然而每次得到的数据量并不一定是块大小这么大，最后一个块可能会偏小。道理很简单，把 10 按块大小为 3 拆分，最后一个块大小为 1。但是由于我们的块大小不会太大，这个影响微乎其微。</p>
+<h2 id="Thoughts"><a href="#Thoughts" class="headerlink" title="Thoughts"></a>Thoughts</h2><p>进度和速度显示可能是很多程序员忽略的一个问题，但是我觉得非常重要，可以说 you always need ETA(tqdm)。但是在使用的时候要注意刚开始的速度可能并不准确，尤其是任务队列中的处理时间不尽相同时。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://tqdm.github.io/docs/tqdm/#__init__">tqdm.tqdm - tqdm documentation</a></li>
+<li><a href="https://github.com/tqdm/tqdm/blob/master/examples/tqdm_requests.py">tqdm/tqdm_requests.py at master · tqdm/tqdm · GitHub</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/04/27/pandas-read-excel-with-merged-cells/"
+                    data-tooltip="pandas 读取合并单元格并保留合并信息"
+                    aria-label="上一篇: pandas 读取合并单元格并保留合并信息"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    data-tooltip="为什么我的 client CPU 和 server GPU 都很闲？"
+                    aria-label="下一篇: 为什么我的 client CPU 和 server GPU 都很闲？"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/04/27/pandas-read-excel-with-merged-cells/"
+                    data-tooltip="pandas 读取合并单元格并保留合并信息"
+                    aria-label="上一篇: pandas 读取合并单元格并保留合并信息"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    data-tooltip="为什么我的 client CPU 和 server GPU 都很闲？"
+                    aria-label="下一篇: 为什么我的 client CPU 和 server GPU 都很闲？"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/04/09/tqdm-requests/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2023/04/09/tqdm-requests/';
+              
+            this.page.identifier = '2023/04/09/tqdm-requests/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

@@ -1,0 +1,805 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>MCP 简易指南（二）：概念 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n上一篇重点讲了什么是 mcp、为何使用 mcp 以及如何使用。本来想把概念一起都写到那里，但是觉得太长了，干脆就把概念介绍放到了这里。\n核心概念 plusTransport 类型刚才我们在 demo 里用的是 transport=&quot;streamable-http&quot; ，实际上 transport 有 3 种类型：\n\nstdio（默认）\nsse\nstreamable-http\n\n第一种是命令行启动 server 程序（不是 http），比如 uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/get_current_time run get_current_time.py ，实际上就是直接运行 python 程序。你填入 inspector 或者 postman 的时候就是填入启动命令。\n后两种都是 http 形式的，最终会暴露出来一个 url 来提供调用，sse 默认的端点是 /sse ，streamable-http 默认是 /mcp ，而且根据文档，后者已经在逐渐替换前者了，所以建议使用后者进行开发。两者区别如下：\n\n\n\n\n\nSSE\nstreamable-http\n\n\n\n\nendpoint\n/sse\n/mcp\n\n\n启动参数\ntransport=&quot;sse&quot;\ntransport=&quot;streamable-http&quot;\n\n\n推荐场景\n兼容老客户端、本地开发\n生产环境、大并发、云部署\n\n\n是否支持流式\n支持（单向）\n支持（更灵活，多格式）\n\n\n多节点/云原生\n不友好\n非常友好\n\n\n负载均衡\n难\n易\n\n\nSession管理\n简单/无状态\n支持 stateful/stateless/resume\n\n\n\n\nTools如果用过 openai 的 function calling，那么应该对这个很熟了，本质上就是将函数定义以一定格式传给模型。\n工具由如下结构定义：\n123456789101112131415&#123;  name: string;          // 工具的唯一标识符  description?: string;  // 易读的工具描述  inputSchema: &#123;         // 工具参数的 JSON schema    type: &quot;object&quot;,    properties: &#123; ... &#125;  // 工具参数  &#125;,  annotations?: &#123;        // 可选，关于工具行为的注释    title?: string;      // 易读的工具标题    readOnlyHint?: boolean;    // 如果 true，那么工具不会改变其环境（只读）。    destructiveHint?: boolean; // 如果 true，那么工具可能会执行破坏性的更新。    idempotentHint?: boolean;  // 如果 true，那么对该工具使用同样参数重复调用，不会有额外影响。    openWorldHint?: boolean;   // 如果 true，那么工具可能会与外部实体交互。  &#125;&#125;\n这么说可能有点抽象，我们来看下刚才的 get_current_time 工具的定义：\n12345678910111213&#123;  &quot;tools&quot;: [    &#123;      &quot;name&quot;: &quot;get_current_time&quot;,      &quot;description&quot;: &quot;\\n    Returns the current date and time in the &#x27;Asia/Shanghai&#x27; timezone.\\n\\n    Returns:\\n        datetime: The current datetime object localized to &#x27;Asia/Shanghai&#x27; timezone.\\n    &quot;,      &quot;inputSchema&quot;: &#123;        &quot;type&quot;: &quot;object&quot;,        &quot;properties&quot;: &#123;&#125;,        &quot;title&quot;: &quot;get_current_timeArguments&quot;      &#125;    &#125;  ]&#125;\n其他还有执行系统命令和调用 api 的工具等例子，可以参考这里。\n我们在使用调试工具连接 mcp server 后，会自动发起 ListToolsRequest 请求来获取可用的工具：\n\nResources资源就是 server 希望提供给 client 的数据，包括文本数据和二进制数据：\n\n文本数据：utf-8 编码的文本数据，例如代码、日志、JSON 和纯文本等。\n二进制数据：PDF、图像、音频和视频等。\n\n每个资源都有一个唯一标识 URI，格式为 [protocol]://[host]/[path]，比如我们常见的 pg 数据库可以标识为 postgres://database/customers/schema ，文件可以标识为 file:///home/user/documents/report.pdf 。另外 server 也可以定义自己的 URI 格式。\nserver 在返回资源列表时，每个资源一般使用如下格式返回：\n123456&#123;  uri: string;           // 资源 URI  name: string;          // 人类可读的名字  description?: string;  // 可选，资源描述，这个会提供给 llm，使其更好的理解该资源。  mimeType?: string;     // 可选，MIME type，如v text/plain&#125;\n如果一个资源的 URI 是动态的，那么上述 uri 字段可以换成 uriTemplate ，其格式遵循 RFC 6570。\nclient 可以通过 resources/read 来读取可用的资源，server 返回资源列表。另外在资源更新时 server 也可以通知 client，具体可以见 Resource updates。\n一个实现例子：\n123456789101112131415161718192021222324252627app = Server(&quot;example-server&quot;)@app.list_resources()async def list_resources() -&gt; list[types.Resource]:    return [        types.Resource(            uri=&quot;file:///logs/app.log&quot;,            name=&quot;Application Logs&quot;,            mimeType=&quot;text/plain&quot;        )    ]@app.read_resource()async def read_resource(uri: AnyUrl) -&gt; str:    if str(uri) == &quot;file:///logs/app.log&quot;:        log_contents = await read_log_file()        return log_contents    raise ValueError(&quot;Resource not found&quot;)# Start serverasync with stdio_server() as streams:    await app.run(        streams[0],        streams[1],        app.create_initialization_options()    )\nPrompts在 mcp 中，prompts 其实指的是 prompt template，即带有参数的 prompt，说白了就是 python 中的 f-string。\n这个 template 的定义如下：\n1234567891011&#123;  name: string;              // prompt 的唯一标识符  description?: string;      // 人类可读的描述  arguments?: [              // 可选，参数列表    &#123;      name: string;          // 参数标识符      description?: string;  // 参数描述      required?: boolean;    // 该参数是否必需    &#125;  ]&#125;\n和之前的资源一样，client 也可以通过请求来获取可用的 prompt 列表，以及 server 可以通知 client prompt 有更新。\n一个实现例子：\n12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879from mcp.server import Serverimport mcp.types as types# Define available promptsPROMPTS = &#123;    &quot;git-commit&quot;: types.Prompt(        name=&quot;git-commit&quot;,        description=&quot;Generate a Git commit message&quot;,        arguments=[            types.PromptArgument(                name=&quot;changes&quot;,                description=&quot;Git diff or description of changes&quot;,                required=True            )        ],    ),    &quot;explain-code&quot;: types.Prompt(        name=&quot;explain-code&quot;,        description=&quot;Explain how code works&quot;,        arguments=[            types.PromptArgument(                name=&quot;code&quot;,                description=&quot;Code to explain&quot;,                required=True            ),            types.PromptArgument(                name=&quot;language&quot;,                description=&quot;Programming language&quot;,                required=False            )        ],    )&#125;# Initialize serverapp = Server(&quot;example-prompts-server&quot;)@app.list_prompts()async def list_prompts() -&gt; list[types.Prompt]:    return list(PROMPTS.values())@app.get_prompt()async def get_prompt(    name: str, arguments: dict[str, str] | None = None) -&gt; types.GetPromptResult:    if name not in PROMPTS:        raise ValueError(f&quot;Prompt not found: &#123;name&#125;&quot;)    if name == &quot;git-commit&quot;:        changes = arguments.get(&quot;changes&quot;) if arguments else &quot;&quot;        return types.GetPromptResult(            messages=[                types.PromptMessage(                    role=&quot;user&quot;,                    content=types.TextContent(                        type=&quot;text&quot;,                        text=f&quot;Generate a concise but descriptive commit message &quot;                        f&quot;for these changes:\\n\\n&#123;changes&#125;&quot;                    )                )            ]        )    if name == &quot;explain-code&quot;:        code = arguments.get(&quot;code&quot;) if arguments else &quot;&quot;        language = arguments.get(&quot;language&quot;, &quot;Unknown&quot;) if arguments else &quot;Unknown&quot;        return types.GetPromptResult(            messages=[                types.PromptMessage(                    role=&quot;user&quot;,                    content=types.TextContent(                        type=&quot;text&quot;,                        text=f&quot;Explain how this &#123;language&#125; code works:\\n\\n&#123;code&#125;&quot;                    )                )            ]        )    raise ValueError(&quot;Prompt implementation not found&quot;)\n上述例子定义了两个 prompt：用于生成 commit message 的 git-commit 和用于解释代码的 explain-code ，它们的具体 prompt 内容都在 get_prompt 中定义，而整体定义是在外面。注意在返回 prompt 列表时，是不会返回具体的 prompt 内容的。\n整体看下来，这个其实非常像函数的定义，prompt 的 name 实际上就是函数名，prompt 的参数就是函数的参数，而函数体实际上就是把参数带进去，生成我们常见的消息格式，role user content 这一套，最终返回该消息。然后在 get_prompt 中，根据不同的 prompt name 返回不同的 prompt 消息。\n所以这样来看，用户是不是就不能更改某个 prompt 的具体内容了？虽然文档上说 prompt 是 user-controlled，但是这里的 control 应该只是选择哪一个 prompt，而不是修改。\nSampling一听到这个词，自然而然想到是 llm 中的采样，事实也是这样的，只是通过 client 实现的采样。根据文档，sampling 可以让 server 通过 client 去请求 llm，流程如下：\n\nserver 向 client 发送一个 sampling/createMessage 请求；\nclient 审核请求并可修改它；\nclient 从 LLM 中采样，即执行实际的 llm 请求；\nclient 审核 completion；\nclient 将结果返回给 server。\n\nserver 向 client 发送的请求格式也基本上是遵循了我们常见的 openai 格式：\n12345678910111213141516171819202122232425262728293031&#123;  messages: [    &#123;      role: &quot;user&quot; | &quot;assistant&quot;,      content: &#123;        type: &quot;text&quot; | &quot;image&quot;,        // For text:        text?: string,        // For images:        data?: string,             // base64 encoded        mimeType?: string      &#125;    &#125;  ],  modelPreferences?: &#123;    hints?: [&#123;      name?: string                // Suggested model name/family    &#125;],    costPriority?: number,         // 0-1, importance of minimizing cost    speedPriority?: number,        // 0-1, importance of low latency    intelligencePriority?: number  // 0-1, importance of capabilities  &#125;,  systemPrompt?: string,  includeContext?: &quot;none&quot; | &quot;thisServer&quot; | &quot;allServers&quot;,  temperature?: number,  maxTokens: number,  stopSequences?: string[],  metadata?: Record&lt;string, unknown&gt;&#125;\n这些字段基本都和使用 openai 请求时差不多，但有一个不同的是，modelPreferences.hints 中的 name ，这个字段实际上填的是可以匹配完整或部分模型名称的字符串，如 “claude-3” 和 “sonnet”。结合下面的几个字段，client 会自动选择指定的模型，比如最省钱、最快或者最智能。\n一个请求的实际例子：\n1234567891011121314151617&#123;  &quot;method&quot;: &quot;sampling/createMessage&quot;,  &quot;params&quot;: &#123;    &quot;messages&quot;: [      &#123;        &quot;role&quot;: &quot;user&quot;,        &quot;content&quot;: &#123;          &quot;type&quot;: &quot;text&quot;,          &quot;text&quot;: &quot;What files are in the current directory?&quot;        &#125;      &#125;    ],    &quot;systemPrompt&quot;: &quot;You are a helpful file system assistant.&quot;,    &quot;includeContext&quot;: &quot;thisServer&quot;,    &quot;maxTokens&quot;: 100  &#125;&#125;\n响应的格式也和使用 openai 时差不多：\n1234567891011&#123;  model: string,  // Name of the model used  stopReason?: &quot;endTurn&quot; | &quot;stopSequence&quot; | &quot;maxTokens&quot; | string,  role: &quot;user&quot; | &quot;assistant&quot;,  content: &#123;    type: &quot;text&quot; | &quot;image&quot;,    text?: string,    data?: string,    mimeType?: string  &#125;&#125;\nRootsRoots 指的是 workspace 的目录，比如根目录、base url 等。这个功能不是很常用，目前似乎只有 gc 支持，其他都不支持，暂且就不做过多介绍了，我也没有什么使用经验。\nEND","dateCreated":"2025-06-14T20:46:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2025-06-14T20:46:00+08:00","description":"什么是 mcp transport？什么是 tools？本期更多关注概念。","headline":"MCP 简易指南（二）：概念","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2025/06/14/introducing-mcp-part-2/","keywords":"LLM, MCP"}</script>
+    <meta name="description" content="什么是 mcp transport？什么是 tools？本期更多关注概念。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="MCP 简易指南（二）：概念">
+<meta property="og:url" content="https://alanlee.fun/2025/06/14/introducing-mcp-part-2/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="什么是 mcp transport？什么是 tools？本期更多关注概念。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2025/06/14/dD4NucqonPIUl38.png">
+<meta property="article:published_time" content="2025-06-14T12:46:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.195Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="MCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2025/06/14/dD4NucqonPIUl38.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            MCP 简易指南（二）：概念
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2025-06-14T20:46:00+08:00">
+	
+		    2025 年 6 月 14 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-plus"><span class="toc-text">核心概念 plus</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Transport-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Transport 类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tools"><span class="toc-text">Tools</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Resources"><span class="toc-text">Resources</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Prompts"><span class="toc-text">Prompts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Sampling"><span class="toc-text">Sampling</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Roots"><span class="toc-text">Roots</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p><a href="https://alanlee.fun/2025/06/03/introducing-mcp-part-1/">上一篇</a>重点讲了什么是 mcp、为何使用 mcp 以及如何使用。本来想把概念一起都写到那里，但是觉得太长了，干脆就把概念介绍放到了这里。</p>
+<h1 id="核心概念-plus"><a href="#核心概念-plus" class="headerlink" title="核心概念 plus"></a>核心概念 plus</h1><h2 id="Transport-类型"><a href="#Transport-类型" class="headerlink" title="Transport 类型"></a>Transport 类型</h2><p>刚才我们在 demo 里用的是 <code>transport=&quot;streamable-http&quot;</code> ，实际上 transport 有 3 种类型：</p>
+<ul>
+<li>stdio（默认）</li>
+<li>sse</li>
+<li>streamable-http</li>
+</ul>
+<p>第一种是命令行启动 server 程序（不是 http），比如 <code>uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/get_current_time run get_current_time.py</code> ，实际上就是直接运行 python 程序。你填入 inspector 或者 postman 的时候就是填入启动命令。</p>
+<p>后两种都是 http 形式的，最终会暴露出来一个 url 来提供调用，sse 默认的端点是 <code>/sse</code> ，streamable-http 默认是 <code>/mcp</code> ，而且根据<a href="https://github.com/modelcontextprotocol/python-sdk/tree/main?tab=readme-ov-file#streamable-http-transport">文档</a>，后者已经在逐渐替换前者了，所以建议使用后者进行开发。两者区别如下：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>SSE</th>
+<th>streamable-http</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>endpoint</strong></td>
+<td><code>/sse</code></td>
+<td><code>/mcp</code></td>
+</tr>
+<tr>
+<td><strong>启动参数</strong></td>
+<td><code>transport=&quot;sse&quot;</code></td>
+<td><code>transport=&quot;streamable-http&quot;</code></td>
+</tr>
+<tr>
+<td><strong>推荐场景</strong></td>
+<td>兼容老客户端、本地开发</td>
+<td>生产环境、大并发、云部署</td>
+</tr>
+<tr>
+<td><strong>是否支持流式</strong></td>
+<td>支持（单向）</td>
+<td>支持（更灵活，多格式）</td>
+</tr>
+<tr>
+<td><strong>多节点/云原生</strong></td>
+<td>不友好</td>
+<td>非常友好</td>
+</tr>
+<tr>
+<td><strong>负载均衡</strong></td>
+<td>难</td>
+<td>易</td>
+</tr>
+<tr>
+<td><strong>Session管理</strong></td>
+<td>简单/无状态</td>
+<td>支持 stateful/stateless/resume</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="Tools"><a href="#Tools" class="headerlink" title="Tools"></a>Tools</h2><p>如果用过 openai 的 function calling，那么应该对这个很熟了，本质上就是将函数定义以一定格式传给模型。</p>
+<p>工具由如下结构定义：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  name<span class="punctuation">:</span> string;          <span class="comment">// 工具的唯一标识符</span></span><br><span class="line">  description?<span class="punctuation">:</span> string;  <span class="comment">// 易读的工具描述</span></span><br><span class="line">  inputSchema<span class="punctuation">:</span> <span class="punctuation">&#123;</span>         <span class="comment">// 工具参数的 JSON schema</span></span><br><span class="line">    type<span class="punctuation">:</span> <span class="string">&quot;object&quot;</span><span class="punctuation">,</span></span><br><span class="line">    properties<span class="punctuation">:</span> <span class="punctuation">&#123;</span> ... <span class="punctuation">&#125;</span>  <span class="comment">// 工具参数</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  annotations?<span class="punctuation">:</span> <span class="punctuation">&#123;</span>        <span class="comment">// 可选，关于工具行为的注释</span></span><br><span class="line">    title?<span class="punctuation">:</span> string;      <span class="comment">// 易读的工具标题</span></span><br><span class="line">    readOnlyHint?<span class="punctuation">:</span> boolean;    <span class="comment">// 如果 true，那么工具不会改变其环境（只读）。</span></span><br><span class="line">    destructiveHint?<span class="punctuation">:</span> boolean; <span class="comment">// 如果 true，那么工具可能会执行破坏性的更新。</span></span><br><span class="line">    idempotentHint?<span class="punctuation">:</span> boolean;  <span class="comment">// 如果 true，那么对该工具使用同样参数重复调用，不会有额外影响。</span></span><br><span class="line">    openWorldHint?<span class="punctuation">:</span> boolean;   <span class="comment">// 如果 true，那么工具可能会与外部实体交互。</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>这么说可能有点抽象，我们来看下刚才的 <code>get_current_time</code> 工具的定义：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;tools&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;get_current_time&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;\n    Returns the current date and time in the &#x27;Asia/Shanghai&#x27; timezone.\n\n    Returns:\n        datetime: The current datetime object localized to &#x27;Asia/Shanghai&#x27; timezone.\n    &quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;inputSchema&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;object&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;properties&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;title&quot;</span><span class="punctuation">:</span> <span class="string">&quot;get_current_timeArguments&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>其他还有执行系统命令和调用 api 的工具等例子，可以参考<a href="https://modelcontextprotocol.io/docs/concepts/tools#example-tool-patterns">这里</a>。</p>
+<p>我们在使用调试工具连接 mcp server 后，会自动发起 ListToolsRequest 请求来获取可用的工具：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/14/dD4NucqonPIUl38.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/14/dD4NucqonPIUl38.png" alt=""></a></div>
+<h2 id="Resources"><a href="#Resources" class="headerlink" title="Resources"></a>Resources</h2><p>资源就是 server 希望提供给 client 的数据，包括文本数据和二进制数据：</p>
+<ul>
+<li>文本数据：utf-8 编码的文本数据，例如代码、日志、JSON 和纯文本等。</li>
+<li>二进制数据：PDF、图像、音频和视频等。</li>
+</ul>
+<p>每个资源都有一个唯一标识 URI，格式为 <code>[protocol]://[host]/[path]</code>，比如我们常见的 pg 数据库可以标识为 <code>postgres://database/customers/schema</code> ，文件可以标识为 <code>file:///home/user/documents/report.pdf</code> 。另外 server 也可以定义自己的 URI 格式。</p>
+<p>server 在返回资源列表时，每个资源一般使用如下格式返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  uri<span class="punctuation">:</span> string;           <span class="comment">// 资源 URI</span></span><br><span class="line">  name<span class="punctuation">:</span> string;          <span class="comment">// 人类可读的名字</span></span><br><span class="line">  description?<span class="punctuation">:</span> string;  <span class="comment">// 可选，资源描述，这个会提供给 llm，使其更好的理解该资源。</span></span><br><span class="line">  mimeType?<span class="punctuation">:</span> string;     <span class="comment">// 可选，MIME type，如v text/plain</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>如果一个资源的 URI 是动态的，那么上述 <code>uri</code> 字段可以换成 <code>uriTemplate</code> ，其格式遵循 RFC 6570。</p>
+<p>client 可以通过 <code>resources/read</code> 来读取可用的资源，server 返回资源列表。另外在资源更新时 server 也可以通知 client，具体可以见 <a href="https://modelcontextprotocol.io/docs/concepts/resources#resource-updates">Resource updates</a>。</p>
+<p>一个实现例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">app = Server(<span class="string">&quot;example-server&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.list_resources()</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">list_resources</span>() -&gt; <span class="built_in">list</span>[types.Resource]:</span><br><span class="line">    <span class="keyword">return</span> [</span><br><span class="line">        types.Resource(</span><br><span class="line">            uri=<span class="string">&quot;file:///logs/app.log&quot;</span>,</span><br><span class="line">            name=<span class="string">&quot;Application Logs&quot;</span>,</span><br><span class="line">            mimeType=<span class="string">&quot;text/plain&quot;</span></span><br><span class="line">        )</span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.read_resource()</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">read_resource</span>(<span class="params">uri: AnyUrl</span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">str</span>(uri) == <span class="string">&quot;file:///logs/app.log&quot;</span>:</span><br><span class="line">        log_contents = <span class="keyword">await</span> read_log_file()</span><br><span class="line">        <span class="keyword">return</span> log_contents</span><br><span class="line"></span><br><span class="line">    <span class="keyword">raise</span> ValueError(<span class="string">&quot;Resource not found&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Start server</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">with</span> stdio_server() <span class="keyword">as</span> streams:</span><br><span class="line">    <span class="keyword">await</span> app.run(</span><br><span class="line">        streams[<span class="number">0</span>],</span><br><span class="line">        streams[<span class="number">1</span>],</span><br><span class="line">        app.create_initialization_options()</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+<h2 id="Prompts"><a href="#Prompts" class="headerlink" title="Prompts"></a>Prompts</h2><p>在 mcp 中，prompts 其实指的是 prompt template，即带有参数的 prompt，说白了就是 python 中的 f-string。</p>
+<p>这个 template 的定义如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  name<span class="punctuation">:</span> string;              <span class="comment">// prompt 的唯一标识符</span></span><br><span class="line">  description?<span class="punctuation">:</span> string;      <span class="comment">// 人类可读的描述</span></span><br><span class="line">  arguments?<span class="punctuation">:</span> <span class="punctuation">[</span>              <span class="comment">// 可选，参数列表</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      name<span class="punctuation">:</span> string;          <span class="comment">// 参数标识符</span></span><br><span class="line">      description?<span class="punctuation">:</span> string;  <span class="comment">// 参数描述</span></span><br><span class="line">      required?<span class="punctuation">:</span> boolean;    <span class="comment">// 该参数是否必需</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>和之前的资源一样，client 也可以通过请求来获取可用的 prompt 列表，以及 server 可以通知 client prompt 有更新。</p>
+<p>一个实现例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> mcp.server <span class="keyword">import</span> Server</span><br><span class="line"><span class="keyword">import</span> mcp.types <span class="keyword">as</span> types</span><br><span class="line"></span><br><span class="line"><span class="comment"># Define available prompts</span></span><br><span class="line">PROMPTS = &#123;</span><br><span class="line">    <span class="string">&quot;git-commit&quot;</span>: types.Prompt(</span><br><span class="line">        name=<span class="string">&quot;git-commit&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;Generate a Git commit message&quot;</span>,</span><br><span class="line">        arguments=[</span><br><span class="line">            types.PromptArgument(</span><br><span class="line">                name=<span class="string">&quot;changes&quot;</span>,</span><br><span class="line">                description=<span class="string">&quot;Git diff or description of changes&quot;</span>,</span><br><span class="line">                required=<span class="literal">True</span></span><br><span class="line">            )</span><br><span class="line">        ],</span><br><span class="line">    ),</span><br><span class="line">    <span class="string">&quot;explain-code&quot;</span>: types.Prompt(</span><br><span class="line">        name=<span class="string">&quot;explain-code&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;Explain how code works&quot;</span>,</span><br><span class="line">        arguments=[</span><br><span class="line">            types.PromptArgument(</span><br><span class="line">                name=<span class="string">&quot;code&quot;</span>,</span><br><span class="line">                description=<span class="string">&quot;Code to explain&quot;</span>,</span><br><span class="line">                required=<span class="literal">True</span></span><br><span class="line">            ),</span><br><span class="line">            types.PromptArgument(</span><br><span class="line">                name=<span class="string">&quot;language&quot;</span>,</span><br><span class="line">                description=<span class="string">&quot;Programming language&quot;</span>,</span><br><span class="line">                required=<span class="literal">False</span></span><br><span class="line">            )</span><br><span class="line">        ],</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># Initialize server</span></span><br><span class="line">app = Server(<span class="string">&quot;example-prompts-server&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.list_prompts()</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">list_prompts</span>() -&gt; <span class="built_in">list</span>[types.Prompt]:</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(PROMPTS.values())</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.get_prompt()</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">get_prompt</span>(<span class="params"></span></span><br><span class="line"><span class="params">    name: <span class="built_in">str</span>, arguments: <span class="built_in">dict</span>[<span class="built_in">str</span>, <span class="built_in">str</span>] | <span class="literal">None</span> = <span class="literal">None</span></span></span><br><span class="line"><span class="params"></span>) -&gt; types.GetPromptResult:</span><br><span class="line">    <span class="keyword">if</span> name <span class="keyword">not</span> <span class="keyword">in</span> PROMPTS:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">f&quot;Prompt not found: <span class="subst">&#123;name&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> name == <span class="string">&quot;git-commit&quot;</span>:</span><br><span class="line">        changes = arguments.get(<span class="string">&quot;changes&quot;</span>) <span class="keyword">if</span> arguments <span class="keyword">else</span> <span class="string">&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> types.GetPromptResult(</span><br><span class="line">            messages=[</span><br><span class="line">                types.PromptMessage(</span><br><span class="line">                    role=<span class="string">&quot;user&quot;</span>,</span><br><span class="line">                    content=types.TextContent(</span><br><span class="line">                        <span class="built_in">type</span>=<span class="string">&quot;text&quot;</span>,</span><br><span class="line">                        text=<span class="string">f&quot;Generate a concise but descriptive commit message &quot;</span></span><br><span class="line">                        <span class="string">f&quot;for these changes:\n\n<span class="subst">&#123;changes&#125;</span>&quot;</span></span><br><span class="line">                    )</span><br><span class="line">                )</span><br><span class="line">            ]</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> name == <span class="string">&quot;explain-code&quot;</span>:</span><br><span class="line">        code = arguments.get(<span class="string">&quot;code&quot;</span>) <span class="keyword">if</span> arguments <span class="keyword">else</span> <span class="string">&quot;&quot;</span></span><br><span class="line">        language = arguments.get(<span class="string">&quot;language&quot;</span>, <span class="string">&quot;Unknown&quot;</span>) <span class="keyword">if</span> arguments <span class="keyword">else</span> <span class="string">&quot;Unknown&quot;</span></span><br><span class="line">        <span class="keyword">return</span> types.GetPromptResult(</span><br><span class="line">            messages=[</span><br><span class="line">                types.PromptMessage(</span><br><span class="line">                    role=<span class="string">&quot;user&quot;</span>,</span><br><span class="line">                    content=types.TextContent(</span><br><span class="line">                        <span class="built_in">type</span>=<span class="string">&quot;text&quot;</span>,</span><br><span class="line">                        text=<span class="string">f&quot;Explain how this <span class="subst">&#123;language&#125;</span> code works:\n\n<span class="subst">&#123;code&#125;</span>&quot;</span></span><br><span class="line">                    )</span><br><span class="line">                )</span><br><span class="line">            ]</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">raise</span> ValueError(<span class="string">&quot;Prompt implementation not found&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>上述例子定义了两个 prompt：用于生成 commit message 的 <code>git-commit</code> 和用于解释代码的 <code>explain-code</code> ，它们的具体 prompt 内容都在 <code>get_prompt</code> 中定义，而整体定义是在外面。注意在返回 prompt 列表时，是不会返回具体的 prompt 内容的。</p>
+<p>整体看下来，这个其实非常像函数的定义，prompt 的 name 实际上就是函数名，prompt 的参数就是函数的参数，而函数体实际上就是把参数带进去，生成我们常见的消息格式，role user content 这一套，最终返回该消息。然后在 <code>get_prompt</code> 中，根据不同的 prompt name 返回不同的 prompt 消息。</p>
+<p>所以这样来看，用户是不是就不能更改某个 prompt 的具体内容了？虽然文档上说 prompt 是 user-controlled，但是这里的 control 应该只是选择哪一个 prompt，而不是修改。</p>
+<h2 id="Sampling"><a href="#Sampling" class="headerlink" title="Sampling"></a>Sampling</h2><p>一听到这个词，自然而然想到是 llm 中的采样，事实也是这样的，只是通过 client 实现的采样。根据文档，sampling 可以让 server 通过 client 去请求 llm，流程如下：</p>
+<ol>
+<li>server 向 client 发送一个 <code>sampling/createMessage</code> 请求；</li>
+<li>client 审核请求并可修改它；</li>
+<li>client 从 LLM 中采样，即执行实际的 llm 请求；</li>
+<li>client 审核 completion；</li>
+<li>client 将结果返回给 server。</li>
+</ol>
+<p>server 向 client 发送的请求格式也基本上是遵循了我们常见的 openai 格式：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  messages<span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      role<span class="punctuation">:</span> <span class="string">&quot;user&quot;</span> | <span class="string">&quot;assistant&quot;</span><span class="punctuation">,</span></span><br><span class="line">      content<span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        type<span class="punctuation">:</span> <span class="string">&quot;text&quot;</span> | <span class="string">&quot;image&quot;</span><span class="punctuation">,</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// For text:</span></span><br><span class="line">        text?<span class="punctuation">:</span> string<span class="punctuation">,</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// For images:</span></span><br><span class="line">        data?<span class="punctuation">:</span> string<span class="punctuation">,</span>             <span class="comment">// base64 encoded</span></span><br><span class="line">        mimeType?<span class="punctuation">:</span> string</span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  modelPreferences?<span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    hints?<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span></span><br><span class="line">      name?<span class="punctuation">:</span> string                <span class="comment">// Suggested model name/family</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    costPriority?<span class="punctuation">:</span> number<span class="punctuation">,</span>         <span class="comment">// 0-1, importance of minimizing cost</span></span><br><span class="line">    speedPriority?<span class="punctuation">:</span> number<span class="punctuation">,</span>        <span class="comment">// 0-1, importance of low latency</span></span><br><span class="line">    intelligencePriority?<span class="punctuation">:</span> number  <span class="comment">// 0-1, importance of capabilities</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  systemPrompt?<span class="punctuation">:</span> string<span class="punctuation">,</span></span><br><span class="line">  includeContext?<span class="punctuation">:</span> <span class="string">&quot;none&quot;</span> | <span class="string">&quot;thisServer&quot;</span> | <span class="string">&quot;allServers&quot;</span><span class="punctuation">,</span></span><br><span class="line">  temperature?<span class="punctuation">:</span> number<span class="punctuation">,</span></span><br><span class="line">  maxTokens<span class="punctuation">:</span> number<span class="punctuation">,</span></span><br><span class="line">  stopSequences?<span class="punctuation">:</span> string<span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  metadata?<span class="punctuation">:</span> Record&lt;string<span class="punctuation">,</span> unknown&gt;</span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>这些字段基本都和使用 openai 请求时差不多，但有一个不同的是，<code>modelPreferences.hints</code> 中的 <code>name</code> ，这个字段实际上填的是可以匹配完整或部分模型名称的字符串，如 “claude-3” 和 “sonnet”。结合下面的几个字段，client 会自动选择指定的模型，比如最省钱、最快或者最智能。</p>
+<p>一个请求的实际例子：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;method&quot;</span><span class="punctuation">:</span> <span class="string">&quot;sampling/createMessage&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;params&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;messages&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;role&quot;</span><span class="punctuation">:</span> <span class="string">&quot;user&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;content&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;text&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;text&quot;</span><span class="punctuation">:</span> <span class="string">&quot;What files are in the current directory?&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;systemPrompt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;You are a helpful file system assistant.&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;includeContext&quot;</span><span class="punctuation">:</span> <span class="string">&quot;thisServer&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;maxTokens&quot;</span><span class="punctuation">:</span> <span class="number">100</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>响应的格式也和使用 openai 时差不多：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  model<span class="punctuation">:</span> string<span class="punctuation">,</span>  <span class="comment">// Name of the model used</span></span><br><span class="line">  stopReason?<span class="punctuation">:</span> <span class="string">&quot;endTurn&quot;</span> | <span class="string">&quot;stopSequence&quot;</span> | <span class="string">&quot;maxTokens&quot;</span> | string<span class="punctuation">,</span></span><br><span class="line">  role<span class="punctuation">:</span> <span class="string">&quot;user&quot;</span> | <span class="string">&quot;assistant&quot;</span><span class="punctuation">,</span></span><br><span class="line">  content<span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    type<span class="punctuation">:</span> <span class="string">&quot;text&quot;</span> | <span class="string">&quot;image&quot;</span><span class="punctuation">,</span></span><br><span class="line">    text?<span class="punctuation">:</span> string<span class="punctuation">,</span></span><br><span class="line">    data?<span class="punctuation">:</span> string<span class="punctuation">,</span></span><br><span class="line">    mimeType?<span class="punctuation">:</span> string</span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<h2 id="Roots"><a href="#Roots" class="headerlink" title="Roots"></a>Roots</h2><p>Roots 指的是 workspace 的目录，比如根目录、base url 等。这个功能不是很常用，目前似乎只有 gc 支持，其他都不支持，暂且就不做过多介绍了，我也没有什么使用经验。</p>
+<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/LLM/" rel="tag">LLM</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/MCP/" rel="tag">MCP</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/03/introducing-mcp-part-1/"
+                    data-tooltip="MCP 简易指南（一）：实践"
+                    aria-label="下一篇: MCP 简易指南（一）：实践"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/03/introducing-mcp-part-1/"
+                    data-tooltip="MCP 简易指南（一）：实践"
+                    aria-label="下一篇: MCP 简易指南（一）：实践"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2025/06/14/introducing-mcp-part-2/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2025/06/14/introducing-mcp-part-2/';
+              
+            this.page.identifier = '2025/06/14/introducing-mcp-part-2/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

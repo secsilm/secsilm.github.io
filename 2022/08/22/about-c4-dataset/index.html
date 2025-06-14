@@ -1,0 +1,742 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>关于 C4 数据集 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n参考 Documenting Large Webtext Corpora: A Case Study on the Colossal Clean Crawled Corpus。\n\n从 365 百万 domain 中抓取，共计大约 1560 亿 token。\n用来训练 T5 和 Switch Transformer。\nRaffel et al. (2020) 提供了重新创建 C4 的脚本，但是运行这些脚本大概需要数千刀。\nC4 是以 Common Crawl 2019 年 4 月的 snapshot 为基础创建的，使用了很多 filter 来过滤文本。\n这些 filter 的作用包括：\n删除没有 terminal punctuation mark 的行。\n删除少于 3 个词的行。\n删除少于 5 个句子的文档。\n删除包含包含 Lorem ipsum 这种 placeholder 文本的文档。\n删除包含“List of Dirty, Naughty, Obscene, or Otherwise Bad Words”中任何单词的文档。\n删除非英文文档，非英文的标准是使用 langdetect 得到的英文概率小于 0.99，所以 C4 主要是英文文档。\n\n\n应用了 filter 的数据集版本叫 C4.EN，没应用的叫 C4.EN.NOCLEAN，没有使用 blcoklist 的 C4.EN 叫 C4.EN.NOBLOCKLIST。三个版本的简单统计如下图，其中 token 数是用 spacy 的 English tokenizer 分词后统计的：三个版本的 C4.EN 统计\n来源网址中，按 TLD（top-level domains）统计，前三名是 .com、.org、.co.uk，其中 .gov 和 .mil 占比也不少，后者尽管不在 top25 中，但是也有 33 百万 token。\n按网站统计，前三名是 patents.google.com、en.wikipedia.com、en.m.wikipedia.com。\n按发表时间统计，92% 都发表在数据集收集前的一个十年中（2011-2019），分布是长尾分布 long-tailed，大部分都在数据收集前的 10-20 年间。这是从 C4.EN 中采样得来的，采样大小为 1 百万。发表时间是按照该网址被 Internet Archive 首次索引收录的时间算的，所以真实发表时间实际更早一点。\n按地理位置统计，作者使用了一个 IP-country 数据库，从原始数据集中随机采样了一个大小为 17 万 5 千的样本集。前五名是美国（51.3%）、无法分辨、德国、英国和加拿大。中国排在第 18，香港排在第 16。值得注意的是，按人口算第 2、3、4 大说英语的国家——印度、巴基斯坦、尼日利亚、菲律宾，在数据集中占比只有美国的 3.4%、0.06%、0.03%、0.1%，尽管他们有数千万人说英语。\nC4 包含大量机器生成的文本，machine-generated text，主要包括专利的机器翻译和 ocr 文本。前面说过，按网站统计 patents.google.com 排第一，这是专利网站，Google 会使用机器翻译模型翻译非英文专利，也会使用 ocr 将扫描文本识别出来。识别哪些文本是机器生成的也是一个活跃的研究领域。\nC4 中存在 benchmark data contamination 现象，即下游任务的训练集或测试集出现在 C4 中，造成了数据污染。具体来说，分为两种情况：input-and-label contamination 和 input contamination。\n一些 seq2seq 任务的 label 其实就是 input 中的文本，例如抽取式摘要，如果这种任务的 input 出现在了预训练数据集中，那么其 label 也相当于出现在了预训练数据集中，那么我们有理由认为模型实际上只是在背书而没有做真正的推理。作者分析了 3 个生成式任务的7个数据集，发现均有不同程度（1.87-24.88%）的污染，target 文本为单句的匹配率（完全匹配）要明显高于多句。\nInput contamination 同样会对下游任务造成影响。作者发现有 2-50% 的 GLUE input 出现在 C4 中。对于分类任务来说，虽然不包含 label 的训练集出现在 C4 中并不影响最终性能，但是对 zero-shot 和 few-shot 来说，这仍然是一个值得慎重对待的问题。\nC4 带有明显的种族偏见，“Jewish”更容易与积极情绪挂钩，而“Arab”更容易与消极情绪挂钩。\n对被排掉的文档进行随机抽样，得到 10 万份文档，然后进行 k-means 聚类，k=50，使用 TF-IDF 进行 embedding，然后使用 PCA 进行降维可视化。但最终发现只有 16 个类，且三分之一的是性相关文档。\n相比于种族，提及性取向的文档更有可能被排除，例如 lesbian 和 gay。这个结论是通过计算点互信息 PMI 得到的。\n非裔美国英语 AAE 和西班牙裔美国英语 Hisp 更有可能被排除。\n许多被排除的文档并不包含 offensive 和 sexual 内容。\n97.8% 的 C4.EN 是白人英语 WAE，AAE 和 Hisp 分别只有 0.07% 和 0.09%。\n在创建数据集的过程中，评估 bias 很重要。\n在清洗 web-crawled 数据时，作者反对使用黑名单的方法来排除文档。\n作者分析的是 C4.EN，所以本文结论可能并不适合其他语言。\nGPT-3 的作者在训练完成之后，才发现存在 benchmark contamination。由于重新训练非常昂贵，他们没有重新训练，转而分析不同任务受到该现象的影响，发现确实会影响相关 benchmark 的性能。\n","dateCreated":"2022-08-22T21:04:19+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2022-08-22T21:04:19+08:00","description":"C4 数据集速览。","headline":"关于 C4 数据集","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2022/08/22/about-c4-dataset/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2022/08/22/about-c4-dataset/","keywords":"Paper, Dataset"}</script>
+    <meta name="description" content="C4 数据集速览。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="关于 C4 数据集">
+<meta property="og:url" content="https://alanlee.fun/2022/08/22/about-c4-dataset/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="C4 数据集速览。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2022/09/01/pqYNAy39XhBbSjM.png">
+<meta property="article:published_time" content="2022-08-22T13:04:19.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.191Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Paper">
+<meta property="article:tag" content="Dataset">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2022/09/01/pqYNAy39XhBbSjM.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            关于 C4 数据集
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2022-08-22T21:04:19+08:00">
+	
+		    2022 年 8 月 22 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<p>参考 <a href="https://arxiv.org/abs/2104.08758">Documenting Large Webtext Corpora: A Case Study on the Colossal Clean Crawled Corpus</a>。</p>
+<ol>
+<li>从 365 百万 domain 中抓取，共计大约 1560 亿 token。</li>
+<li>用来训练 T5 和 Switch Transformer。</li>
+<li><a href="https://arxiv.org/abs/1910.10683">Raffel et al. (2020)</a> 提供了重新<a href="https://github.com/google-research/text-to-text-transfer-transformer#c4">创建 C4 的脚本</a>，但是运行这些脚本大概需要数千刀。</li>
+<li>C4 是以 Common Crawl 2019 年 4 月的 snapshot 为基础创建的，使用了很多 filter 来过滤文本。</li>
+<li>这些 filter 的作用包括：<ol>
+<li>删除没有 terminal punctuation mark 的行。</li>
+<li>删除少于 3 个词的行。</li>
+<li>删除少于 5 个句子的文档。</li>
+<li>删除包含包含 <em>Lorem ipsum</em> 这种 placeholder 文本的文档。</li>
+<li>删除包含“<a href="https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words">List of Dirty, Naughty, Obscene, or Otherwise Bad Words</a>”中任何单词的文档。</li>
+<li>删除非英文文档，非英文的标准是使用 <a href="https://pypi.org/project/langdetect/"><code>langdetect</code></a> 得到的英文概率小于 0.99，所以 C4 主要是英文文档。</li>
+</ol>
+</li>
+<li>应用了 filter 的数据集版本叫 C4.EN，没应用的叫 C4.EN.NOCLEAN，没有使用 blcoklist 的 C4.EN 叫 C4.EN.NOBLOCKLIST。三个版本的简单统计如下图，其中 token 数是用 spacy 的 English tokenizer 分词后统计的：<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/09/01/pqYNAy39XhBbSjM.png" title="三个版本的 C4.EN 统计" data-caption="三个版本的 C4.EN 统计" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/09/01/pqYNAy39XhBbSjM.png" alt="三个版本的 C4.EN 统计"></a><span class="caption">三个版本的 C4.EN 统计</span></div></li>
+<li>来源网址中，按 TLD（top-level domains）统计，前三名是 .com、.org、.co.uk，其中 .gov 和 .mil 占比也不少，后者尽管不在 top25 中，但是也有 33 百万 token。</li>
+<li>按网站统计，前三名是 <code>patents.google.com</code>、<code>en.wikipedia.com</code>、<code>en.m.wikipedia.com</code>。</li>
+<li>按发表时间统计，92% 都发表在数据集收集前的一个十年中（2011-2019），分布是长尾分布 long-tailed，大部分都在数据收集前的 10-20 年间。这是从 C4.EN 中采样得来的，采样大小为 1 百万。发表时间是按照该网址被 Internet Archive 首次索引收录的时间算的，所以真实发表时间实际更早一点。</li>
+<li>按地理位置统计，作者使用了一个 IP-country 数据库，从原始数据集中随机采样了一个大小为 17 万 5 千的样本集。前五名是美国（51.3%）、无法分辨、德国、英国和加拿大。中国排在第 18，香港排在第 16。值得注意的是，按人口算第 2、3、4 大说英语的国家——印度、巴基斯坦、尼日利亚、菲律宾，在数据集中占比只有美国的 3.4%、0.06%、0.03%、0.1%，尽管他们有数千万人说英语。</li>
+<li>C4 包含大量机器生成的文本，machine-generated text，主要包括专利的机器翻译和 ocr 文本。前面说过，按网站统计 <code>patents.google.com</code> 排第一，这是专利网站，Google 会使用机器翻译模型翻译非英文专利，也会使用 ocr 将扫描文本识别出来。识别哪些文本是机器生成的也是一个活跃的研究领域。</li>
+<li>C4 中存在 benchmark data contamination 现象，即下游任务的训练集或测试集出现在 C4 中，造成了数据污染。具体来说，分为两种情况：input-and-label contamination 和 input contamination。</li>
+<li>一些 seq2seq 任务的 label 其实就是 input 中的文本，例如抽取式摘要，如果这种任务的 input 出现在了预训练数据集中，那么其 label 也相当于出现在了预训练数据集中，那么我们有理由认为模型实际上只是在背书而没有做真正的推理。作者分析了 3 个生成式任务的7个数据集，发现均有不同程度（1.87-24.88%）的污染，target 文本为单句的匹配率（完全匹配）要明显高于多句。</li>
+<li>Input contamination 同样会对下游任务造成影响。作者发现有 2-50% 的 GLUE input 出现在 C4 中。对于分类任务来说，虽然不包含 label 的训练集出现在 C4 中并不影响最终性能，但是对 zero-shot 和 few-shot 来说，这仍然是一个值得慎重对待的问题。</li>
+<li>C4 带有明显的种族偏见，“Jewish”更容易与积极情绪挂钩，而“Arab”更容易与消极情绪挂钩。</li>
+<li>对被排掉的文档进行随机抽样，得到 10 万份文档，然后进行 k-means 聚类，k=50，使用 TF-IDF 进行 embedding，然后使用 PCA 进行降维可视化。但最终发现只有 16 个类，且三分之一的是性相关文档。</li>
+<li>相比于种族，提及性取向的文档更有可能被排除，例如 lesbian 和 gay。这个结论是通过计算点互信息 PMI 得到的。</li>
+<li>非裔美国英语 AAE 和西班牙裔美国英语 Hisp 更有可能被排除。</li>
+<li>许多被排除的文档并不包含 offensive 和 sexual 内容。</li>
+<li>97.8% 的 C4.EN 是白人英语 WAE，AAE 和 Hisp 分别只有 0.07% 和 0.09%。</li>
+<li>在创建数据集的过程中，评估 bias 很重要。</li>
+<li>在清洗 web-crawled 数据时，作者反对使用黑名单的方法来排除文档。</li>
+<li>作者分析的是 C4.EN，所以本文结论可能并不适合其他语言。</li>
+<li>GPT-3 的作者在训练完成之后，才发现存在 benchmark contamination。由于重新训练非常昂贵，他们没有重新训练，转而分析不同任务受到该现象的影响，发现确实会影响相关 benchmark 的性能。</li>
+</ol>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Dataset/" rel="tag">Dataset</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Paper/" rel="tag">Paper</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/12/04/install-basic-deep-learning-env/"
+                    data-tooltip="深度学习环境创建指南"
+                    aria-label="上一篇: 深度学习环境创建指南"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/04/23/disqus-comments-not-showing/"
+                    data-tooltip="Disqus 有评论但没显示的一种解决方案"
+                    aria-label="下一篇: Disqus 有评论但没显示的一种解决方案"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/12/04/install-basic-deep-learning-env/"
+                    data-tooltip="深度学习环境创建指南"
+                    aria-label="上一篇: 深度学习环境创建指南"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/04/23/disqus-comments-not-showing/"
+                    data-tooltip="Disqus 有评论但没显示的一种解决方案"
+                    aria-label="下一篇: Disqus 有评论但没显示的一种解决方案"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/08/22/about-c4-dataset/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2022/08/22/about-c4-dataset/';
+              
+            this.page.identifier = '2022/08/22/about-c4-dataset/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

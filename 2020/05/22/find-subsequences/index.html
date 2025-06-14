@@ -1,0 +1,728 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>寻找所有公共子序列并返回索引 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。\n例如：\n1234target = &#x27;违禁词&#x27;source = &#x27;asdf违asdf禁aa词as违1禁2词3&#x27;# 要求的返回是wanted = [&#x27;违禁词&#x27;, &#x27;违禁词&#x27;], [[4, 9, 12], [15, 17, 19]]\n刚开始我觉得这是一个寻找最长公共子序列的问题，但是尝试了一下后发现，如果 source 中有多个子序列形式的 target，最长公共子序列算法只能找到其中一个，而且一般是不能返回索引的。\n于是我自己重新写了一个程序来实现这个需求。程序应该不是最优的，欢迎提出改进。\n大致流程：\n\n将 target 扩展到 ≤ len(source) 长度。\n从 target 的第一个字符 i 开始遍历。\n如果 i 在 source 中，那么记录其索引，将其加入到当前已找到的字符串 current_found 中。计算其真实索引（基于原 source），加入到 current_indices。\n将该字符及前面的字符从 source 中删除，成为新的 source。\n如果当前已找到的字符串 current_found 和 target 相等，则就找到了一个 base_target。将相关变量置为初始状态。\n如果 source 为空或者长度小于 base_target 长度或者已不包含 base_target 中任何字符，结束。\n\n代码：\n12345678910111213141516171819202122def find_subsequences(source, target):    &quot;&quot;&quot;在 source 中找到所有子序列形式的 target，并返回索引。&quot;&quot;&quot;    base_target = target    target = base_target * (len(source) // len(base_target))    source_len = len(source)    all_found = []    current_found = &#x27;&#x27;    all_indices, current_indices = [], []    for i in target:        if i in source:            current_found += i            index = source.index(i)            current_indices.append(source_len - (len(source) - index))            source = source[(index+1):]        if current_found == base_target:            all_indices.append(current_indices)            all_found.append(base_target)            current_found = &#x27;&#x27;            current_indices = []        if not source or len(source) &lt; len(base_target) or not set(source).intersection(set(base_target)):            break    return all_found, all_indices\n还用上面的例子进行测试：\n12&gt;&gt;&gt; find_subsequences(source, target)([&#x27;违禁词&#x27;, &#x27;违禁词&#x27;], [[4, 9, 12], [15, 17, 19]])\n此外，关于计算真实索引：\ncompute real index\nEND","dateCreated":"2020-05-22T11:58:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-05-22T11:58:00+08:00","description":"\n最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。","headline":"寻找所有公共子序列并返回索引","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/05/22/find-subsequences/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/05/22/find-subsequences/","keywords":"Python, NLP"}</script>
+    <meta name="description" content="最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="寻找所有公共子序列并返回索引">
+<meta property="og:url" content="https://alanlee.fun/2020/05/22/find-subsequences/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/05/22/4gtbxJYzNQpemMh.png">
+<meta property="article:published_time" content="2020-05-22T03:58:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.194Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="NLP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/22/4gtbxJYzNQpemMh.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            寻找所有公共子序列并返回索引
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-05-22T11:58:00+08:00">
+	
+		    2020 年 5 月 22 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>最近同事说了这么一个需求：假设有两个字符串 target 和 source，要在 source 中寻找 target，但不要求 target 在 source 中是连续的，并返回索引。一般来说 target 是一个较短的词语，source 是一个包含 target 的较长句子，target 在 source 中不一定连续，且可能有多个。<br><span id="more"></span></p>
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">target = <span class="string">&#x27;违禁词&#x27;</span></span><br><span class="line">source = <span class="string">&#x27;asdf违asdf禁aa词as违1禁2词3&#x27;</span></span><br><span class="line"><span class="comment"># 要求的返回是</span></span><br><span class="line">wanted = [<span class="string">&#x27;违禁词&#x27;</span>, <span class="string">&#x27;违禁词&#x27;</span>], [[<span class="number">4</span>, <span class="number">9</span>, <span class="number">12</span>], [<span class="number">15</span>, <span class="number">17</span>, <span class="number">19</span>]]</span><br></pre></td></tr></table></figure>
+<p>刚开始我觉得这是一个寻找<a href="https://alanlee.fun/2020/04/07/understanding-lcs/">最长公共子序列</a>的问题，但是尝试了一下后发现，如果 source 中有多个子序列形式的 target，最长公共子序列算法只能找到其中一个，而且一般是不能返回索引的。</p>
+<p>于是我自己重新写了一个程序来实现这个需求。程序应该不是最优的，欢迎提出改进。</p>
+<p>大致流程：</p>
+<ol>
+<li>将 <code>target</code> 扩展到 ≤ <code>len(source)</code> 长度。</li>
+<li>从 <code>target</code> 的第一个字符 <code>i</code> 开始遍历。</li>
+<li>如果 <code>i</code> 在 <code>source</code> 中，那么记录其索引，将其加入到当前已找到的字符串 <code>current_found</code> 中。计算其真实索引（基于原 <code>source</code>），加入到 <code>current_indices</code>。</li>
+<li>将该字符及前面的字符从 <code>source</code> 中删除，成为新的 <code>source</code>。</li>
+<li>如果当前已找到的字符串 <code>current_found</code> 和 <code>target</code> 相等，则就找到了一个 <code>base_target</code>。将相关变量置为初始状态。</li>
+<li>如果 <code>source</code> 为空或者长度小于 <code>base_target</code> 长度或者已不包含 <code>base_target</code> 中任何字符，结束。</li>
+</ol>
+<p>代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">find_subsequences</span>(<span class="params">source, target</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;在 source 中找到所有子序列形式的 target，并返回索引。&quot;&quot;&quot;</span></span><br><span class="line">    base_target = target</span><br><span class="line">    target = base_target * (<span class="built_in">len</span>(source) // <span class="built_in">len</span>(base_target))</span><br><span class="line">    source_len = <span class="built_in">len</span>(source)</span><br><span class="line">    all_found = []</span><br><span class="line">    current_found = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    all_indices, current_indices = [], []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> target:</span><br><span class="line">        <span class="keyword">if</span> i <span class="keyword">in</span> source:</span><br><span class="line">            current_found += i</span><br><span class="line">            index = source.index(i)</span><br><span class="line">            current_indices.append(source_len - (<span class="built_in">len</span>(source) - index))</span><br><span class="line">            source = source[(index+<span class="number">1</span>):]</span><br><span class="line">        <span class="keyword">if</span> current_found == base_target:</span><br><span class="line">            all_indices.append(current_indices)</span><br><span class="line">            all_found.append(base_target)</span><br><span class="line">            current_found = <span class="string">&#x27;&#x27;</span></span><br><span class="line">            current_indices = []</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> source <span class="keyword">or</span> <span class="built_in">len</span>(source) &lt; <span class="built_in">len</span>(base_target) <span class="keyword">or</span> <span class="keyword">not</span> <span class="built_in">set</span>(source).intersection(<span class="built_in">set</span>(base_target)):</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">    <span class="keyword">return</span> all_found, all_indices</span><br></pre></td></tr></table></figure>
+<p>还用上面的例子进行测试：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>find_subsequences(source, target)</span><br><span class="line">([<span class="string">&#x27;违禁词&#x27;</span>, <span class="string">&#x27;违禁词&#x27;</span>], [[<span class="number">4</span>, <span class="number">9</span>, <span class="number">12</span>], [<span class="number">15</span>, <span class="number">17</span>, <span class="number">19</span>]])</span><br></pre></td></tr></table></figure>
+<p>此外，关于计算真实索引：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/22/4gtbxJYzNQpemMh.png" title="compute real index" data-caption="compute real index" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/22/4gtbxJYzNQpemMh.png" alt="compute real index"></a><span class="caption">compute real index</span></div>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/22/understanding-edit-distance/"
+                    data-tooltip="理解编辑距离"
+                    aria-label="上一篇: 理解编辑距离"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/15/bandizip-noads/"
+                    data-tooltip="Bandizip 无广告版"
+                    aria-label="下一篇: Bandizip 无广告版"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/05/22/find-subsequences/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/05/22/find-subsequences/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/05/22/find-subsequences/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/22/understanding-edit-distance/"
+                    data-tooltip="理解编辑距离"
+                    aria-label="上一篇: 理解编辑距离"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/15/bandizip-noads/"
+                    data-tooltip="Bandizip 无广告版"
+                    aria-label="下一篇: Bandizip 无广告版"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/05/22/find-subsequences/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/05/22/find-subsequences/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/05/22/find-subsequences/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/05/22/find-subsequences/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/05/22/find-subsequences/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/05/22/find-subsequences/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/05/22/find-subsequences/';
+              
+            this.page.identifier = '2020/05/22/find-subsequences/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

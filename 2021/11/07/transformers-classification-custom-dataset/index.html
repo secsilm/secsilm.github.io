@@ -1,0 +1,757 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>使用 Transformers 在你自己的数据集上训练文本分类模型 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。\n\n背景之前只闻 transformers 超厉害超好用，但是没有实际用过。之前涉及到 bert 类模型都是直接手写或是在别人的基础上修改。但这次由于某些原因，需要快速训练一个简单的文本分类模型。其实这种场景应该挺多的，例如简单的 POC 或是临时测试某些模型。\n我的需求很简单：用我们自己的数据集，快速训练一个文本分类模型，验证想法。\n我觉得如此简单的一个需求，应该有模板代码。但实际去搜的时候发现，官方文档什么时候变得这么多这么庞大了？还多了个 Trainer API？瞬间让我想起了 Pytorch Lightning 那个坑人的同名 API。但可能是时间原因，找了一圈没找到适用于自定义数据集的代码，都是用的官方、预定义的数据集。\n所以弄完后，我决定简单写一个文章，来说下这原本应该极其容易解决的事情。\n数据假设我们数据的格式如下：\n1230 第一个句子1 第二个句子0 第三个句子\n即每一行都是 label sentence 的格式，中间空格分隔。并且我们已将数据集分成了 train.txt 和 val.txt 。\n代码加载数据集首先使用 datasets 加载数据集：\n12from datasets import load_datasetdataset = load_dataset(&#x27;text&#x27;, data_files=&#123;&#x27;train&#x27;: &#x27;data/train_20w.txt&#x27;, &#x27;test&#x27;: &#x27;data/val_2w.txt&#x27;&#125;)\n加载后的 dataset 是一个 DatasetDict 对象：\n12345678910DatasetDict(&#123;    train: Dataset(&#123;        features: [&#x27;text&#x27;],        num_rows: 3    &#125;)    test: Dataset(&#123;        features: [&#x27;text&#x27;],        num_rows: 3    &#125;)&#125;)\n类似 tf.data ，此后我们需要对其进行 map ，对每一个句子进行 tokenize、padding、batch、shuffle：\n1234567891011121314def tokenize_function(examples):    labels = []    texts = []    for example in examples[&#x27;text&#x27;]:        split = example.split(&#x27; &#x27;, maxsplit=1)        labels.append(int(split[0]))        texts.append(split[1])    tokenized = tokenizer(texts, padding=&#x27;max_length&#x27;, truncation=True, max_length=32)    tokenized[&#x27;labels&#x27;] = labels    return tokenizedtokenized_datasets = dataset.map(tokenize_function, batched=True)train_dataset = tokenized_datasets[&quot;train&quot;].shuffle(seed=42)eval_dataset = tokenized_datasets[&quot;test&quot;].shuffle(seed=42)\n根据数据集格式不同，我们可以在 tokenize_function 中随意自定义处理过程，以得到 text 和 labels。注意 batch_size 和 max_length 也是在此处指定。处理完我们便得到了可以输入给模型的训练集和测试集。\n训练123456789model = AutoModelForSequenceClassification.from_pretrained(&quot;bert-base-cased&quot;, num_labels=2, cache_dir=&#x27;data/pretrained&#x27;)training_args = TrainingArguments(&#x27;ckpts&#x27;, per_device_train_batch_size=256, num_train_epochs=5)trainer = Trainer(    model=model,    args=training_args,    train_dataset=train_dataset,    eval_dataset=eval_dataset)trainer.train()\n你可以根据情况修改训练 batchsize per_device_train_batch_size 。\n增加准确率显示我们在训练的时候一般会监测测试准确率来评估模型性能，而 transformers 在训练过程中默认是不会输出准确率的，而且训练完也不会输出的。这样的话我们想要一个准确率的话，只能再手动加载一下模型然后走一下预测，略显麻烦。\n但 transformers 也是支持计算并输出准确率的，我们可以为 Trainer 指定 compute_metrics 参数。\ncompute_metrics 参数必须是一个函数，用于计算准确率等 metrics 的函数。该函数的输入是 transformers.EvalPrediction 对象，包含模型的输出（logits）和正确标签，其本质上是一个 namedtuple，相应的 field 为 predictions 和 label_ids；输出必须是一个字典，key 为 metric name，value 为 metric value。\n关于 metric 的计算，datasets 实际上已经为我们提供了一些内置函数。你可以用 datasets.list_metrics() 来获取目前所有可用的 metric。但是在 load_metric() 时，需要从 GitHub 下载处理程序，鉴于国内网络状况，这步通常都会卡住：\n12# https://github.com/huggingface/datasets/blob/21bfd0d3f5ff3fbfd691600e2c7071a167816cdf/src/datasets/config.py#L21REPO_METRICS_URL = &quot;https://raw.githubusercontent.com/huggingface/datasets/&#123;revision&#125;/metrics/&#123;path&#125;/&#123;name&#125;&quot;\n解决这种情况有几种办法：\n\n挂梯子。\nload_metric() 支持从本地加载计算程序，所以你可以把 metric 计算代码放到你本地，然后把地址传进去。\n不使用 load_metric()，而是我们自己根据 predictions 和 label_ids 来计算。\n\n本文接下来就是使用最后一种方法，较为灵活。我们可以使用 scikit-learn 来计算这些 metric。实际上 datasets 中的 accuracy 也是使用 sklearn.metrics.accuracy_score 来计算的。\n来看代码：\n123456789101112131415161718192021222324from sklearn.metrics import accuracy_score, f1_scoredef compute_metrics(eval_pred) -&gt; dict:    logits, labels = eval_pred    predictions = np.argmax(logits, axis=-1)    acc = accuracy_score(labels, predictions)    f1 = f1_score(labels, predictions, average=&#x27;micro&#x27;)    return &#123;&quot;accuracy&quot;: acc, &#x27;f1&#x27;: f1&#125;training_args = TrainingArguments(    # 其他参数    evaluation_strategy=&quot;epoch&quot;,    # 其他参数)trainer = Trainer(    # 其他参数    args=training_args,    eval_dataset=eval_dataset,    compute_metrics=compute_metrics,  # &lt;-- 计算metric    # 其他参数)\n注意一定要加上上面 TrainingArguments 中的 evaluation_strategy=&quot;epoch&quot;，该参数默认是 &quot;no&quot;，即不进行 evaluation。我们此处指定为 &quot;epoch&quot; 表示在每个 epoch 结束时进行 evaluation。其他可选的值为 &quot;steps&quot;，表示每 eval_steps 进行一次 evaluation，默认为 500 steps。\n然后运行我们即可看到类似如下的输出：\n1234567891011121314***** Running training *****  Num examples = 43410  Num Epochs = 5  Instantaneous batch size per device = 48  Total train batch size (w. parallel, distributed &amp; accumulation) = 48  Gradient Accumulation steps = 1  Total optimization steps = 4525&#123;&#x27;loss&#x27;: 0.82, &#x27;learning_rate&#x27;: 4.447513812154696e-05, &#x27;epoch&#x27;: 0.55&#125; 20%|████                           | 905/4525 [06:20&lt;21:36,  2.79it/s] The following columns in the evaluation set  don&#x27;t have a corresponding argument in `BertForSequenceClassification.forward` and have been ignored: text.        ***** Running Evaluation *****  Num examples = 5426  Batch size = 8&#123;&#x27;eval_loss&#x27;: 0.7136639952659607, &#x27;eval_accuracy&#x27;: 0.7051234795429414, &#x27;eval_f1&#x27;: 0.7051234795429414, &#x27;eval_runtime&#x27;: 20.5673, &#x27;eval_samples_per_second&#x27;: 263.817, &#x27;eval_steps_per_second&#x27;: 33.014, &#x27;epoch&#x27;: 1.0&#125;\n我们可以看到在第一个 epoch 结束之后进行了 evaluation，accuracy 和 f1 也被正确返回了（会加上 eval_ 前缀）。\n只保存性能最好的 checkpoint根据 save_strategy 的不同，训练时默认每隔一定时间段就保存一次模型 checkpoint。如果训练 epochs 比较多，会保存很多 ckpt。但有时我们硬盘空间有限，或者由于其他原因不想保存这么多的 ckpt，只想保存最佳模型的。\ntransformers 也可以很方便地实现这个功能。\n\n严格来说会保存两个 ckpt：一个最佳的，一个最后的（用于接续训练）。\n\n默认情况下，我们只需要给 TrainingArguments 多加两个参数：\n\nload_best_model_at_end=True：训练结束加载最佳模型。\nsave_total_limit=1：总共保存 1 个模型 ckpt（实际是两个）。\n\n那么如何判断最佳呢？\n通过 metric_for_best_model 和 greater_is_better 来共同判断。要想判断最佳，我们首先需要知道评判标准是什么，这就是前者的作用。默认是 loss，在 eval_dataset 上的 loss，你也可以指定为 compute_metrics() 所返回的 metric name（带不带 eval_ 都行）。其次我们需要知道这个标准是越大越好还是越小越好，这就是后者的作用。如果是标准是 loss，那么会自动设置为 False，因为 loss 是越小越好。但如果你指定为其他的标准，记得手动设置下这个参数。\n来看代码：\n123456training_args = TrainingArguments(    # 其他参数    load_best_model_at_end=True,    save_total_limit=1,    # 其他参数)\n完整代码完整代码见 GitHub。\nEND","dateCreated":"2021-11-07T10:37:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2021-11-07T10:37:00+08:00","description":"\n最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。","headline":"使用 Transformers 在你自己的数据集上训练文本分类模型","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/","keywords":"NLP, Sequence Classification"}</script>
+    <meta name="description" content="最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="使用 Transformers 在你自己的数据集上训练文本分类模型">
+<meta property="og:url" content="https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 huggingface transformers 训练文本分类模型时遇到的一个小问题说下。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-11-07T02:37:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.199Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="Sequence Classification">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            使用 Transformers 在你自己的数据集上训练文本分类模型
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-11-07T10:37:00+08:00">
+	
+		    2021 年 11 月 7 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE"><span class="toc-text">数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81"><span class="toc-text">代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E8%BD%BD%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text">加载数据集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83"><span class="toc-text">训练</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A2%9E%E5%8A%A0%E5%87%86%E7%A1%AE%E7%8E%87%E6%98%BE%E7%A4%BA"><span class="toc-text">增加准确率显示</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AA%E4%BF%9D%E5%AD%98%E6%80%A7%E8%83%BD%E6%9C%80%E5%A5%BD%E7%9A%84-checkpoint"><span class="toc-text">只保存性能最好的 checkpoint</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81"><span class="toc-text">完整代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>最近实在是有点忙，没啥时间写博客了。趁着周末水一文，把最近用 <a href="https://github.com/huggingface/transformers">huggingface transformers</a> 训练文本分类模型时遇到的一个小问题说下。</p>
+<span id="more"></span>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>之前只闻 transformers 超厉害超好用，但是没有实际用过。之前涉及到 bert 类模型都是直接手写或是在别人的基础上修改。但这次由于某些原因，需要快速训练一个简单的文本分类模型。其实这种场景应该挺多的，例如简单的 POC 或是临时测试某些模型。</p>
+<p>我的需求很简单：用我们<strong>自己的</strong>数据集，<strong>快速</strong>训练一个文本分类模型，验证想法。</p>
+<p>我觉得如此简单的一个需求，应该有模板代码。但实际去搜的时候发现，官方文档什么时候变得这么多这么庞大了？还多了个 <code>Trainer</code> API？瞬间让我想起了 Pytorch Lightning 那个坑人的<a href="https://pytorch-lightning.readthedocs.io/en/latest/common/trainer.html">同名 API</a>。但可能是时间原因，找了一圈没找到适用于自定义数据集的代码，都是用的官方、预定义的数据集。</p>
+<p>所以弄完后，我决定简单写一个文章，来说下这原本应该极其容易解决的事情。</p>
+<h2 id="数据"><a href="#数据" class="headerlink" title="数据"></a>数据</h2><p>假设我们数据的格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0 第一个句子</span><br><span class="line">1 第二个句子</span><br><span class="line">0 第三个句子</span><br></pre></td></tr></table></figure>
+<p>即每一行都是 <code>label sentence</code> 的格式，中间空格分隔。并且我们已将数据集分成了 <code>train.txt</code> 和 <code>val.txt</code> 。</p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><h3 id="加载数据集"><a href="#加载数据集" class="headerlink" title="加载数据集"></a>加载数据集</h3><p>首先使用 <code>datasets</code> 加载数据集：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> datasets <span class="keyword">import</span> load_dataset</span><br><span class="line">dataset = load_dataset(<span class="string">&#x27;text&#x27;</span>, data_files=&#123;<span class="string">&#x27;train&#x27;</span>: <span class="string">&#x27;data/train_20w.txt&#x27;</span>, <span class="string">&#x27;test&#x27;</span>: <span class="string">&#x27;data/val_2w.txt&#x27;</span>&#125;)</span><br></pre></td></tr></table></figure>
+<p>加载后的 <code>dataset</code> 是一个 <code>DatasetDict</code> 对象：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">DatasetDict(&#123;</span><br><span class="line">    train: Dataset(&#123;</span><br><span class="line">        features: [<span class="string">&#x27;text&#x27;</span>],</span><br><span class="line">        num_rows: <span class="number">3</span></span><br><span class="line">    &#125;)</span><br><span class="line">    test: Dataset(&#123;</span><br><span class="line">        features: [<span class="string">&#x27;text&#x27;</span>],</span><br><span class="line">        num_rows: <span class="number">3</span></span><br><span class="line">    &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>类似 <code>tf.data</code> ，此后我们需要对其进行 <code>map</code> ，对每一个句子进行 tokenize、padding、batch、shuffle：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">tokenize_function</span>(<span class="params">examples</span>):</span><br><span class="line">    labels = []</span><br><span class="line">    texts = []</span><br><span class="line">    <span class="keyword">for</span> example <span class="keyword">in</span> examples[<span class="string">&#x27;text&#x27;</span>]:</span><br><span class="line">        split = example.split(<span class="string">&#x27; &#x27;</span>, maxsplit=<span class="number">1</span>)</span><br><span class="line">        labels.append(<span class="built_in">int</span>(split[<span class="number">0</span>]))</span><br><span class="line">        texts.append(split[<span class="number">1</span>])</span><br><span class="line">    tokenized = tokenizer(texts, padding=<span class="string">&#x27;max_length&#x27;</span>, truncation=<span class="literal">True</span>, max_length=<span class="number">32</span>)</span><br><span class="line">    tokenized[<span class="string">&#x27;labels&#x27;</span>] = labels</span><br><span class="line">    <span class="keyword">return</span> tokenized</span><br><span class="line"></span><br><span class="line">tokenized_datasets = dataset.<span class="built_in">map</span>(tokenize_function, batched=<span class="literal">True</span>)</span><br><span class="line">train_dataset = tokenized_datasets[<span class="string">&quot;train&quot;</span>].shuffle(seed=<span class="number">42</span>)</span><br><span class="line">eval_dataset = tokenized_datasets[<span class="string">&quot;test&quot;</span>].shuffle(seed=<span class="number">42</span>)</span><br></pre></td></tr></table></figure>
+<p>根据数据集格式不同，我们可以在 <code>tokenize_function</code> 中随意自定义处理过程，以得到 text 和 labels。注意 <code>batch_size</code> 和 <code>max_length</code> 也是在此处指定。处理完我们便得到了可以输入给模型的训练集和测试集。</p>
+<h3 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">model = AutoModelForSequenceClassification.from_pretrained(<span class="string">&quot;bert-base-cased&quot;</span>, num_labels=<span class="number">2</span>, cache_dir=<span class="string">&#x27;data/pretrained&#x27;</span>)</span><br><span class="line">training_args = TrainingArguments(<span class="string">&#x27;ckpts&#x27;</span>, per_device_train_batch_size=<span class="number">256</span>, num_train_epochs=<span class="number">5</span>)</span><br><span class="line">trainer = Trainer(</span><br><span class="line">    model=model,</span><br><span class="line">    args=training_args,</span><br><span class="line">    train_dataset=train_dataset,</span><br><span class="line">    eval_dataset=eval_dataset</span><br><span class="line">)</span><br><span class="line">trainer.train()</span><br></pre></td></tr></table></figure>
+<p>你可以根据情况修改训练 batchsize <code>per_device_train_batch_size</code> 。</p>
+<h3 id="增加准确率显示"><a href="#增加准确率显示" class="headerlink" title="增加准确率显示"></a>增加准确率显示</h3><p>我们在训练的时候一般会监测测试准确率来评估模型性能，而 <code>transformers</code> 在训练过程中默认是不会输出准确率的，而且训练完也不会输出的。这样的话我们想要一个准确率的话，只能再手动加载一下模型然后走一下预测，略显麻烦。</p>
+<p>但 <code>transformers</code> 也是支持计算并输出准确率的，我们可以为 <code>Trainer</code> 指定 <code>compute_metrics</code> 参数。</p>
+<p><code>compute_metrics</code> 参数必须是一个函数，用于计算准确率等 metrics 的函数。该函数的输入是 <a href="https://huggingface.co/docs/transformers/v4.16.2/en/internal/trainer_utils#transformers.EvalPrediction"><code>transformers.EvalPrediction</code></a> 对象，包含模型的输出（logits）和正确标签，其本质上是一个 namedtuple，相应的 field 为 <code>predictions</code> 和 <code>label_ids</code>；输出必须是一个字典，key 为 metric name，value 为 metric value。</p>
+<p>关于 metric 的计算，<code>datasets</code> 实际上已经为我们提供了一些内置函数。你可以用 <code>datasets.list_metrics()</code> 来获取目前所有可用的 metric。但是在 <code>load_metric()</code> 时，需要从 GitHub 下载处理程序，鉴于国内网络状况，这步通常都会卡住：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># https://github.com/huggingface/datasets/blob/21bfd0d3f5ff3fbfd691600e2c7071a167816cdf/src/datasets/config.py#L21</span><br><span class="line">REPO_METRICS_URL = &quot;https://raw.githubusercontent.com/huggingface/datasets/&#123;revision&#125;/metrics/&#123;path&#125;/&#123;name&#125;&quot;</span><br></pre></td></tr></table></figure>
+<p>解决这种情况有几种办法：</p>
+<ul>
+<li>挂梯子。</li>
+<li><code>load_metric()</code> 支持从本地加载计算程序，所以你可以把 metric 计算代码放到你本地，然后把地址传进去。</li>
+<li>不使用 <code>load_metric()</code>，而是我们自己根据 <code>predictions</code> 和 <code>label_ids</code> 来计算。</li>
+</ul>
+<p>本文接下来就是使用最后一种方法，较为灵活。我们可以使用 scikit-learn 来计算这些 metric。<strong>实际上 <code>datasets</code> 中的 <code>accuracy</code> <a href="https://github.com/huggingface/datasets/blob/1675ad6a95/metrics/accuracy/accuracy.py">也是使用</a> <code>sklearn.metrics.accuracy_score</code> 来计算的。</strong></p>
+<p>来看代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> accuracy_score, f1_score</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">compute_metrics</span>(<span class="params">eval_pred</span>) -&gt; <span class="built_in">dict</span>:</span><br><span class="line">    logits, labels = eval_pred</span><br><span class="line">    predictions = np.argmax(logits, axis=-<span class="number">1</span>)</span><br><span class="line">    acc = accuracy_score(labels, predictions)</span><br><span class="line">    f1 = f1_score(labels, predictions, average=<span class="string">&#x27;micro&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;accuracy&quot;</span>: acc, <span class="string">&#x27;f1&#x27;</span>: f1&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">training_args = TrainingArguments(</span><br><span class="line">    <span class="comment"># 其他参数</span></span><br><span class="line">    evaluation_strategy=<span class="string">&quot;epoch&quot;</span>,</span><br><span class="line">    <span class="comment"># 其他参数</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">trainer = Trainer(</span><br><span class="line">    <span class="comment"># 其他参数</span></span><br><span class="line">    args=training_args,</span><br><span class="line">    eval_dataset=eval_dataset,</span><br><span class="line">    compute_metrics=compute_metrics,  <span class="comment"># &lt;-- 计算metric</span></span><br><span class="line">    <span class="comment"># 其他参数</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p><strong>注意</strong>一定要加上上面 <code>TrainingArguments</code> 中的 <code>evaluation_strategy=&quot;epoch&quot;</code>，该参数默认是 <code>&quot;no&quot;</code>，即不进行 evaluation。我们此处指定为 <code>&quot;epoch&quot;</code> 表示在每个 epoch 结束时进行 evaluation。其他可选的值为 <code>&quot;steps&quot;</code>，表示每 <code>eval_steps</code> 进行一次 evaluation，默认为 500 steps。</p>
+<p>然后运行我们即可看到类似如下的输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">***** Running training *****</span><br><span class="line">  Num examples = 43410</span><br><span class="line">  Num Epochs = 5</span><br><span class="line">  Instantaneous batch size per device = 48</span><br><span class="line">  Total train batch size (w. parallel, distributed &amp; accumulation) = 48</span><br><span class="line">  Gradient Accumulation steps = 1</span><br><span class="line">  Total optimization steps = 4525</span><br><span class="line">&#123;&#x27;loss&#x27;: 0.82, &#x27;learning_rate&#x27;: 4.447513812154696e-05, &#x27;epoch&#x27;: 0.55&#125;</span><br><span class="line"> 20%|████                           | 905/4525 [06:20&lt;21:36,  2.79it/s]</span><br><span class="line"> The following columns in the evaluation set  don&#x27;t have a corresponding argument in `BertForSequenceClassification.forward` and have been ignored: text.        </span><br><span class="line">***** Running Evaluation *****</span><br><span class="line">  Num examples = 5426</span><br><span class="line">  Batch size = 8</span><br><span class="line">&#123;&#x27;eval_loss&#x27;: 0.7136639952659607, &#x27;eval_accuracy&#x27;: 0.7051234795429414, &#x27;eval_f1&#x27;: 0.7051234795429414, &#x27;eval_runtime&#x27;: 20.5673, &#x27;eval_samples_per_second&#x27;: 263.817, &#x27;eval_steps_per_second&#x27;: 33.014, &#x27;epoch&#x27;: 1.0&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以看到在第一个 epoch 结束之后进行了 evaluation，accuracy 和 f1 也被正确返回了（会加上 <code>eval_</code> 前缀）。</p>
+<h3 id="只保存性能最好的-checkpoint"><a href="#只保存性能最好的-checkpoint" class="headerlink" title="只保存性能最好的 checkpoint"></a>只保存性能最好的 checkpoint</h3><p>根据 <code>save_strategy</code> 的不同，训练时默认每隔一定时间段就保存一次模型 checkpoint。如果训练 epochs 比较多，会保存很多 ckpt。但有时我们硬盘空间有限，或者由于其他原因不想保存这么多的 ckpt，只想保存最佳模型的。</p>
+<p>transformers 也可以很方便地实现这个功能。</p>
+<blockquote>
+<p>严格来说会保存两个 ckpt：一个最佳的，一个最后的（用于接续训练）。</p>
+</blockquote>
+<p>默认情况下，我们只需要给 <code>TrainingArguments</code> 多加两个参数：</p>
+<ul>
+<li><code>load_best_model_at_end=True</code>：训练结束加载最佳模型。</li>
+<li><code>save_total_limit=1</code>：总共保存 1 个模型 ckpt（实际是两个）。</li>
+</ul>
+<p>那么如何判断最佳呢？</p>
+<p>通过 <code>metric_for_best_model</code> 和 <code>greater_is_better</code> 来共同判断。要想判断最佳，我们首先需要知道<strong>评判标准是什么</strong>，这就是前者的作用。默认是 <code>loss</code>，在 <code>eval_dataset</code> 上的 loss，你也可以指定为 <code>compute_metrics()</code> 所返回的 metric name（带不带 <code>eval_</code> 都行）。其次我们需要知道这个<strong>标准是越大越好还是越小越好</strong>，这就是后者的作用。如果是标准是 loss，那么会自动设置为 <code>False</code>，因为 loss 是越小越好。但如果你指定为其他的标准，记得手动设置下这个参数。</p>
+<p>来看代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">training_args = TrainingArguments(</span><br><span class="line">    <span class="comment"># 其他参数</span></span><br><span class="line">    load_best_model_at_end=<span class="literal">True</span>,</span><br><span class="line">    save_total_limit=<span class="number">1</span>,</span><br><span class="line">    <span class="comment"># 其他参数</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<h2 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h2><p>完整代码见 <a href="https://github.com/secsilm/transformers_tutorial/blob/main/tutorials/sequence_classification_with_custom_dataset.py">GitHub</a>。</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Sequence-Classification/" rel="tag">Sequence Classification</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/12/17/tensorboard-embedding-projector/"
+                    data-tooltip="TensorBoard Projector 简易指南"
+                    aria-label="上一篇: TensorBoard Projector 简易指南"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/09/12/data-augment-ner-nlp/"
+                    data-tooltip="NLP 中的通用数据增强方法及针对 NER 的变种"
+                    aria-label="下一篇: NLP 中的通用数据增强方法及针对 NER 的变种"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/12/17/tensorboard-embedding-projector/"
+                    data-tooltip="TensorBoard Projector 简易指南"
+                    aria-label="上一篇: TensorBoard Projector 简易指南"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/09/12/data-augment-ner-nlp/"
+                    data-tooltip="NLP 中的通用数据增强方法及针对 NER 的变种"
+                    aria-label="下一篇: NLP 中的通用数据增强方法及针对 NER 的变种"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/';
+              
+            this.page.identifier = '2021/11/07/transformers-classification-custom-dataset/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

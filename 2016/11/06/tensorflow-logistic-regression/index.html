@@ -1,0 +1,722 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>TensorFlow 中的 Logistic Regression - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数：\nJ(\\theta)=-\\frac{1}{m}\\sum_{i=1}^m\\left[y^{(i)}logh_\\theta(x^{(i)})+(1-y^{(i)})log(1-h_\\theta(x^{(i)}))\\right]其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了，一个是用于回归的，一个是用于分类的。\n数据集数据集不再是经典的MNIST数据集，而是我在UCI上找的用于二分类的数据集，因为我觉得老用经典的数据集不能很好的理解整个程序。数据集可以从这里下载，数据集是关于房屋居住的，给出一些影响房屋居住的因素和是否居住（二分类），例如光照、温度等。数据集有3个txt文件，本篇使用的是datatraining.txt,数据量是8143×7，删除日期数据，然后按照75:25的比例拆分成训练集和测试集，然后做一些必要的reshape。\n数据集大致是这样子的：\n代码123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475from __future__ import print_function, divisionimport tensorflow as tfimport pandas as pdimport numpy as npimport matplotlib.pyplot as pltimport seabornfrom sklearn.cross_validation import train_test_splitimport random# 读取数据data = pd.read_csv(&quot;datatraining.txt&quot;)# 拆分数据X_train, X_test, y_train, y_test = train_test_split(data[[&quot;Temperature&quot;, &quot;Humidity&quot;, &quot;Light&quot;, &quot;CO2&quot;, &quot;HumidityRatio&quot;]].values, data[&quot;Occupancy&quot;].values.reshape(-1, 1), random_state=42)# one-hot 编码y_train = tf.concat(1, [1 - y_train, y_train])y_test = tf.concat(1, [1 - y_test, y_test])# 设置模型learning_rate = 0.001training_epochs = 50batch_size = 100display_step = 1n_samples = X_train.shape[0]n_features = 5n_class = 2x = tf.placeholder(tf.float32, [None, n_features])y = tf.placeholder(tf.float32, [None, n_class])# 模型参数W = tf.Variable(tf.zeros([n_features, n_class]))b = tf.Variable(tf.zeros([n_class]))# W = tf.Variable(tf.truncated_normal([n_features, n_class-1]))# b = tf.Variable(tf.truncated_normal([n_class]))# 定义模型，此处使用与线性回归一样的定义# 因为在后面定义损失的时候会加上映射pred = tf.matmul(x, W) + b# 定义损失函数cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))# cost = tf.nn.sigmoid_cross_entropy_with_logits(pred, y)# 梯度下降optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)# 准确率correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))# 初始化所有变量init = tf.initialize_all_variables()# 训练模型with tf.Session() as sess:    sess.run(init)    for epoch in range(training_epochs):        avg_cost = 0        total_batch = int(n_samples / batch_size)        for i in range(total_batch):            _, c = sess.run([optimizer, cost],                             feed_dict=&#123;x: X_train[i * batch_size : (i+1) * batch_size],                                       y: y_train[i * batch_size : (i+1) * batch_size, :].eval()&#125;)            avg_cost = c / total_batch        plt.plot(epoch+1, avg_cost, &#x27;co&#x27;)                if (epoch+1) % display_step == 0:            print(&quot;Epoch:&quot;, &quot;%04d&quot; % (epoch+1), &quot;cost=&quot;, avg_cost)                print(&quot;Optimization Finished!&quot;)        print(&quot;Testing Accuracy:&quot;, accuracy.eval(&#123;x: X_train, y:y_train.eval()&#125;))    plt.xlabel(&quot;Epoch&quot;)    plt.ylabel(&quot;Cost&quot;)    plt.show()\n结果12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152Epoch: 0001 cost= 0.402052676091Epoch: 0002 cost= 0.384176723293Epoch: 0003 cost= 0.174337043137Epoch: 0004 cost= 0.131257948328Epoch: 0005 cost= 0.116865955415Epoch: 0006 cost= 0.167843505984Epoch: 0007 cost= 0.0734717650492Epoch: 0008 cost= 0.134278797712Epoch: 0009 cost= 0.107930605529Epoch: 0010 cost= 0.0559994509963Epoch: 0011 cost= 0.0894105786183Epoch: 0012 cost= 0.112936254408Epoch: 0013 cost= 0.0598722950357Epoch: 0014 cost= 0.0590479530272Epoch: 0015 cost= 0.085669126667Epoch: 0016 cost= 0.0516053653154Epoch: 0017 cost= 0.0587136237348Epoch: 0018 cost= 0.0668616529371Epoch: 0019 cost= 0.0612989566365Epoch: 0020 cost= 0.0527745035828Epoch: 0021 cost= 0.0758241278226Epoch: 0022 cost= 0.0845051749808Epoch: 0023 cost= 0.0364650820122Epoch: 0024 cost= 0.0526885400053Epoch: 0025 cost= 0.0451166786131Epoch: 0026 cost= 0.0508907896573Epoch: 0027 cost= 0.0619052668087Epoch: 0028 cost= 0.0560943103227Epoch: 0029 cost= 0.0425660180264Epoch: 0030 cost= 0.0601769588033Epoch: 0031 cost= 0.0461903712789Epoch: 0032 cost= 0.0437817573547Epoch: 0033 cost= 0.102960703803Epoch: 0034 cost= 0.0599972771817Epoch: 0035 cost= 0.10071516037Epoch: 0036 cost= 0.101918243971Epoch: 0037 cost= 0.102948681253Epoch: 0038 cost= 0.0239826597151Epoch: 0039 cost= 0.02541697807Epoch: 0040 cost= 0.039644296052Epoch: 0041 cost= 0.0564842145951Epoch: 0042 cost= 0.0651661059895Epoch: 0043 cost= 0.0559316267733Epoch: 0044 cost= 0.058336042967Epoch: 0045 cost= 0.0420891652342Epoch: 0046 cost= 0.0113296391534Epoch: 0047 cost= 0.0151269641079Epoch: 0048 cost= 0.070616901898Epoch: 0049 cost= 0.0543320648006Epoch: 0050 cost= 0.0490373939764Optimization Finished!Testing Accuracy: 0.973473\n\n可以看到最终准确率达到了97%，这里注意标签要进行one-hot编码。\n与sklearn的比较我用相同的数据集使用sklearn实现了LR,\n123clf = LogisticRegression()clf.fit(X_train, y_train)clf.score(X_test, y_test)\n结果准确率是0.98624754420432215，而且训练时间大为缩短。\n\n\nEND","dateCreated":"2016-11-06T03:13:49+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2016-11-06T03:13:49+08:00","description":"前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数：\nJ(\\theta)=-\\frac{1}{m}\\sum_{i=1}^m\\left[y^{(i)}logh_\\theta(x^{(i)})+(1-y^{(i)})log(1-h_\\theta(x^{(i)}))\\right]其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了，一个是用于回归的，一个是用于分类的。\n数据集数据集不再是经典的MNIST数据集，而是我在UCI上找的用于二分类的数据集，因为我觉得老用经典的数据集不能很好的理解整个程序。数据集可以从这里下载，数据集是关于房屋居住的，给出一些影响房屋居住的因素和是否居住（二分类），例如光照、温度等。数据集有3个txt文件，本篇使用的是datatraining.txt,数据量是8143×7，删除日期数据，然后按照75:25的比例拆分成训练集和测试集，然后做一些必要的reshape。\n数据集大致是这样子的：\n代码123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475from __future__ import print_function, divisionimport tensorflow as tfimport pandas as pdimport numpy as npimport matplotlib.pyplot as pltimport seabornfrom sklearn.cross_validation import train_test_splitimport random# 读取数据data = pd.read_csv(&quot;datatraining.txt&quot;)# 拆分数据X_train, X_test, y_train, y_test = train_test_split(data[[&quot;Temperature&quot;, &quot;Humidity&quot;, &quot;Light&quot;, &quot;CO2&quot;, &quot;HumidityRatio&quot;]].values, data[&quot;Occupancy&quot;].values.reshape(-1, 1), random_state=42)# one-hot 编码y_train = tf.concat(1, [1 - y_train, y_train])y_test = tf.concat(1, [1 - y_test, y_test])# 设置模型learning_rate = 0.001training_epochs = 50batch_size = 100display_step = 1n_samples = X_train.shape[0]n_features = 5n_class = 2x = tf.placeholder(tf.float32, [None, n_features])y = tf.placeholder(tf.float32, [None, n_class])# 模型参数W = tf.Variable(tf.zeros([n_features, n_class]))b = tf.Variable(tf.zeros([n_class]))# W = tf.Variable(tf.truncated_normal([n_features, n_class-1]))# b = tf.Variable(tf.truncated_normal([n_class]))# 定义模型，此处使用与线性回归一样的定义# 因为在后面定义损失的时候会加上映射pred = tf.matmul(x, W) + b# 定义损失函数cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))# cost = tf.nn.sigmoid_cross_entropy_with_logits(pred, y)# 梯度下降optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)# 准确率correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))# 初始化所有变量init = tf.initialize_all_variables()# 训练模型with tf.Session() as sess:    sess.run(init)    for epoch in range(training_epochs):        avg_cost = 0        total_batch = int(n_samples / batch_size)        for i in range(total_batch):            _, c = sess.run([optimizer, cost],                             feed_dict=&#123;x: X_train[i * batch_size : (i+1) * batch_size],                                       y: y_train[i * batch_size : (i+1) * batch_size, :].eval()&#125;)            avg_cost = c / total_batch        plt.plot(epoch+1, avg_cost, &#x27;co&#x27;)                if (epoch+1) % display_step == 0:            print(&quot;Epoch:&quot;, &quot;%04d&quot; % (epoch+1), &quot;cost=&quot;, avg_cost)                print(&quot;Optimization Finished!&quot;)        print(&quot;Testing Accuracy:&quot;, accuracy.eval(&#123;x: X_train, y:y_train.eval()&#125;))    plt.xlabel(&quot;Epoch&quot;)    plt.ylabel(&quot;Cost&quot;)    plt.show()\n结果12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152Epoch: 0001 cost= 0.402052676091Epoch: 0002 cost= 0.384176723293Epoch: 0003 cost= 0.174337043137Epoch: 0004 cost= 0.131257948328Epoch: 0005 cost= 0.116865955415Epoch: 0006 cost= 0.167843505984Epoch: 0007 cost= 0.0734717650492Epoch: 0008 cost= 0.134278797712Epoch: 0009 cost= 0.107930605529Epoch: 0010 cost= 0.0559994509963Epoch: 0011 cost= 0.0894105786183Epoch: 0012 cost= 0.112936254408Epoch: 0013 cost= 0.0598722950357Epoch: 0014 cost= 0.0590479530272Epoch: 0015 cost= 0.085669126667Epoch: 0016 cost= 0.0516053653154Epoch: 0017 cost= 0.0587136237348Epoch: 0018 cost= 0.0668616529371Epoch: 0019 cost= 0.0612989566365Epoch: 0020 cost= 0.0527745035828Epoch: 0021 cost= 0.0758241278226Epoch: 0022 cost= 0.0845051749808Epoch: 0023 cost= 0.0364650820122Epoch: 0024 cost= 0.0526885400053Epoch: 0025 cost= 0.0451166786131Epoch: 0026 cost= 0.0508907896573Epoch: 0027 cost= 0.0619052668087Epoch: 0028 cost= 0.0560943103227Epoch: 0029 cost= 0.0425660180264Epoch: 0030 cost= 0.0601769588033Epoch: 0031 cost= 0.0461903712789Epoch: 0032 cost= 0.0437817573547Epoch: 0033 cost= 0.102960703803Epoch: 0034 cost= 0.0599972771817Epoch: 0035 cost= 0.10071516037Epoch: 0036 cost= 0.101918243971Epoch: 0037 cost= 0.102948681253Epoch: 0038 cost= 0.0239826597151Epoch: 0039 cost= 0.02541697807Epoch: 0040 cost= 0.039644296052Epoch: 0041 cost= 0.0564842145951Epoch: 0042 cost= 0.0651661059895Epoch: 0043 cost= 0.0559316267733Epoch: 0044 cost= 0.058336042967Epoch: 0045 cost= 0.0420891652342Epoch: 0046 cost= 0.0113296391534Epoch: 0047 cost= 0.0151269641079Epoch: 0048 cost= 0.070616901898Epoch: 0049 cost= 0.0543320648006Epoch: 0050 cost= 0.0490373939764Optimization Finished!Testing Accuracy: 0.973473\n\n可以看到最终准确率达到了97%，这里注意标签要进行one-hot编码。\n与sklearn的比较我用相同的数据集使用sklearn实现了LR,\n123clf = LogisticRegression()clf.fit(X_train, y_train)clf.score(X_test, y_test)\n结果准确率是0.98624754420432215，而且训练时间大为缩短。\n\n\nEND","headline":"TensorFlow 中的 Logistic Regression","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/","keywords":"Python, TensorFlow, Machine Learning"}</script>
+    <meta name="description" content="前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数： J(\theta)&#x3D;-\frac{1}{m}\sum_{i&#x3D;1}^m\left[y^{(i)}logh">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="TensorFlow 中的 Logistic Regression">
+<meta property="og:url" content="https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="前面提到了使用 TensorFlow 进行线性回归以及学习率、迭代次数和初始化方式对准确率的影响，这次来谈一下如何使用 TensorFlow 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数： J(\theta)&#x3D;-\frac{1}{m}\sum_{i&#x3D;1}^m\left[y^{(i)}logh">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://i.imgur.com/doWttAU.png">
+<meta property="og:image" content="http://i.imgur.com/Ri1jJQq.png">
+<meta property="article:published_time" content="2016-11-05T19:13:49.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.199Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="TensorFlow">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://i.imgur.com/doWttAU.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            TensorFlow 中的 Logistic Regression
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2016-11-06T03:13:49+08:00">
+	
+		    2016 年 11 月 6 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>前面提到了<a href="http://blog.csdn.net/u010099080/article/details/52894773">使用 <code>TensorFlow</code> 进行线性回归</a>以及<a href="http://blog.csdn.net/u010099080/article/details/52965337">学习率、迭代次数和初始化方式对准确率的影响</a>，这次来谈一下如何使用 <code>TensorFlow</code> 进行 Logistics Regression（以下简称 LR）。关于LR的理论内容我就不再赘述了，网上有很多资料讲，这里我就写下 LR 所用的损失函数：</p>
+<script type="math/tex; mode=display">J(\theta)=-\frac{1}{m}\sum_{i=1}^m\left[y^{(i)}logh_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)}))\right]</script><p>其实整个程序下来和线性回归差不多，只不过是损失函数的定义不一样了，当然数据也不一样了，一个是用于回归的，一个是用于分类的。</p>
+<h2 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h2><p>数据集不再是经典的<code>MNIST</code>数据集，而是我在UCI上找的用于二分类的数据集，因为我觉得老用经典的数据集不能很好的<strong>理解</strong>整个程序。数据集可以从<a href="http://archive.ics.uci.edu/ml/datasets/Occupancy+Detection+">这里</a>下载，数据集是关于房屋居住的，给出一些影响房屋居住的因素和是否居住（二分类），例如光照、温度等。数据集有3个txt文件，本篇使用的是<code>datatraining.txt</code>,数据量是8143×7，删除日期数据，然后按照<code>75:25</code>的比例拆分成训练集和测试集，然后做一些必要的<code>reshape</code>。</p>
+<p>数据集大致是这样子的：<br><img src="http://i.imgur.com/doWttAU.png" alt=""></p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> print_function, division</span><br><span class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> seaborn</span><br><span class="line"><span class="keyword">from</span> sklearn.cross_validation <span class="keyword">import</span> train_test_split</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"></span><br><span class="line"><span class="comment"># 读取数据</span></span><br><span class="line">data = pd.read_csv(<span class="string">&quot;datatraining.txt&quot;</span>)</span><br><span class="line"><span class="comment"># 拆分数据</span></span><br><span class="line">X_train, X_test, y_train, y_test = train_test_split(data[[<span class="string">&quot;Temperature&quot;</span>, <span class="string">&quot;Humidity&quot;</span>, <span class="string">&quot;Light&quot;</span>, <span class="string">&quot;CO2&quot;</span>, <span class="string">&quot;HumidityRatio&quot;</span>]].values, data[<span class="string">&quot;Occupancy&quot;</span>].values.reshape(-<span class="number">1</span>, <span class="number">1</span>), random_state=<span class="number">42</span>)</span><br><span class="line"><span class="comment"># one-hot 编码</span></span><br><span class="line">y_train = tf.concat(<span class="number">1</span>, [<span class="number">1</span> - y_train, y_train])</span><br><span class="line">y_test = tf.concat(<span class="number">1</span>, [<span class="number">1</span> - y_test, y_test])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置模型</span></span><br><span class="line">learning_rate = <span class="number">0.001</span></span><br><span class="line">training_epochs = <span class="number">50</span></span><br><span class="line">batch_size = <span class="number">100</span></span><br><span class="line">display_step = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">n_samples = X_train.shape[<span class="number">0</span>]</span><br><span class="line">n_features = <span class="number">5</span></span><br><span class="line">n_class = <span class="number">2</span></span><br><span class="line">x = tf.placeholder(tf.float32, [<span class="literal">None</span>, n_features])</span><br><span class="line">y = tf.placeholder(tf.float32, [<span class="literal">None</span>, n_class])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 模型参数</span></span><br><span class="line">W = tf.Variable(tf.zeros([n_features, n_class]))</span><br><span class="line">b = tf.Variable(tf.zeros([n_class]))</span><br><span class="line"><span class="comment"># W = tf.Variable(tf.truncated_normal([n_features, n_class-1]))</span></span><br><span class="line"><span class="comment"># b = tf.Variable(tf.truncated_normal([n_class]))</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义模型，此处使用与线性回归一样的定义</span></span><br><span class="line"><span class="comment"># 因为在后面定义损失的时候会加上映射</span></span><br><span class="line">pred = tf.matmul(x, W) + b</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义损失函数</span></span><br><span class="line">cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))</span><br><span class="line"><span class="comment"># cost = tf.nn.sigmoid_cross_entropy_with_logits(pred, y)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 梯度下降</span></span><br><span class="line">optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准确率</span></span><br><span class="line">correct_prediction = tf.equal(tf.argmax(pred, <span class="number">1</span>), tf.argmax(y, <span class="number">1</span>))</span><br><span class="line">accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化所有变量</span></span><br><span class="line">init = tf.initialize_all_variables()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练模型</span></span><br><span class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</span><br><span class="line">    sess.run(init)</span><br><span class="line">    <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(training_epochs):</span><br><span class="line">        avg_cost = <span class="number">0</span></span><br><span class="line">        total_batch = <span class="built_in">int</span>(n_samples / batch_size)</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(total_batch):</span><br><span class="line">            _, c = sess.run([optimizer, cost], </span><br><span class="line">                            feed_dict=&#123;x: X_train[i * batch_size : (i+<span class="number">1</span>) * batch_size], </span><br><span class="line">                                      y: y_train[i * batch_size : (i+<span class="number">1</span>) * batch_size, :].<span class="built_in">eval</span>()&#125;)</span><br><span class="line">            avg_cost = c / total_batch</span><br><span class="line">        plt.plot(epoch+<span class="number">1</span>, avg_cost, <span class="string">&#x27;co&#x27;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (epoch+<span class="number">1</span>) % display_step == <span class="number">0</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Epoch:&quot;</span>, <span class="string">&quot;%04d&quot;</span> % (epoch+<span class="number">1</span>), <span class="string">&quot;cost=&quot;</span>, avg_cost)</span><br><span class="line">            </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Optimization Finished!&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Testing Accuracy:&quot;</span>, accuracy.<span class="built_in">eval</span>(&#123;x: X_train, y:y_train.<span class="built_in">eval</span>()&#125;))</span><br><span class="line">    plt.xlabel(<span class="string">&quot;Epoch&quot;</span>)</span><br><span class="line">    plt.ylabel(<span class="string">&quot;Cost&quot;</span>)</span><br><span class="line">    plt.show()</span><br></pre></td></tr></table></figure>
+<h2 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">Epoch: 0001 cost= 0.402052676091</span><br><span class="line">Epoch: 0002 cost= 0.384176723293</span><br><span class="line">Epoch: 0003 cost= 0.174337043137</span><br><span class="line">Epoch: 0004 cost= 0.131257948328</span><br><span class="line">Epoch: 0005 cost= 0.116865955415</span><br><span class="line">Epoch: 0006 cost= 0.167843505984</span><br><span class="line">Epoch: 0007 cost= 0.0734717650492</span><br><span class="line">Epoch: 0008 cost= 0.134278797712</span><br><span class="line">Epoch: 0009 cost= 0.107930605529</span><br><span class="line">Epoch: 0010 cost= 0.0559994509963</span><br><span class="line">Epoch: 0011 cost= 0.0894105786183</span><br><span class="line">Epoch: 0012 cost= 0.112936254408</span><br><span class="line">Epoch: 0013 cost= 0.0598722950357</span><br><span class="line">Epoch: 0014 cost= 0.0590479530272</span><br><span class="line">Epoch: 0015 cost= 0.085669126667</span><br><span class="line">Epoch: 0016 cost= 0.0516053653154</span><br><span class="line">Epoch: 0017 cost= 0.0587136237348</span><br><span class="line">Epoch: 0018 cost= 0.0668616529371</span><br><span class="line">Epoch: 0019 cost= 0.0612989566365</span><br><span class="line">Epoch: 0020 cost= 0.0527745035828</span><br><span class="line">Epoch: 0021 cost= 0.0758241278226</span><br><span class="line">Epoch: 0022 cost= 0.0845051749808</span><br><span class="line">Epoch: 0023 cost= 0.0364650820122</span><br><span class="line">Epoch: 0024 cost= 0.0526885400053</span><br><span class="line">Epoch: 0025 cost= 0.0451166786131</span><br><span class="line">Epoch: 0026 cost= 0.0508907896573</span><br><span class="line">Epoch: 0027 cost= 0.0619052668087</span><br><span class="line">Epoch: 0028 cost= 0.0560943103227</span><br><span class="line">Epoch: 0029 cost= 0.0425660180264</span><br><span class="line">Epoch: 0030 cost= 0.0601769588033</span><br><span class="line">Epoch: 0031 cost= 0.0461903712789</span><br><span class="line">Epoch: 0032 cost= 0.0437817573547</span><br><span class="line">Epoch: 0033 cost= 0.102960703803</span><br><span class="line">Epoch: 0034 cost= 0.0599972771817</span><br><span class="line">Epoch: 0035 cost= 0.10071516037</span><br><span class="line">Epoch: 0036 cost= 0.101918243971</span><br><span class="line">Epoch: 0037 cost= 0.102948681253</span><br><span class="line">Epoch: 0038 cost= 0.0239826597151</span><br><span class="line">Epoch: 0039 cost= 0.02541697807</span><br><span class="line">Epoch: 0040 cost= 0.039644296052</span><br><span class="line">Epoch: 0041 cost= 0.0564842145951</span><br><span class="line">Epoch: 0042 cost= 0.0651661059895</span><br><span class="line">Epoch: 0043 cost= 0.0559316267733</span><br><span class="line">Epoch: 0044 cost= 0.058336042967</span><br><span class="line">Epoch: 0045 cost= 0.0420891652342</span><br><span class="line">Epoch: 0046 cost= 0.0113296391534</span><br><span class="line">Epoch: 0047 cost= 0.0151269641079</span><br><span class="line">Epoch: 0048 cost= 0.070616901898</span><br><span class="line">Epoch: 0049 cost= 0.0543320648006</span><br><span class="line">Epoch: 0050 cost= 0.0490373939764</span><br><span class="line">Optimization Finished!</span><br><span class="line">Testing Accuracy: 0.973473</span><br></pre></td></tr></table></figure>
+<p><img src="http://i.imgur.com/Ri1jJQq.png" alt=""></p>
+<p>可以看到最终准确率达到了97%，这里注意标签要进行<code>one-hot</code>编码。</p>
+<h2 id="与sklearn的比较"><a href="#与sklearn的比较" class="headerlink" title="与sklearn的比较"></a>与sklearn的比较</h2><p>我用相同的数据集使用<code>sklearn</code>实现了LR,</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">clf = LogisticRegression()</span><br><span class="line">clf.fit(X_train, y_train)</span><br><span class="line">clf.score(X_test, y_test)</span><br></pre></td></tr></table></figure>
+<p>结果准确率是0.98624754420432215，而且训练时间大为缩短。</p>
+<hr>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text">数据集</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81"><span class="toc-text">代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C"><span class="toc-text">结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8Esklearn%E7%9A%84%E6%AF%94%E8%BE%83"><span class="toc-text">与sklearn的比较</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><span id="more"></span>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/11/19/tensorflow-mlp/"
+                    data-tooltip="TensorFlow 中的多层感知器（MLP）"
+                    aria-label="上一篇: TensorFlow 中的多层感知器（MLP）"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/10/29/tensorflow-hyperparams/"
+                    data-tooltip="学习率、迭代次数和初始化方式对模型准确率的影响"
+                    aria-label="下一篇: 学习率、迭代次数和初始化方式对模型准确率的影响"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/11/19/tensorflow-mlp/"
+                    data-tooltip="TensorFlow 中的多层感知器（MLP）"
+                    aria-label="上一篇: TensorFlow 中的多层感知器（MLP）"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/10/29/tensorflow-hyperparams/"
+                    data-tooltip="学习率、迭代次数和初始化方式对模型准确率的影响"
+                    aria-label="下一篇: 学习率、迭代次数和初始化方式对模型准确率的影响"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/';
+              
+            this.page.identifier = '2016/11/06/tensorflow-logistic-regression/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

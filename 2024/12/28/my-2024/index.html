@@ -1,0 +1,735 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>我的 2024 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n2024 马上就要过去了，真的好快！\n不知道从什么时候开始，我也开始有每年底写一个年度回顾的想法。哦对了，应该是从网易云音乐的年度回顾开始。\n回想这一年来发生了什么，有哪些收获，有哪些感想，获得了什么，失去了什么。从哪里开始呢？就从最大的事情开始吧。\n房子房子属实是意外，本没有打算今年买房，但是奈何政策变化太快了，各种利好政策纷至沓来，然后就看了看，然后就买了 😂。具体可以看我之前的写的买房记，在这里就不赘述了。\n孩子今年迎来了我们的第二个孩子，这个确实是计划之中。我觉得两个孩子是最佳的状态，既不多也不少，1 个孩子略显孤单，3 个孩子略显嘈杂。\n但是生第二个孩子的代价，是很大的，尤其是像我们这种两个孩子相差 3 岁的情况。俗话说，terrible 2 horrible 3。两三岁这个年龄的孩子，精力极其旺盛，探索欲极其之强，总想搞点大事情，在家里根本闲不住。然而这时候家里迎来一个刚出生的孩子时，需要一个安静的环境，这就造成了冲突和矛盾。这种冲突简直会让你崩溃，我们家还是父母在帮忙照看的情况，如果没有父母照顾，简直难以度过这段艰难的时期。\n说到这里，在 2 岁多的时候，让孩子去上托班，是一个不错的选择。这样几乎可以避免上述冲突。但是恰巧我们想让老大去上托班的时候，正是冬季。然后冬季是流感高发期，去上托班就意味着大概率会生病，然后将病毒带回家，然后传给老二，这是我们非常不愿意看到的。所以还是选择年后送去托班。\n总之，想要生老二，最好让两个孩子年龄避开 3 岁这个尴尬的差距。将来两个孩子有可能同时处于升学关键期：中考和高考。\n车子北京的摇号政策是在太恶心，2024 年 第二期摇号意料之中的落空，320 万申请者（包括家庭和个人），9600 个指标，粗略算下来，平均摇中概率只有 0.3%。排新能源车也是遥遥无期，model y 算是这两年买不到了，不过 2025 年要出新款了，所以算是塞翁失马？\n四轮车买不了，两轮车还是可以买的。在搬家前那段时间，买了一辆九号 F90。这辆小车，在搬家前后可是帮了大忙，省了不少打车钱。自从有了它，后来打车次数直线下降，短途出行全靠它。后来天气渐冷，才逐渐开始打车。不得不说，春秋季，简直是电动车的黄金时期，骑着车吹风太舒服了。\n牛子什么是牛子？牛马……哈哈哈，只是为了强行与上面对齐，又不能叫马子，只能叫牛子了。我是做 NLP 的，但模型工作在今年只占一小部分，今年的很大部分工作，都是工程上的问题，有很多我之前我没接触过或者了解不深的东西，比如 Kafka、redis 以及 ToC 产品的生产代码编写和性能监控。\n与此同时，LLM 大爆发，无论是国内还是国外，此起彼伏。LLM 的使用门槛越来越低，价格越来越便宜，对 NLP 工程师可能是个挑战。以前我们训练一个分类模型，可能真的需要 NLP 工程师的参与，毕竟编写处理数据和训练代码等还是有一定门槛的。但是现在，只要你把类别列表、待分类文本扔给 LLM，一次 API 调用，就可以得到一个不错的结果，如果你用的是 gpt-4o 等高阶模型，那么你的效果更不会太差，你甚至都不需要微调（而且微调成本较高，效果也不一定好）。所以说你只需一个传统的 Java 工程师即可，甚至是一个实习生！平权正在发生！\n但是话说回来，如果你是调用 LLM API 来使用，那么在发生分类错误时，即 LLM 始终对一些文本分错类，那么此时你基本无法去优化，你能做的只有调整 prompt 或等待模型升级。如果你使用的是本地部署的 LLM，那么要么较小模型效果不好，要么较大模型成本较高，微调费时费力，还不一定有提升。而使用“传统”模型（是的，BERT 这种现在也只能说是传统了），你有更为灵活的模型优化方法和更快的推理速度。对于摘要等生成任务，我认为目前最佳做法仍然是 LLM，但是注意幻觉问题，强如 Apple，也会闹出胡说八道的笑话。\n下一年希望继续增强自己的工程能力和算法能力，阅读更多的论文，理解更多的概念，写出更多的博客！\n野子即牛子之外的探索。今年探索了几个项目，主要是：\n\nVideo Translator：上传一个视频，自动加上中文字幕。这个其实没啥核心技术含量，主要就是 ffmpeg + whisper。希望接下来加上 GitHub 自动打包发布（docker），使其更易用。\n声音克隆：这个目前还未公开。这也是我第一次实际训练音频模型，使用的是 xtts_v2，声音是柴知道之前的女性声音，使用了大概 5 分钟的声音，走了一下从音频获取到模型部署的全流程，收获不少。虽然 xtts 本身支持直接根据 reference audio 进行克隆，但是训练过后发现效果更好。  从音频获取到模型部署全流程\ntil：记录日常遇到的不足以形成一篇完整博文的小问题、小技术点，实际上就是小笔记，之前我的笔记都在 GitHub 和 Notion 上。灵感来自 simonw/til 。希望新的一年继续坚持！\n博客自动发布。利用 GitHub Action 的能力，在 GitHub 上直接编辑博客，提交之后执行 action，build and deploy。详见使用 GitHub Actions 自动发布 Hexo 博客。\n\n乐子根据豆瓣统计，今年共看过 79 部影视。直观上感觉这个数量明显低于去年，主要还是今年太忙了。而且今年国内上映的感兴趣的电影不多。\n沙丘 2、洛基 2、幕府将军、美国内战、凡人歌、异教徒、Devs、人生复本、 终极名单、Reacher 和豺狼的日子等，是值得点出来的，后三个（[-3:]），我称之为“孤胆硬汉大杀四方”，只不过硬汉的风格不同。\n[-4:-6] 是非常不错的关于平行宇宙和薛定谔的猫的片子，Devs 中的理念：Everything is predictable，在当下 LLM 盛行的年代，岂不就是 AGI 的另一种表达？我也认同这句话，有些东西我们现在看起来是不可预测的，但是否是我们对其了解的太少？特征不够多？\n结语回顾 2024 年，买房和老二出生是大事，生活上忙忙碌碌，工作上也忙忙碌碌，技术上也有所探索和收获，但博客发表量太少，太多仍在草稿阶段。希望 2025 年继续提升技术，继续推进现有的一些个人项目，发表更多的博客！Don’t think. Just do it!\nHappy coding, Happy blogging, Happy NEW YEAR!\nEND","dateCreated":"2024-12-28T17:10:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2024-12-28T17:10:00+08:00","description":"2024 年即将落幕，这一年，你过得如何？从意外买房到迎来二宝，从技术探索到工作挑战，从电影乐趣到个人成长——我的 2024，忙碌而充实。让我们一起回顾这一年的点滴，展望更精彩的 2025！[ChatGPT 4o]","headline":"我的 2024","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2024/12/28/my-2024/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2024/12/28/my-2024/","keywords":"Living, Recap"}</script>
+    <meta name="description" content="2024 年即将落幕，这一年，你过得如何？从意外买房到迎来二宝，从技术探索到工作挑战，从电影乐趣到个人成长——我的 2024，忙碌而充实。让我们一起回顾这一年的点滴，展望更精彩的 2025！[ChatGPT 4o]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="我的 2024">
+<meta property="og:url" content="https://alanlee.fun/2024/12/28/my-2024/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="2024 年即将落幕，这一年，你过得如何？从意外买房到迎来二宝，从技术探索到工作挑战，从电影乐趣到个人成长——我的 2024，忙碌而充实。让我们一起回顾这一年的点滴，展望更精彩的 2025！[ChatGPT 4o]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2024/12/28/IuU3js5RlfMEaCH.jpg">
+<meta property="article:published_time" content="2024-12-28T09:10:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.196Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Living">
+<meta property="article:tag" content="Recap">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2024/12/28/IuU3js5RlfMEaCH.jpg">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            我的 2024
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2024-12-28T17:10:00+08:00">
+	
+		    2024 年 12 月 28 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%BF%E5%AD%90"><span class="toc-text">房子</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%A9%E5%AD%90"><span class="toc-text">孩子</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BD%A6%E5%AD%90"><span class="toc-text">车子</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%89%9B%E5%AD%90"><span class="toc-text">牛子</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%87%8E%E5%AD%90"><span class="toc-text">野子</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B9%90%E5%AD%90"><span class="toc-text">乐子</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>2024 马上就要过去了，真的好快！</p>
+<p>不知道从什么时候开始，我也开始有每年底写一个年度回顾的想法。哦对了，应该是从网易云音乐的年度回顾开始。</p>
+<p>回想这一年来发生了什么，有哪些收获，有哪些感想，获得了什么，失去了什么。从哪里开始呢？就从最大的事情开始吧。</p>
+<h1 id="房子"><a href="#房子" class="headerlink" title="房子"></a>房子</h1><p>房子属实是意外，本没有打算今年买房，但是奈何政策变化太快了，各种利好政策纷至沓来，然后就看了看，然后就买了 😂。具体可以看我之前的写的<a href="https://alanlee.fun/2024/11/03/my-home-purchase-story/">买房记</a>，在这里就不赘述了。</p>
+<h1 id="孩子"><a href="#孩子" class="headerlink" title="孩子"></a>孩子</h1><p>今年迎来了我们的第二个孩子，这个确实是计划之中。我觉得两个孩子是最佳的状态，既不多也不少，1 个孩子略显孤单，3 个孩子略显嘈杂。</p>
+<p>但是生第二个孩子的代价，是很大的，尤其是像我们这种两个孩子相差 3 岁的情况。俗话说，terrible 2 horrible 3。两三岁这个年龄的孩子，精力极其旺盛，探索欲极其之强，总想搞点大事情，在家里根本闲不住。然而这时候家里迎来一个刚出生的孩子时，需要一个安静的环境，这就造成了冲突和矛盾。这种冲突简直会让你崩溃，我们家还是父母在帮忙照看的情况，如果没有父母照顾，简直难以度过这段艰难的时期。</p>
+<p>说到这里，在 2 岁多的时候，让孩子去上托班，是一个不错的选择。这样几乎可以避免上述冲突。但是恰巧我们想让老大去上托班的时候，正是冬季。然后冬季是流感高发期，去上托班就意味着大概率会生病，然后将病毒带回家，然后传给老二，这是我们非常不愿意看到的。所以还是选择年后送去托班。</p>
+<p>总之，想要生老二，最好让两个孩子年龄避开 3 岁这个尴尬的差距。将来两个孩子有可能同时处于升学关键期：中考和高考。</p>
+<h1 id="车子"><a href="#车子" class="headerlink" title="车子"></a>车子</h1><p>北京的摇号政策是在太恶心，2024 年 第二期摇号意料之中的落空，320 万申请者（包括家庭和个人），9600 个指标，粗略算下来，平均摇中概率只有 0.3%。排新能源车也是遥遥无期，model y 算是这两年买不到了，不过 2025 年要出新款了，所以算是塞翁失马？</p>
+<p>四轮车买不了，两轮车还是可以买的。在搬家前那段时间，买了一辆九号 F90。这辆小车，在搬家前后可是帮了大忙，省了不少打车钱。自从有了它，后来打车次数直线下降，短途出行全靠它。后来天气渐冷，才逐渐开始打车。不得不说，春秋季，简直是电动车的黄金时期，骑着车吹风太舒服了。</p>
+<h1 id="牛子"><a href="#牛子" class="headerlink" title="牛子"></a>牛子</h1><p>什么是牛子？牛马……哈哈哈，只是为了强行与上面对齐，又不能叫马子，只能叫牛子了。我是做 NLP 的，但模型工作在今年只占一小部分，今年的很大部分工作，都是工程上的问题，有很多我之前我没接触过或者了解不深的东西，比如 Kafka、redis 以及 ToC 产品的生产代码编写和性能监控。</p>
+<p>与此同时，LLM 大爆发，无论是国内还是国外，此起彼伏。LLM 的使用门槛越来越低，价格越来越便宜，对 NLP 工程师可能是个挑战。以前我们训练一个分类模型，可能真的需要 NLP 工程师的参与，毕竟编写处理数据和训练代码等还是有一定门槛的。但是现在，只要你把类别列表、待分类文本扔给 LLM，一次 API 调用，就可以得到一个不错的结果，如果你用的是 gpt-4o 等高阶模型，那么你的效果更不会太差，你甚至都不需要微调（而且微调成本较高，效果也不一定好）。所以说你只需一个传统的 Java 工程师即可，甚至是一个实习生！<strong>平权正在发生！</strong></p>
+<p>但是话说回来，如果你是调用 LLM API 来使用，那么在发生分类错误时，即 LLM 始终对一些文本分错类，那么此时你基本无法去优化，你能做的只有调整 prompt 或等待模型升级。如果你使用的是本地部署的 LLM，那么要么较小模型效果不好，要么较大模型成本较高，微调费时费力，还不一定有提升。而使用“传统”模型（是的，BERT 这种现在也只能说是传统了），你有更为灵活的模型优化方法和更快的推理速度。对于摘要等生成任务，我认为目前最佳做法仍然是 LLM，但是注意幻觉问题，强如 Apple，也会闹出胡说八道的笑话。</p>
+<p>下一年希望继续增强自己的工程能力和算法能力，阅读更多的论文，理解更多的概念，写出更多的博客！</p>
+<h1 id="野子"><a href="#野子" class="headerlink" title="野子"></a>野子</h1><p>即牛子之外的探索。今年探索了几个项目，主要是：</p>
+<ul>
+<li><a href="https://github.com/secsilm/video-translator">Video Translator</a>：上传一个视频，自动加上中文字幕。这个其实没啥核心技术含量，主要就是 ffmpeg + whisper。希望接下来加上 GitHub 自动打包发布（docker），使其更易用。</li>
+<li>声音克隆：这个目前还未公开。这也是我第一次实际训练音频模型，使用的是 xtts_v2，声音是柴知道之前的女性声音，使用了大概 5 分钟的声音，走了一下从音频获取到模型部署的全流程，收获不少。虽然 xtts 本身支持直接根据 reference audio 进行克隆，但是训练过后发现效果更好。  <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/12/28/IuU3js5RlfMEaCH.jpg" title="从音频获取到模型部署全流程" data-caption="从音频获取到模型部署全流程" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2024/12/28/IuU3js5RlfMEaCH.jpg" alt="从音频获取到模型部署全流程"></a><span class="caption">从音频获取到模型部署全流程</span></div></li>
+<li><a href="https://github.com/secsilm/til">til</a>：记录日常遇到的不足以形成一篇完整博文的小问题、小技术点，实际上就是小笔记，之前我的笔记都在 GitHub 和 Notion 上。灵感来自 <a href="https://github.com/simonw/til">simonw/til</a> 。希望新的一年继续坚持！</li>
+<li>博客自动发布。利用 GitHub Action 的能力，在 GitHub 上直接编辑博客，提交之后执行 action，build and deploy。详见<a href="https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/">使用 GitHub Actions 自动发布 Hexo 博客</a>。</li>
+</ul>
+<h1 id="乐子"><a href="#乐子" class="headerlink" title="乐子"></a>乐子</h1><p>根据豆瓣统计，今年共看过 79 部影视。直观上感觉这个数量明显低于去年，主要还是今年太忙了。而且今年国内上映的感兴趣的电影不多。</p>
+<p><a href="https://movie.douban.com/subject/35575567/">沙丘 2</a>、<a href="https://movie.douban.com/subject/35244032/">洛基 2</a>、<a href="https://movie.douban.com/subject/30291334/">幕府将军</a>、<a href="https://movie.douban.com/subject/35750081/">美国内战</a>、<a href="https://movie.douban.com/subject/36189205/">凡人歌</a>、<a href="https://movie.douban.com/subject/36439490/">异教徒</a>、<a href="https://movie.douban.com/subject/30169926/">Devs</a>、<a href="https://movie.douban.com/subject/35819414/">人生复本</a>、 <a href="https://movie.douban.com/subject/34963448/">终极名单</a>、<a href="https://movie.douban.com/subject/30378897/">Reacher</a> 和<a href="https://movie.douban.com/subject/36323224/">豺狼的日子</a>等，是值得点出来的，后三个（<code>[-3:]</code>），我称之为“<a href="https://www.douban.com/doulist/160563962/">孤胆硬汉大杀四方</a>”，只不过硬汉的风格不同。</p>
+<p><code>[-4:-6]</code> 是非常不错的关于平行宇宙和薛定谔的猫的片子，Devs 中的理念：Everything is predictable，在当下 LLM 盛行的年代，岂不就是 AGI 的另一种表达？我也认同这句话，有些东西我们现在看起来是不可预测的，但是否是我们对其了解的太少？特征不够多？</p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>回顾 2024 年，买房和老二出生是大事，生活上忙忙碌碌，工作上也忙忙碌碌，技术上也有所探索和收获，但博客发表量太少，太多仍在草稿阶段。希望 2025 年继续提升技术，继续推进现有的一些个人项目，发表更多的博客！<strong>Don’t think. Just do it!</strong></p>
+<p>Happy coding, Happy blogging, Happy NEW YEAR!</p>
+<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Living/" rel="tag">Living</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Recap/" rel="tag">Recap</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/03/introducing-mcp-part-1/"
+                    data-tooltip="MCP 简易指南（一）：实践"
+                    aria-label="上一篇: MCP 简易指南（一）：实践"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/11/03/my-home-purchase-story/"
+                    data-tooltip="买房记"
+                    aria-label="下一篇: 买房记"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/12/28/my-2024/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/12/28/my-2024/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/12/28/my-2024/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/03/introducing-mcp-part-1/"
+                    data-tooltip="MCP 简易指南（一）：实践"
+                    aria-label="上一篇: MCP 简易指南（一）：实践"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/11/03/my-home-purchase-story/"
+                    data-tooltip="买房记"
+                    aria-label="下一篇: 买房记"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/12/28/my-2024/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/12/28/my-2024/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/12/28/my-2024/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/12/28/my-2024/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/12/28/my-2024/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/12/28/my-2024/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2024/12/28/my-2024/';
+              
+            this.page.identifier = '2024/12/28/my-2024/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

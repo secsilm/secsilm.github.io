@@ -1,0 +1,747 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>一个 UnboundLocalError 引发的神奇问题 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题最近在写一个工作上的代码时，遇到要使用嵌套函数的情况，但是总是报一个 UnboundLocalError 的错误。我把问题代码抽象出来如下：\n1234567891011121314151617def outer():    outer_list = []    outer_int = 0    def inner():        print(&#x27;INNER&#x27;)        print(f&quot;outer_list=&#123;outer_list&#125;&quot;)        print(f&quot;outer_int=&#123;outer_int&#125;&quot;)        outer_list.append(1)        outer_int = 1        inner()    print(&#x27;OUTER&#x27;)    print(f&quot;outer_list=&#123;outer_list&#125;&quot;)    print(f&quot;outer_int=&#123;outer_int&#125;&quot;)outer()\n运行该代码会报如下 UnboundLocalError 错误，显示 outer_int 未定义：\n12345678910111213141516171819202122232425INNERouter_list=[]---------------------------------------------------------------------------UnboundLocalError                         Traceback (most recent call last)&lt;ipython-input-7-0c4860f923cf&gt; in &lt;module&gt;()     16      17 ---&gt; 18 outer()1 frames&lt;ipython-input-7-0c4860f923cf&gt; in outer()     10         outer_int = 1     11 ---&gt; 12     inner()     13     print(&#x27;OUTER&#x27;)     14     print(f&quot;outer_list=&#123;outer_list&#125;&quot;)&lt;ipython-input-7-0c4860f923cf&gt; in inner()      6         print(&#x27;INNER&#x27;)      7         print(f&quot;outer_list=&#123;outer_list&#125;&quot;)----&gt; 8         print(f&quot;outer_int=&#123;outer_int&#125;&quot;)      9         outer_list.append(1)     10         outer_int = 1UnboundLocalError: local variable &#x27;outer_int&#x27; referenced before assignment\nouter_list 和 outer_int 同样在 outer() 里进行了定义，按理说在嵌套函数里都可以获取到，但是现在表明只有 outer_list 可以获取到。\n但是如果你将第 10 行 outer_int = 1 注释掉，你会发现又不报错了，又可以访问到 outer_int 了：\n123456INNERouter_list=[]outer_int=0OUTERouter_list=[1]outer_int=0\n这是怎么回事？\n猜想与证明首先表明，这是 feature 而不是 bug！\n然后我们需要先引入几个术语：\n\n自由变量 free variable。自由变量一般是相对于嵌套函数来说的。一个嵌套函数的自由变量是指该函数用到了该变量，但其定义并不在该函数内的非全局变量。在上面的代码中， outer_list 和 outer_int 都是 inner() 的自由变量，它们都在 inner() 中被用到，但是定义却是在 outer() 函数中，而且它们也很明显不是 global 的。“自由”意味着它们可以在不同函数之间”自由穿梭“。此外用 nonlocal 声明的变量也是自由变量。\nCell 变量 Cell variable（我不太确定中文叫法，暂且就叫 cell 变量吧）。单元变量其实本质上是一种局部变量，是同一变量在不同视角下的说法，该变量在外部函数中定义，但是在内部函数被引用。在上面的代码中， outer_list 和 outer_int 都是 outer() 的 cell 变量，但对 inner() 来说，它们同时也是其下的自由变量。\n\n由上面的现象我们可以猜想，可能是由于 inner() 函数中对 outer_int 的重新赋值导致其从自由变量变为 inner() 函数的局部变量，然后引发 UnboundLocalError 。\n那如何证明我们的猜想呢？\n这就又要引入一个概念叫字节码 bytecode。Python 代码执行流程是先将你写的代码编译为一种中间代码，然后运行时再由解释器解释这些中间代码为机器代码来执行。这种中间代码就叫字节码。\n如果你观察过运行 Python 文件后的目录变化情况，你会发现在你第一次运行完一个 Python 文件后，当前目录会生成一个 __pycache__ 目录，里面存放着和你运行的 Python 文件同名的文件，只不过后缀是 .pyc ，这些文件里存放的就是字节码。\n这些字节码里存放着编译后的各种底层操作，我们可以从这些字节码里看到详细的操作细节。但是字节码是二进制文件，我们需要使用内置的 dis 模块来帮助我们反汇编（disassembly）这些字节码，生成格式化后的、人类阅读友好的字节码指令。\n为方便我们后面讨论，我先将两个关键的字节码指令及其意义列出如下：\n\nLOAD_FAST ：将指向局部对象 co_varnames[var_num] 的引用推入栈顶。对应于局部变量。\nLOAD_GLOBAL ：加载名称为 co_names[namei] 的全局对象推入栈顶。对应于全局变量。\nLOAD_DEREF ：加载包含在 cell 的第 i 个空位中的单元并释放可用的存储空间。将一个 cell 所包含对象的引用推入栈顶。对应于自由变量和 cell 变量。\n\n\n相应的还有 STORE_* 的指令，其意义和 LOAD_* 相反，我就不赘述了。\n\nOK，我们现在来看下注释前代码的字节码（Python 3.7.12，下同）：\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172  2           0 BUILD_LIST               0              2 STORE_DEREF              0 (outer_list)  3           4 LOAD_CONST               1 (0)              6 STORE_FAST               0 (outer_int)  5           8 LOAD_CLOSURE             0 (outer_list)             10 BUILD_TUPLE              1             12 LOAD_CONST               2 (&lt;code object inner at 0x7f9f518cdf60, file &quot;&lt;ipython-input-1-0c4860f923cf&gt;&quot;, line 5&gt;)             14 LOAD_CONST               3 (&#x27;outer.&lt;locals&gt;.inner&#x27;)             16 MAKE_FUNCTION            8             18 STORE_FAST               1 (inner) 12          20 LOAD_FAST                1 (inner)             22 CALL_FUNCTION            0             24 POP_TOP 13          26 LOAD_GLOBAL              0 (print)             28 LOAD_CONST               4 (&#x27;OUTER&#x27;)             30 CALL_FUNCTION            1             32 POP_TOP 14          34 LOAD_GLOBAL              0 (print)             36 LOAD_CONST               5 (&#x27;outer_list=&#x27;)             38 LOAD_DEREF               0 (outer_list)             40 FORMAT_VALUE             0             42 BUILD_STRING             2             44 CALL_FUNCTION            1             46 POP_TOP 15          48 LOAD_GLOBAL              0 (print)             50 LOAD_CONST               6 (&#x27;outer_int=&#x27;)             52 LOAD_FAST                0 (outer_int)             54 FORMAT_VALUE             0             56 BUILD_STRING             2             58 CALL_FUNCTION            1             60 POP_TOP             62 LOAD_CONST               0 (None)             64 RETURN_VALUEDisassembly of &lt;code object inner at 0x7f9f518cdf60, file &quot;&lt;ipython-input-1-0c4860f923cf&gt;&quot;, line 5&gt;:  6           0 LOAD_GLOBAL              0 (print)              2 LOAD_CONST               1 (&#x27;INNER&#x27;)              4 CALL_FUNCTION            1              6 POP_TOP  7           8 LOAD_GLOBAL              0 (print)             10 LOAD_CONST               2 (&#x27;outer_list=&#x27;)             12 LOAD_DEREF               0 (outer_list)  &lt;---- HERE             14 FORMAT_VALUE             0             16 BUILD_STRING             2             18 CALL_FUNCTION            1             20 POP_TOP  8          22 LOAD_GLOBAL              0 (print)             24 LOAD_CONST               3 (&#x27;outer_int=&#x27;)             26 LOAD_FAST                0 (outer_int)  &lt;---- HERE             28 FORMAT_VALUE             0             30 BUILD_STRING             2             32 CALL_FUNCTION            1             34 POP_TOP  9          36 LOAD_DEREF               0 (outer_list)             38 LOAD_METHOD              1 (append)             40 LOAD_CONST               4 (1)             42 CALL_METHOD              1             44 POP_TOP 10          46 LOAD_CONST               4 (1)             48 STORE_FAST               0 (outer_int)             50 LOAD_CONST               0 (None)             52 RETURN_VALUE\n注意我标记 &lt;---- HERE 的那两行，即第 7 行和第 8 行所对应的字节码。\n我们可以看到， outer_list 是一个自由变量，其相关的指令都是 *_DEREF ，第 7 行使用 LOAD_DEREF 来加载 outer_list 。而 outer_int 是一个 inner() 的局部变量，其相关的指令都是 *_FAST ，第 8 行使用 LOAD_FAST 来加载 outer_int 。但是 outer_int 在 inner() 中并未定义，所以会引发 UnboundLocalError 。\n我们再来看下注释后的字节码指令：\n12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970  2           0 BUILD_LIST               0              2 STORE_DEREF              1 (outer_list)  &lt;---- HERE  3           4 LOAD_CONST               1 (0)              6 STORE_DEREF              0 (outer_int)  &lt;---- HERE  5           8 LOAD_CLOSURE             0 (outer_int)             10 LOAD_CLOSURE             1 (outer_list)             12 BUILD_TUPLE              2             14 LOAD_CONST               2 (&lt;code object inner at 0x7fa67ec76ed0, file &quot;&lt;ipython-input-1-b646af7e4a0b&gt;&quot;, line 5&gt;)             16 LOAD_CONST               3 (&#x27;outer.&lt;locals&gt;.inner&#x27;)             18 MAKE_FUNCTION            8             20 STORE_FAST               0 (inner) 12          22 LOAD_FAST                0 (inner)             24 CALL_FUNCTION            0             26 POP_TOP 13          28 LOAD_GLOBAL              0 (print)             30 LOAD_CONST               4 (&#x27;OUTER&#x27;)             32 CALL_FUNCTION            1             34 POP_TOP 14          36 LOAD_GLOBAL              0 (print)             38 LOAD_CONST               5 (&#x27;outer_list=&#x27;)             40 LOAD_DEREF               1 (outer_list)             42 FORMAT_VALUE             0             44 BUILD_STRING             2             46 CALL_FUNCTION            1             48 POP_TOP 15          50 LOAD_GLOBAL              0 (print)             52 LOAD_CONST               6 (&#x27;outer_int=&#x27;)             54 LOAD_DEREF               0 (outer_int)             56 FORMAT_VALUE             0             58 BUILD_STRING             2             60 CALL_FUNCTION            1             62 POP_TOP             64 LOAD_CONST               0 (None)             66 RETURN_VALUEDisassembly of &lt;code object inner at 0x7fa67ec76ed0, file &quot;&lt;ipython-input-1-b646af7e4a0b&gt;&quot;, line 5&gt;:  6           0 LOAD_GLOBAL              0 (print)              2 LOAD_CONST               1 (&#x27;INNER&#x27;)              4 CALL_FUNCTION            1              6 POP_TOP  7           8 LOAD_GLOBAL              0 (print)             10 LOAD_CONST               2 (&#x27;outer_list=&#x27;)             12 LOAD_DEREF               1 (outer_list)             14 FORMAT_VALUE             0             16 BUILD_STRING             2             18 CALL_FUNCTION            1             20 POP_TOP  8          22 LOAD_GLOBAL              0 (print)             24 LOAD_CONST               3 (&#x27;outer_int=&#x27;)             26 LOAD_DEREF               0 (outer_int)  &lt;---- HERE             28 FORMAT_VALUE             0             30 BUILD_STRING             2             32 CALL_FUNCTION            1             34 POP_TOP  9          36 LOAD_DEREF               1 (outer_list)             38 LOAD_METHOD              1 (append)             40 LOAD_CONST               4 (1)             42 CALL_METHOD              1             44 POP_TOP             46 LOAD_CONST               0 (None)             48 RETURN_VALUE\n我们可以看到 outer_list 和 outer_int 现在都是自由变量了，自然也不会引发 UnboundLocalError 了。\n那么为什么 outer_list 可以在 inner() 中引用并改变呢？其实 outer_list 并没有被改变，其 id 没有变，只是增加了一个值，其内存中的地址并没有变（变量的地址指的是起始地址）。也就是说， outer_list 是一个可变对象，而 outer_int 是一个不可变对象。正是由于不可变对象的这个特性， inner() 中对 outer_int 的重新赋值导致编译器认为其是一个局部变量，而在前面 print 的时候还没定义，自然引发了错误，这也同时可以避免你对一个不可变对象的误操作。如果你将 print 去掉，程序也不会报错，这就相当于创建了一个新对象。\n总结所以，如果你想要在嵌套函数中使用外部函数的不可变对象并想要对其改变，例如 int 对象的 +=  操作，则要么使用可变对象替换之，要么在嵌套函数中使用 nonlocal 声明之，使之变成一个自由变量。\nReference\nCell Objects — Python 3.10.2 documentation\nPython behind the scenes #5: how variables are implemented in CPython\n\nEND","dateCreated":"2022-01-17T21:00:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2022-01-17T21:00:00+08:00","description":"UnboundLocalError 错误是如何出现的？其深层次原因是什么？","headline":"一个 UnboundLocalError 引发的神奇问题","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2022/01/17/python-unboundlocalerror/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2022/01/17/python-unboundlocalerror/","keywords":"Python"}</script>
+    <meta name="description" content="UnboundLocalError 错误是如何出现的？其深层次原因是什么？">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="一个 UnboundLocalError 引发的神奇问题">
+<meta property="og:url" content="https://alanlee.fun/2022/01/17/python-unboundlocalerror/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="UnboundLocalError 错误是如何出现的？其深层次原因是什么？">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-01-17T13:00:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.197Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            一个 UnboundLocalError 引发的神奇问题
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2022-01-17T21:00:00+08:00">
+	
+		    2022 年 1 月 17 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8C%9C%E6%83%B3%E4%B8%8E%E8%AF%81%E6%98%8E"><span class="toc-text">猜想与证明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>最近在写一个工作上的代码时，遇到要使用嵌套函数的情况，但是总是报一个 <code>UnboundLocalError</code> 的错误。我把问题代码抽象出来如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">outer</span>():</span><br><span class="line">    outer_list = []</span><br><span class="line">    outer_int = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">inner</span>():</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;INNER&#x27;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;outer_list=<span class="subst">&#123;outer_list&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;outer_int=<span class="subst">&#123;outer_int&#125;</span>&quot;</span>)</span><br><span class="line">        outer_list.append(<span class="number">1</span>)</span><br><span class="line">        outer_int = <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    inner()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;OUTER&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;outer_list=<span class="subst">&#123;outer_list&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;outer_int=<span class="subst">&#123;outer_int&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">outer()</span><br></pre></td></tr></table></figure>
+<p>运行该代码会报如下 <code>UnboundLocalError</code> 错误，显示 <code>outer_int</code> 未定义：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">INNER</span><br><span class="line">outer_list=[]</span><br><span class="line">---------------------------------------------------------------------------</span><br><span class="line">UnboundLocalError                         Traceback (most recent call last)</span><br><span class="line">&lt;ipython-<span class="built_in">input</span>-<span class="number">7</span>-0c4860f923cf&gt; <span class="keyword">in</span> &lt;module&gt;()</span><br><span class="line">     <span class="number">16</span> </span><br><span class="line">     <span class="number">17</span> </span><br><span class="line">---&gt; <span class="number">18</span> outer()</span><br><span class="line"></span><br><span class="line"><span class="number">1</span> frames</span><br><span class="line">&lt;ipython-<span class="built_in">input</span>-<span class="number">7</span>-0c4860f923cf&gt; <span class="keyword">in</span> outer()</span><br><span class="line">     <span class="number">10</span>         outer_int = <span class="number">1</span></span><br><span class="line">     <span class="number">11</span> </span><br><span class="line">---&gt; <span class="number">12</span>     inner()</span><br><span class="line">     <span class="number">13</span>     <span class="built_in">print</span>(<span class="string">&#x27;OUTER&#x27;</span>)</span><br><span class="line">     <span class="number">14</span>     <span class="built_in">print</span>(<span class="string">f&quot;outer_list=<span class="subst">&#123;outer_list&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">&lt;ipython-<span class="built_in">input</span>-<span class="number">7</span>-0c4860f923cf&gt; <span class="keyword">in</span> inner()</span><br><span class="line">      <span class="number">6</span>         <span class="built_in">print</span>(<span class="string">&#x27;INNER&#x27;</span>)</span><br><span class="line">      <span class="number">7</span>         <span class="built_in">print</span>(<span class="string">f&quot;outer_list=<span class="subst">&#123;outer_list&#125;</span>&quot;</span>)</span><br><span class="line">----&gt; <span class="number">8</span>         <span class="built_in">print</span>(<span class="string">f&quot;outer_int=<span class="subst">&#123;outer_int&#125;</span>&quot;</span>)</span><br><span class="line">      <span class="number">9</span>         outer_list.append(<span class="number">1</span>)</span><br><span class="line">     <span class="number">10</span>         outer_int = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">UnboundLocalError: local variable <span class="string">&#x27;outer_int&#x27;</span> referenced before assignment</span><br></pre></td></tr></table></figure>
+<p><code>outer_list</code> 和 <code>outer_int</code> 同样在 <code>outer()</code> 里进行了定义，按理说在嵌套函数里都可以获取到，但是现在表明只有 <code>outer_list</code> 可以获取到。</p>
+<p>但是如果你将第 10 行 <code>outer_int = 1</code> 注释掉，你会发现又不报错了，又可以访问到 <code>outer_int</code> 了：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">INNER</span><br><span class="line">outer_list=[]</span><br><span class="line">outer_int=<span class="number">0</span></span><br><span class="line">OUTER</span><br><span class="line">outer_list=[<span class="number">1</span>]</span><br><span class="line">outer_int=<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>这是怎么回事？</p>
+<h2 id="猜想与证明"><a href="#猜想与证明" class="headerlink" title="猜想与证明"></a>猜想与证明</h2><p>首先表明，这是 feature 而不是 bug！</p>
+<p>然后我们需要先引入几个术语：</p>
+<ul>
+<li>自由变量 free variable。自由变量一般是相对于嵌套函数来说的。一个嵌套函数的<strong>自由变量是指该函数用到了该变量，但其定义并不在该函数内的非全局变量</strong>。在上面的代码中， <code>outer_list</code> 和 <code>outer_int</code> 都是 <code>inner()</code> 的自由变量，它们都在 <code>inner()</code> 中被用到，但是定义却是在 <code>outer()</code> 函数中，而且它们也很明显不是 global 的。“自由”意味着它们可以在不同函数之间”自由穿梭“。此外用 <code>nonlocal</code> 声明的变量也是自由变量。</li>
+<li>Cell 变量 Cell variable（<em>我不太确定中文叫法，暂且就叫 cell 变量吧</em>）。单元变量其实本质上是一种局部变量，是同一变量在不同视角下的说法，该变量在外部函数中定义，但是在内部函数被引用。在上面的代码中， <code>outer_list</code> 和 <code>outer_int</code> 都是 <code>outer()</code> 的 cell 变量，但对 <code>inner()</code> 来说，它们同时也是其下的自由变量。</li>
+</ul>
+<p>由上面的现象我们可以猜想，可能是由于 <code>inner()</code> 函数中对 <code>outer_int</code> 的重新赋值导致其从自由变量变为 <code>inner()</code> 函数的局部变量，然后引发 <code>UnboundLocalError</code> 。</p>
+<p>那如何证明我们的猜想呢？</p>
+<p>这就又要引入一个概念叫<a href="https://docs.python.org/3/glossary.html#term-bytecode">字节码 bytecode</a>。Python 代码执行流程是先将你写的代码编译为一种中间代码，然后运行时再由解释器解释这些中间代码为机器代码来执行。这种中间代码就叫字节码。</p>
+<p>如果你观察过运行 Python 文件后的目录变化情况，你会发现在你第一次运行完一个 Python 文件后，当前目录会生成一个 <code>__pycache__</code> 目录，里面存放着和你运行的 Python 文件同名的文件，只不过后缀是 <code>.pyc</code> ，这些文件里存放的就是字节码。</p>
+<p>这些字节码里存放着编译后的各种底层操作，我们可以从这些字节码里看到详细的操作细节。但是字节码是二进制文件，我们需要使用内置的 <a href="https://docs.python.org/3/library/dis.html"><code>dis</code> 模块</a>来帮助我们反汇编（<em>disassembly</em>）这些字节码，生成格式化后的、人类阅读友好的字节码指令。</p>
+<p>为方便我们后面讨论，我先将两个关键的<a href="https://docs.python.org/3/library/dis.html#:~:text=General%20instructions">字节码指令</a>及其意义列出如下：</p>
+<ul>
+<li><a href="https://docs.python.org/3/library/dis.html#opcode-LOAD_FAST"><code>LOAD_FAST</code></a> ：将指向局部对象 <code>co_varnames[var_num]</code> 的引用推入栈顶。对应于局部变量。</li>
+<li><a href="https://docs.python.org/3/library/dis.html#opcode-LOAD_GLOBAL"><code>LOAD_GLOBAL</code></a> ：加载名称为 <code>co_names[namei]</code> 的全局对象推入栈顶。对应于全局变量。</li>
+<li><a href="https://docs.python.org/3/library/dis.html#opcode-LOAD_DEREF"><code>LOAD_DEREF</code></a> ：加载包含在 cell 的第 <em>i</em> 个空位中的单元并释放可用的存储空间。将一个 cell 所包含对象的引用推入栈顶。对应于自由变量和 cell 变量。</li>
+</ul>
+<blockquote>
+<p>相应的还有 <code>STORE_*</code> 的指令，其意义和 <code>LOAD_*</code> 相反，我就不赘述了。</p>
+</blockquote>
+<p>OK，我们现在来看下注释前代码的字节码（Python 3.7.12，下同）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line">  <span class="number">2</span>           <span class="number">0</span> BUILD_LIST               <span class="number">0</span></span><br><span class="line">              <span class="number">2</span> STORE_DEREF              <span class="number">0</span> (outer_list)</span><br><span class="line"></span><br><span class="line">  <span class="number">3</span>           <span class="number">4</span> LOAD_CONST               <span class="number">1</span> (<span class="number">0</span>)</span><br><span class="line">              <span class="number">6</span> STORE_FAST               <span class="number">0</span> (outer_int)</span><br><span class="line"></span><br><span class="line">  <span class="number">5</span>           <span class="number">8</span> LOAD_CLOSURE             <span class="number">0</span> (outer_list)</span><br><span class="line">             <span class="number">10</span> BUILD_TUPLE              <span class="number">1</span></span><br><span class="line">             <span class="number">12</span> LOAD_CONST               <span class="number">2</span> (&lt;code <span class="built_in">object</span> inner at <span class="number">0x7f9f518cdf60</span>, file <span class="string">&quot;&lt;ipython-input-1-0c4860f923cf&gt;&quot;</span>, line <span class="number">5</span>&gt;)</span><br><span class="line">             <span class="number">14</span> LOAD_CONST               <span class="number">3</span> (<span class="string">&#x27;outer.&lt;locals&gt;.inner&#x27;</span>)</span><br><span class="line">             <span class="number">16</span> MAKE_FUNCTION            <span class="number">8</span></span><br><span class="line">             <span class="number">18</span> STORE_FAST               <span class="number">1</span> (inner)</span><br><span class="line"></span><br><span class="line"> <span class="number">12</span>          <span class="number">20</span> LOAD_FAST                <span class="number">1</span> (inner)</span><br><span class="line">             <span class="number">22</span> CALL_FUNCTION            <span class="number">0</span></span><br><span class="line">             <span class="number">24</span> POP_TOP</span><br><span class="line"></span><br><span class="line"> <span class="number">13</span>          <span class="number">26</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">28</span> LOAD_CONST               <span class="number">4</span> (<span class="string">&#x27;OUTER&#x27;</span>)</span><br><span class="line">             <span class="number">30</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">32</span> POP_TOP</span><br><span class="line"></span><br><span class="line"> <span class="number">14</span>          <span class="number">34</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">36</span> LOAD_CONST               <span class="number">5</span> (<span class="string">&#x27;outer_list=&#x27;</span>)</span><br><span class="line">             <span class="number">38</span> LOAD_DEREF               <span class="number">0</span> (outer_list)</span><br><span class="line">             <span class="number">40</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">42</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">44</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">46</span> POP_TOP</span><br><span class="line"></span><br><span class="line"> <span class="number">15</span>          <span class="number">48</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">50</span> LOAD_CONST               <span class="number">6</span> (<span class="string">&#x27;outer_int=&#x27;</span>)</span><br><span class="line">             <span class="number">52</span> LOAD_FAST                <span class="number">0</span> (outer_int)</span><br><span class="line">             <span class="number">54</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">56</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">58</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">60</span> POP_TOP</span><br><span class="line">             <span class="number">62</span> LOAD_CONST               <span class="number">0</span> (<span class="literal">None</span>)</span><br><span class="line">             <span class="number">64</span> RETURN_VALUE</span><br><span class="line"></span><br><span class="line">Disassembly of &lt;code <span class="built_in">object</span> inner at <span class="number">0x7f9f518cdf60</span>, file <span class="string">&quot;&lt;ipython-input-1-0c4860f923cf&gt;&quot;</span>, line <span class="number">5</span>&gt;:</span><br><span class="line">  <span class="number">6</span>           <span class="number">0</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">              <span class="number">2</span> LOAD_CONST               <span class="number">1</span> (<span class="string">&#x27;INNER&#x27;</span>)</span><br><span class="line">              <span class="number">4</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">              <span class="number">6</span> POP_TOP</span><br><span class="line"></span><br><span class="line">  <span class="number">7</span>           <span class="number">8</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">10</span> LOAD_CONST               <span class="number">2</span> (<span class="string">&#x27;outer_list=&#x27;</span>)</span><br><span class="line">             <span class="number">12</span> LOAD_DEREF               <span class="number">0</span> (outer_list)  &lt;---- HERE</span><br><span class="line">             <span class="number">14</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">16</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">18</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">20</span> POP_TOP</span><br><span class="line"></span><br><span class="line">  <span class="number">8</span>          <span class="number">22</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">24</span> LOAD_CONST               <span class="number">3</span> (<span class="string">&#x27;outer_int=&#x27;</span>)</span><br><span class="line">             <span class="number">26</span> LOAD_FAST                <span class="number">0</span> (outer_int)  &lt;---- HERE</span><br><span class="line">             <span class="number">28</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">30</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">32</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">34</span> POP_TOP</span><br><span class="line"></span><br><span class="line">  <span class="number">9</span>          <span class="number">36</span> LOAD_DEREF               <span class="number">0</span> (outer_list)</span><br><span class="line">             <span class="number">38</span> LOAD_METHOD              <span class="number">1</span> (append)</span><br><span class="line">             <span class="number">40</span> LOAD_CONST               <span class="number">4</span> (<span class="number">1</span>)</span><br><span class="line">             <span class="number">42</span> CALL_METHOD              <span class="number">1</span></span><br><span class="line">             <span class="number">44</span> POP_TOP</span><br><span class="line"></span><br><span class="line"> <span class="number">10</span>          <span class="number">46</span> LOAD_CONST               <span class="number">4</span> (<span class="number">1</span>)</span><br><span class="line">             <span class="number">48</span> STORE_FAST               <span class="number">0</span> (outer_int)</span><br><span class="line">             <span class="number">50</span> LOAD_CONST               <span class="number">0</span> (<span class="literal">None</span>)</span><br><span class="line">             <span class="number">52</span> RETURN_VALUE</span><br></pre></td></tr></table></figure>
+<p>注意我标记 <code>&lt;---- HERE</code> 的那两行，即第 7 行和第 8 行所对应的字节码。</p>
+<p>我们可以看到， <code>outer_list</code> 是一个自由变量，其相关的指令都是 <code>*_DEREF</code> ，第 7 行使用 <code>LOAD_DEREF</code> 来加载 <code>outer_list</code> 。而 <code>outer_int</code> 是一个 <code>inner()</code> 的局部变量，其相关的指令都是 <code>*_FAST</code> ，第 8 行使用 <code>LOAD_FAST</code> 来加载 <code>outer_int</code> 。但是 <code>outer_int</code> 在 <code>inner()</code> 中并未定义，所以会引发 <code>UnboundLocalError</code> 。</p>
+<p>我们再来看下注释后的字节码指令：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line">  <span class="number">2</span>           <span class="number">0</span> BUILD_LIST               <span class="number">0</span></span><br><span class="line">              <span class="number">2</span> STORE_DEREF              <span class="number">1</span> (outer_list)  &lt;---- HERE</span><br><span class="line"></span><br><span class="line">  <span class="number">3</span>           <span class="number">4</span> LOAD_CONST               <span class="number">1</span> (<span class="number">0</span>)</span><br><span class="line">              <span class="number">6</span> STORE_DEREF              <span class="number">0</span> (outer_int)  &lt;---- HERE</span><br><span class="line"></span><br><span class="line">  <span class="number">5</span>           <span class="number">8</span> LOAD_CLOSURE             <span class="number">0</span> (outer_int)</span><br><span class="line">             <span class="number">10</span> LOAD_CLOSURE             <span class="number">1</span> (outer_list)</span><br><span class="line">             <span class="number">12</span> BUILD_TUPLE              <span class="number">2</span></span><br><span class="line">             <span class="number">14</span> LOAD_CONST               <span class="number">2</span> (&lt;code <span class="built_in">object</span> inner at <span class="number">0x7fa67ec76ed0</span>, file <span class="string">&quot;&lt;ipython-input-1-b646af7e4a0b&gt;&quot;</span>, line <span class="number">5</span>&gt;)</span><br><span class="line">             <span class="number">16</span> LOAD_CONST               <span class="number">3</span> (<span class="string">&#x27;outer.&lt;locals&gt;.inner&#x27;</span>)</span><br><span class="line">             <span class="number">18</span> MAKE_FUNCTION            <span class="number">8</span></span><br><span class="line">             <span class="number">20</span> STORE_FAST               <span class="number">0</span> (inner)</span><br><span class="line"></span><br><span class="line"> <span class="number">12</span>          <span class="number">22</span> LOAD_FAST                <span class="number">0</span> (inner)</span><br><span class="line">             <span class="number">24</span> CALL_FUNCTION            <span class="number">0</span></span><br><span class="line">             <span class="number">26</span> POP_TOP</span><br><span class="line"></span><br><span class="line"> <span class="number">13</span>          <span class="number">28</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">30</span> LOAD_CONST               <span class="number">4</span> (<span class="string">&#x27;OUTER&#x27;</span>)</span><br><span class="line">             <span class="number">32</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">34</span> POP_TOP</span><br><span class="line"></span><br><span class="line"> <span class="number">14</span>          <span class="number">36</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">38</span> LOAD_CONST               <span class="number">5</span> (<span class="string">&#x27;outer_list=&#x27;</span>)</span><br><span class="line">             <span class="number">40</span> LOAD_DEREF               <span class="number">1</span> (outer_list)</span><br><span class="line">             <span class="number">42</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">44</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">46</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">48</span> POP_TOP</span><br><span class="line"></span><br><span class="line"> <span class="number">15</span>          <span class="number">50</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">52</span> LOAD_CONST               <span class="number">6</span> (<span class="string">&#x27;outer_int=&#x27;</span>)</span><br><span class="line">             <span class="number">54</span> LOAD_DEREF               <span class="number">0</span> (outer_int)</span><br><span class="line">             <span class="number">56</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">58</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">60</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">62</span> POP_TOP</span><br><span class="line">             <span class="number">64</span> LOAD_CONST               <span class="number">0</span> (<span class="literal">None</span>)</span><br><span class="line">             <span class="number">66</span> RETURN_VALUE</span><br><span class="line"></span><br><span class="line">Disassembly of &lt;code <span class="built_in">object</span> inner at <span class="number">0x7fa67ec76ed0</span>, file <span class="string">&quot;&lt;ipython-input-1-b646af7e4a0b&gt;&quot;</span>, line <span class="number">5</span>&gt;:</span><br><span class="line">  <span class="number">6</span>           <span class="number">0</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">              <span class="number">2</span> LOAD_CONST               <span class="number">1</span> (<span class="string">&#x27;INNER&#x27;</span>)</span><br><span class="line">              <span class="number">4</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">              <span class="number">6</span> POP_TOP</span><br><span class="line"></span><br><span class="line">  <span class="number">7</span>           <span class="number">8</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">10</span> LOAD_CONST               <span class="number">2</span> (<span class="string">&#x27;outer_list=&#x27;</span>)</span><br><span class="line">             <span class="number">12</span> LOAD_DEREF               <span class="number">1</span> (outer_list)</span><br><span class="line">             <span class="number">14</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">16</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">18</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">20</span> POP_TOP</span><br><span class="line"></span><br><span class="line">  <span class="number">8</span>          <span class="number">22</span> LOAD_GLOBAL              <span class="number">0</span> (<span class="built_in">print</span>)</span><br><span class="line">             <span class="number">24</span> LOAD_CONST               <span class="number">3</span> (<span class="string">&#x27;outer_int=&#x27;</span>)</span><br><span class="line">             <span class="number">26</span> LOAD_DEREF               <span class="number">0</span> (outer_int)  &lt;---- HERE</span><br><span class="line">             <span class="number">28</span> FORMAT_VALUE             <span class="number">0</span></span><br><span class="line">             <span class="number">30</span> BUILD_STRING             <span class="number">2</span></span><br><span class="line">             <span class="number">32</span> CALL_FUNCTION            <span class="number">1</span></span><br><span class="line">             <span class="number">34</span> POP_TOP</span><br><span class="line"></span><br><span class="line">  <span class="number">9</span>          <span class="number">36</span> LOAD_DEREF               <span class="number">1</span> (outer_list)</span><br><span class="line">             <span class="number">38</span> LOAD_METHOD              <span class="number">1</span> (append)</span><br><span class="line">             <span class="number">40</span> LOAD_CONST               <span class="number">4</span> (<span class="number">1</span>)</span><br><span class="line">             <span class="number">42</span> CALL_METHOD              <span class="number">1</span></span><br><span class="line">             <span class="number">44</span> POP_TOP</span><br><span class="line">             <span class="number">46</span> LOAD_CONST               <span class="number">0</span> (<span class="literal">None</span>)</span><br><span class="line">             <span class="number">48</span> RETURN_VALUE</span><br></pre></td></tr></table></figure>
+<p>我们可以看到 <code>outer_list</code> 和 <code>outer_int</code> 现在都是自由变量了，自然也不会引发 <code>UnboundLocalError</code> 了。</p>
+<p>那么为什么 <code>outer_list</code> 可以在 <code>inner()</code> 中引用并改变呢？其实 <code>outer_list</code> 并没有被改变，其 id 没有变，只是增加了一个值，其内存中的地址并没有变（变量的地址指的是起始地址）。也就是说， <code>outer_list</code> 是一个<a href="https://docs.python.org/3/glossary.html#term-mutable">可变对象</a>，而 <code>outer_int</code> 是一个<a href="https://docs.python.org/3/glossary.html#term-immutable">不可变对象</a>。正是由于不可变对象的这个特性， <code>inner()</code> 中对 <code>outer_int</code> 的重新赋值导致编译器认为其是一个局部变量，而在前面 <code>print</code> 的时候还没定义，自然引发了错误，这也同时可以避免你对一个不可变对象的误操作。如果你将 <code>print</code> 去掉，程序也不会报错，这就相当于创建了一个新对象。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>所以，如果你想要在嵌套函数中使用外部函数的不可变对象并想要对其改变，例如 <code>int</code> 对象的 <code>+=</code>  操作，则<strong>要么使用可变对象替换之，要么在嵌套函数中使用 <code>nonlocal</code> 声明之</strong>，使之变成一个自由变量。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://docs.python.org/3/c-api/cell.html">Cell Objects — Python 3.10.2 documentation</a></li>
+<li><a href="https://tenthousandmeters.com/blog/python-behind-the-scenes-5-how-variables-are-implemented-in-cpython/">Python behind the scenes #5: how variables are implemented in CPython</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/02/04/embed-altair-plot/"
+                    data-tooltip="嵌入 Altair 绘图到 Hexo 博客中"
+                    aria-label="上一篇: 嵌入 Altair 绘图到 Hexo 博客中"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/08/introducing-upsetplot/"
+                    data-tooltip="UpSet Plot 简易指南（一）"
+                    aria-label="下一篇: UpSet Plot 简易指南（一）"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/02/04/embed-altair-plot/"
+                    data-tooltip="嵌入 Altair 绘图到 Hexo 博客中"
+                    aria-label="上一篇: 嵌入 Altair 绘图到 Hexo 博客中"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/08/introducing-upsetplot/"
+                    data-tooltip="UpSet Plot 简易指南（一）"
+                    aria-label="下一篇: UpSet Plot 简易指南（一）"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/01/17/python-unboundlocalerror/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2022/01/17/python-unboundlocalerror/';
+              
+            this.page.identifier = '2022/01/17/python-unboundlocalerror/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

@@ -1,0 +1,798 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Constituency Parsing with a Self-Attensive Encoder 论文解读 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n之前没咋涉略过 parsing 部分，最近有用到，遇到一个实现的很不错的库：benepar，无论是速度、代码还是性能上，伯克利出品。而本文要讲的论文就是 benepar 的参考论文：Constituency Parsing with a Self-Attensive Encoder，代码和论文作者都是一个人：Nikita Kitaev，论文发表于 ACL 2018。代码还参考了作者的另一篇论文：Multilingual Constituency Parsing with Self-Attention and Pre-Training。\n\n看时间，有空了再解读下 benepar 的源代码。写好了我会把链接放在这。\n\n模型总体架构模型是 encoder-decoder 架构，总体就是两部分：第一部分是给句子中的每一个位置 $t$ 生成一个含有上下文信息的向量表示 $y_t$，即 encoder，这部分借鉴了 Vaswani et al. (2017)1；第二部分是根据 $y_t$ 生成 span 得分 $s(i, j, l)$，即 decoder，这部分主要借鉴了 Stern et al. (2017a)2，参考 Gaddy et al. (2018)3 进行了部分修改。模型总体架构图如下图所示：\n模型架构图\nBase model每个实验都会有一个 baseline。作者进行了很多实验，每个实验基本上就是 encoder 部分不同，这也是这个论文的重点，decoder 部分不重要，是一个 chart parser，为每一棵树都计算一个得分，并用一个类似 CKY 的算法找到最佳树。公式如下：\ns(i, j, \\cdot)=M_{2} \\text {relu}\\left(\\text{LayerNorm} \\left(M_{1} v+c_{1}\\right)\\right)+c_{2}其中：\n\nv=\\left[\\overrightarrow{y}_{j}-\\overrightarrow{y}_{i} ; \\overleftarrow{y}_{j+1}-\\overleftarrow{y}_{i+1}\\right]$\\overrightarrow{y}_{k}$ 和 $\\overleftarrow{y}_{k}$在 Stern et al. (2017a)2 中分别用的是 BiLSTM 中的正向和反向输出，而本篇论文中是直接将 $y_k$ 分成两半。更多信息可参考 Gaddy et al. (2018)3。\nEncoderencoder 的输入是 word embedding（$[w_1,\\cdots,w_T]$）、postag embedding（$[m_1,\\cdots,m_T]$），也存储了一个 learned position embedding（$[p_1,\\cdots,p_T]$）。这三个矩阵维度相同，最后会把他们加起来：$z_t = w_t + m_t + p_t$。\n然后这个 $z_t$ 就会输入一个 stacked 8 层相同的网络，和 bert 那套一样，multi-headed attention、layernorm 等。最后的输出就是 $y_t$。\nencoder架构图\nattention head\n这个模型最终在 PTB WSJ dev 数据集上的 F1 是 92.67，记住这个数字，以后的模型效果都将会跟这个数字比。\n如果将 encoder 换成 LSTM-based，那么 F1 是 92.24，比前者稍低。这也说明了要想取得好结果， RNN-based encoder 并不是必须的，而且 self-attention 还能达到更好的效果。\nFactored model内容特征和位置特征谁更重要？在 base model 种，信息在 encoder 中传输主要依靠的是 self-attention，可以同时使用内容特征($w_t+p_t$，即 word embedding + postag embedding)和位置信息去获得词之间的相互影响。按道理说，网络可以学习到如何平衡不同的特征信息，但是实践证明不能。所以我们会将会显式地分解模型，拆分内容和位置特征，来提高模型的准确率。\n在此之前，为了测量两种特征的重要性，作者做了个测试：禁用内容特征。\nHOW？\n在每一个 head 计算 $Q$ 和 $K$ 的时候，仅乘上位置信息 $P$，之前乘的是 $X$，即内容 + 位置。而计算 $V$ 的时候仍然使用 $X$。\n结果 F1 就降了 0.27，比 LSTM-based 模型还要好。准确率降低在作者的意料之中，但是降了这么少是在意料之外的，作者表示内容特征在模型里占的比重这么小很 strange：\n\nIt seems strange that content-based attention benefits our model to such a small degree.\n\n从输入上拆分下一步，作者猜想两种信息混合（即相加）有可能会让其中一种信息占据主导地位，压制对方，从而影响网络在两者中间找到平衡的最优点。所以作者提出了一个模型的分解版本：显式地拆分内容和位置特征。\nHOW？\n原来的输入 $z_t = w_t + m_t + p_t$，现在编程 $z_t = [w_t+m_t ; p_t]$，即改成拼接的方式。但是为了保持住输入 $z_t$ 的 size，所以 $w_t + m_t$ 和 $p_t$ 的 size 都会减半。然而实践证明，简单地这样拆分，结果并不好，dev 上的 F1 仅有 92.60，而之前是 92.67。\n问题在哪？\n首先信息混合的问题根源肯定不在 addition，即 $z_t = w_t + m_t + p_t$。事实上，adding 和 concatenation 在高维度上的表现是差不多的，尤其是当结果会立马乘上一个矩阵之后。关于这一点，我们可以检查这个结果在网络中是怎么被使用的，尤其是注意力中的 query-key 的点乘部分。对于点乘 $q \\cdot k$，假如我们把 q 分解成内容和位置特征：$q=q^{(c)}+q^{(p)}$，对 $k$ 同样。然后 $q \\cdot k=\\left(q^{(c)}+q^{(p)}\\right) \\cdot\\left(k^{(c)}+k^{(p)}\\right)$。\n然后这里会产生交叉项，比如 $q^{(c)} \\cdot k^{(p)}$，这个可能存在隐患，例如这可能会导致得到这样一个网络：单词 the 总是会特别注意句子的第 5 个位置。这种交叉注意力似乎并没有太大作用，反而会带来过拟合。\n从注意力层面拆分作者为了完善这种分解式模型，又使用了一种新的分解方式。对于一个向量 $x=\\left[x^{(c)} ; x^{(p)}\\right]$，原来是直接乘上权重矩阵 $W$，即 $c = Wx$。\n但现在让 $W$ 也跟着拆分，就变成 $c=\\left[c^{(c)} ; c^{(p)}\\right]=\\left[W^{(c)} x^{(c)} ; W^{(p)} x^{(p)}\\right]$。模型的很多中间变量都需要跟着改变，包括所有的 query 和 key。然后 query-key 点乘就变成 $q \\cdot k=q^{(c)} \\cdot k^{(c)}+q^{(p)} \\cdot k^{(p)}$。对于一个 attention head 来说，拆分后的情况如图所示，可以看成分别对 $x^{(c)}$ 和 $x^{(p)}$ 应用注意力，后续的 feed-forward 层也同样拆分。\n拆分后的 attention head\n此外，作者认为也可以将这种拆分看成是在参数矩阵上强制加上块稀疏化（block-sparsity）约束：\n\nW=\\left[\\begin{array}{cc}\nW^{(c)} & 0 \\\\\n0 & W^{(p)}\n\\end{array}\\right]就像之前一样，也保持相同的向量大小，也就意味着减少了参数量。简单来说，作者将每个向量都一半一半拆成内容和位置向量，那么就相当于模型参数量减少了一半（？？？）。最终这个模型在 dev 上达到了 93.15 的 F1，得到了约 0.5 的提升。\n这个结果表明拆分不同类型的特征确实能得到一个不错的结果，但是作者还有一个疑惑：也许通过将所有矩阵都进行块稀疏化，我们偶然发现了更好的超参数配置？例如这个结果提升可能只是和模型参数量有关？\n为了验证这个猜想，作者又进行了一次实验。控制变量法，这次的模型始终强制进行块稀疏化，但是输入仍然使用原来的 3 个矩阵相加的结果，也就是不拆分内容和位置特征。最后的 F1 是 92.63，和 base 模型差不多（92.67）。这也就证明了 factoring 是很重要的。\n正是应了 The Zen of Python 那句话：\n\nExplicit is better than implicit.\n\n两种注意力在不同模型不同层的重要性随后作者又进一步分析了模型，主要是两部分：对内容和位置注意力的进一步分析和 windowed attention。\n为了分析模型对内容和位置注意力的利用情况，作者又做了个实验，模型训练保持不变，但是在测试阶段，把内容注意力或位置注意力人为置零，即禁用。分别在不同的层禁用内容或者位置注意力，最后发现位置注意力相当重要，但是内容注意力也有一定帮助，尤其是在最后几层。结果如下表所示：\n表1\n同时也可以看到模型确实利用了两种特征，而且位置特征占据主导位置。内容特征在后面几层更有用，同时也验证了作者之前的猜想：模型的前几层就像一个 CNN，更高的层能够更好的平衡两种特征。\n是不是同时也表明位置特征是一种浅层特征，而内容特征是一种高层次特征？这也符合我们的直觉。\n尝试 Attention 变体：Windowed Attention关于 windowed attention，首先说下这是什么意思。对于 A 和 B 两句话，原本的注意力机制是两句话中的词互相都有注意力连接，A 中的词注意 B 中所有的词，B 中的词注意 A 中的所有词，就是一个 dense 连接。但是现在 windowed attention 就变成， B 中的词只能注意 A 中的一部分词，而具体多少词，就是 distance。A 对 B 也同理。这种方式叫 strict windowed attention。\n有 strict，自然就有不那么 strict 的，即 relaxed windowed attention。这个版本的 windowed attention 主要是由于作者偶然发现有几个 attention head 的某几层总是会 attend to start token，总是会对标记句子开始的特殊标记（不是句子的第一个词）格外的注意。\n既然如此，那就来个 relaxed 版的 windowed attention，即一个句子的 start token、第一个词、最后一个词和 end token，不受 window 限制，可以正常与其他词进行注意力连接，相当于加了个特例，条件“宽松”了一些。实验结果如下表所示，结果表明 relaxed 版的模型 F1 更高。作者后来又将 strict 和 relaxed windowed attention 融入到训练过程中，再次实验。\n表2\n进行了这么多实验，最终的结论就是长距离依赖对于取得最佳准确率是必不可少的。\nFactored model without/with extra data回想刚才讲的模型，输入是三个 embedding 相加：word、postag 和 position。其中 postag 是需要事先使用 Stanford tagger 算好的，也就是利用了额外数据。而 word embedding 此时我们并没有使用 pretrained embedding。那么这就诞生了接下来的两个实验：替换 postag，即尽量不使用这种外部数据；使用 pretrained word embedding。\n替换 postag embedding先说第一个。作者首先尝试直接将 postag 去掉，结果发现 F1 直接掉了一个点。然后分别尝试使用 CharLSTM 和 CharConcat 来替代 postag，并且与是否使用 word embedding 进行组合，共四次小实验。结果发现用 CharLSTM、带 word embedding 的效果最好，甚至比原来的使用 postag 的效果还好，CharConcat 效果好于原版，但劣于 CharLSTM。\n那么什么是 CharLSTM？\n不难，就是使用一个双向 LSTM 来 embed 一个单词，只不过输入是 char 级别的。然后使用 LSTM 的输出来替换 postag。作者还发现，只使用这个，丢掉原来的 word embedding 的效果比用 word embedding 的效果还要好。我觉得这应该很明显吧，CharLSTM 本质上还是一个词的 embedding，再加上一遍 word embedding 只会造成冗余。\n那什么是 CharConcat 呢？\n你可能是第一次听说，我也是。不过也不难，作者说这是他们从 Hall et al. (2014)4 得来的灵感，Hall 他们是用出现频率较高的后缀来替代词。那么这里类似，就是取一个单词的前后 8 个共计 16 个字母来表示该单词，每个字母的 embedding 是 32 维的，16 个 concat 到一起就变成了 512 维。如果单词太短， 那么就 padding。这种极致简单的模式带来了意想不到的效果，虽然比 CharLSTM 差，但是比原版要好。\n又应了 The Zen of Python 的那句话了：\n\nSimple is better than complex.\n\nPretrained word embedding现在说第二个，pretrained word embedding 的问题。其实也没啥可说的，作者直接使用了 ELMo，但是 ELMo 的词向量是 1024 维的，而本文模型是 512 维的，对不上怎么办？\nProject，学习一个权重矩阵将这个 1024 维的 ELMo 映射到 512 维。作者还认为已经有这么强大的预训练词向量了，encoder 就不需要 8 层了。事实证明没错，最后只要 4 层，在 dev 上就已经达到了 95.21 的 F1。\n结果在 PTB 测试集上最佳 F1 为 95.13，模型为 factored self-attentive + ELMo，即刚才说的最后一个版本的模型。详细的测试结果如下图所示：\n表6\n作者对自己的模型在其他语言上的表现也很有信心，在包含 9 种语言的数据集 SPMRL 上做了测试，其中 8 种语言达到了 SOTA。详细的测试结果如下图所示：\n表7\nEND\n1. Vaswani, Ashish, et al. “Attention is all you need.” Advances in neural information processing systems. 2017. &#8617;\n\n\n2. Stern, Mitchell, Jacob Andreas, and Dan Klein. “A minimal span-based neural constituency parser.” arXiv preprint arXiv:1705.03919 (2017). &#8617;\n\n\n3. Gaddy, David, Mitchell Stern, and Dan Klein. “What’s going on in neural constituency parsers? an analysis.” arXiv preprint arXiv:1804.07853 (2018). &#8617;\n\n\n4. Hall, David, Greg Durrett, and Dan Klein. “Less grammar, more features.” Proceedings of the 52nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). 2014. &#8617;\n\n","dateCreated":"2020-11-16T20:31:53+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-11-16T20:31:53+08:00","description":"\n之前没咋涉略过 parsing 部分，最近有用到，遇到一个实现的很不错的库：benepar，无论是速度、代码还是性能上，伯克利出品。而本文要讲的论文就是 benepar 的参考论文：Constituency Parsing with a Self-Attensive Encoder，代码和论文作者都是一个人：Nikita Kitaev，论文发表于 ACL 2018。代码还参考了作者的另一篇论文：Multilingual Constituency Parsing with Self-Attention and Pre-Training。","headline":"Constituency Parsing with a Self-Attensive Encoder 论文解读","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/11/16/self-attentive-parser-paper/","keywords":"Paper, NLP"}</script>
+    <meta name="description" content="之前没咋涉略过 parsing 部分，最近有用到，遇到一个实现的很不错的库：benepar，无论是速度、代码还是性能上，伯克利出品。而本文要讲的论文就是 benepar 的参考论文：Constituency Parsing with a Self-Attensive Encoder，代码和论文作者都是一个人：Nikita Kitaev，论文发表于 ACL 2018。代码还参考了作者的另一篇论文：">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Constituency Parsing with a Self-Attensive Encoder 论文解读">
+<meta property="og:url" content="https://alanlee.fun/2020/11/16/self-attentive-parser-paper/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="之前没咋涉略过 parsing 部分，最近有用到，遇到一个实现的很不错的库：benepar，无论是速度、代码还是性能上，伯克利出品。而本文要讲的论文就是 benepar 的参考论文：Constituency Parsing with a Self-Attensive Encoder，代码和论文作者都是一个人：Nikita Kitaev，论文发表于 ACL 2018。代码还参考了作者的另一篇论文：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/11/15/myD3FIAlQBLNvnT.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/15/6CKwHbaeVuldkiN.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/15/UHRNQDEXpOAgkcf.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/15/RvM4gAJwnZDNfBU.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/12/gElWOwkJ6RBnjGA.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/12/IvMHiXtzT7gmEuN.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/12/dIlhMYO2TwRyXHZ.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/12/mVvdekJ4tiGK7aU.png">
+<meta property="article:published_time" content="2020-11-16T12:31:53.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.197Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Paper">
+<meta property="article:tag" content="NLP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/11/15/myD3FIAlQBLNvnT.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Constituency Parsing with a Self-Attensive Encoder 论文解读
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-11-16T20:31:53+08:00">
+	
+		    2020 年 11 月 16 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%9E%8B%E6%80%BB%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="toc-text">模型总体架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Base-model"><span class="toc-text">Base model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Encoder"><span class="toc-text">Encoder</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Factored-model"><span class="toc-text">Factored model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AE%B9%E7%89%B9%E5%BE%81%E5%92%8C%E4%BD%8D%E7%BD%AE%E7%89%B9%E5%BE%81%E8%B0%81%E6%9B%B4%E9%87%8D%E8%A6%81%EF%BC%9F"><span class="toc-text">内容特征和位置特征谁更重要？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E8%BE%93%E5%85%A5%E4%B8%8A%E6%8B%86%E5%88%86"><span class="toc-text">从输入上拆分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E6%B3%A8%E6%84%8F%E5%8A%9B%E5%B1%82%E9%9D%A2%E6%8B%86%E5%88%86"><span class="toc-text">从注意力层面拆分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%A4%E7%A7%8D%E6%B3%A8%E6%84%8F%E5%8A%9B%E5%9C%A8%E4%B8%8D%E5%90%8C%E6%A8%A1%E5%9E%8B%E4%B8%8D%E5%90%8C%E5%B1%82%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="toc-text">两种注意力在不同模型不同层的重要性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%9D%E8%AF%95-Attention-%E5%8F%98%E4%BD%93%EF%BC%9AWindowed-Attention"><span class="toc-text">尝试 Attention 变体：Windowed Attention</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Factored-model-without-with-extra-data"><span class="toc-text">Factored model without&#x2F;with extra data</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%BF%E6%8D%A2-postag-embedding"><span class="toc-text">替换 postag embedding</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Pretrained-word-embedding"><span class="toc-text">Pretrained word embedding</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C"><span class="toc-text">结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>之前没咋涉略过 parsing 部分，最近有用到，遇到一个实现的很不错的库：<a href="https://github.com/nikitakit/self-attentive-parser">benepar</a>，无论是速度、代码还是性能上，伯克利出品。而本文要讲的论文就是 benepar 的参考论文：<a href="https://www.aclweb.org/anthology/P18-1249/">Constituency Parsing with a Self-Attensive Encoder</a>，代码和论文作者都是一个人：Nikita Kitaev，论文发表于 ACL 2018。代码还参考了作者的另一篇论文：Multilingual Constituency Parsing with Self-Attention and Pre-Training。<br><span id="more"></span></p>
+<blockquote>
+<p>看时间，有空了再解读下 benepar 的源代码。写好了我会把链接放在这。</p>
+</blockquote>
+<h2 id="模型总体架构"><a href="#模型总体架构" class="headerlink" title="模型总体架构"></a>模型总体架构</h2><p>模型是 encoder-decoder 架构，总体就是两部分：第一部分是给句子中的每一个位置 $t$ 生成一个含有上下文信息的向量表示 $y_t$，即 encoder，这部分借鉴了 Vaswani et al. (2017)<sup><a href="#fn_1" id="reffn_1">1</a></sup>；第二部分是根据 $y_t$ 生成 span 得分 $s(i, j, l)$，即 decoder，这部分主要借鉴了 Stern et al. (2017a)<sup><a href="#fn_2" id="reffn_2">2</a></sup>，参考 Gaddy et al. (2018)<sup><a href="#fn_3" id="reffn_3">3</a></sup> 进行了部分修改。模型总体架构图如下图所示：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/15/myD3FIAlQBLNvnT.png" title="模型架构图" data-caption="模型架构图" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/15/myD3FIAlQBLNvnT.png" alt="模型架构图"></a><span class="caption">模型架构图</span></div>
+<h2 id="Base-model"><a href="#Base-model" class="headerlink" title="Base model"></a>Base model</h2><p>每个实验都会有一个 baseline。作者进行了很多实验，每个实验基本上就是 encoder 部分不同，这也是这个论文的重点，decoder 部分不重要，是一个 chart parser，为每一棵树都计算一个得分，并用一个类似 CKY 的算法找到最佳树。公式如下：</p>
+<script type="math/tex; mode=display">s(i, j, \cdot)=M_{2} \text {relu}\left(\text{LayerNorm} \left(M_{1} v+c_{1}\right)\right)+c_{2}</script><p>其中：</p>
+<script type="math/tex; mode=display">
+v=\left[\overrightarrow{y}_{j}-\overrightarrow{y}_{i} ; \overleftarrow{y}_{j+1}-\overleftarrow{y}_{i+1}\right]</script><p>$\overrightarrow{y}_{k}$ 和 $\overleftarrow{y}_{k}$在 Stern et al. (2017a)<sup><a href="#fn_2" id="reffn_2">2</a></sup> 中分别用的是 BiLSTM 中的正向和反向输出，而本篇论文中是直接将 $y_k$ 分成两半。更多信息可参考 Gaddy et al. (2018)<sup><a href="#fn_3" id="reffn_3">3</a></sup>。</p>
+<h3 id="Encoder"><a href="#Encoder" class="headerlink" title="Encoder"></a>Encoder</h3><p>encoder 的输入是 word embedding（$[w_1,\cdots,w_T]$）、postag embedding（$[m_1,\cdots,m_T]$），也存储了一个 learned position embedding（$[p_1,\cdots,p_T]$）。这三个矩阵维度相同，最后会把他们加起来：$z_t = w_t + m_t + p_t$。</p>
+<p>然后这个 $z_t$ 就会输入一个 stacked 8 层相同的网络，和 bert 那套一样，multi-headed attention、layernorm 等。最后的输出就是 $y_t$。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/15/6CKwHbaeVuldkiN.png" title="encoder架构图" data-caption="encoder架构图" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/15/6CKwHbaeVuldkiN.png" alt="encoder架构图"></a><span class="caption">encoder架构图</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/15/UHRNQDEXpOAgkcf.png" title="attention head" data-caption="attention head" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/15/UHRNQDEXpOAgkcf.png" alt="attention head"></a><span class="caption">attention head</span></div>
+<p>这个模型最终在 PTB WSJ dev 数据集上的 F1 是 <strong>92.67</strong>，记住这个数字，以后的模型效果都将会跟这个数字比。</p>
+<p>如果将 encoder 换成 LSTM-based，那么 F1 是 92.24，比前者稍低。这也说明了要想取得好结果， RNN-based encoder 并不是必须的，而且 self-attention 还能达到更好的效果。</p>
+<h2 id="Factored-model"><a href="#Factored-model" class="headerlink" title="Factored model"></a>Factored model</h2><h3 id="内容特征和位置特征谁更重要？"><a href="#内容特征和位置特征谁更重要？" class="headerlink" title="内容特征和位置特征谁更重要？"></a>内容特征和位置特征谁更重要？</h3><p>在 base model 种，信息在 encoder 中传输主要依靠的是 self-attention，可以同时使用内容特征($w_t+p_t$，即 word embedding + postag embedding)和位置信息去获得词之间的相互影响。按道理说，网络可以学习到如何平衡不同的特征信息，但是实践证明不能。所以我们会将会显式地分解模型，<strong>拆分内容和位置特征</strong>，来提高模型的准确率。</p>
+<p>在此之前，为了测量两种特征的重要性，作者做了个测试：<strong>禁用内容特征</strong>。</p>
+<p>HOW？</p>
+<p>在每一个 head 计算 $Q$ 和 $K$ 的时候，仅乘上位置信息 $P$，之前乘的是 $X$，即内容 + 位置。而计算 $V$ 的时候仍然使用 $X$。</p>
+<p>结果 F1 就降了 0.27，比 LSTM-based 模型还要好。准确率降低在作者的意料之中，但是降了这么少是在意料之外的，作者表示内容特征在模型里占的比重这么小很 strange：</p>
+<blockquote>
+<p>It seems strange that content-based attention benefits our model to such a small degree.</p>
+</blockquote>
+<h3 id="从输入上拆分"><a href="#从输入上拆分" class="headerlink" title="从输入上拆分"></a>从输入上拆分</h3><p>下一步，作者猜想两种信息混合（即相加）有可能会让其中一种信息占据主导地位，压制对方，从而影响网络在两者中间找到平衡的最优点。所以作者提出了一个模型的分解版本：显式地拆分内容和位置特征。</p>
+<p>HOW？</p>
+<p>原来的输入 $z_t = w_t + m_t + p_t$，现在编程 $z_t = [w_t+m_t ; p_t]$，即改成拼接的方式。但是为了保持住输入 $z_t$ 的 size，所以 $w_t + m_t$ 和 $p_t$ 的 size 都会减半。然而实践证明，简单地这样拆分，结果并不好，dev 上的 F1 仅有 92.60，而之前是 92.67。</p>
+<p>问题在哪？</p>
+<p>首先信息混合的问题根源肯定不在 addition，即 $z_t = w_t + m_t + p_t$。事实上，adding 和 concatenation 在高维度上的表现是差不多的，尤其是当结果会立马乘上一个矩阵之后。关于这一点，我们可以检查这个结果在网络中是怎么被使用的，尤其是注意力中的 query-key 的点乘部分。对于点乘 $q \cdot k$，假如我们把 q 分解成内容和位置特征：$q=q^{(c)}+q^{(p)}$，对 $k$ 同样。然后 $q \cdot k=\left(q^{(c)}+q^{(p)}\right) \cdot\left(k^{(c)}+k^{(p)}\right)$。</p>
+<p>然后这里会产生交叉项，比如 $q^{(c)} \cdot k^{(p)}$，这个可能存在隐患，例如这可能会导致得到这样一个网络：单词 <em>the</em> 总是会特别注意句子的第 5 个位置。这种交叉注意力似乎并没有太大作用，反而会带来过拟合。</p>
+<h3 id="从注意力层面拆分"><a href="#从注意力层面拆分" class="headerlink" title="从注意力层面拆分"></a>从注意力层面拆分</h3><p>作者为了完善这种分解式模型，又使用了一种新的分解方式。对于一个向量 $x=\left[x^{(c)} ; x^{(p)}\right]$，原来是直接乘上权重矩阵 $W$，即 $c = Wx$。</p>
+<p>但现在让 $W$ 也跟着拆分，就变成 $c=\left[c^{(c)} ; c^{(p)}\right]=\left[W^{(c)} x^{(c)} ; W^{(p)} x^{(p)}\right]$。模型的很多中间变量都需要跟着改变，包括所有的 query 和 key。然后 query-key 点乘就变成 $q \cdot k=q^{(c)} \cdot k^{(c)}+q^{(p)} \cdot k^{(p)}$。对于一个 attention head 来说，拆分后的情况如图所示，可以看成分别对 $x^{(c)}$ 和 $x^{(p)}$ 应用注意力，后续的 feed-forward 层也同样拆分。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/15/RvM4gAJwnZDNfBU.png" title="拆分后的 attention head" data-caption="拆分后的 attention head" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/15/RvM4gAJwnZDNfBU.png" alt="拆分后的 attention head"></a><span class="caption">拆分后的 attention head</span></div>
+<p>此外，作者认为也可以将这种拆分看成是在参数矩阵上强制加上块稀疏化（<em>block-sparsity</em>）约束：</p>
+<script type="math/tex; mode=display">
+W=\left[\begin{array}{cc}
+W^{(c)} & 0 \\
+0 & W^{(p)}
+\end{array}\right]</script><p>就像之前一样，也保持相同的向量大小，也就意味着减少了参数量。简单来说，作者将每个向量都一半一半拆成内容和位置向量，那么就相当于模型参数量减少了一半（？？？）。最终这个模型在 dev 上达到了 93.15 的 F1，得到了约 0.5 的提升。</p>
+<p>这个结果表明拆分不同类型的特征确实能得到一个不错的结果，但是作者还有一个疑惑：也许通过将所有矩阵都进行块稀疏化，我们偶然发现了更好的超参数配置？例如这个结果提升可能只是和模型参数量有关？</p>
+<p>为了验证这个猜想，作者又进行了一次实验。控制变量法，这次的模型始终强制进行块稀疏化，但是输入仍然使用原来的 3 个矩阵相加的结果，也就是不拆分内容和位置特征。最后的 F1 是 92.63，和 base 模型差不多（92.67）。这也就证明了 factoring 是很重要的。</p>
+<p>正是应了 <a href="https://www.python.org/dev/peps/pep-0020/">The Zen of Python</a> 那句话：</p>
+<blockquote>
+<p>Explicit is better than implicit.</p>
+</blockquote>
+<h3 id="两种注意力在不同模型不同层的重要性"><a href="#两种注意力在不同模型不同层的重要性" class="headerlink" title="两种注意力在不同模型不同层的重要性"></a>两种注意力在不同模型不同层的重要性</h3><p>随后作者又进一步分析了模型，主要是两部分：对内容和位置注意力的进一步分析和 windowed attention。</p>
+<p>为了分析模型对内容和位置注意力的利用情况，作者又做了个实验，模型训练保持不变，但是在测试阶段，把内容注意力或位置注意力人为置零，即禁用。分别在不同的层禁用内容或者位置注意力，最后发现位置注意力相当重要，但是内容注意力也有一定帮助，尤其是在最后几层。结果如下表所示：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/12/gElWOwkJ6RBnjGA.png" title="表1" data-caption="表1" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/12/gElWOwkJ6RBnjGA.png" alt="表1"></a><span class="caption">表1</span></div>
+<p>同时也可以看到模型确实利用了两种特征，而且位置特征占据主导位置。内容特征在后面几层更有用，同时也验证了作者之前的猜想：模型的前几层就像一个 CNN，更高的层能够更好的平衡两种特征。</p>
+<p>是不是同时也表明位置特征是一种浅层特征，而内容特征是一种高层次特征？这也符合我们的直觉。</p>
+<h3 id="尝试-Attention-变体：Windowed-Attention"><a href="#尝试-Attention-变体：Windowed-Attention" class="headerlink" title="尝试 Attention 变体：Windowed Attention"></a>尝试 Attention 变体：Windowed Attention</h3><p>关于 windowed attention，首先说下这是什么意思。对于 A 和 B 两句话，原本的注意力机制是两句话中的词互相都有注意力连接，A 中的词注意 B 中所有的词，B 中的词注意 A 中的所有词，就是一个 dense 连接。但是现在 windowed attention 就变成， B 中的词只能注意 A 中的一部分词，而具体多少词，就是 distance。A 对 B 也同理。这种方式叫 <em>strict windowed attention</em>。</p>
+<p>有 strict，自然就有不那么 strict 的，即 <em>relaxed windowed attention</em>。这个版本的 windowed attention 主要是由于作者偶然发现有几个 attention head 的某几层总是会 attend to start token，总是会对标记句子开始的特殊标记（不是句子的第一个词）格外的注意。</p>
+<p>既然如此，那就来个 relaxed 版的 windowed attention，即一个句子的 start token、第一个词、最后一个词和 end token，不受 window 限制，可以正常与其他词进行注意力连接，相当于加了个特例，条件“宽松”了一些。实验结果如下表所示，结果表明 relaxed 版的模型 F1 更高。作者后来又将 strict 和 relaxed windowed attention 融入到训练过程中，再次实验。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/12/IvMHiXtzT7gmEuN.png" title="表2" data-caption="表2" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/12/IvMHiXtzT7gmEuN.png" alt="表2"></a><span class="caption">表2</span></div>
+<p>进行了这么多实验，最终的结论就是长距离依赖对于取得最佳准确率是必不可少的。</p>
+<h2 id="Factored-model-without-with-extra-data"><a href="#Factored-model-without-with-extra-data" class="headerlink" title="Factored model without/with extra data"></a>Factored model without/with extra data</h2><p>回想刚才讲的模型，输入是三个 embedding 相加：word、postag 和 position。其中 postag 是需要事先使用 Stanford tagger 算好的，也就是利用了额外数据。而 word embedding 此时我们并没有使用 pretrained embedding。那么这就诞生了接下来的两个实验：替换 postag，即尽量不使用这种外部数据；使用 pretrained word embedding。</p>
+<h3 id="替换-postag-embedding"><a href="#替换-postag-embedding" class="headerlink" title="替换 postag embedding"></a>替换 postag embedding</h3><p>先说第一个。作者首先尝试直接将 postag 去掉，结果发现 F1 直接掉了一个点。然后分别尝试使用 CharLSTM 和 CharConcat 来替代 postag，并且与是否使用 word embedding 进行组合，共四次小实验。结果发现用 CharLSTM、带 word embedding 的效果最好，甚至比原来的使用 postag 的效果还好，CharConcat 效果好于原版，但劣于 CharLSTM。</p>
+<p>那么什么是 CharLSTM？</p>
+<p>不难，就是使用一个双向 LSTM 来 embed 一个单词，只不过输入是 char 级别的。然后使用 LSTM 的输出来替换 postag。作者还发现，只使用这个，丢掉原来的 word embedding 的效果比用 word embedding 的效果还要好。我觉得这应该很明显吧，CharLSTM 本质上还是一个词的 embedding，再加上一遍 word embedding 只会造成冗余。</p>
+<p>那什么是 CharConcat 呢？</p>
+<p>你可能是第一次听说，我也是。不过也不难，作者说这是他们从 Hall et al. (2014)<sup><a href="#fn_4" id="reffn_4">4</a></sup> 得来的灵感，Hall 他们是用出现频率较高的后缀来替代词。那么这里类似，就是取一个单词的前后 8 个共计 16 个字母来表示该单词，每个字母的 embedding 是 32 维的，16 个 concat 到一起就变成了 512 维。如果单词太短， 那么就 padding。这种极致简单的模式带来了意想不到的效果，虽然比 CharLSTM 差，但是比原版要好。</p>
+<p>又应了 <a href="https://www.python.org/dev/peps/pep-0020/">The Zen of Python</a> 的那句话了：</p>
+<blockquote>
+<p>Simple is better than complex.</p>
+</blockquote>
+<h3 id="Pretrained-word-embedding"><a href="#Pretrained-word-embedding" class="headerlink" title="Pretrained word embedding"></a>Pretrained word embedding</h3><p>现在说第二个，pretrained word embedding 的问题。其实也没啥可说的，作者直接使用了 ELMo，但是 ELMo 的词向量是 1024 维的，而本文模型是 512 维的，对不上怎么办？</p>
+<p>Project，学习一个权重矩阵将这个 1024 维的 ELMo 映射到 512 维。作者还认为已经有这么强大的预训练词向量了，encoder 就不需要 8 层了。事实证明没错，最后只要 4 层，在 dev 上就已经达到了 95.21 的 F1。</p>
+<h2 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h2><p>在 PTB 测试集上最佳 F1 为 95.13，模型为 factored self-attentive + ELMo，即刚才说的最后一个版本的模型。详细的测试结果如下图所示：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/12/dIlhMYO2TwRyXHZ.png" title="表6" data-caption="表6" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/12/dIlhMYO2TwRyXHZ.png" alt="表6"></a><span class="caption">表6</span></div>
+<p>作者对自己的模型在其他语言上的表现也很有信心，在包含 9 种语言的数据集 SPMRL 上做了测试，其中 8 种语言达到了 SOTA。详细的测试结果如下图所示：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/12/mVvdekJ4tiGK7aU.png" title="表7" data-caption="表7" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/12/mVvdekJ4tiGK7aU.png" alt="表7"></a><span class="caption">表7</span></div>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><blockquote id="fn_1">
+<sup>1</sup>. <a href="https://proceedings.neurips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf">Vaswani, Ashish, et al. “Attention is all you need.” Advances in neural information processing systems. 2017.</a><a href="#reffn_1" title="Jump back to footnote [1] in the text."> &#8617;</a>
+</blockquote>
+<blockquote id="fn_2">
+<sup>2</sup>. <a href="https://www.aclweb.org/anthology/P17-1076/">Stern, Mitchell, Jacob Andreas, and Dan Klein. “A minimal span-based neural constituency parser.” arXiv preprint arXiv:1705.03919 (2017).</a><a href="#reffn_2" title="Jump back to footnote [2] in the text."> &#8617;</a>
+</blockquote>
+<blockquote id="fn_3">
+<sup>3</sup>. <a href="https://arxiv.org/abs/1804.07853">Gaddy, David, Mitchell Stern, and Dan Klein. “What’s going on in neural constituency parsers? an analysis.” arXiv preprint arXiv:1804.07853 (2018).</a><a href="#reffn_3" title="Jump back to footnote [3] in the text."> &#8617;</a>
+</blockquote>
+<blockquote id="fn_4">
+<sup>4</sup>. <a href="https://www.aclweb.org/anthology/P14-1022.pdf">Hall, David, Greg Durrett, and Dan Klein. “Less grammar, more features.” Proceedings of the 52nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). 2014.</a><a href="#reffn_4" title="Jump back to footnote [4] in the text."> &#8617;</a>
+</blockquote>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Paper/" rel="tag">Paper</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/22/c++-for-python-programmers/"
+                    data-tooltip="给 Python 程序员的 C++ 简易入门"
+                    aria-label="上一篇: 给 Python 程序员的 C++ 简易入门"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/10/25/windows-terminal-hotkeys/"
+                    data-tooltip="Windows Terminal 快捷键"
+                    aria-label="下一篇: Windows Terminal 快捷键"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/22/c++-for-python-programmers/"
+                    data-tooltip="给 Python 程序员的 C++ 简易入门"
+                    aria-label="上一篇: 给 Python 程序员的 C++ 简易入门"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/10/25/windows-terminal-hotkeys/"
+                    data-tooltip="Windows Terminal 快捷键"
+                    aria-label="下一篇: Windows Terminal 快捷键"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/11/16/self-attentive-parser-paper/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/11/16/self-attentive-parser-paper/';
+              
+            this.page.identifier = '2020/11/16/self-attentive-parser-paper/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

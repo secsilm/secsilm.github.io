@@ -1,0 +1,733 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>《机器学习》学习笔记1——绪论 机器学习概述 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：\n\n布里斯托尔大学人工智能教授，拥有20多年的机器学习教研经验。在高度结构化的数据挖掘以及通过ROC分析来评估和改进机器学习模型方面，Flach是国际领先的研究人员。他还是Machine Learning期刊总编。曾担任2009年ACM知识发现与数据挖掘国际会议、2012年欧洲机器学习与数据挖掘国际会议的程序委员会共同主席。另著有Simply Logical：Intelligent Reasoning by Example。\n\n\n这是他的个人主页Peter Flach\n绪论为机器学习概述，正文开始：\n1、开篇用一个垃圾邮件过滤器作为引子——SpamAssassin，介绍了如何根据阈值判定是否属于垃圾邮件。书中背景知识1中提到用数学语言描述SpamAssassin的工作原理，将原本的决策规则\n\n\\sum_{i=1}^n \\omega_i x_i > t 向量化表示为\n\n\\omega^。 \\cdot x^。 > 0其中，$\\omega^。 = (-t,\\omega_1,\\cdots,\\omega_n),x^。= (1,x_1,\\cdots,x_n)$, 均为行向量（这里觉得稍有不妥，对于机器学习而言我目前看到的文献均是以列向量作为标准，而且在统计学中向量一般也使用列向量的形式表示）。特别地，假设$x_0$ 的方向与$\\omega$一致，决策边界可以表示为\n\n\\omega \\cdot (x - x_0) = 0这里写图片描述\n这样可以更清晰的表达出如下重要事实——决定决策边界位置的是$\\omega$的方向，而非其长度。\n2、机器学习的一般定义：机器学习是对依据经验提升自身性能或丰富自身知识的各种算法和系统的系统性研究。\n3、在训练数据上取得优异性能只是手段，而非目的。如果一味追求训练阶段的性能，很容易导致另一个问题——过拟合（overfitting）。通俗地讲，假如你两周后就要考模式识别这门课，你向老师要了前几届的试卷来练（si）习（ji）练（ying）习（bei），由于你上课根本没听过，也没有那个时间来重新看一遍预习加复习，所以你知得死记硬背。当然，几张卷子你很快便得了满分，可以说你的训练阶段性能很好。BUT，考试的时候你就蒙逼了，老师稍微一变你就不会了，这就说明你测试阶段性能很差，这就是所谓的过拟合问题。还有另外一个词可以说就是你的推广性 OR 泛化能力（generalization）很差。\n4、任务、模型和特征是机器学习的三大“原料”。这里写图片描述\n书中提到任务和学习问题是不同的两个概念，需要加以区分：\n\n任务是通过模型来完成的，而学习问题则通过能够产生模型的学习算法来解决。\n\n上图中也可以看出任务与学习问题是不同的，任务不包括训练阶段，BUT学习问题包括。我个人认为，解决学习问题是完成任务的前提，解决学习问题得到模型，然后用模型来完成任务。\n5、机器学习所关注的问题是使用正确的特征来构建正确的模型以完成既定的任务。（Machine learning is concerned with using the right features to build the right models that achieve the right tasks.）这段话是作者Important points to remember中的一句话，以后还是得谨记心中并多多体会。\nOK，Good Bye Alan！\n","dateCreated":"2016-01-11T04:10:31+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2016-01-11T04:10:31+08:00","description":"\n在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：","headline":"《机器学习》学习笔记1——绪论 机器学习概述","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/01/11/machine-learning-book-note/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2016/01/11/machine-learning-book-note/","keywords":"Machine Learning"}</script>
+    <meta name="description" content="在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="《机器学习》学习笔记1——绪论 机器学习概述">
+<meta property="og:url" content="https://alanlee.fun/2016/01/11/machine-learning-book-note/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20160111155647412">
+<meta property="og:image" content="http://img.blog.csdn.net/20160111155758628">
+<meta property="article:published_time" content="2016-01-10T20:10:31.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.196Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20160111155647412">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            《机器学习》学习笔记1——绪论 机器学习概述
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2016-01-11T04:10:31+08:00">
+	
+		    2016 年 1 月 11 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1>
+<p>在亚马逊上买了Peter Flach教授写的段菲博士翻译的《机器学习》一书，开始机器学习之旅。开始之前，先介绍下Peter Flach教授：<br><span id="more"></span></p>
+<blockquote>
+<p>布里斯托尔大学人工智能教授，拥有20多年的机器学习教研经验。在高度结构化的数据挖掘以及通过ROC分析来评估和改进机器学习模型方面，Flach是国际领先的研究人员。他还是<em>Machine Learning</em>期刊总编。曾担任2009年ACM知识发现与数据挖掘国际会议、2012年欧洲机器学习与数据挖掘国际会议的程序委员会共同主席。另著有<em>Simply Logical：Intelligent Reasoning by Example</em>。</p>
+</blockquote>
+<!-- more -->
+<p>这是他的个人主页<a href="http://www.cs.bris.ac.uk/~flach/">Peter Flach</a></p>
+<p>绪论为机器学习概述，正文开始：</p>
+<p>1、开篇用一个垃圾邮件过滤器作为引子——SpamAssassin，介绍了如何根据阈值判定是否属于垃圾邮件。书中背景知识1中提到用数学语言描述SpamAssassin的工作原理，将原本的决策规则</p>
+<script type="math/tex; mode=display">
+\sum_{i=1}^n \omega_i x_i > t</script><p> 向量化表示为</p>
+<script type="math/tex; mode=display">
+\omega^。 \cdot x^。 > 0</script><p>其中，$\omega^。 = (-t,\omega_1,\cdots,\omega_n),x^。= (1,x_1,\cdots,x_n)$, 均为行向量（这里觉得稍有不妥，对于机器学习而言我目前看到的文献均是以列向量作为标准，而且在统计学中向量一般也使用列向量的形式表示）。特别地，假设$x_0$ 的方向与$\omega$一致，决策边界可以表示为</p>
+<script type="math/tex; mode=display">
+\omega \cdot (x - x_0) = 0</script><div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20160111155647412" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20160111155647412" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p>这样可以更清晰的表达出如下重要事实——<strong>决定决策边界位置的是$\omega$的方向，而非其长度</strong>。</p>
+<p>2、机器学习的一般定义：机器学习是对依据经验提升自身性能或丰富自身知识的各种算法和系统的系统性研究。</p>
+<p>3、<strong>在训练数据上取得优异性能只是手段，而非目的</strong>。如果一味追求训练阶段的性能，很容易导致另一个问题——过拟合（overfitting）。通俗地讲，假如你两周后就要考模式识别这门课，你向老师要了前几届的试卷来练（si）习（ji）练（ying）习（bei），由于你上课根本没听过，也没有那个时间来重新看一遍预习加复习，所以你知得死记硬背。当然，几张卷子你很快便得了满分，可以说你的训练阶段性能很好。BUT，考试的时候你就蒙逼了，老师稍微一变你就不会了，这就说明你测试阶段性能很差，这就是所谓的过拟合问题。还有另外一个词可以说就是你的<strong>推广性</strong> OR <strong>泛化能力</strong>（generalization）很差。</p>
+<p>4、任务、模型和特征是机器学习的三大“原料”。<br><div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20160111155758628" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20160111155758628" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div></p>
+<p>书中提到任务和学习问题是不同的两个概念，需要加以区分：</p>
+<blockquote>
+<p>任务是通过模型来完成的，而学习问题则通过能够产生模型的学习算法来解决。</p>
+</blockquote>
+<p>上图中也可以看出任务与学习问题是不同的，任务不包括训练阶段，BUT学习问题包括。我个人认为，解决<strong>学习问题</strong>是完成<strong>任务</strong>的前提，<strong>解决学习问题得到模型，然后用模型来完成任务。</strong></p>
+<p>5、机器学习所关注的问题是使用正确的特征来构建正确的模型以完成既定的任务。（<strong>Machine learning is concerned with using the right features to build the right models that achieve the right tasks.</strong>）这段话是作者Important points to remember中的一句话，以后还是得谨记心中并多多体会。</p>
+<p>OK，Good Bye Alan！</p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/08/27/ubuntu-installing-tensorflow/"
+                    data-tooltip="Ubuntu 14.04 64 位安装 Google 的 TensorFlow"
+                    aria-label="上一篇: Ubuntu 14.04 64 位安装 Google 的 TensorFlow"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2015/12/21/matlab-fitlm/"
+                    data-tooltip="使用 MATLAB 的 fitlm 函数进行线性回归"
+                    aria-label="下一篇: 使用 MATLAB 的 fitlm 函数进行线性回归"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/08/27/ubuntu-installing-tensorflow/"
+                    data-tooltip="Ubuntu 14.04 64 位安装 Google 的 TensorFlow"
+                    aria-label="上一篇: Ubuntu 14.04 64 位安装 Google 的 TensorFlow"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2015/12/21/matlab-fitlm/"
+                    data-tooltip="使用 MATLAB 的 fitlm 函数进行线性回归"
+                    aria-label="下一篇: 使用 MATLAB 的 fitlm 函数进行线性回归"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/01/11/machine-learning-book-note/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2016/01/11/machine-learning-book-note/';
+              
+            this.page.identifier = '2016/01/11/machine-learning-book-note/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

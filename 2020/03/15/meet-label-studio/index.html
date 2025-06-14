@@ -1,0 +1,785 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>试用开源标注平台 Label Studio - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\nPhoto by Josh Sorenson on Unsplash\n\n数据标注是人工智能背后的女人。—— 我说的\n\n初探在 reddit 上看到一个人提了一个问题：What is your favourite (free) labelling tool?，你最喜欢的（免费）标注工具是什么。由于我一直关注标注工具，而且没找到好用、漂亮的标注工具（甚至一度计划自己做一个），也认为这块很重要，所以就点进去看了下。收获不少，帖子楼主提到的 Prodigy，我点进去看了看，确实很漂亮，但是收费，来看下价格：\nProdigy 价格\n罢了。\n贫穷让我看到了 Label Studio、doccano 和 brat，brat 我之前就知道，只是没那么美观。剩下两个都很不错，开源也美观，这次我们来看看前者。\nLabel Studio\n以命名实体识别任务的数据标注为例，先来看下使用 Label Studio 进行标注的效果：\nner演示.gif\n查看任务进度：\n查看任务进度\n后端使用的是 flask，前端使用的是 React。\nOK，如果你还满意的话可以继续往下看安装、导入数据等部分了。接下来我会以标注 NER 数据为例，介绍如何使用 Label Studio。标注类别有人名、地名、公司名、产品和时间，标注数据放在 sentences.txt 中，内容如下：\n12345狼牙山，我站在你面前，显得多么矮小呀！1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。\n安装和启动主要有三种方式 ：\n\npip：pip install label-studio，建议使用 conda 等虚拟环境\ndocker：docker pull heartexlabs/label-studio，docker 镜像版本可能会滞后\n源码：  123git clone https://github.com/heartexlabs/label-studio.gitcd label-studiopython setup.py develop\n\n\n建议使用 pip 方式安装。\n假设我们计划将标注相关文件放在 ner_labeling 文件夹中，你不用事先创建。安装好后使用如下命令启动：\n1label-studio start ner_labeling --init\n这会初始化这个项目并默认在 8200 端口启动服务，生成一些默认文件和文件夹：\n12345ner_labeling/├── completions  # 存放标注好的数据，json 文件，每一个标注完成的任务都放在一个以其 ID 命名的 json 文件中├── config.json  # 项目设置，例如服务端口├── config.xml   # 标签（label）设置└── tasks.json   # 所有导入的任务，key 为任务 ID，value 为任务数据\n然后你就可以在 http://&#123;your-server-ip&#125;:8200 访问了。\n设置标签第一步就是要设置标签，具体包括标签名称、颜色等。可以在网页上直接修改并直观看到效果：\n设置标签\n如图修改标签名称和颜色，满意后点击左下角的 Save 按钮，保存设置到 config.xml 中。\n\n注意官方并不建议直接修改项目中的文件，建议使用网页或者命令修改。\n\n导入任务接着点击左上角图标回到主页面，进行第二步导入任务，可以导入 json、csv、tsv 和 txt 等文件格式。对于本文的例子来说，我们使用 txt 文件最为方便，一行是一个句子，直接将文件拖入上传框中即可，完成后会显示导入任务数和耗费时间：\n\n单个 txt 文件大小不超过 1M，如果超过 1M，可以使用  split 命令分割。\n\n导入任务\n关闭后点击右上方导航栏的 Tasks，可看到导入的任务数和任务存放地址，就是那个 tasks.json，任务 ID 默认从 0 开始计数，生成的 tasks.json 如下：\n1234567891011121314151617181920212223242526272829303132&#123;    &quot;0&quot;: &#123;        &quot;id&quot;: 0,        &quot;data&quot;: &#123;            &quot;text&quot;: &quot;狼牙山，我站在你面前，显得多么矮小呀！&quot;        &#125;    &#125;,    &quot;1&quot;: &#123;        &quot;id&quot;: 1,        &quot;data&quot;: &#123;            &quot;text&quot;: &quot;1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。&quot;        &#125;    &#125;,    &quot;2&quot;: &#123;        &quot;id&quot;: 2,        &quot;data&quot;: &#123;            &quot;text&quot;: &quot;罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。&quot;        &#125;    &#125;,    &quot;3&quot;: &#123;        &quot;id&quot;: 3,        &quot;data&quot;: &#123;            &quot;text&quot;: &quot;20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。&quot;        &#125;    &#125;,    &quot;4&quot;: &#123;        &quot;id&quot;: 4,        &quot;data&quot;: &#123;            &quot;text&quot;: &quot;可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。&quot;        &#125;    &#125;&#125;\n开始标注导入数据后就可以开始标注了，点击导航栏的 Tasks → Start Labeling 或者直接点击导航栏的 Labeling 即可开始标注：\n标注示例.gif\n每次点击 Submit 就会保存标注好的数据到 completions 文件夹中，同时也可以在 Tasks 中查看已完成的任务及完成时间：\n查看已完成的任务及完成时间\n导出数据导出数据这块是 Label Studio 的一个缺点，官方目前支持的是 JSON、CSV、TSV、CoNLL 2003、COCO 和 Pascal VOC XML，其中 CoNLL 2003 是 ner 数据格式的一种，但是经过我测试导出这种格式并不成功，导出的文件是空的。\n但是我们可以先导出为 JSON 文件，然后编写一个脚本转换成我们需要的格式，例如 BIEOS。\n优缺点经过我粗浅的使用，发现一些优缺点：\n优点：\n\n界面相对美观\n部署方便\n配置方便，有多种内置模板\n导入数据方便\n可以明晰了解任务的完成度及每条任务的完成时间\n支持图像、文本和音频等多种数据格式和多种任务数据的标注\n\n缺点：\n\n速度较慢，尤其是保存标注结果并进行下一条标注时\n没有账号体系，但是有一个 multisession mode，暂未深入研究\n\nReference\n[D] What is your favourite (free) labelling tool? : MachineLearning\nLabel Studio\ndoccano/doccano: Open source text annotation tool for machine learning practitioner.\nProdigy · An annotation tool for AI, Machine Learning &amp; NLP\nbrat rapid annotation tool\n\nEND","dateCreated":"2020-03-15T11:55:19+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-03-15T11:55:19+08:00","description":"\nPhoto by Josh Sorenson on Unsplash","headline":"试用开源标注平台 Label Studio","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/03/15/meet-label-studio/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/03/15/meet-label-studio/","keywords":"Data Science, Machine Learning"}</script>
+    <meta name="description" content="Photo by Josh Sorenson on Unsplash">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="试用开源标注平台 Label Studio">
+<meta property="og:url" content="https://alanlee.fun/2020/03/15/meet-label-studio/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Photo by Josh Sorenson on Unsplash">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/g1GPKlMNFwdBxT7.png">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/jPHIzq3eOK5YMQ6.png">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/CMxwPoKs3gtD752.gif">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/JnhTiBE21k7y6Zm.png">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/fyUqMFeLrDI8nz9.png">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/d3lK5TI8bf9PSiz.png">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/QdnfGWzZUhjRxT1.gif">
+<meta property="og:image" content="https://i.loli.net/2020/03/15/9OoADWfMuGcJd1P.png">
+<meta property="article:published_time" content="2020-03-15T03:55:19.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.196Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Data Science">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/03/15/g1GPKlMNFwdBxT7.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            试用开源标注平台 Label Studio
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-03-15T11:55:19+08:00">
+	
+		    2020 年 3 月 15 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E6%8E%A2"><span class="toc-text">初探</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%92%8C%E5%90%AF%E5%8A%A8"><span class="toc-text">安装和启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E6%A0%87%E7%AD%BE"><span class="toc-text">设置标签</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%BC%E5%85%A5%E4%BB%BB%E5%8A%A1"><span class="toc-text">导入任务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E6%A0%87%E6%B3%A8"><span class="toc-text">开始标注</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%BC%E5%87%BA%E6%95%B0%E6%8D%AE"><span class="toc-text">导出数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">优缺点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p><em>Photo by Josh Sorenson on Unsplash</em><br><span id="more"></span></p>
+<blockquote>
+<p>数据标注是人工智能背后的女人。—— 我说的</p>
+</blockquote>
+<h2 id="初探"><a href="#初探" class="headerlink" title="初探"></a>初探</h2><p>在 reddit 上看到一个人提了一个问题：<a href="https://www.reddit.com/r/MachineLearning/comments/fh3cfp/d_what_is_your_favourite_free_labelling_tool/">What is your favourite (free) labelling tool?</a>，你最喜欢的（免费）标注工具是什么。由于我一直关注标注工具，而且没找到好用、漂亮的标注工具（甚至一度计划自己做一个），也认为这块很重要，所以就点进去看了下。收获不少，帖子楼主提到的 Prodigy，我点进去看了看，确实很漂亮，但是收费，来看下价格：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/g1GPKlMNFwdBxT7.png" title="Prodigy 价格" data-caption="Prodigy 价格" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/g1GPKlMNFwdBxT7.png" alt="Prodigy 价格"></a><span class="caption">Prodigy 价格</span></div>
+<p>罢了。</p>
+<p>贫穷让我看到了 <a href="https://labelstud.io/">Label Studio</a>、<a href="https://github.com/doccano/doccano">doccano</a> 和 <a href="https://brat.nlplab.org/index.html">brat</a>，brat 我之前就知道，只是没那么美观。剩下两个都很不错，开源也美观，这次我们来看看前者。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/jPHIzq3eOK5YMQ6.png" title="Label Studio" data-caption="Label Studio" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/jPHIzq3eOK5YMQ6.png" alt="Label Studio"></a><span class="caption">Label Studio</span></div>
+<p>以命名实体识别任务的数据标注为例，先来看下使用 Label Studio 进行标注的效果：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/CMxwPoKs3gtD752.gif" title="ner演示.gif" data-caption="ner演示.gif" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/CMxwPoKs3gtD752.gif" alt="ner演示.gif"></a><span class="caption">ner演示.gif</span></div>
+<p>查看任务进度：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/JnhTiBE21k7y6Zm.png" title="查看任务进度" data-caption="查看任务进度" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/JnhTiBE21k7y6Zm.png" alt="查看任务进度"></a><span class="caption">查看任务进度</span></div>
+<p>后端使用的是 flask，前端使用的是 React。</p>
+<p>OK，如果你还满意的话可以继续往下看安装、导入数据等部分了。接下来我会以标注 NER 数据为例，介绍如何使用 Label Studio。标注类别有人名、地名、公司名、产品和时间，标注数据放在 <code>sentences.txt</code> 中，内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">狼牙山，我站在你面前，显得多么矮小呀！</span><br><span class="line">1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。</span><br><span class="line">罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。</span><br><span class="line">20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。</span><br><span class="line">可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。</span><br></pre></td></tr></table></figure>
+<h2 id="安装和启动"><a href="#安装和启动" class="headerlink" title="安装和启动"></a>安装和启动</h2><p>主要有三种方式 ：</p>
+<ul>
+<li>pip：<code>pip install label-studio</code>，建议使用 conda 等虚拟环境</li>
+<li>docker：<code>docker pull heartexlabs/label-studio</code>，docker 镜像版本可能会滞后</li>
+<li>源码：  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/heartexlabs/label-studio.git</span><br><span class="line"><span class="built_in">cd</span> label-studio</span><br><span class="line">python setup.py develop</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>建议使用 pip 方式安装。</p>
+<p>假设我们计划将标注相关文件放在 <code>ner_labeling</code> 文件夹中，你不用事先创建。安装好后使用如下命令启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">label-studio start ner_labeling --init</span><br></pre></td></tr></table></figure>
+<p>这会初始化这个项目并默认在 8200 端口启动服务，生成一些默认文件和文件夹：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ner_labeling/</span><br><span class="line">├── completions  # 存放标注好的数据，json 文件，每一个标注完成的任务都放在一个以其 ID 命名的 json 文件中</span><br><span class="line">├── config.json  # 项目设置，例如服务端口</span><br><span class="line">├── config.xml   # 标签（label）设置</span><br><span class="line">└── tasks.json   # 所有导入的任务，key 为任务 ID，value 为任务数据</span><br></pre></td></tr></table></figure>
+<p>然后你就可以在 <code>http://&#123;your-server-ip&#125;:8200</code> 访问了。</p>
+<h2 id="设置标签"><a href="#设置标签" class="headerlink" title="设置标签"></a>设置标签</h2><p>第一步就是要设置标签，具体包括标签名称、颜色等。可以在网页上直接修改并直观看到效果：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/fyUqMFeLrDI8nz9.png" title="设置标签" data-caption="设置标签" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/fyUqMFeLrDI8nz9.png" alt="设置标签"></a><span class="caption">设置标签</span></div>
+<p>如图修改标签名称和颜色，满意后点击左下角的 <code>Save</code> 按钮，保存设置到 <code>config.xml</code> 中。</p>
+<blockquote>
+<p>注意<a href="https://labelstud.io/guide/setup.html#Structure">官方</a>并不建议直接修改项目中的文件，建议使用网页或者命令修改。</p>
+</blockquote>
+<h2 id="导入任务"><a href="#导入任务" class="headerlink" title="导入任务"></a>导入任务</h2><p>接着点击左上角图标回到主页面，进行第二步导入任务，可以导入 json、csv、tsv 和 txt 等文件格式。对于本文的例子来说，我们使用 txt 文件最为方便，一行是一个句子，直接将文件拖入上传框中即可，完成后会显示导入任务数和耗费时间：</p>
+<blockquote>
+<p>单个 txt 文件大小不超过 1M，如果超过 1M，可以使用  <code>split</code> 命令分割。</p>
+</blockquote>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/d3lK5TI8bf9PSiz.png" title="导入任务" data-caption="导入任务" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/d3lK5TI8bf9PSiz.png" alt="导入任务"></a><span class="caption">导入任务</span></div>
+<p>关闭后点击右上方导航栏的 <code>Tasks</code>，可看到导入的任务数和任务存放地址，就是那个 <code>tasks.json</code>，任务 ID 默认从 0 开始计数，生成的 <code>tasks.json</code> 如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;0&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;text&quot;</span><span class="punctuation">:</span> <span class="string">&quot;狼牙山，我站在你面前，显得多么矮小呀！&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;1&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;text&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1976年9月间，我与《福建文艺》编辑部的几位同事，专程到上杭县举办改稿学习班。&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;2&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;text&quot;</span><span class="punctuation">:</span> <span class="string">&quot;罗湾村为修建一座庙宇，从筹集资金、征集土地，到竣工持续近10年。&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;3&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;text&quot;</span><span class="punctuation">:</span> <span class="string">&quot;20日凌晨1时许，博物馆附设的“艺术咖啡”酒吧招待员克罗科洛与监控室的3名女看守联系，没有得到回答。&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;4&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">4</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;text&quot;</span><span class="punctuation">:</span> <span class="string">&quot;可口可乐公司的发言人辩称，饮料市场本来就是竞争高度激烈的地方，百事可乐应该直接到市场去竞争，而不是在法庭上争斗。&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<h2 id="开始标注"><a href="#开始标注" class="headerlink" title="开始标注"></a>开始标注</h2><p>导入数据后就可以开始标注了，点击导航栏的 <code>Tasks</code> → <code>Start Labeling</code> 或者直接点击导航栏的 <code>Labeling</code> 即可开始标注：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/QdnfGWzZUhjRxT1.gif" title="标注示例.gif" data-caption="标注示例.gif" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/QdnfGWzZUhjRxT1.gif" alt="标注示例.gif"></a><span class="caption">标注示例.gif</span></div>
+<p>每次点击 <code>Submit</code> 就会保存标注好的数据到 <code>completions</code> 文件夹中，同时也可以在 <code>Tasks</code> 中查看已完成的任务及完成时间：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/03/15/9OoADWfMuGcJd1P.png" title="查看已完成的任务及完成时间" data-caption="查看已完成的任务及完成时间" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/03/15/9OoADWfMuGcJd1P.png" alt="查看已完成的任务及完成时间"></a><span class="caption">查看已完成的任务及完成时间</span></div>
+<h2 id="导出数据"><a href="#导出数据" class="headerlink" title="导出数据"></a>导出数据</h2><p>导出数据这块是 Label Studio 的一个缺点，官方目前支持的是 JSON、CSV、TSV、CoNLL 2003、COCO 和 Pascal VOC XML，其中 CoNLL 2003 是 ner 数据格式的一种，但是经过我测试导出这种格式并不成功，导出的文件是空的。</p>
+<p>但是我们可以先导出为 JSON 文件，然后编写一个脚本转换成我们需要的格式，例如 BIEOS。</p>
+<h2 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h2><p>经过我粗浅的使用，发现一些优缺点：</p>
+<p>优点：</p>
+<ul>
+<li>界面相对美观</li>
+<li>部署方便</li>
+<li>配置方便，有多种内置模板</li>
+<li>导入数据方便</li>
+<li>可以明晰了解任务的完成度及每条任务的完成时间</li>
+<li>支持图像、文本和音频等多种数据格式和多种任务数据的标注</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>速度较慢，尤其是保存标注结果并进行下一条标注时</li>
+<li>没有账号体系，但是有一个 <a href="https://labelstud.io/guide/index.html#Multisession-mode">multisession mode</a>，暂未深入研究</li>
+</ul>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://www.reddit.com/r/MachineLearning/comments/fh3cfp/d_what_is_your_favourite_free_labelling_tool/">[D] What is your favourite (free) labelling tool? : MachineLearning</a></li>
+<li><a href="https://labelstud.io/">Label Studio</a></li>
+<li><a href="https://github.com/doccano/doccano">doccano/doccano: Open source text annotation tool for machine learning practitioner.</a></li>
+<li><a href="https://prodi.gy/">Prodigy · An annotation tool for AI, Machine Learning &amp; NLP</a></li>
+<li><a href="https://brat.nlplab.org/index.html">brat rapid annotation tool</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Data-Science/" rel="tag">Data Science</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/07/understanding-lcs/"
+                    data-tooltip="理解最长公共子序列算法"
+                    aria-label="上一篇: 理解最长公共子序列算法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/28/bisect-speed/"
+                    data-tooltip="二分查找真的很快吗"
+                    aria-label="下一篇: 二分查找真的很快吗"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/07/understanding-lcs/"
+                    data-tooltip="理解最长公共子序列算法"
+                    aria-label="上一篇: 理解最长公共子序列算法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/28/bisect-speed/"
+                    data-tooltip="二分查找真的很快吗"
+                    aria-label="下一篇: 二分查找真的很快吗"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/03/15/meet-label-studio/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/03/15/meet-label-studio/';
+              
+            this.page.identifier = '2020/03/15/meet-label-studio/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

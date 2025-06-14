@@ -1,0 +1,737 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>批量导出 QQ 邮箱邮件 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题我想导出我的 QQ 邮箱中某个文件夹下的所有文件，eml 或者 mbox 格式都行，但是我发现 QQ 邮箱网页端没这个功能，只能一封一封导出为 eml。QQ 邮箱也没有 Mac 或者 windows 客户端。然后我尝试用 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端来导出，结果发现都存在一个问题：邮件不完整，似乎只能显示近一个月内的邮件。我怀疑是这些客户端的设置没弄好，但找了一圈发现没有相关设置。\n解决方法后来我再去查看 QQ 邮箱网页端的设置时发现，有个「收取选项」设置，默认为「最近 30 天」。这下就破案了，只需改为全部即可，然后在客户端刷新或重新添加账户。\n修改「收取选项」为「最近 30 天」\n如果你想导出 QQ 邮箱中某个文件夹下的所有文件，可以尝试这个方法：\n\n在 QQ 邮箱网页端将「收取选项」设置为「全部」；\n在你的电脑上下载一个支持导出邮件的客户端，例如 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端等；\n在客户端中添加 QQ 邮箱账户，并选择要导出的文件夹；\n根据客户端的要求导出即可。\n\neml 和 mbox 格式eml 格式是一种用于存储电子邮件的文件格式，其英文全称为 “email message format”。一个 eml 文件通常包括邮件的头部信息和正文内容，可以使用邮件客户端或者文本编辑器打开。下面是一个 eml 文件的简单示例：\n12345From: [sender@example.com](mailto:sender@example.com)To: [recipient@example.com](mailto:recipient@example.com)Subject: This is a test emailThis is the body of the email.\n在 Python 中读取一个 eml 文件，可以使用 Python 内置的 email 模块。下面是一个读取 eml 文件并打印邮件头部和正文内容的 demo 代码：\n123456789import emailwith open(&#x27;example.eml&#x27;, &#x27;rb&#x27;) as fp:    msg = email.message_from_binary_file(fp)print(&#x27;From:&#x27;, msg[&#x27;From&#x27;])print(&#x27;To:&#x27;, msg[&#x27;To&#x27;])print(&#x27;Subject:&#x27;, msg[&#x27;Subject&#x27;])print(&#x27;Body:&#x27;, msg.get_payload())\nmbox 格式是另一种常见的存储邮件的文件格式，其英文全称为 “mailbox format”。一个 mbox 文件通常包括多个邮件，每个邮件之间用一个特殊的分隔符隔开，可以使用邮件客户端或者文本编辑器打开。下面是一个 mbox 文件的简单示例：\n1234567891011From sender@example.com Wed May 18 13:48:45 2022Return-Path: &lt;sender@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is the body of the email.From recipient@example.com Wed May 18 14:03:10 2022Return-Path: &lt;recipient@example.com&gt;X-Spam-Checker-Version: SpamAssassin 3.4.2 (2018-09-13) on example.com...This is another email.\n在 Python 中读取一个 mbox 文件，可以使用 Python 内置的 mailbox 模块。下面是一个读取 mbox 文件并打印每个邮件的头部和正文内容的 demo 代码：\n123456789import mailboxmbox = mailbox.mbox(&#x27;example.mbox&#x27;)for msg in mbox:    print(&#x27;From:&#x27;, msg[&#x27;From&#x27;])    print(&#x27;To:&#x27;, msg[&#x27;To&#x27;])    print(&#x27;Subject:&#x27;, msg[&#x27;Subject&#x27;])    print(&#x27;Body:&#x27;, msg.get_payload())\nEND","dateCreated":"2023-05-26T09:21:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2023-05-26T09:21:00+08:00","description":"本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]","headline":"批量导出 QQ 邮箱邮件","image":[null,"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/05/26/batch-export-qq-emails/","keywords":"Misc","thumbnailUrl":"https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"}</script>
+    <meta name="description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="批量导出 QQ 邮箱邮件">
+<meta property="og:url" content="https://alanlee.fun/2023/05/26/batch-export-qq-emails/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文介绍了如何批量导出 QQ 邮箱邮件的方法，需要把“收取选项”改为“全部”才能导出所有邮件。同时介绍了 eml 和 mbox 两种邮件格式的知识和在 Python 中读取邮件的方法。[ChatGPT]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png">
+<meta property="article:published_time" content="2023-05-26T01:21:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.191Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Misc">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            批量导出 QQ 邮箱邮件
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-05-26T09:21:00+08:00">
+	
+		    2023 年 5 月 26 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="toc-text">解决方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#eml-%E5%92%8C-mbox-%E6%A0%BC%E5%BC%8F"><span class="toc-text">eml 和 mbox 格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>我想导出我的 QQ 邮箱中某个文件夹下的所有文件，eml 或者 mbox 格式都行，但是我发现 QQ 邮箱网页端没这个功能，只能一封一封导出为 eml。QQ 邮箱也没有 Mac 或者 windows 客户端。然后我尝试用 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端来导出，结果发现都存在一个问题：邮件不完整，似乎只能显示近一个月内的邮件。我怀疑是这些客户端的设置没弄好，但找了一圈发现没有相关设置。</p>
+<h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>后来我再去查看 QQ 邮箱网页端的设置时发现，有个「收取选项」设置，默认为「最近 30 天」。这下就破案了，只需改为全部即可，然后在客户端刷新或重新添加账户。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png" title="修改「收取选项」为「最近 30 天」" data-caption="修改「收取选项」为「最近 30 天」" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/05/26/vEfR5Vzt1rOQADp.png" alt="修改「收取选项」为「最近 30 天」"></a><span class="caption">修改「收取选项」为「最近 30 天」</span></div>
+<p>如果你想导出 QQ 邮箱中某个文件夹下的所有文件，可以尝试这个方法：</p>
+<ol>
+<li><strong>在 QQ 邮箱网页端将「收取选项」设置为「全部」</strong>；</li>
+<li>在你的电脑上下载一个支持导出邮件的客户端，例如 Mac 自带邮件客户端、foxmail、outlook、thunderbird 客户端等；</li>
+<li>在客户端中添加 QQ 邮箱账户，并选择要导出的文件夹；</li>
+<li>根据客户端的要求导出即可。</li>
+</ol>
+<h2 id="eml-和-mbox-格式"><a href="#eml-和-mbox-格式" class="headerlink" title="eml 和 mbox 格式"></a>eml 和 mbox 格式</h2><p>eml 格式是一种用于存储电子邮件的文件格式，其英文全称为 “email message format”。一个 eml 文件通常包括邮件的头部信息和正文内容，可以使用邮件客户端或者文本编辑器打开。下面是一个 eml 文件的简单示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">From: [sender@example.com](mailto:sender@example.com)</span><br><span class="line">To: [recipient@example.com](mailto:recipient@example.com)</span><br><span class="line">Subject: This <span class="keyword">is</span> a test email</span><br><span class="line"></span><br><span class="line">This <span class="keyword">is</span> the body of the email.</span><br></pre></td></tr></table></figure>
+<p>在 Python 中读取一个 eml 文件，可以使用 Python 内置的 email 模块。下面是一个读取 eml 文件并打印邮件头部和正文内容的 demo 代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> email</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;example.eml&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>) <span class="keyword">as</span> fp:</span><br><span class="line">    msg = email.message_from_binary_file(fp)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;From:&#x27;</span>, msg[<span class="string">&#x27;From&#x27;</span>])</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;To:&#x27;</span>, msg[<span class="string">&#x27;To&#x27;</span>])</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;Subject:&#x27;</span>, msg[<span class="string">&#x27;Subject&#x27;</span>])</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;Body:&#x27;</span>, msg.get_payload())</span><br></pre></td></tr></table></figure>
+<p>mbox 格式是另一种常见的存储邮件的文件格式，其英文全称为 “mailbox format”。一个 mbox 文件通常包括多个邮件，每个邮件之间用一个特殊的分隔符隔开，可以使用邮件客户端或者文本编辑器打开。下面是一个 mbox 文件的简单示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">From sender@example.com Wed May <span class="number">18</span> <span class="number">13</span>:<span class="number">48</span>:<span class="number">45</span> <span class="number">2022</span></span><br><span class="line">Return-Path: &lt;sender@example.com&gt;</span><br><span class="line">X-Spam-Checker-Version: SpamAssassin <span class="number">3.4</span><span class="number">.2</span> (<span class="number">2018</span>-09-<span class="number">13</span>) on example.com</span><br><span class="line">...</span><br><span class="line">This <span class="keyword">is</span> the body of the email.</span><br><span class="line"></span><br><span class="line">From recipient@example.com Wed May <span class="number">18</span> <span class="number">14</span>:03:<span class="number">10</span> <span class="number">2022</span></span><br><span class="line">Return-Path: &lt;recipient@example.com&gt;</span><br><span class="line">X-Spam-Checker-Version: SpamAssassin <span class="number">3.4</span><span class="number">.2</span> (<span class="number">2018</span>-09-<span class="number">13</span>) on example.com</span><br><span class="line">...</span><br><span class="line">This <span class="keyword">is</span> another email.</span><br></pre></td></tr></table></figure>
+<p>在 Python 中读取一个 mbox 文件，可以使用 Python 内置的 mailbox 模块。下面是一个读取 mbox 文件并打印每个邮件的头部和正文内容的 demo 代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> mailbox</span><br><span class="line"></span><br><span class="line">mbox = mailbox.mbox(<span class="string">&#x27;example.mbox&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> msg <span class="keyword">in</span> mbox:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;From:&#x27;</span>, msg[<span class="string">&#x27;From&#x27;</span>])</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;To:&#x27;</span>, msg[<span class="string">&#x27;To&#x27;</span>])</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Subject:&#x27;</span>, msg[<span class="string">&#x27;Subject&#x27;</span>])</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Body:&#x27;</span>, msg.get_payload())</span><br></pre></td></tr></table></figure>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Misc/" rel="tag">Misc</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/06/17/xiaomi-tv-youtube/"
+                    data-tooltip="两种方法教你在小米电视上观看 YouTube"
+                    aria-label="上一篇: 两种方法教你在小米电视上观看 YouTube"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/05/17/travel-international-workers-day-2023-Beijing-Wildlife-Park/"
+                    data-tooltip="2023 五一北京周边行 3/3 —— 北京野生动物园"
+                    aria-label="下一篇: 2023 五一北京周边行 3/3 —— 北京野生动物园"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/06/17/xiaomi-tv-youtube/"
+                    data-tooltip="两种方法教你在小米电视上观看 YouTube"
+                    aria-label="上一篇: 两种方法教你在小米电视上观看 YouTube"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/05/17/travel-international-workers-day-2023-Beijing-Wildlife-Park/"
+                    data-tooltip="2023 五一北京周边行 3/3 —— 北京野生动物园"
+                    aria-label="下一篇: 2023 五一北京周边行 3/3 —— 北京野生动物园"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/05/26/batch-export-qq-emails/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2023/05/26/batch-export-qq-emails/';
+              
+            this.page.identifier = '2023/05/26/batch-export-qq-emails/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

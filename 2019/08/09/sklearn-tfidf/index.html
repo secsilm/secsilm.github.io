@@ -1,0 +1,787 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>sklearn 如何计算 TFIDF - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n文中代码见 GitHub Gist 或者使用 nbviewer 查看。\n\n什么是 TFIDF简单来说，在一个文档集中，TFIDF 反映了一个词在一篇文档中的重要程度，或者说这个词在这篇文档中具有多大的「标志性」。我们可以用其作为每个词的权重进而通过计算余弦相似度来比较两篇文档的相似性。\nTFIDF 是由 TF 和 IDF 的乘积得到的：\n\\text{tfidf}(t, d, D) = \\text{tf}(t, d) \\cdot \\text{idf}(t, D)其中，$t$ 表示词项，$d \\in D$ 表示文档，$D$ 表示所有 $d$ 组成的文档集。这其中 $\\text{tf}(t, d)$ 和 $\\text{idf}(t, D)$ 各自都有多种不同的计算方式，下面分别来说下。\n$\\text{tf}(t, d)$tf 指的是 term frequency，即一个词在一篇文档中出现的次数，最原始的计算方式就是直接统计词项 $t$ 在文档 $d$ 中出现的次数，我们将其记为 $f_{t, d}$。除此之外，还有其他计算方式：\n\n二值：如果词项 $t$ 在文档 $d$ 中出现，则为 1，否则为 0。此时 $\\text{tf}(t,d)$ 的取值范围为 ${0,1}$\n词项频率：即词项 $t$ 的频数（次数）除以文档 $d$ 的总词数，此时 $\\text{tf}(t,d)$ 的取值范围为 $[0,1]$\n\n\\text{tf}(t, d) = \\dfrac{f_{t, d}}{\\Sigma_{t' \\in d}f_{t, d}}\n对数化（log normalization）：此时 $\\text{tf}(t,d)$ 的取值范围为 $[0,\\infty]$\n\n\\text{tf}(t, d) = \\log(1+f_{t,d})\n双重标准化 0.5（double normalization 0.5）：就是让原本的 $\\text{tf}(t,d)$ 除以文档 $d$ 中词频最高的词项的频数，这样做是为了避免偏向长文档。此时 $\\text{tf}(t,d)$ 的取值范围为 $[0,1]$\n\n\\text{tf}(t, d) = 0.5 + 0.5 \\cdot \\dfrac{f_{t,d}}{\\max_{\\{t'\\in d\\}}f_{t',d}}\n双重标准化 K（double normalization K）：就是将上面方法中的 $0.5$ 换成更为一般的 $K$。此时 $\\text{tf}(t,d)$ 的取值范围为 $[0,1]$\n\n\\text{tf}(t, d) = K + (1-K) \\cdot \\dfrac{f_{t,d}}{\\max_{\\{t'\\in d\\}}f_{t',d}}$\\text{idf}(t, D)$idf 指的是 inverse document frequency，即逆文档频率，衡量一个词项能提供多少信息，如它在文档集 $D$ 中比较普遍还是比较少见。一般来说，是由文档集 $D$ 中的文档数 $N$，除以包含词项 $t$ 的文档数 $n_t$，然后再取对数得到：\n\\text{idf}(t, D) = \\log\\dfrac{N}{n_t}其中 $n_t = |{d \\in D:t \\in d}|$。此时取值范围为 $[0, \\infty)$\n\n除此之外，还有其他计算方式：\n\n一元化（unary）：即恒为 1，这也就意味着所有词项都不能提供有效信息\n平滑的逆文档频率（inverse document frequency smooth）：这是为了避免由于词项 $t$ 没有出现在文档集中而发生的除零错误。此时 $\\text{idf}(t,D)$ 的取值范围为 $[\\log N,1]$\n\n\\text{idf}(t, D) = \\log\\dfrac{N}{1+n_t}\ninverse document frequency max（这个中文不太好翻 😃）：对于文档 $d$ 中的词项 $t’$，逐个计算他们的 $n_{t’}$，并选其中的最大值来替换 $N$\n\n\\text{idf}(t, D) = \\log\\dfrac{\\max_{\\{t' \\in d\\}}n_{t'}}{1+n_t}\n概率逆文档频率（probabilistic inverse document frequency）：还是对 $N$ 替换，这次是替换为 $N-n_t$\n\n\\text{idf}(t, D) = \\log\\dfrac{N-n_t}{n_t}sklearn 中如何计算sklearn 中计算 tfidf 的函数是 TfidfTransformer 和 TfidfVectorizer，严格来说后者 = CountVectorizer + TfidfTransformer。TfidfTransformer 和 TfidfVectorizer 有一些共同的参数，这些参数的不同影响了 tfidf 的计算方式：\n\nnorm：归一化，l1、l2（默认值）或者 None。l1 是向量中每个值除以所有值的绝对值的和（）1-范数，l2 是向量中每个值除以所有值的平方开根号（2-范数），即对于 l1：\nx_i = \\dfrac{x_i}{||\\pmb x||_1} = \\dfrac{x_i}{\\sum_j |x_j|}对于 l2：\nx_i = \\dfrac{x_i}{||\\pmb x||_2} = \\dfrac{x_i}{\\sqrt{\\sum_j x^2_j}}\nuse_idf：bool，默认 True，是否使用 idf\nsmooth_idf：bool，默认 True，是否平滑 idf，默认分子和分母 都+1，和上述任何一种都不一样，防止除零错误\nsublinear_tf：bool，默认 False，是否对 tf 使用 sublinear，即使用 1 + log(tf) 来替换原始的 tf\n\n所以，默认参数下（norm=&#39;l2&#39;, use_idf=True, smooth_idf=True, sublinear_tf=False），sklearn 是这么计算 tfidf 的：\n\n\\begin{aligned}\n\\text{tfidf}(t, d, D) &= \\text{tf}(t, d) \\cdot \\text{idf}(t, D) \\\\\n                      &= \\text{tf}(t, d) \\cdot \\left(\\log{\\dfrac{1 + N}{1+n_t}} + 1\\right)\n\\end{aligned}例子手算我们以如下文档集 $D$ 为例，列表中每个元素是一篇文档，共有 $N=4$ 篇文档，使用 jieba 分好词：\n1234567891011documents = [    &quot;低头亲吻我的左手&quot;,  # 文档 1    &quot;换取被宽恕的承诺&quot;,  # 文档 2    &quot;老旧管风琴在角落&quot;,  # 文档 3    &quot;一直一直一直伴奏&quot;,  # 文档 4]documents = [&quot; &quot;.join(jieba.cut(item)) for item in documents]# [&#x27;低头 亲吻 我 的 左手&#x27;, #  &#x27;换取 被 宽恕 的 承诺&#x27;, #  &#x27;老旧 管风琴 在 角落&#x27;, #  &#x27;一直 一直 一直 伴奏&#x27;]\n我们的词汇表如下，顺序无关：\n1一直 亲吻 伴奏 低头 在 宽恕 左手 我 承诺 换取 的 管风琴 老旧 被 角落\n现在我们可以首先计算所有词的 idf，以第一个词 一直 为例：\n\n这里的 $\\log$ 为自然对数，$e$ 为底。\n\n\n\\begin{aligned}\n  idf(一直, D) &= \\log{\\dfrac{1 + N}{1+n_t}} + 1 \\\\\n  &= \\log{\\dfrac{1 + 4}{1+1}} + 1 \\\\\n  &= \\log{\\dfrac{5}{2}} + 1 \\\\\n  &= 1.916290731874155\n\\end{aligned}其实除了 的，其他所有词的 idf 都是 $1.916290731874155$，因为都只出现在一篇文档里。\n以第一个词 一直 为例，来计算其 tfidf 值，按照上述 sklearn 的默认参数。其在前三篇文档中都未出现，即 $\\text{tf}(一直, 文档1/2/3) = 0$，那么 $\\text{tfidf}(一直, 文档1/2/3, D) = 0$。\n最后一篇文档中，其出现了 3 次，则 $\\text{tf}(一直, 文档4) = 3$，$\\text{tfidf}(一直, 文档4, D) = 3 \\times 1.916290731874155 = 5.748872195622465$。最后一篇剩下的词为 伴奏，同理可计算其 tfidf 值为 $1.916290731874155$，那么该文档的 tfidf 向量为\n(5.748872195622465, 0, 1.916290731874155, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)再经过2-范数归一化，得到\n(0.9486833, 0, 0.31622777, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)这就是文档 4 最终的 tfidf 向量了。\n使用 sklearn 计算代码如下：\n\n默认情况下 sklearn 会莫名其妙地去除掉一些停用词，即使 stop_words=None，详细讨论参见 CountVectorizer can’t remain stop words in Chinese · Issue #10756 · scikit-learn/scikit-learn\n\n123456789101112131415161718192021222324252627282930313233343536373839import jiebafrom sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer, CountVectorizerdocuments = [    &quot;低头亲吻我的左手&quot;,    &quot;换取被宽恕的承诺&quot;,    &quot;老旧管风琴在角落&quot;,    &quot;一直一直一直伴奏&quot;,]documents = [&quot; &quot;.join(jieba.cut(item)) for item in documents]# 默认情况下 sklearn 会莫名其妙地去除掉一些停用词，即使 stop_words=None # 详细讨论参见 https://github.com/scikit-learn/scikit-learn/issues/10756vectorizer = TfidfVectorizer(token_pattern=r&#x27;(?u)\\b\\w+\\b&#x27;)X = vectorizer.fit_transform(documents)# 词汇表print(&#x27; &#x27;.join(vectorizer.get_feature_names()))# &#x27;一直 亲吻 伴奏 低头 在 宽恕 左手 我 承诺 换取 的 管风琴 老旧 被 角落&#x27;# idfprint(vectorizer.idf_)# array([1.91629073, 1.91629073, 1.91629073, 1.91629073, 1.91629073,#        1.91629073, 1.91629073, 1.91629073, 1.91629073, 1.91629073,#        1.51082562, 1.91629073, 1.91629073, 1.91629073, 1.91629073])# tfidfprint(X.toarray())# array([[0.        , 0.46516193, 0.        , 0.46516193, 0.        ,#         0.        , 0.46516193, 0.46516193, 0.        , 0.        ,#         0.36673901, 0.        , 0.        , 0.        , 0.        ],#        [0.        , 0.        , 0.        , 0.        , 0.        ,#         0.46516193, 0.        , 0.        , 0.46516193, 0.46516193,#         0.36673901, 0.        , 0.        , 0.46516193, 0.        ],#        [0.        , 0.        , 0.        , 0.        , 0.5       ,#         0.        , 0.        , 0.        , 0.        , 0.        ,#         0.        , 0.5       , 0.5       , 0.        , 0.5       ],#        [0.9486833 , 0.        , 0.31622777, 0.        , 0.        ,#         0.        , 0.        , 0.        , 0.        , 0.        ,#         0.        , 0.        , 0.        , 0.        , 0.        ]])\n可以看到和我们手算的一样。\nReference\ntf–idf - Wikipedia\nTf-idf :: A Single-Page Tutorial - Information Retrieval and Text Mining\n5.2. Feature extraction — scikit-learn 0.21.3 documentation\nCountVectorizer can’t remain stop words in Chinese · Issue #10756 · scikit-learn/scikit-learn\n\nEND","dateCreated":"2019-08-09T22:07:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2019-08-09T22:07:00+08:00","description":"\n\n文中代码见 GitHub Gist 或者使用 nbviewer 查看。","headline":"sklearn 如何计算 TFIDF","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2019/08/09/sklearn-tfidf/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2019/08/09/sklearn-tfidf/","keywords":"Python, Data Science"}</script>
+    <meta name="description" content="文中代码见 GitHub Gist 或者使用 nbviewer 查看。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="sklearn 如何计算 TFIDF">
+<meta property="og:url" content="https://alanlee.fun/2019/08/09/sklearn-tfidf/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="文中代码见 GitHub Gist 或者使用 nbviewer 查看。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/NGACgAl.png">
+<meta property="article:published_time" content="2019-08-09T14:07:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.198Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Data Science">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/NGACgAl.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            sklearn 如何计算 TFIDF
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-08-09T22:07:00+08:00">
+	
+		    2019 年 8 月 9 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-TFIDF"><span class="toc-text">什么是 TFIDF</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#text-tf-t-d"><span class="toc-text">$\text{tf}(t, d)$</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#text-idf-t-D"><span class="toc-text">$\text{idf}(t, D)$</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sklearn-%E4%B8%AD%E5%A6%82%E4%BD%95%E8%AE%A1%E7%AE%97"><span class="toc-text">sklearn 中如何计算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BE%8B%E5%AD%90"><span class="toc-text">例子</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E7%AE%97"><span class="toc-text">手算</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-sklearn-%E8%AE%A1%E7%AE%97"><span class="toc-text">使用 sklearn 计算</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<blockquote>
+<p>文中代码见 <a href="https://gist.github.com/secsilm/79fef46e3defa33e7644d59f2401aa34">GitHub Gist</a> 或者使用 <a href="https://nbviewer.jupyter.org/gist/secsilm/79fef46e3defa33e7644d59f2401aa34">nbviewer</a> 查看。<br><span id="more"></span></p>
+</blockquote>
+<h2 id="什么是-TFIDF"><a href="#什么是-TFIDF" class="headerlink" title="什么是 TFIDF"></a>什么是 TFIDF</h2><p>简单来说，在一个文档集中，TFIDF 反映了一个词在一篇文档中的重要程度，或者说这个词在这篇文档中具有多大的「标志性」。我们可以用其作为每个词的权重进而通过计算余弦相似度来比较两篇文档的相似性。</p>
+<p>TFIDF 是由 TF 和 IDF 的乘积得到的：</p>
+<script type="math/tex; mode=display">\text{tfidf}(t, d, D) = \text{tf}(t, d) \cdot \text{idf}(t, D)</script><p>其中，$t$ 表示词项，$d \in D$ 表示文档，$D$ 表示所有 $d$ 组成的文档集。这其中 $\text{tf}(t, d)$ 和 $\text{idf}(t, D)$ 各自都有多种不同的计算方式，下面分别来说下。</p>
+<h3 id="text-tf-t-d"><a href="#text-tf-t-d" class="headerlink" title="$\text{tf}(t, d)$"></a>$\text{tf}(t, d)$</h3><p>tf 指的是 <strong>t</strong>erm <strong>f</strong>requency，即一个词在一篇文档中出现的次数，最原始的计算方式就是直接统计词项 $t$ 在文档 $d$ 中出现的次数，我们将其记为 $f_{t, d}$。除此之外，还有其他计算方式：</p>
+<ul>
+<li>二值：如果词项 $t$ 在文档 $d$ 中出现，则为 1，否则为 0。此时 $\text{tf}(t,d)$ 的取值范围为 ${0,1}$</li>
+<li>词项频率：即词项 $t$ 的频数（次数）除以文档 $d$ 的总词数，此时 $\text{tf}(t,d)$ 的取值范围为 $[0,1]$</li>
+</ul>
+<script type="math/tex; mode=display">\text{tf}(t, d) = \dfrac{f_{t, d}}{\Sigma_{t' \in d}f_{t, d}}</script><ul>
+<li>对数化（<em>log normalization</em>）：此时 $\text{tf}(t,d)$ 的取值范围为 $[0,\infty]$</li>
+</ul>
+<script type="math/tex; mode=display">\text{tf}(t, d) = \log(1+f_{t,d})</script><ul>
+<li>双重标准化 0.5（<em>double normalization 0.5</em>）：就是让原本的 $\text{tf}(t,d)$ 除以文档 $d$ 中词频最高的词项的频数，这样做是为了避免偏向长文档。此时 $\text{tf}(t,d)$ 的取值范围为 $[0,1]$</li>
+</ul>
+<script type="math/tex; mode=display">\text{tf}(t, d) = 0.5 + 0.5 \cdot \dfrac{f_{t,d}}{\max_{\{t'\in d\}}f_{t',d}}</script><ul>
+<li>双重标准化 K（<em>double normalization K</em>）：就是将上面方法中的 $0.5$ 换成更为一般的 $K$。此时 $\text{tf}(t,d)$ 的取值范围为 $[0,1]$</li>
+</ul>
+<script type="math/tex; mode=display">\text{tf}(t, d) = K + (1-K) \cdot \dfrac{f_{t,d}}{\max_{\{t'\in d\}}f_{t',d}}</script><h3 id="text-idf-t-D"><a href="#text-idf-t-D" class="headerlink" title="$\text{idf}(t, D)$"></a>$\text{idf}(t, D)$</h3><p>idf 指的是 <strong>i</strong>nverse <strong>d</strong>ocument <strong>f</strong>requency，即逆文档频率，衡量一个词项能提供多少信息，如它在文档集 $D$ 中比较普遍还是比较少见。一般来说，是由文档集 $D$ 中的文档数 $N$，除以包含词项 $t$ 的文档数 $n_t$，然后再取对数得到：</p>
+<script type="math/tex; mode=display">\text{idf}(t, D) = \log\dfrac{N}{n_t}</script><p>其中 $n_t = |{d \in D:t \in d}|$。此时取值范围为 $[0, \infty)$</p>
+<p><img src="https://i.imgur.com/NGACgAl.png" alt=""></p>
+<p>除此之外，还有其他计算方式：</p>
+<ul>
+<li>一元化（<em>unary</em>）：即恒为 1，这也就意味着所有词项都不能提供有效信息</li>
+<li>平滑的逆文档频率（<em>inverse document frequency smooth</em>）：这是为了避免由于词项 $t$ 没有出现在文档集中而发生的除零错误。此时 $\text{idf}(t,D)$ 的取值范围为 $[\log N,1]$</li>
+</ul>
+<script type="math/tex; mode=display">\text{idf}(t, D) = \log\dfrac{N}{1+n_t}</script><ul>
+<li>inverse document frequency max（<em>这个中文不太好翻 😃</em>）：对于文档 $d$ 中的词项 $t’$，逐个计算他们的 $n_{t’}$，并选其中的最大值来替换 $N$</li>
+</ul>
+<script type="math/tex; mode=display">\text{idf}(t, D) = \log\dfrac{\max_{\{t' \in d\}}n_{t'}}{1+n_t}</script><ul>
+<li>概率逆文档频率（<em>probabilistic inverse document frequency</em>）：还是对 $N$ 替换，这次是替换为 $N-n_t$</li>
+</ul>
+<script type="math/tex; mode=display">\text{idf}(t, D) = \log\dfrac{N-n_t}{n_t}</script><h2 id="sklearn-中如何计算"><a href="#sklearn-中如何计算" class="headerlink" title="sklearn 中如何计算"></a>sklearn 中如何计算</h2><p><a href="https://scikit-learn.org/stable/modules/feature_extraction.html#tfidf-term-weighting">sklearn 中计算 tfidf</a> 的函数是 <a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfTransformer.html#sklearn.feature_extraction.text.TfidfTransformer"><code>TfidfTransformer</code></a> 和 <a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html#sklearn.feature_extraction.text.TfidfVectorizer"><code>TfidfVectorizer</code></a>，严格来说后者 = <a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html#sklearn.feature_extraction.text.CountVectorizer"><code>CountVectorizer</code></a> + <code>TfidfTransformer</code>。<code>TfidfTransformer</code> 和 <code>TfidfVectorizer</code> 有一些共同的参数，这些参数的不同影响了 tfidf 的计算方式：</p>
+<ul>
+<li><code>norm</code>：归一化，<code>l1</code>、<code>l2</code>（默认值）或者 <code>None</code>。<code>l1</code> 是向量中每个值除以所有值的绝对值的和（）1-范数，<code>l2</code> 是向量中每个值除以所有值的平方开根号（2-范数），即对于 <code>l1</code>：<script type="math/tex; mode=display">
+x_i = \dfrac{x_i}{||\pmb x||_1} = \dfrac{x_i}{\sum_j |x_j|}</script>对于 <code>l2</code>：<script type="math/tex; mode=display">
+x_i = \dfrac{x_i}{||\pmb x||_2} = \dfrac{x_i}{\sqrt{\sum_j x^2_j}}</script></li>
+<li><code>use_idf</code>：<code>bool</code>，默认 <code>True</code>，是否使用 idf</li>
+<li><code>smooth_idf</code>：<code>bool</code>，默认 <code>True</code>，是否平滑 idf，默认分子和分母 都+1，和上述任何一种都不一样，防止除零错误</li>
+<li><code>sublinear_tf</code>：<code>bool</code>，默认 <code>False</code>，是否对 tf 使用 sublinear，即使用 <code>1 + log(tf)</code> 来替换原始的 tf</li>
+</ul>
+<p>所以，默认参数下（<code>norm=&#39;l2&#39;, use_idf=True, smooth_idf=True, sublinear_tf=False</code>），sklearn 是这么计算 tfidf 的：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+\text{tfidf}(t, d, D) &= \text{tf}(t, d) \cdot \text{idf}(t, D) \\
+                      &= \text{tf}(t, d) \cdot \left(\log{\dfrac{1 + N}{1+n_t}} + 1\right)
+\end{aligned}</script><h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><h3 id="手算"><a href="#手算" class="headerlink" title="手算"></a>手算</h3><p>我们以如下文档集 $D$ 为例，列表中每个元素是一篇文档，共有 $N=4$ 篇文档，使用 jieba 分好词：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">documents = [</span><br><span class="line">    <span class="string">&quot;低头亲吻我的左手&quot;</span>,  <span class="comment"># 文档 1</span></span><br><span class="line">    <span class="string">&quot;换取被宽恕的承诺&quot;</span>,  <span class="comment"># 文档 2</span></span><br><span class="line">    <span class="string">&quot;老旧管风琴在角落&quot;</span>,  <span class="comment"># 文档 3</span></span><br><span class="line">    <span class="string">&quot;一直一直一直伴奏&quot;</span>,  <span class="comment"># 文档 4</span></span><br><span class="line">]</span><br><span class="line">documents = [<span class="string">&quot; &quot;</span>.join(jieba.cut(item)) <span class="keyword">for</span> item <span class="keyword">in</span> documents]</span><br><span class="line"><span class="comment"># [&#x27;低头 亲吻 我 的 左手&#x27;, </span></span><br><span class="line"><span class="comment">#  &#x27;换取 被 宽恕 的 承诺&#x27;, </span></span><br><span class="line"><span class="comment">#  &#x27;老旧 管风琴 在 角落&#x27;, </span></span><br><span class="line"><span class="comment">#  &#x27;一直 一直 一直 伴奏&#x27;]</span></span><br></pre></td></tr></table></figure>
+<p>我们的词汇表如下，顺序无关：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">一直 亲吻 伴奏 低头 在 宽恕 左手 我 承诺 换取 的 管风琴 老旧 被 角落</span><br></pre></td></tr></table></figure>
+<p>现在我们可以首先计算所有词的 idf，以第一个词 <code>一直</code> 为例：</p>
+<blockquote>
+<p>这里的 $\log$ 为自然对数，$e$ 为底。</p>
+</blockquote>
+<script type="math/tex; mode=display">
+\begin{aligned}
+  idf(一直, D) &= \log{\dfrac{1 + N}{1+n_t}} + 1 \\
+  &= \log{\dfrac{1 + 4}{1+1}} + 1 \\
+  &= \log{\dfrac{5}{2}} + 1 \\
+  &= 1.916290731874155
+\end{aligned}</script><p>其实除了 <code>的</code>，其他所有词的 idf 都是 $1.916290731874155$，因为都只出现在一篇文档里。</p>
+<p>以第一个词 <code>一直</code> 为例，来计算其 tfidf 值，按照上述 sklearn 的默认参数。其在前三篇文档中都未出现，即 $\text{tf}(一直, 文档1/2/3) = 0$，那么 $\text{tfidf}(一直, 文档1/2/3, D) = 0$。</p>
+<p>最后一篇文档中，其出现了 3 次，则 $\text{tf}(一直, 文档4) = 3$，$\text{tfidf}(一直, 文档4, D) = 3 \times 1.916290731874155 = 5.748872195622465$。最后一篇剩下的词为 <code>伴奏</code>，同理可计算其 tfidf 值为 $1.916290731874155$，那么该文档的 tfidf 向量为</p>
+<script type="math/tex; mode=display">(5.748872195622465, 0, 1.916290731874155, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)</script><p>再经过2-范数归一化，得到</p>
+<script type="math/tex; mode=display">(0.9486833, 0, 0.31622777, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)</script><p>这就是文档 4 最终的 tfidf 向量了。</p>
+<h3 id="使用-sklearn-计算"><a href="#使用-sklearn-计算" class="headerlink" title="使用 sklearn 计算"></a>使用 sklearn 计算</h3><p>代码如下：</p>
+<blockquote>
+<p>默认情况下 sklearn 会莫名其妙地去除掉一些停用词，即使 <code>stop_words=None</code>，详细讨论参见 <a href="https://github.com/scikit-learn/scikit-learn/issues/10756">CountVectorizer can’t remain stop words in Chinese · Issue #10756 · scikit-learn/scikit-learn</a></p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> jieba</span><br><span class="line"><span class="keyword">from</span> sklearn.feature_extraction.text <span class="keyword">import</span> TfidfTransformer, TfidfVectorizer, CountVectorizer</span><br><span class="line"></span><br><span class="line">documents = [</span><br><span class="line">    <span class="string">&quot;低头亲吻我的左手&quot;</span>,</span><br><span class="line">    <span class="string">&quot;换取被宽恕的承诺&quot;</span>,</span><br><span class="line">    <span class="string">&quot;老旧管风琴在角落&quot;</span>,</span><br><span class="line">    <span class="string">&quot;一直一直一直伴奏&quot;</span>,</span><br><span class="line">]</span><br><span class="line">documents = [<span class="string">&quot; &quot;</span>.join(jieba.cut(item)) <span class="keyword">for</span> item <span class="keyword">in</span> documents]</span><br><span class="line"><span class="comment"># 默认情况下 sklearn 会莫名其妙地去除掉一些停用词，即使 stop_words=None </span></span><br><span class="line"><span class="comment"># 详细讨论参见 https://github.com/scikit-learn/scikit-learn/issues/10756</span></span><br><span class="line">vectorizer = TfidfVectorizer(token_pattern=<span class="string">r&#x27;(?u)\b\w+\b&#x27;</span>)</span><br><span class="line">X = vectorizer.fit_transform(documents)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 词汇表</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27; &#x27;</span>.join(vectorizer.get_feature_names()))</span><br><span class="line"><span class="comment"># &#x27;一直 亲吻 伴奏 低头 在 宽恕 左手 我 承诺 换取 的 管风琴 老旧 被 角落&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># idf</span></span><br><span class="line"><span class="built_in">print</span>(vectorizer.idf_)</span><br><span class="line"><span class="comment"># array([1.91629073, 1.91629073, 1.91629073, 1.91629073, 1.91629073,</span></span><br><span class="line"><span class="comment">#        1.91629073, 1.91629073, 1.91629073, 1.91629073, 1.91629073,</span></span><br><span class="line"><span class="comment">#        1.51082562, 1.91629073, 1.91629073, 1.91629073, 1.91629073])</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># tfidf</span></span><br><span class="line"><span class="built_in">print</span>(X.toarray())</span><br><span class="line"><span class="comment"># array([[0.        , 0.46516193, 0.        , 0.46516193, 0.        ,</span></span><br><span class="line"><span class="comment">#         0.        , 0.46516193, 0.46516193, 0.        , 0.        ,</span></span><br><span class="line"><span class="comment">#         0.36673901, 0.        , 0.        , 0.        , 0.        ],</span></span><br><span class="line"><span class="comment">#        [0.        , 0.        , 0.        , 0.        , 0.        ,</span></span><br><span class="line"><span class="comment">#         0.46516193, 0.        , 0.        , 0.46516193, 0.46516193,</span></span><br><span class="line"><span class="comment">#         0.36673901, 0.        , 0.        , 0.46516193, 0.        ],</span></span><br><span class="line"><span class="comment">#        [0.        , 0.        , 0.        , 0.        , 0.5       ,</span></span><br><span class="line"><span class="comment">#         0.        , 0.        , 0.        , 0.        , 0.        ,</span></span><br><span class="line"><span class="comment">#         0.        , 0.5       , 0.5       , 0.        , 0.5       ],</span></span><br><span class="line"><span class="comment">#        [0.9486833 , 0.        , 0.31622777, 0.        , 0.        ,</span></span><br><span class="line"><span class="comment">#         0.        , 0.        , 0.        , 0.        , 0.        ,</span></span><br><span class="line"><span class="comment">#         0.        , 0.        , 0.        , 0.        , 0.        ]])</span></span><br></pre></td></tr></table></figure>
+<p>可以看到和我们手算的一样。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf">tf–idf - Wikipedia</a></li>
+<li><a href="http://www.tfidf.com/">Tf-idf :: A Single-Page Tutorial - Information Retrieval and Text Mining</a></li>
+<li><a href="https://scikit-learn.org/stable/modules/feature_extraction.html#tfidf-term-weighting">5.2. Feature extraction — scikit-learn 0.21.3 documentation</a></li>
+<li><a href="https://github.com/scikit-learn/scikit-learn/issues/10756">CountVectorizer can’t remain stop words in Chinese · Issue #10756 · scikit-learn/scikit-learn</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Data-Science/" rel="tag">Data Science</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/09/19/install-ghost/"
+                    data-tooltip="Ghost 博客平台安装和配置"
+                    aria-label="上一篇: Ghost 博客平台安装和配置"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/04/13/understanding-pca/"
+                    data-tooltip="理解主成分分析"
+                    aria-label="下一篇: 理解主成分分析"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/09/19/install-ghost/"
+                    data-tooltip="Ghost 博客平台安装和配置"
+                    aria-label="上一篇: Ghost 博客平台安装和配置"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/04/13/understanding-pca/"
+                    data-tooltip="理解主成分分析"
+                    aria-label="下一篇: 理解主成分分析"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/08/09/sklearn-tfidf/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2019/08/09/sklearn-tfidf/';
+              
+            this.page.identifier = '2019/08/09/sklearn-tfidf/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

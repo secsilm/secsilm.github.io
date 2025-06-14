@@ -1,0 +1,753 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>两种方法教你在小米电视上观看 YouTube - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题我一直有个想法是在我家的小米电视上看 YouTube，之前都是手机上下载专门用来投屏 YouTube 的软件（Tubio），缺点是操作稍显复杂，清晰度不能选择，字幕投不上。经过前几天在电视上折腾小白网盘、电视家等经验，这次就想再来试下实现这个想法。\n解决方法按理来说，想要看 YouTube，就需要电视上装一个 VPN 软件和 YouTube。电视也是基于 Android 系统做的，所以还比较好实现。VPN 软件我们就可以使用和手机上一样的 ssr 或者 clash。我大概讲下我测试的两种方法。\n方法1：SSR + SmartTube这个方法是我看网上传的最多的，但是首先说下这个方法我失败了。\nSmartTube（GitHub）是一个专门用于在电视上观看 YouTube 的免广告应用，那为什么不用官方的 YouTube app 呢？因为官方的需要依赖 Google 服务框架那一套东西，比较麻烦，而这个 app 是不需要的。其有 stable 和 beta 两个版本，下载 stable 即可。\n\n下载 SSR apk 和 SmartTube apk 到 U 盘上，然后插到电视上，分别安装。\n配置好你的 SSR，测试下看能不能正常连接。我的就在这步卡住了，根本连接不了，订阅是更新成功了，但是选择节点后测试失败。\n假设你上一步成功了，安装并打开 SmartTube，能正常加载首页就表示成功了，你也可以选择登陆自己的账号，点上方的小人根据提示操作即可。\n\n方法 2：一台挂着梯子的电脑 + SmartTube这个是我成功的方法，也是我认为最方便最简洁的方法，搜索的时候在一个 YouTube 视频看到的。\n\n将电脑梯子设置为局域网可访问。\n 允许局域网连接。\n\n使用 ifconfig 或者梯子控制台界面找到电脑的 ip 和端口。\n 查看并记住你的本机地址。\n 查看并记住代理端口。\n\n在 SmartTube 上，在左侧选择 设置  ➡️ 一般  ➡️ 互联网审查  ➡️ 使用网页代理，根据提示填入刚才的 ip 和端口即可，代理类型选择 HTTP，测试一下，两个都 OK 就表示成功连接了代理。\n 设置让 SmartTube 使用网页代理。\n 填入 ip 和端口。\n\n确定退出回到首页，就可以看到能成功加载了。登录账号啥的和方法 1 相同，也可以选择清晰度和字幕，和电脑上几乎一样，非常方便。\n 首页成功加载。\n\n\n通过以上两种方法，你就可以方便地在小米电视上观看 YouTube，享受大屏幕带来的视觉效果啦～\nEND","dateCreated":"2023-06-17T16:01:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2023-06-17T16:01:00+08:00","description":"本文介绍了两种在小米电视上观看 YouTube 的方法：SSR + SmartTube 和一台挂着梯子的电脑 + SmartTube。通过这两种方法，用户能够方便地在小米电视上观看 YouTube，并享受大屏幕带来的视觉效果。[ChatGPT]","headline":"两种方法教你在小米电视上观看 YouTube","image":[null,"https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/","keywords":"Tools, Misc, Living","thumbnailUrl":"https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"}</script>
+    <meta name="description" content="本文介绍了两种在小米电视上观看 YouTube 的方法：SSR + SmartTube 和一台挂着梯子的电脑 + SmartTube。通过这两种方法，用户能够方便地在小米电视上观看 YouTube，并享受大屏幕带来的视觉效果。[ChatGPT]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="两种方法教你在小米电视上观看 YouTube">
+<meta property="og:url" content="https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文介绍了两种在小米电视上观看 YouTube 的方法：SSR + SmartTube 和一台挂着梯子的电脑 + SmartTube。通过这两种方法，用户能够方便地在小米电视上观看 YouTube，并享受大屏幕带来的视觉效果。[ChatGPT]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2023/06/17/K5dCY7TEomPcWkb.png">
+<meta property="og:image" content="https://s2.loli.net/2023/06/17/HFOZ5EL8pSXfKas.png">
+<meta property="og:image" content="https://s2.loli.net/2023/06/17/Z1CxhfYMdpEqmAj.png">
+<meta property="og:image" content="https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png">
+<meta property="og:image" content="https://s2.loli.net/2023/06/17/ZnklpoJBcgeCvjV.png">
+<meta property="og:image" content="https://s2.loli.net/2023/06/17/1KdNQcvfD6HBMs8.png">
+<meta property="article:published_time" content="2023-06-17T08:01:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.201Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Tools">
+<meta property="article:tag" content="Misc">
+<meta property="article:tag" content="Living">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/06/17/K5dCY7TEomPcWkb.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            两种方法教你在小米电视上观看 YouTube
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-06-17T16:01:00+08:00">
+	
+		    2023 年 6 月 17 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="toc-text">解决方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%951%EF%BC%9ASSR-SmartTube"><span class="toc-text">方法1：SSR + SmartTube</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-2%EF%BC%9A%E4%B8%80%E5%8F%B0%E6%8C%82%E7%9D%80%E6%A2%AF%E5%AD%90%E7%9A%84%E7%94%B5%E8%84%91-SmartTube"><span class="toc-text">方法 2：一台挂着梯子的电脑 + SmartTube</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>我一直有个想法是在我家的小米电视上看 YouTube，之前都是手机上下载专门用来投屏 YouTube 的软件（<a href="https://tubioapp.com/">Tubio</a>），缺点是操作稍显复杂，清晰度不能选择，字幕投不上。经过前几天在电视上折腾小白网盘、电视家等经验，这次就想再来试下实现这个想法。</p>
+<h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>按理来说，想要看 YouTube，就需要电视上装一个 VPN 软件和 YouTube。电视也是基于 Android 系统做的，所以还比较好实现。VPN 软件我们就可以使用和手机上一样的 ssr 或者 clash。我大概讲下我测试的两种方法。</p>
+<h3 id="方法1：SSR-SmartTube"><a href="#方法1：SSR-SmartTube" class="headerlink" title="方法1：SSR + SmartTube"></a>方法1：SSR + SmartTube</h3><p>这个方法是我看网上传的最多的，但是首先说下这个方法我失败了。</p>
+<p><a href="https://smartyoutubetv.github.io/">SmartTube</a>（<a href="https://github.com/yuliskov/SmartTubeNext">GitHub</a>）是一个专门用于在电视上观看 YouTube 的免广告应用，那为什么不用官方的 YouTube app 呢？因为官方的需要依赖 Google 服务框架那一套东西，比较麻烦，而这个 app 是不需要的。其有 stable 和 beta 两个版本，下载 stable 即可。</p>
+<ol>
+<li>下载 <a href="https://github.com/shadowsocksrr/shadowsocksr-android/releases">SSR apk</a> 和 <a href="https://github.com/yuliskov/SmartTubeNext/releases/download/latest/smarttube_stable.apk">SmartTube apk</a> 到 U 盘上，然后插到电视上，分别安装。</li>
+<li>配置好你的 SSR，测试下看能不能正常连接。我的就在这步卡住了，根本连接不了，订阅是更新成功了，但是选择节点后测试失败。</li>
+<li>假设你上一步成功了，安装并打开 SmartTube，能正常加载首页就表示成功了，你也可以选择登陆自己的账号，点上方的小人根据提示操作即可。</li>
+</ol>
+<h3 id="方法-2：一台挂着梯子的电脑-SmartTube"><a href="#方法-2：一台挂着梯子的电脑-SmartTube" class="headerlink" title="方法 2：一台挂着梯子的电脑 + SmartTube"></a>方法 2：一台挂着梯子的电脑 + SmartTube</h3><p>这个是我成功的方法，也是我认为最方便最简洁的方法，搜索的时候在一个 YouTube 视频看到的。</p>
+<ol>
+<li><p>将电脑梯子设置为局域网可访问。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/06/17/K5dCY7TEomPcWkb.png" title="允许局域网连接。" data-caption="允许局域网连接。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/06/17/K5dCY7TEomPcWkb.png" alt="允许局域网连接。"></a><span class="caption">允许局域网连接。</span></div>
+</li>
+<li><p>使用 <code>ifconfig</code> 或者梯子控制台界面找到电脑的 ip 和端口。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/06/17/HFOZ5EL8pSXfKas.png" title="查看并记住你的本机地址。" data-caption="查看并记住你的本机地址。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/06/17/HFOZ5EL8pSXfKas.png" alt="查看并记住你的本机地址。"></a><span class="caption">查看并记住你的本机地址。</span></div>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/06/17/Z1CxhfYMdpEqmAj.png" title="查看并记住代理端口。" data-caption="查看并记住代理端口。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/06/17/Z1CxhfYMdpEqmAj.png" alt="查看并记住代理端口。"></a><span class="caption">查看并记住代理端口。</span></div>
+</li>
+<li><p>在 SmartTube 上，在左侧选择 <code>设置</code>  ➡️ <code>一般</code>  ➡️ <code>互联网审查</code>  ➡️ <code>使用网页代理</code>，根据提示填入刚才的 ip 和端口即可，代理类型选择 <code>HTTP</code>，测试一下，两个都 OK 就表示成功连接了代理。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png" title="设置让 SmartTube 使用网页代理。" data-caption="设置让 SmartTube 使用网页代理。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/06/17/fGWvwHbglIhuCPi.png" alt="设置让 SmartTube 使用网页代理。"></a><span class="caption">设置让 SmartTube 使用网页代理。</span></div>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/06/17/ZnklpoJBcgeCvjV.png" title="填入 ip 和端口。" data-caption="填入 ip 和端口。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/06/17/ZnklpoJBcgeCvjV.png" alt="填入 ip 和端口。"></a><span class="caption">填入 ip 和端口。</span></div>
+</li>
+<li><p>确定退出回到首页，就可以看到能成功加载了。登录账号啥的和方法 1 相同，也可以选择清晰度和字幕，和电脑上几乎一样，非常方便。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/06/17/1KdNQcvfD6HBMs8.png" title="首页成功加载。" data-caption="首页成功加载。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/06/17/1KdNQcvfD6HBMs8.png" alt="首页成功加载。"></a><span class="caption">首页成功加载。</span></div>
+</li>
+</ol>
+<p>通过以上两种方法，你就可以方便地在小米电视上观看 YouTube，享受大屏幕带来的视觉效果啦～</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Living/" rel="tag">Living</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Misc/" rel="tag">Misc</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Tools/" rel="tag">Tools</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/07/02/introducing-supervisor/"
+                    data-tooltip="Supervisor 简易指南"
+                    aria-label="上一篇: Supervisor 简易指南"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/05/26/batch-export-qq-emails/"
+                    data-tooltip="批量导出 QQ 邮箱邮件"
+                    aria-label="下一篇: 批量导出 QQ 邮箱邮件"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/07/02/introducing-supervisor/"
+                    data-tooltip="Supervisor 简易指南"
+                    aria-label="上一篇: Supervisor 简易指南"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/05/26/batch-export-qq-emails/"
+                    data-tooltip="批量导出 QQ 邮箱邮件"
+                    aria-label="下一篇: 批量导出 QQ 邮箱邮件"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/';
+              
+            this.page.identifier = '2023/06/17/xiaomi-tv-youtube/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

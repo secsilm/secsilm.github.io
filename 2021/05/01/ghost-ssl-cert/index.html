@@ -1,0 +1,751 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Ghost SSL 证书过期的解决办法 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题今天访问我的 Ghost 博客 的时候，发现进不去了：\n您的连接不是私密连接\n网上找的图，不过就是这个样子，当时忘了截图\n点击 高级 也没有进去的链接，而且页面地址前面写着”不安全“，证书显示也已经过期一个月了。而且我自己部署的 flask 服务也访问不了了。\n原因Ghost 本身其实会自动 renew 证书，可使用如下命令查看定时任务：\n12$ sudo crontab -l14 0 * * * &quot;/etc/letsencrypt&quot;/acme.sh --cron --home &quot;/etc/letsencrypt&quot; &gt; /dev/null\n有这个输出就表示会自动 renew。但是根据网上的说法，Ghost 没有及时升级  /etc/letsencrypt/acme.sh 版本，造成 renew 失败之类的。\n我看同目录下的 account.conf 中有一行是这样的：\n1#AUTO_UPGRADE=&quot;1&quot;\n自动升级默认是被注释掉的，不过我也不能百分比确定取消注释就会自动升级。具体我也不是很懂，就不多说了，就提一嘴。\n解决所以总而言之，就是要升级 acme.sh 然后重启 Ghost。\n\n进入 acme.sh 目录： 1$ cd /etc/letsencrypt\n备份原文件： 1$ sudo cp acme.sh acme.sh.bk\n升级： 123456789101112131415$ sudo ./acme.sh --upgrade./acme.sh: line 6192: cd: /home/username/.acme.sh: No such file or directory[Fri Apr 30 09:47:22 CST 2021] Installing from online archive.[Fri Apr 30 09:47:22 CST 2021] Downloading https://github.com/Neilpang/acme.sh/archive/master.tar.gztouch: cannot touch &#x27;/home/username/.acme.sh/http.header&#x27;: No such file or directory[Fri Apr 30 09:48:36 CST 2021] Extracting master.tar.gz[Fri Apr 30 09:48:36 CST 2021] It is recommended to install socat first.[Fri Apr 30 09:48:36 CST 2021] We use socat for standalone server if you use standalone mode.[Fri Apr 30 09:48:36 CST 2021] If you don&#x27;t use standalone mode, just ignore this warning.[Fri Apr 30 09:48:36 CST 2021] Installing to /home/username/.acme.sh[Fri Apr 30 09:48:36 CST 2021] Installed to /home/username/.acme.sh/acme.sh[Fri Apr 30 09:48:36 CST 2021] Good, bash is found, so change the shebang to use bash as preferred.[Fri Apr 30 09:48:37 CST 2021] OK[Fri Apr 30 09:48:37 CST 2021] Install success![Fri Apr 30 09:48:37 CST 2021] Upgrade success!\n升级后的文件是放在 home 目录下的，所以要 cp 过来： 1$ sudo cp ~/.acme.sh/acme.sh .\n手动执行一次定时任务。注意加上 —force，原因：sudo · acmesh-official/acme.sh Wiki 12345678910111213141516171819202122232425$ sudo &quot;/etc/letsencrypt&quot;/acme.sh --cron --home &quot;/etc/letsencrypt&quot;[Fri Apr 30 09:53:20 CST 2021] ===Starting cron===[Fri Apr 30 09:53:21 CST 2021] Renew: &#x27;northcloudgate.com&#x27;[Fri Apr 30 09:53:22 CST 2021] Using CA: https://acme-v02.api.letsencrypt.org/directory[Fri Apr 30 09:53:22 CST 2021] Single domain=&#x27;northcloudgate.com&#x27;[Fri Apr 30 09:53:22 CST 2021] Getting domain auth token for each domain[Fri Apr 30 09:53:25 CST 2021] Getting webroot for domain=&#x27;northcloudgate.com&#x27;[Fri Apr 30 09:53:25 CST 2021] Verifying: northcloudgate.com[Fri Apr 30 09:53:30 CST 2021] Success[Fri Apr 30 09:53:30 CST 2021] Verify finished, start to sign.[Fri Apr 30 09:53:30 CST 2021] Lets finalize the order.[Fri Apr 30 09:53:30 CST 2021] Le_OrderFinalize=&#x27;https://acme-v02.api.letsencrypt.org/acme/finalize/64051473/9381845272&#x27;[Fri Apr 30 09:53:31 CST 2021] Downloading cert.[Fri Apr 30 09:53:31 CST 2021] Le_LinkCert=&#x27;https://acme-v02.api.letsencrypt.org/acme/cert/03175a17da415b526b37dedf518750770ddc&#x27;[Fri Apr 30 09:53:32 CST 2021] Cert success.-----BEGIN CERTIFICATE-----CERTIFICATE CONTENT==-----END CERTIFICATE-----[Fri Apr 30 09:53:32 CST 2021] Your cert is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.cer[Fri Apr 30 09:53:32 CST 2021] Your cert key is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.key[Fri Apr 30 09:53:32 CST 2021] The intermediate CA cert is in  /etc/letsencrypt/northcloudgate.com/ca.cer[Fri Apr 30 09:53:32 CST 2021] And the full chain certs is there:  /etc/letsencrypt/northcloudgate.com/fullchain.cer[Fri Apr 30 09:53:32 CST 2021] Run reload cmd: nginx -s reload[Fri Apr 30 09:53:32 CST 2021] Reload success[Fri Apr 30 09:53:32 CST 2021] ===End cron===\n重启 Ghost： 12345$ cd /var/www/ghost$ ghost restart+ sudo systemctl is-active ghost_northcloudgate-com+ sudo systemctl restart ghost_northcloudgate-com✔ Restarting Ghost\n\n\n然后，就又可以看到安全的小白锁了，证书也有效了：\n博客恢复]\n彩蛋在 Google ”您的连接不是私密连接“这个问题的时候，意外发现了一个神奇操作：\n”thisisunsafe“：这是我见过的最神奇最离奇的操作了，没有之一。当你遇到”您的连接不是私密连接“错误的时候，直接在当前页面”凭空“输入这个字符串，就可以进去页面了。注意是凭空，不是地址栏，你看不到你所输入的东西。#有用而有趣的冷知识https://t.co/TnZ5a5o5LN&mdash; Alan Lee (@bluekirin93) April 30, 2021 \n即，当你遇到“您的连接不是私密连接”错误的时候，直接在当前页面“凭空”输入 thisisunsafe，就可以进去页面了。注意是凭空，不是地址栏，你是看不到你所输入的东西的。\n而且根据 reddit 上的说法，\n\n这个 bypass word 之前是 badidea，再之前是 danger。\nChrome 65 的时候把 badidea 改成了 thisisnotsafe 又改成了 thisisunsafe。而且还用 base64 加密了。\n\nReddit\nbypass word 更改\n此外前文提到的 flask 服务也恢复正常了。\nReference\nGhost博客网站证书过期，怎么办？\n事故记录—SSL证书过期\nChrome 65 replaces the “badidea” bypass keyword with “thisisunsafe” : sysadmin\nDiff - d8fc089b62cd4f8d907acff6fb3f5ff58f168697^! - chromium/src - Git at Google\nTHIS IS UNSAFE (and a Bad Idea) - DEV Community\n\nEND","dateCreated":"2021-05-01T17:10:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2021-05-01T17:10:00+08:00","description":"今天访问我的 Ghost 博客 的时候，发现进不去了，证书显示已过期，自己部署的 flask 服务也访问不了了，那么是怎么回事？","headline":"Ghost SSL 证书过期的解决办法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/05/01/ghost-ssl-cert/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/05/01/ghost-ssl-cert/","keywords":"Ghost"}</script>
+    <meta name="description" content="今天访问我的 Ghost 博客 的时候，发现进不去了，证书显示已过期，自己部署的 flask 服务也访问不了了，那么是怎么回事？">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Ghost SSL 证书过期的解决办法">
+<meta property="og:url" content="https://alanlee.fun/2021/05/01/ghost-ssl-cert/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="今天访问我的 Ghost 博客 的时候，发现进不去了，证书显示已过期，自己部署的 flask 服务也访问不了了，那么是怎么回事？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2021/05/01/aWDNzhlfpS9Yi7I.png">
+<meta property="og:image" content="https://i.loli.net/2021/05/01/pxnyQzWXCo7EMgh.png">
+<meta property="og:image" content="https://i.loli.net/2021/05/01/niaKx3wde78OsLH.png">
+<meta property="og:image" content="https://i.loli.net/2021/05/01/vYHAXBJKGaerDPN.png">
+<meta property="article:published_time" content="2021-05-01T09:10:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.194Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Ghost">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2021/05/01/aWDNzhlfpS9Yi7I.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Ghost SSL 证书过期的解决办法
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-05-01T17:10:00+08:00">
+	
+		    2021 年 5 月 1 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%9F%E5%9B%A0"><span class="toc-text">原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3"><span class="toc-text">解决</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BD%A9%E8%9B%8B"><span class="toc-text">彩蛋</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>今天访问我的 <a href="https://northcloudgate.com/">Ghost 博客</a> 的时候，发现进不去了：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/05/01/aWDNzhlfpS9Yi7I.png" title="您的连接不是私密连接" data-caption="您的连接不是私密连接" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/05/01/aWDNzhlfpS9Yi7I.png" alt="您的连接不是私密连接"></a><span class="caption">您的连接不是私密连接</span></div>
+<p><em>网上找的图，不过就是这个样子，当时忘了截图</em></p>
+<p>点击 <code>高级</code> 也没有进去的链接，而且页面地址前面写着”不安全“，证书显示也已经过期一个月了。而且我自己部署的 flask 服务也访问不了了。</p>
+<h2 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h2><p>Ghost 本身其实会自动 renew 证书，可使用如下命令查看定时任务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo crontab -l</span><br><span class="line">14 0 * * * <span class="string">&quot;/etc/letsencrypt&quot;</span>/acme.sh --cron --home <span class="string">&quot;/etc/letsencrypt&quot;</span> &gt; /dev/null</span><br></pre></td></tr></table></figure>
+<p>有这个输出就表示会自动 renew。但是根据网上的说法，Ghost 没有及时升级  <code>/etc/letsencrypt/acme.sh</code> 版本，造成 renew 失败之类的。</p>
+<p>我看同目录下的 <code>account.conf</code> 中有一行是这样的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#AUTO_UPGRADE=&quot;1&quot;</span></span><br></pre></td></tr></table></figure>
+<p>自动升级默认是被注释掉的，不过我也不能百分比确定取消注释就会自动升级。具体我也不是很懂，就不多说了，就提一嘴。</p>
+<h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>所以总而言之，就是要<strong>升级 <code>acme.sh</code> 然后重启 Ghost</strong>。</p>
+<ol>
+<li>进入 acme.sh 目录： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> /etc/letsencrypt</span></span><br></pre></td></tr></table></figure></li>
+<li>备份原文件： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> acme.sh acme.sh.bk</span></span><br></pre></td></tr></table></figure></li>
+<li>升级： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo ./acme.sh --upgrade</span></span><br><span class="line">./acme.sh: line 6192: cd: /home/username/.acme.sh: No such file or directory</span><br><span class="line">[Fri Apr 30 09:47:22 CST 2021] Installing from online archive.</span><br><span class="line">[Fri Apr 30 09:47:22 CST 2021] Downloading https://github.com/Neilpang/acme.sh/archive/master.tar.gz</span><br><span class="line">touch: cannot touch &#x27;/home/username/.acme.sh/http.header&#x27;: No such file or directory</span><br><span class="line">[Fri Apr 30 09:48:36 CST 2021] Extracting master.tar.gz</span><br><span class="line">[Fri Apr 30 09:48:36 CST 2021] It is recommended to install socat first.</span><br><span class="line">[Fri Apr 30 09:48:36 CST 2021] We use socat for standalone server if you use standalone mode.</span><br><span class="line">[Fri Apr 30 09:48:36 CST 2021] If you don&#x27;t use standalone mode, just ignore this warning.</span><br><span class="line">[Fri Apr 30 09:48:36 CST 2021] Installing to /home/username/.acme.sh</span><br><span class="line">[Fri Apr 30 09:48:36 CST 2021] Installed to /home/username/.acme.sh/acme.sh</span><br><span class="line">[Fri Apr 30 09:48:36 CST 2021] Good, bash is found, so change the shebang to use bash as preferred.</span><br><span class="line">[Fri Apr 30 09:48:37 CST 2021] OK</span><br><span class="line">[Fri Apr 30 09:48:37 CST 2021] Install success!</span><br><span class="line">[Fri Apr 30 09:48:37 CST 2021] Upgrade success!</span><br></pre></td></tr></table></figure></li>
+<li>升级后的文件是放在 home 目录下的，所以要 cp 过来： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> ~/.acme.sh/acme.sh .</span></span><br></pre></td></tr></table></figure></li>
+<li>手动执行一次定时任务。注意加上 —force，原因：<a href="https://github.com/acmesh-official/acme.sh/wiki/sudo">sudo · acmesh-official/acme.sh Wiki</a> <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="string">&quot;/etc/letsencrypt&quot;</span>/acme.sh --cron --home <span class="string">&quot;/etc/letsencrypt&quot;</span></span></span><br><span class="line">[Fri Apr 30 09:53:20 CST 2021] ===Starting cron===</span><br><span class="line">[Fri Apr 30 09:53:21 CST 2021] Renew: &#x27;northcloudgate.com&#x27;</span><br><span class="line">[Fri Apr 30 09:53:22 CST 2021] Using CA: https://acme-v02.api.letsencrypt.org/directory</span><br><span class="line">[Fri Apr 30 09:53:22 CST 2021] Single domain=&#x27;northcloudgate.com&#x27;</span><br><span class="line">[Fri Apr 30 09:53:22 CST 2021] Getting domain auth token for each domain</span><br><span class="line">[Fri Apr 30 09:53:25 CST 2021] Getting webroot for domain=&#x27;northcloudgate.com&#x27;</span><br><span class="line">[Fri Apr 30 09:53:25 CST 2021] Verifying: northcloudgate.com</span><br><span class="line">[Fri Apr 30 09:53:30 CST 2021] Success</span><br><span class="line">[Fri Apr 30 09:53:30 CST 2021] Verify finished, start to sign.</span><br><span class="line">[Fri Apr 30 09:53:30 CST 2021] Lets finalize the order.</span><br><span class="line">[Fri Apr 30 09:53:30 CST 2021] Le_OrderFinalize=&#x27;https://acme-v02.api.letsencrypt.org/acme/finalize/64051473/9381845272&#x27;</span><br><span class="line">[Fri Apr 30 09:53:31 CST 2021] Downloading cert.</span><br><span class="line">[Fri Apr 30 09:53:31 CST 2021] Le_LinkCert=&#x27;https://acme-v02.api.letsencrypt.org/acme/cert/03175a17da415b526b37dedf518750770ddc&#x27;</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] Cert success.</span><br><span class="line">-----BEGIN CERTIFICATE-----</span><br><span class="line">CERTIFICATE CONTENT==</span><br><span class="line">-----END CERTIFICATE-----</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] Your cert is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.cer</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] Your cert key is in  /etc/letsencrypt/northcloudgate.com/northcloudgate.com.key</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] The intermediate CA cert is in  /etc/letsencrypt/northcloudgate.com/ca.cer</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] And the full chain certs is there:  /etc/letsencrypt/northcloudgate.com/fullchain.cer</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] Run reload cmd: nginx -s reload</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] Reload success</span><br><span class="line">[Fri Apr 30 09:53:32 CST 2021] ===End cron===</span><br></pre></td></tr></table></figure></li>
+<li>重启 Ghost： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> /var/www/ghost</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ghost restart</span></span><br><span class="line">+ sudo systemctl is-active ghost_northcloudgate-com</span><br><span class="line">+ sudo systemctl restart ghost_northcloudgate-com</span><br><span class="line">✔ Restarting Ghost</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>然后，就又可以看到安全的小白锁了，证书也有效了：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/05/01/pxnyQzWXCo7EMgh.png" title="博客恢复]" data-caption="博客恢复]" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/05/01/pxnyQzWXCo7EMgh.png" alt="博客恢复]"></a><span class="caption">博客恢复]</span></div>
+<h2 id="彩蛋"><a href="#彩蛋" class="headerlink" title="彩蛋"></a>彩蛋</h2><p>在 Google ”您的连接不是私密连接“这个问题的时候，意外发现了一个神奇操作：</p>
+<p><blockquote class="twitter-tweet"><p lang="zh" dir="ltr">”thisisunsafe“：这是我见过的最神奇最离奇的操作了，没有之一。当你遇到”您的连接不是私密连接“错误的时候，直接在当前页面”凭空“输入这个字符串，就可以进去页面了。注意是凭空，不是地址栏，你看不到你所输入的东西。<a href="https://twitter.com/hashtag/%E6%9C%89%E7%94%A8%E8%80%8C%E6%9C%89%E8%B6%A3%E7%9A%84%E5%86%B7%E7%9F%A5%E8%AF%86?src=hash&amp;ref_src=twsrc%5Etfw">#有用而有趣的冷知识</a><a href="https://t.co/TnZ5a5o5LN">https://t.co/TnZ5a5o5LN</a></p>&mdash; Alan Lee (@bluekirin93) <a href="https://twitter.com/bluekirin93/status/1387942574996922373?ref_src=twsrc%5Etfw">April 30, 2021</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+<p>即，当你遇到“您的连接不是私密连接”错误的时候，直接在当前页面“<strong>凭空</strong>”输入 <code>thisisunsafe</code>，就可以进去页面了。注意是凭空，不是地址栏，你是看不到你所输入的东西的。</p>
+<p>而且根据 <a href="https://www.reddit.com/r/sysadmin/comments/82rnr6/chrome_65_replaces_the_badidea_bypass_keyword/">reddit</a> 上的说法，</p>
+<ul>
+<li>这个 bypass word 之前是 <code>badidea</code>，再之前是 <code>danger</code>。</li>
+<li>Chrome 65 的时候把 <code>badidea</code> 改成了 <code>thisisnotsafe</code> 又改成了 <code>thisisunsafe</code>。而且还用 base64 加密了。</li>
+</ul>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/05/01/niaKx3wde78OsLH.png" title="Reddit" data-caption="Reddit" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/05/01/niaKx3wde78OsLH.png" alt="Reddit"></a><span class="caption">Reddit</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/05/01/vYHAXBJKGaerDPN.png" title="bypass word 更改" data-caption="bypass word 更改" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/05/01/vYHAXBJKGaerDPN.png" alt="bypass word 更改"></a><span class="caption">bypass word 更改</span></div>
+<p>此外前文提到的 flask 服务也恢复正常了。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://wmdpd.com/ghostzheng-shu-guo-qi-zen-yao-ban/">Ghost博客网站证书过期，怎么办？</a></li>
+<li><a href="https://liyangkai.com/2019121401/">事故记录—SSL证书过期</a></li>
+<li><a href="https://www.reddit.com/r/sysadmin/comments/82rnr6/chrome_65_replaces_the_badidea_bypass_keyword/">Chrome 65 replaces the “badidea” bypass keyword with “thisisunsafe” : sysadmin</a></li>
+<li><a href="https://chromium.googlesource.com/chromium/src/+/d8fc089b62cd4f8d907acff6fb3f5ff58f168697%5E%21/#F0">Diff - d8fc089b62cd4f8d907acff6fb3f5ff58f168697^! - chromium/src - Git at Google</a></li>
+<li><a href="https://dev.to/brettimus/this-is-unsafe-and-a-bad-idea-5ej4">THIS IS UNSAFE (and a Bad Idea) - DEV Community</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Ghost/" rel="tag">Ghost</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/08/21/torch-gather/"
+                    data-tooltip="理解 PyTorch 中的 gather 函数"
+                    aria-label="上一篇: 理解 PyTorch 中的 gather 函数"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/03/04/pattern-matching-python310/"
+                    data-tooltip="Python 3.10 的新功能：模式匹配 Pattern Matching"
+                    aria-label="下一篇: Python 3.10 的新功能：模式匹配 Pattern Matching"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/08/21/torch-gather/"
+                    data-tooltip="理解 PyTorch 中的 gather 函数"
+                    aria-label="上一篇: 理解 PyTorch 中的 gather 函数"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/03/04/pattern-matching-python310/"
+                    data-tooltip="Python 3.10 的新功能：模式匹配 Pattern Matching"
+                    aria-label="下一篇: Python 3.10 的新功能：模式匹配 Pattern Matching"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/05/01/ghost-ssl-cert/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2021/05/01/ghost-ssl-cert/';
+              
+            this.page.identifier = '2021/05/01/ghost-ssl-cert/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

@@ -1,0 +1,836 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>使用 TensorFlow Estimators 进行文本分类 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n译者注：\n\n本文翻译自 Sebastian Ruder 于 2018 年 4 月 16 日发表的文章 Text Classification with TensorFlow Estimators，文章和 Julian Eisenschlos 共同撰写，原先发表在 TensorFlow 博客。\n文中括号或者引用块中的 斜体字 为对应的英文原文或者我自己注释的话（会标明「译者注」），否则为原文中本来就有的话。\n目录保留英文原文。\n你如果对 TensorFlow 中的 Datasets 和 Estimators 还不是很了解，那么可以参考我写的理解 Estimators 和 Datasets。\n本人水平有限，如有错误欢迎指出。\n\n\n\nHello there! 通过这篇博文，我们将为你展示如何使用 TensorFlow 中的 Estimators 进行文本分类。下面是本文内容大纲：\n\n使用 Datasets 载入数据\n使用预构建的 Estimators 构建基准\n使用词嵌入（word embeddings）\n使用卷积和 LSTM 层构建自定义的 Estimators\n载入预训练的词向量（word vectors）\n使用 TensorBoard 评估和比较模型\n\n\n\n欢迎来到 TensorFlow Estimators 和 Datasets 入门系列博客的第四部分。你不需要事先阅读前几部分，但是如果想要再回顾一下下面的几个概念的话，还是建议去看下。第一部分 聚焦于预构建的 Estimators，第二部分 讨论了特征列（feature columns），而第三部分 则是介绍如何创建自定义的 Estimators。\n这里，在第四部分中，我们将在前面几个部分的基础上去解决自然语言处理（NLP）中的一系列不同问题。具体来说，本文说明了如何使用自定义的 Estimators、嵌入和 tf.layers 模块来解决一个文本分类问题。在这个过程中，我们将会学习使用 word2vec 和迁移学习技术来提升模型性能，尤其是在带标签的数据稀缺时。\n我们将会给你展示相关的代码片段。这里是包含完整代码的 Jupyter Notebook 文件，你可以在本地或者 Google Colaboratory 运行。你也可以在这里找到相关的 .py 源文件。需要注意的是程序只是为了说明 Estimators 是如何工作的，并没有为了达到最大性能而优化。\nThe Task我们将要使用的数据集是 IMDB Large Movie Review Dataset，包含用于训练的 25000 篇带有明显情感倾向的电影评论，测试集也是 25000 篇。我们将会用此数据集训练一个二分类模型，用于判断一篇评论是积极的还是消极的。\n为了说明，下面列出数据集中一个负面评论（2 颗星）的片段：\n\nNow, I LOVE Italian horror films. The cheesier they are, the better. However, this is not cheesy Italian. This is week-old spaghetti sauce with rotting meatballs. It is amateur hour on every level. There is no suspense, no horror, with just a few drops of blood scattered around to remind you that you are in fact watching a horror film.\n\nKeras 提供了一个方便的函数来导入该数据集，同时也可以在这里下载一个序列化的 numpy array .npy 文件。对于文本分类来说，通常来说会限制词汇表的大小，以防止数据集变得太稀疏和维度太高从而过拟合。因此，每一个评论都由一系列的单词索引组成，从 4（对应于数据集中最常见的单词 the） 到 4999，对应于单词 orange。索引 1 代表句子的开始，2 代表所有的未知词（也叫作 out-of-vocabulary 或者 OOV）。这些索引是通过一个预处理文本的 pipeline 来得到的，这个 pipeline 包括首先清理、归一化（normalize）和 tokenize（译者注：可以理解为分词）每一个句子，然后构建一个以词（tokens）频为索引的字典。\n在我们将数据载入到内存中后，我们用 0 将所有句子补齐到相同长度（这里是 200），这样对于训练集和测试集我们就分别有一个两维的 $25000 \\times 200$ 的数组。\n12345678910111213vocab_size = 5000sentence_size = 200(x_train_variable, y_train), (x_test_variable, y_test) = imdb.load_data(num_words=vocab_size)x_train = sequence.pad_sequences(    x_train_variable,     maxlen=sentence_size,     padding=&#x27;post&#x27;,     value=0)x_test = sequence.pad_sequences(      x_test_variable,    maxlen=sentence_size,     padding=&#x27;post&#x27;,     value=0)\nInput FunctionsEstimators 框架使用输入函数（input functions）来将数据导入和模型区分开来。无论你的数据是在一个 .csv 文件中，还是在一个 pandas.DataFrame 中，无论你的数据能否载入到内存中，都有几个辅助函数可以帮你来创建输入函数。在我们的例子中，我们可以对训练集和测试集使用 Dataset.from_tensor_slices。\n12345678910111213141516171819202122x_len_train = np.array([min(len(x), sentence_size) for x in x_train_variable])x_len_test = np.array([min(len(x), sentence_size) for x in x_test_variable])def parser(x, length, y):    features = &#123;&quot;x&quot;: x, &quot;len&quot;: length&#125;    return features, ydef train_input_fn():    dataset = tf.data.Dataset.from_tensor_slices((x_train, x_len_train, y_train))    dataset = dataset.shuffle(buffer_size=len(x_train_variable))    dataset = dataset.batch(100)    dataset = dataset.map(parser)    dataset = dataset.repeat()    iterator = dataset.make_one_shot_iterator()    return iterator.get_next()def test_input_fn():    dataset = tf.data.Dataset.from_tensor_slices((x_test, x_len_test, y_test))    dataset = dataset.batch(100)    dataset = dataset.map(parser)    iterator = dataset.make_one_shot_iterator()    return iterator.get_next()\n我们打乱训练集数据和不预先指定我们想要训练的步数（epochs），而在测试阶段我们只需要遍历数据集一次就可以了。我们也添加了一个额外的 &quot;len&quot; 字段，该字段表示序列的原始长度，即没有补充过的，我们会在后面用到。\nBuilding a baseline在开始任何机器学习项目之前先构建一个基准总是好的。最开始的模型越简单越好，因为有一个简单鲁棒的基准可以帮助我们理解在增加模型复杂度之后，模型可以得到多少性能提升。当然如果这个简单的模型就能满足我们的需求，那就再好不过了。\n因此，现在我们用一个最简单的模型来做文本分类，即一个不考虑词序的稀疏线性模型，为每一个 token（译者注：可以理解为词，下同）都分配一个权重，然后进行线性求和。因为这个模型不考虑词在句子中的顺序，我们也将称之为一种词袋（Bag-of-Words）方法。现在让我们来看下如何使用 Estimator 实现这个模型。\n我们首先定义特征列（feature column），然后将此特征列输入到分类器。就像我们在第二部分中所看到的，对于这种文本预处理输入，我们应该使用 categorical_column_with_identity。如果我们的输入就是原本的文本，那么也有其他的 feature_column 可以进行很多预处理。现在我们可以使用预构建的 LinearClassifier 了：\n12345column = tf.feature_column.categorical_column_with_identity(&#x27;x&#x27;, vocab_size)classifier = tf.estimator.LinearClassifier(    feature_columns=[column],    model_dir=os.path.join(model_dir, &#x27;bow_sparse))\n最后，我们创建一个用于训练分类器和创建 PR 曲线的函数。由于本文的目的并不是得到最好的模型性能，我们这里就只训练模型 25000 步。\n123456789101112131415161718def train_and_evaluate(classifier):    classifier.train(input_fn=train_input_fn, steps=25000)    eval_results = classifier.evaluate(input_fn=eval_input_fn)    predictions = np.array([p[&#x27;logistic&#x27;][0] for p in classifier.predict(input_fn=eval_input_fn)])    tf.reset_default_graph()    # 添加一个 PR summary    pr = summary_lib.pr_curve(        &#x27;precision_recall&#x27;,         predictions=predictions,         labels=y_test.astype(bool),        num_threshholds=21    )    with tf.Session() as sess:        writer = tf.summary.FileWriter(os.path.join(classifier.model_dir, &#x27;eval&#x27;), sess.graph)        writer.add_summary(sess.run(pr), global_step=0)        writer.close()train_and_evaluate(classifier)\n选择简单模型的一个好处是模型解释性更好。模型越复杂，就越难以检查和越像一个「黑箱」（black box）。在这个例子中，我们可以从模型的最新检查点（checkpoint）中载入权重，然后看下绝对值最大的权重对应于哪个词。模型结果正如我们所料：\n123456789101112131415# 载入模型权重weights = classifier.get_variable_value(&#x27;linear/linear_model/x/weights&#x27;).flatten()sorted_indexes = np.argsort(weights)# 找到绝对值最大权重extremes = np.concatenate((sorted_indexes[-8:], sorted_indexes[:8]))extreme_weights = sorted(    [(weights[i], word_inverted_index[i-index_offset]) for i in extremes])# 绘图y_pos = np.arange(len(extreme_weights))plt.bar(y_pos, [pair[0] for pair in extreme_weights])plt.xticks(y_pos, [pair[1] for pair in extreme_weights])plt.y_label(&#x27;Weight)plt.title(&#x27;Most significant tokens&#x27;)plt.show()\ntoken weights\n正如图中所看到的，正数权重最大的的几个词例如 ‘refreshing’，和明显与正面情绪有关，而有负数权重的词则是和负面情绪相关。一个简单但是强大的可以改善模型的方法是使用 tf-idf 权重。\nEmbeddings下一个增加模型复杂度的方法就是词嵌入。嵌入是稀疏高维数据的低维稠密表示，这可以使我们的模型对每个词学习到一个更有意义的表示，而不是仅仅一个索引。这个稠密表示一般是从一个足够大的文档集中学习得到，其中每一个单独的维度并没有什么具体的意义，但是已经被证明可以捕捉到诸如时态、复数、性别、主题关系和其他关系。我们可以通过将当前的特征列转为 embedding_column 来加入词嵌入。模型中的表示是每一个词对应的嵌入的平均（参见文档中的 combiner 参数）（译者注：应该指的是句子或者文档的嵌入）。我们可以将这个嵌入特征加入到预构建的 DNNClassifier 中。\n注意：一个 embedding_column 仅仅是将全连接层应用于词的稀疏二值特征向量的一种高效方式，会乘上一个取决于 combiner 的常数。这样做的直接后果就是如果你直接在 LinearClassifier 中使用 embedding_column，那么这是没有任何意义的，因为连续两个没有非线性激励的线性层对模型的预测没有好处，除非那个嵌入是预训练过的。（译者注：此处翻译感觉不太准确，这里贴上原文：A note for the keen observer: an embedding_column is just an efficient way of applying a fully connected layer to the sparse binary feature vector of tokens, which is multiplied by a constant depending of the chosen combiner. A direct consequence of this is that it wouldn’t make sense to use an embedding_column directly in a LinearClassifier because two consecutive linear layers without non-linearities in between add no prediction power to the model, unless of course the embeddings are pre-trained.）\n12345678910embedding_size = 50word_embedding_column = tf.feature_column.embedding_column(    column, dimension=embedding_size)classifier = tf.estimator.DNNClassifier(    hidden_units=[100],    feature_columns=[word_embedding_column],    model_dir=os.path.join(model_dir, &#x27;bow_embeddings&#x27;))train_and_evaluate(classifier)\n我们可以在 TensorBoard 中使用 t-SNE 来将 50 维的词向量在三维空间中进行可视化。我们希望语义上相似的词在词向量空间中也是相近的。这对我们检查模型权重和找到异常行为很有用。\ntensorboard word-embeddings visualization\nConvolutions现在继续提升模型性能的一个方法是继续往深了走，加更多的全连接层，调整每层大小和训练函数。然而这样我们只是增加了模型复杂度，忽略了重要的句子结构。词并不是孤立的，词的意义也是由词本身和其周围的上下文决定的。\n卷积就是一种利用这种结构的方式，就像我们在图像分类中做的一样。直观上来说，无论在句子中的位置如何，词的特定序列或者 n-grams 通常都具有相同的意思。通过卷积操作引入一个结构先验（structural prior）可以使我们为相邻词之间的关系建模，因此也会给我们一个更好的表示。\n下图显示了一个大小为 $d \\times m$ 的卷积核 $F$ 遍历每一个 3-gram 词窗口从而构建一个新的特征图。然后接上一个池化层（pooling layer）来组合相近的结果。\nconvolution\n来源：Learning to Rank Short Text Pairs with Convolutional Deep Neural Networks by Severyn et al. [2015]\n\n让我们来看下完整的模型结构。Dropout 是一种正则化方法，可以避免模型过拟合。\nmodel architecture\n译者注：由于原图分辨率较低，不太清楚，此图为我对其的重制版\n\n\n译者注：上图的重制 dot 代码如下：12345digraph G&#123;    rankdir=LR    node [shape=box, style=filled, fillcolor=&quot;.7 .3 1.0&quot;]    &quot;Embedding Layer&quot; -&gt; Droupout -&gt; Convolutuin1D -&gt; GlobalMaxPooling -&gt; &quot;Hidden Dense Layer&quot; -&gt; Dropout -&gt; &quot;Output Layer&quot;&#125;\n\n正如前面的博文所说，tf.estimator 框架为训练模型提供了一个高层 API，定义了 train()、evaluate() 和 predict() 操作，能够自动处理检查点、载入、初始化、部署服务、构建计算图和会话。tf.estimator 已经提供了一小部分的预构建 Estimators，就像我们前面所用到的，但是大多数情况下你都需要自己去构建。\n写一个自定义的 Estimator 就意味着写一个能够返回一个 EstimatorSpec 的 model_fn(features, labels, mode, params) 函数。第一步就是将特征映射到我们的嵌入层：\n123456input_layer = tf.contrib.layers.embed_sequence(    features[&#x27;x&#x27;],    vocab_size,    embedding_size,    initializer=params[&#x27;embedding_initializer&#x27;])\n然后使用 tf.layers 来构建各层：\n12345678910111213141516171819202122232425262728training = (mode == tf.estimator.ModeKeys.TRAIN)dropout_emb = tf.layers.dropout(    inputs=input_layer,    rate=0.2,    training=training)conv = tf.layers.con1d(    inputs=dropout_emb,    filters=32,    kernel_size=3,    padding=&#x27;same&#x27;,    activation=tf.nn.relu)pool = tf.reduce_max(input_tensor=conv, axis=1)hidden = tf.layers.dense(    inputs=pool,    units=250,    activation=tf.nn.relu)dropout_hidden = tf.layers.dropout(    inputs=hidden,    rate=0.2,    training=training)logits = tf.layers.dense(    inputs=dropout_hidden,    units=1)\n最后，我们将使用一个 Head 来简化 model_fn 的编写。这个 head 已经知道如何计算预测值、损失、train_op、评估指标以及导出输出，而且可以被多个模型重用。这种用法在预构建的 Estimator 中也在使用，而且可以在我们所有的模型之间提供一个统一的评估函数。我们将会使用 binary_classification_head 这个用于单标签二分类的 head，使用 sigmoid_cross_entropy_with_logits 作为损失函数。\n12345678910111213141516171819def cnn_model_fn(features, labels, mode, params):    # 一些其他代码    head = tf.contrib.estimator.binary_classification_head()    optimizer = tf.train.AdamOptimizer()    def _train_op_fn(loss):        tf.summary.scalar(&#x27;loss&#x27;, loss)        return optimizer.minimize(            loss=loss,            global_step=tf.train.get_global_step()        )    return head.create_estimator_spec(        features=features,        labels=labels,        mode=mode,        logits=logits,        train_op_fn=_train_op_fn    )\n最后就像之前一样运行这个模型：\n12345678initializer = tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0)params = &#123;&#x27;embedding_initializer&#x27;: initializer&#125;cnn_classifier = tf.estimator.Estimator(    model_fn=model_fn,    model_dir=os.path.join(model_dir, &#x27;cnn&#x27;),    params=params)train_and_evaluate(cnn_classifier)\nLSTM Networks使用 Estimator API 和相同的模型 head，我们还可以创建一个使用长短时记忆网络（LSTM）而不是卷积的分类器。诸如此类的循环模型（recurrent models）在 NLP 应用中是一种最成功的构建模块。一个 LSTM 顺序处理整篇文档，使用其内部的单元（cell）对序列进行递归，同时将序列的当前状态存储在内存中。\n由于循环模型的递归性质，相比 CNN，模型会变得更深和更复杂，这也会导致训练时间变长和更差的收敛，这也是循环模型的一个缺点。LSTMs（和一般的 RNNs）可能会遇到例如梯度消失和梯度爆炸等收敛问题，但是通过有效的调整，也可以使他们在许多问题上得到最优的结果。一般来说，CNNs 擅于进行特征提取，而 RNNs 则在那些模型效果取决于整个句子意义的任务上比较有优势，比如问答和机器翻译。\n每一个单元一次处理一个词嵌入，然后根据在时间点 $t$ 的嵌入向量 $x$ 和前一个在时间点 $t-1$ 的状态 $h$ 进行一个可微分计算（differential computation），然后更新其内部状态。为了能够更好地理解 LSTMs 是怎么工作的，你可以参见 Chris Olah 的博文。（译者注：我之前将这篇博文翻译成了中文，可以参见理解 LSTM 网络）。\nLSTM cell\n来源：Understanding LSTM Networks by Chris Olah\n\n整个 LSTM 模型可以如简单的流程图：\nLSTM model\n译者注：由于原图分辨率和大小问题，此图为我对其的重制版\n\n\n译者注：上图的重制 dot 代码如下：123456digraph G&#123;    rankdir=LR    node [shape=box, style=filled, fillcolor=&quot;.7 .3 1.0&quot;]    &quot;Embedding Layer&quot; -&gt;  &quot;LSTM Cell&quot; -&gt; &quot;Output Layer&quot;;    &quot;LSTM Cell&quot; -&gt; &quot;LSTM Cell&quot; [label=&quot;Recurison&quot;];&#125;\n\n在本文开头，我们将所有文档都裁剪成 200 个词，这对于构建一个合适的 tensor 是必要的。然而当一篇文档少于 200 个词的时候，我们不希望 LSTM 继续去补充长度到 200，因为这不仅不会增加任何有用信而且还会降低性能。因此，我们想要额外给网络提供句子的原本长度。在内部，模型然后把最新的状态复制到序列的末尾。这可以通过使用输入函数中的 &quot;len&quot; 特征实现。我们现在可以使用和上面相同的逻辑，简单地用 LSTM 单元替换掉卷积、池化和拉平层。\n1234567891011lsmt_cell = tf.nn.rnn_cell.BasicLSTMCell(100)_, final_states = tf.nn.dynamic_rnn(    lstm_cell,    inputs,    sequence_length=features[&#x27;len&#x27;],    dtype=tf.float32)logits = tf.layers.dense(    inputs=final_states.h,    units=1)\nPre-trained vectors我们前面所展示的大多数模型都是使用词嵌入作为第一层。到目前为止，我们都是随机初始化这个嵌入层。然后，很多先前的工作已经表明使用在一个很大的无标签的词库中预训练的嵌入是很有好处的，尤其是当要在一个小的有标签的数据集上训练时。最流行的预训练嵌入是 word2vec。通过从预训练嵌入来利用无标签数据中的知识是迁移学习的一个例子。\n现在我们将为你展示如何在一个 Estimator 中使用他们。我们将会使用来自另外一个流行模型 GloVe 的预训练词嵌入。\n1234567embeddings = &#123;&#125;with open(&#x27;glove.6B.50d.txt&#x27;, &#x27;r&#x27;, encoding=&#x27;utf-8&#x27;) as f:    for line in f:    values = line.strip().split()    w = values[0]    vectors = np.asarray(values[:1], dtype=&#x27;float32&#x27;)    embeddings[w] = vectors\n在从一个文件中载入词向量到内存后，我们使用和词汇表中相同的索引来将其存储为一个 numpy.array，这个数组大小为 (5000, 50)。每一行中都包含一个 50 维的词向量，行索引对应于该词在词汇表中的索引。\n12345embedding_matrix = np.random.uniform(-1, 1, size=(vocab_size, embedding_size))for w, i in word_index.items():    v = embeddings.get(w)    if v is not None and i &lt; vocab_size:    embedding_matrix[i] = v\n最后，我们可以使用一个自定义的初始化函数，然后将其通过 params 对象传给我们的 cnn_model_fn，不用改动其他的。\n1234567891011def my_initializer(shape=None, dtype=tf.float32, partition_info=None):    assert dtype is tf.float32    return embedding_matrixparams = &#123;&#x27;embedding_initialize&#x27;: my_initializer&#125;cnn_pretrained_classifier = tf.estimator.Estimator(    model_fn=cnn_model_fn,    model_dir=os.path.join(model_dir, &#x27;cnn_pretrained&#x27;),    params=params)train_and_evaluate(cnn_pretrained_classifier)\nRunning TensorBoard现在我们可以启动 TensorBoard，看下我们刚训练的几个模型在训练时间和性能上有何不同。\n在终端输入：\n1&gt; tensorboard --logdir=&#123;model_dir&#125;\n我们可以看到在训练和测试时收集的许多评估指标，包括每个模型在每个训练步骤的损失函数值和 PR 曲线。这对于我们选择性能最好的模型和分类阈值很有帮助。\npr curves\n每个模型在测试集上的 PR 曲线\n\nloss\n训练损失与训练步数\n\nGetting Predictions为了得到对新句子的预测值，我们可以使用 Estimator 的 predict 方法，这个方法会载入每个模型的最新检查点然后执行评估。但是在将数据送入给模型之前我们需要先清洗一下，分词然后将每个词映射到相应的索引：\n123456789101112131415161718def text_to_index(sentence):    # 去除标点符号，除了 &#x27;    translator = str.maketrans(&#x27;&#x27;, &#x27; &#x27;, string.punctuation.replace(&quot;&#x27;&quot;, &#x27;&#x27;))    tokens = sentence.translate(translator).lower().split()    return np.array([1] + [word_index[t] if t in word_index else 2 for t in tokens])def print_predictions(sentences, classifier):    indexes = [text_to_index(sentence) for sentence in sentences]    x = sequence.pad_sequences(        indexes,        maxlen=sentence_size,        padding=&#x27;post&#x27;,        value=0    )    length = np.array([min(len(x), sentence_size) for x in indexes])    predict_input_fn = tf.estimator.inputs.numpy_input_fn(x=&#123;&quot;x&quot;: x, &quot;len&quot;: length&#125;, shuffle=False)    predictions = [p[&#x27;logistic&#x27;][0] for p in classifier.predict(input_fn=predict_input_fn)]    print(predictions)\n需要注意的是检查点本身并不足以进行预测，用于构建 Estimator 的代码也是必需的，需要用这段代码将保存的权重和相应的 tensors 对应上。将保存的检查点和相应的代码联系起来是一种很好地做法。\n如果你有兴趣以完全可恢复的方式将模型导出到硬盘上，你可能需要查看 SavedModel 类，这对于使用 TensorFlow Serving 通过 API 来提供模型特别有用。\nSummary本篇博文中，我们探索了如何使用 Estimators 在 IMDB Reviews Dataset 上进行文本分类。我们训练和可视化了我们自己的嵌入和载入的预训练的词嵌入。我们从最简单的模型开始逐渐扩展到卷积神经网络和 LSTMs。\n对于更多细节，你可以查看以下内容：\n\n一个 可以在本地或者 Colaboratory 上运行的 Jupyter Notebook\n本文的完整的源代码\nTensorFlow 关于嵌入的指导\nTensorFlow 关于 Vector Representation of Words 的教程\nNLTK 中关于如何设计语言处理 pipelines 的章节 Processing Raw Text\n\nThanks for reading！\n","dateCreated":"2018-07-18T18:57:19+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2018-07-18T18:57:19+08:00","description":"\n\n译者注：\n\n本文翻译自 Sebastian Ruder 于 2018 年 4 月 16 日发表的文章 Text Classification with TensorFlow Estimators，文章和 Julian Eisenschlos 共同撰写，原先发表在 TensorFlow 博客。\n文中括号或者引用块中的 斜体字 为对应的英文原文或者我自己注释的话（会标明「译者注」），否则为原文中本来就有的话。\n目录保留英文原文。\n你如果对 TensorFlow 中的 Datasets 和 Estimators 还不是很了解，那么可以参考我写的理解 Estimators 和 Datasets。\n本人水平有限，如有错误欢迎指出。\n\n","headline":"使用 TensorFlow Estimators 进行文本分类","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/","keywords":"NLP, TensorFlow, Machine Learning, Translation"}</script>
+    <meta name="description" content="译者注：  本文翻译自 Sebastian Ruder 于 2018 年 4 月 16 日发表的文章 Text Classification with TensorFlow Estimators，文章和 Julian Eisenschlos 共同撰写，原先发表在 TensorFlow 博客。 文中括号或者引用块中的 斜体字 为对应的英文原文或者我自己注释的话（会标明「译者注」），否则为原文中本">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="使用 TensorFlow Estimators 进行文本分类">
+<meta property="og:url" content="https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="译者注：  本文翻译自 Sebastian Ruder 于 2018 年 4 月 16 日发表的文章 Text Classification with TensorFlow Estimators，文章和 Julian Eisenschlos 共同撰写，原先发表在 TensorFlow 博客。 文中括号或者引用块中的 斜体字 为对应的英文原文或者我自己注释的话（会标明「译者注」），否则为原文中本">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/xhXjSdI.png">
+<meta property="og:image" content="https://i.imgur.com/cRfwk5r.gif">
+<meta property="og:image" content="https://i.imgur.com/Iz34b17.png">
+<meta property="og:image" content="https://i.imgur.com/KJAPMrv.png">
+<meta property="og:image" content="https://i.imgur.com/DP4o5jc.png">
+<meta property="og:image" content="https://i.imgur.com/K6fIRvT.png">
+<meta property="og:image" content="https://i.imgur.com/tw9TzgZ.png">
+<meta property="og:image" content="https://i.imgur.com/zbApsYm.png">
+<meta property="article:published_time" content="2018-07-18T10:57:19.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.199Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="TensorFlow">
+<meta property="article:tag" content="Machine Learning">
+<meta property="article:tag" content="Translation">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/xhXjSdI.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            使用 TensorFlow Estimators 进行文本分类
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-07-18T18:57:19+08:00">
+	
+		    2018 年 7 月 18 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#The-Task"><span class="toc-text">The Task</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Input-Functions"><span class="toc-text">Input Functions</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Building-a-baseline"><span class="toc-text">Building a baseline</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Embeddings"><span class="toc-text">Embeddings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Convolutions"><span class="toc-text">Convolutions</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LSTM-Networks"><span class="toc-text">LSTM Networks</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Pre-trained-vectors"><span class="toc-text">Pre-trained vectors</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Running-TensorBoard"><span class="toc-text">Running TensorBoard</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Getting-Predictions"><span class="toc-text">Getting Predictions</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
+<blockquote>
+<p>译者注：</p>
+<ul>
+<li>本文翻译自 <a href="http://ruder.io/">Sebastian Ruder</a> 于 2018 年 4 月 16 日发表的文章 <a href="http://ruder.io/text-classification-tensorflow-estimators/">Text Classification with TensorFlow Estimators</a>，文章和 <a href="https://twitter.com/eisenjulian">Julian Eisenschlos</a> 共同撰写，原先发表在 <a href="https://medium.com/tensorflow/classifying-text-with-tensorflow-estimators-a99603033fbe">TensorFlow 博客</a>。</li>
+<li>文中括号或者引用块中的 <em>斜体字</em> 为对应的英文原文或者我自己注释的话（会标明「译者注」），否则为原文中本来就有的话。</li>
+<li>目录保留英文原文。</li>
+<li>你如果对 TensorFlow 中的 Datasets 和 Estimators 还不是很了解，那么可以参考我写的<a href="https://alanlee.fun/2017/12/22/understanding-estimators-datasets/">理解 Estimators 和 Datasets</a>。</li>
+<li>本人水平有限，如有错误欢迎指出。</li>
+</ul>
+</blockquote>
+<span id="more"></span>
+<p>Hello there! 通过这篇博文，我们将为你展示如何使用 TensorFlow 中的 Estimators 进行文本分类。下面是本文内容大纲：</p>
+<ul>
+<li>使用 Datasets 载入数据</li>
+<li>使用预构建的 Estimators 构建基准</li>
+<li>使用词嵌入（<em>word embeddings</em>）</li>
+<li>使用卷积和 LSTM 层构建自定义的 Estimators</li>
+<li>载入预训练的词向量（<em>word vectors</em>）</li>
+<li>使用 TensorBoard 评估和比较模型</li>
+</ul>
+<hr>
+<!-- toc -->
+<p>欢迎来到 TensorFlow Estimators 和 Datasets 入门系列博客的第四部分。你不需要事先阅读前几部分，但是如果想要再回顾一下下面的几个概念的话，还是建议去看下。<a href="https://developers.googleblog.com/2017/09/introducing-tensorflow-datasets.html">第一部分</a> 聚焦于预构建的 Estimators，<a href="https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html">第二部分</a> 讨论了特征列（<em>feature columns</em>），而<a href="https://developers.googleblog.com/2017/12/creating-custom-estimators-in-tensorflow.html">第三部分</a> 则是介绍如何创建自定义的 Estimators。<br><!-- more --></p>
+<p>这里，在第四部分中，我们将在前面几个部分的基础上去解决自然语言处理（NLP）中的一系列不同问题。具体来说，本文说明了如何使用自定义的 Estimators、嵌入和 <a href="https://www.tensorflow.org/api_docs/python/tf/layers">tf.layers</a> 模块来解决一个文本分类问题。在这个过程中，我们将会学习使用 word2vec 和迁移学习技术来提升模型性能，尤其是在带标签的数据稀缺时。</p>
+<p>我们将会给你展示相关的代码片段。<a href="https://github.com/eisenjulian/nlp_estimator_tutorial/blob/master/nlp_estimators.ipynb">这里</a>是包含完整代码的 Jupyter Notebook 文件，你可以在本地或者 <a href="https://colab.research.google.com/drive/1oXjNYSJ3VsRvAsXN4ClmtsVEgPW_CX_c?hl=en#forceEdit=true&amp;offline=true&amp;sandboxMode=true">Google Colaboratory</a> 运行。你也可以在<a href="https://github.com/eisenjulian/nlp_estimator_tutorial/blob/master/nlp_estimators.py">这里</a>找到相关的 <code>.py</code> 源文件。需要注意的是程序只是为了说明 Estimators 是如何工作的，并没有为了达到最大性能而优化。</p>
+<h2 id="The-Task"><a href="#The-Task" class="headerlink" title="The Task"></a>The Task</h2><p>我们将要使用的数据集是 IMDB <a href="http://ai.stanford.edu/~amaas/data/sentiment/">Large Movie Review Dataset</a>，包含用于训练的 25000 篇带有明显情感倾向的电影评论，测试集也是 25000 篇。我们将会用此数据集训练一个二分类模型，用于判断一篇评论是积极的还是消极的。</p>
+<p>为了说明，下面列出数据集中一个负面评论（2 颗星）的片段：</p>
+<blockquote>
+<p>Now, I LOVE Italian horror films. The cheesier they are, the better. However, this is not cheesy Italian. This is week-old spaghetti sauce with rotting meatballs. It is amateur hour on every level. There is no suspense, no horror, with just a few drops of blood scattered around to remind you that you are in fact watching a horror film.</p>
+</blockquote>
+<p>Keras 提供了一个方便的函数来导入该数据集，同时也可以在<a href="https://s3.amazonaws.com/text-datasets/imdb.npz">这里</a>下载一个序列化的 numpy array <code>.npy</code> 文件。对于文本分类来说，通常来说会限制词汇表的大小，以防止数据集变得太稀疏和维度太高从而过拟合。因此，每一个评论都由一系列的单词索引组成，从 4（对应于数据集中最常见的单词 <strong>the</strong>） 到 4999，对应于单词 <strong>orange</strong>。索引 1 代表句子的开始，2 代表所有的未知词（也叫作 out-of-vocabulary 或者 OOV）。这些索引是通过一个预处理文本的 pipeline 来得到的，这个 pipeline 包括首先清理、归一化（normalize）和 tokenize（<em>译者注：可以理解为分词</em>）每一个句子，然后构建一个以词（<em>tokens</em>）频为索引的字典。</p>
+<p>在我们将数据载入到内存中后，我们用 0 将所有句子补齐到相同长度（这里是 200），这样对于训练集和测试集我们就分别有一个两维的 $25000 \times 200$ 的数组。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">vocab_size = <span class="number">5000</span></span><br><span class="line">sentence_size = <span class="number">200</span></span><br><span class="line">(x_train_variable, y_train), (x_test_variable, y_test) = imdb.load_data(num_words=vocab_size)</span><br><span class="line">x_train = sequence.pad_sequences(</span><br><span class="line">    x_train_variable, </span><br><span class="line">    maxlen=sentence_size, </span><br><span class="line">    padding=<span class="string">&#x27;post&#x27;</span>, </span><br><span class="line">    value=<span class="number">0</span>)</span><br><span class="line">x_test = sequence.pad_sequences(  </span><br><span class="line">    x_test_variable,</span><br><span class="line">    maxlen=sentence_size, </span><br><span class="line">    padding=<span class="string">&#x27;post&#x27;</span>, </span><br><span class="line">    value=<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="Input-Functions"><a href="#Input-Functions" class="headerlink" title="Input Functions"></a>Input Functions</h2><p>Estimators 框架使用<em>输入函数</em>（<em>input functions</em>）来将数据导入和模型区分开来。无论你的数据是在一个 <code>.csv</code> 文件中，还是在一个 <code>pandas.DataFrame</code> 中，无论你的数据能否载入到内存中，都有几个辅助函数可以帮你来创建输入函数。在我们的例子中，我们可以对训练集和测试集使用 <code>Dataset.from_tensor_slices</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">x_len_train = np.array([<span class="built_in">min</span>(<span class="built_in">len</span>(x), sentence_size) <span class="keyword">for</span> x <span class="keyword">in</span> x_train_variable])</span><br><span class="line">x_len_test = np.array([<span class="built_in">min</span>(<span class="built_in">len</span>(x), sentence_size) <span class="keyword">for</span> x <span class="keyword">in</span> x_test_variable])</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">parser</span>(<span class="params">x, length, y</span>):</span><br><span class="line">    features = &#123;<span class="string">&quot;x&quot;</span>: x, <span class="string">&quot;len&quot;</span>: length&#125;</span><br><span class="line">    <span class="keyword">return</span> features, y</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">train_input_fn</span>():</span><br><span class="line">    dataset = tf.data.Dataset.from_tensor_slices((x_train, x_len_train, y_train))</span><br><span class="line">    dataset = dataset.shuffle(buffer_size=<span class="built_in">len</span>(x_train_variable))</span><br><span class="line">    dataset = dataset.batch(<span class="number">100</span>)</span><br><span class="line">    dataset = dataset.<span class="built_in">map</span>(parser)</span><br><span class="line">    dataset = dataset.repeat()</span><br><span class="line">    iterator = dataset.make_one_shot_iterator()</span><br><span class="line">    <span class="keyword">return</span> iterator.get_next()</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">test_input_fn</span>():</span><br><span class="line">    dataset = tf.data.Dataset.from_tensor_slices((x_test, x_len_test, y_test))</span><br><span class="line">    dataset = dataset.batch(<span class="number">100</span>)</span><br><span class="line">    dataset = dataset.<span class="built_in">map</span>(parser)</span><br><span class="line">    iterator = dataset.make_one_shot_iterator()</span><br><span class="line">    <span class="keyword">return</span> iterator.get_next()</span><br></pre></td></tr></table></figure>
+<p>我们打乱训练集数据和不预先指定我们想要训练的步数（<em>epochs</em>），而在测试阶段我们只需要遍历数据集一次就可以了。我们也添加了一个额外的 <code>&quot;len&quot;</code> 字段，该字段表示序列的原始长度，即没有补充过的，我们会在后面用到。</p>
+<h2 id="Building-a-baseline"><a href="#Building-a-baseline" class="headerlink" title="Building a baseline"></a>Building a baseline</h2><p>在开始任何机器学习项目之前先构建一个基准总是好的。最开始的模型越简单越好，因为有一个简单鲁棒的基准可以帮助我们理解在增加模型复杂度之后，模型可以得到多少性能提升。当然如果这个简单的模型就能满足我们的需求，那就再好不过了。</p>
+<p>因此，现在我们用一个最简单的模型来做文本分类，即一个不考虑词序的稀疏线性模型，为每一个 token（<em>译者注：可以理解为词，下同</em>）都分配一个权重，然后进行线性求和。因为这个模型不考虑词在句子中的顺序，我们也将称之为一种词袋（<em>Bag-of-Words</em>）方法。现在让我们来看下如何使用 Estimator 实现这个模型。</p>
+<p>我们首先定义特征列（<em>feature column</em>），然后将此特征列输入到分类器。就像我们在<a href="https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html">第二部分</a>中所看到的，对于这种文本预处理输入，我们应该使用 <code>categorical_column_with_identity</code>。如果我们的输入就是原本的文本，那么也有其他的 <a href="https://www.tensorflow.org/api_docs/python/tf/feature_column"><code>feature_column</code></a> 可以进行很多预处理。现在我们可以使用预构建的 <code>LinearClassifier</code> 了：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">column = tf.feature_column.categorical_column_with_identity(<span class="string">&#x27;x&#x27;</span>, vocab_size)</span><br><span class="line">classifier = tf.estimator.LinearClassifier(</span><br><span class="line">    feature_columns=[column],</span><br><span class="line">    model_dir=os.path.join(model_dir, <span class="string">&#x27;bow_sparse)</span></span><br><span class="line"><span class="string">)</span></span><br></pre></td></tr></table></figure>
+<p>最后，我们创建一个用于训练分类器和创建 PR 曲线的函数。由于本文的目的并不是得到最好的模型性能，我们这里就只训练模型 25000 步。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">train_and_evaluate</span>(<span class="params">classifier</span>):</span><br><span class="line">    classifier.train(input_fn=train_input_fn, steps=<span class="number">25000</span>)</span><br><span class="line">    eval_results = classifier.evaluate(input_fn=eval_input_fn)</span><br><span class="line">    predictions = np.array([p[<span class="string">&#x27;logistic&#x27;</span>][<span class="number">0</span>] <span class="keyword">for</span> p <span class="keyword">in</span> classifier.predict(input_fn=eval_input_fn)])</span><br><span class="line">    tf.reset_default_graph()</span><br><span class="line">    <span class="comment"># 添加一个 PR summary</span></span><br><span class="line">    pr = summary_lib.pr_curve(</span><br><span class="line">        <span class="string">&#x27;precision_recall&#x27;</span>, </span><br><span class="line">        predictions=predictions, </span><br><span class="line">        labels=y_test.astype(<span class="built_in">bool</span>),</span><br><span class="line">        num_threshholds=<span class="number">21</span></span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</span><br><span class="line">        writer = tf.summary.FileWriter(os.path.join(classifier.model_dir, <span class="string">&#x27;eval&#x27;</span>), sess.graph)</span><br><span class="line">        writer.add_summary(sess.run(pr), global_step=<span class="number">0</span>)</span><br><span class="line">        writer.close()</span><br><span class="line"></span><br><span class="line">train_and_evaluate(classifier)</span><br></pre></td></tr></table></figure>
+<p>选择简单模型的一个好处是模型解释性更好。模型越复杂，就越难以检查和越像一个「黑箱」（<em>black box</em>）。在这个例子中，我们可以从模型的最新检查点（<em>checkpoint</em>）中载入权重，然后看下绝对值最大的权重对应于哪个词。模型结果正如我们所料：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 载入模型权重</span></span><br><span class="line">weights = classifier.get_variable_value(<span class="string">&#x27;linear/linear_model/x/weights&#x27;</span>).flatten()</span><br><span class="line">sorted_indexes = np.argsort(weights)</span><br><span class="line"><span class="comment"># 找到绝对值最大权重</span></span><br><span class="line">extremes = np.concatenate((sorted_indexes[-<span class="number">8</span>:], sorted_indexes[:<span class="number">8</span>]))</span><br><span class="line">extreme_weights = <span class="built_in">sorted</span>(</span><br><span class="line">    [(weights[i], word_inverted_index[i-index_offset]) <span class="keyword">for</span> i <span class="keyword">in</span> extremes]</span><br><span class="line">)</span><br><span class="line"><span class="comment"># 绘图</span></span><br><span class="line">y_pos = np.arange(<span class="built_in">len</span>(extreme_weights))</span><br><span class="line">plt.bar(y_pos, [pair[<span class="number">0</span>] <span class="keyword">for</span> pair <span class="keyword">in</span> extreme_weights])</span><br><span class="line">plt.xticks(y_pos, [pair[<span class="number">1</span>] <span class="keyword">for</span> pair <span class="keyword">in</span> extreme_weights])</span><br><span class="line">plt.y_label(<span class="string">&#x27;Weight)</span></span><br><span class="line"><span class="string">plt.title(&#x27;</span>Most significant tokens<span class="string">&#x27;)</span></span><br><span class="line"><span class="string">plt.show()</span></span><br></pre></td></tr></table></figure>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/xhXjSdI.png" title="token weights" data-caption="token weights" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/xhXjSdI.png" alt="token weights"></a><span class="caption">token weights</span></div>
+<p>正如图中所看到的，正数权重最大的的几个词例如 ‘refreshing’，和明显与正面情绪有关，而有负数权重的词则是和负面情绪相关。一个简单但是强大的可以改善模型的方法是使用 <a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf">tf-idf</a> 权重。</p>
+<h2 id="Embeddings"><a href="#Embeddings" class="headerlink" title="Embeddings"></a>Embeddings</h2><p>下一个增加模型复杂度的方法就是词嵌入。嵌入是稀疏高维数据的低维稠密表示，这可以使我们的模型对每个词学习到一个更有意义的表示，而不是仅仅一个索引。这个稠密表示一般是从一个足够大的文档集中学习得到，其中每一个单独的维度并没有什么具体的意义，但是已经被证明可以捕捉到诸如时态、复数、性别、主题关系和其他关系。我们可以通过将当前的特征列转为 <code>embedding_column</code> 来加入词嵌入。模型中的表示是每一个词对应的嵌入的平均（参见<a href="https://www.tensorflow.org/api_docs/python/tf/feature_column/embedding_column">文档</a>中的 <code>combiner</code> 参数）（<em>译者注：应该指的是句子或者文档的嵌入</em>）。我们可以将这个嵌入特征加入到预构建的 <code>DNNClassifier</code> 中。</p>
+<p>注意：一个 <code>embedding_column</code> 仅仅是将全连接层应用于词的稀疏二值特征向量的一种高效方式，会乘上一个取决于 <code>combiner</code> 的常数。这样做的直接后果就是如果你直接在 <code>LinearClassifier</code> 中使用 <code>embedding_column</code>，那么这是没有任何意义的，因为连续两个没有非线性激励的线性层对模型的预测没有好处，除非那个嵌入是预训练过的。（<em>译者注：此处翻译感觉不太准确，这里贴上原文：A note for the keen observer: an <code>embedding_column</code> is just an efficient way of applying a fully connected layer to the sparse binary feature vector of tokens, which is multiplied by a constant depending of the chosen combiner. A direct consequence of this is that it wouldn’t make sense to use an <code>embedding_column</code> directly in a <code>LinearClassifier</code> because two consecutive linear layers without non-linearities in between add no prediction power to the model, unless of course the embeddings are pre-trained.</em>）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">embedding_size = <span class="number">50</span></span><br><span class="line">word_embedding_column = tf.feature_column.embedding_column(</span><br><span class="line">    column, dimension=embedding_size</span><br><span class="line">)</span><br><span class="line">classifier = tf.estimator.DNNClassifier(</span><br><span class="line">    hidden_units=[<span class="number">100</span>],</span><br><span class="line">    feature_columns=[word_embedding_column],</span><br><span class="line">    model_dir=os.path.join(model_dir, <span class="string">&#x27;bow_embeddings&#x27;</span>)</span><br><span class="line">)</span><br><span class="line">train_and_evaluate(classifier)</span><br></pre></td></tr></table></figure>
+<p>我们可以在 TensorBoard 中使用 <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-SNE</a> 来将 50 维的词向量在三维空间中进行可视化。我们希望语义上相似的词在词向量空间中也是相近的。这对我们检查模型权重和找到异常行为很有用。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/cRfwk5r.gif" title="tensorboard word-embeddings visualization" data-caption="tensorboard word-embeddings visualization" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/cRfwk5r.gif" alt="tensorboard word-embeddings visualization"></a><span class="caption">tensorboard word-embeddings visualization</span></div>
+<h2 id="Convolutions"><a href="#Convolutions" class="headerlink" title="Convolutions"></a>Convolutions</h2><p>现在继续提升模型性能的一个方法是继续往深了走，加更多的全连接层，调整每层大小和训练函数。然而这样我们只是增加了模型复杂度，忽略了重要的句子结构。词并不是孤立的，词的意义也是由词本身和其周围的上下文决定的。</p>
+<p>卷积就是一种利用这种结构的方式，就像我们在<a href="https://www.tensorflow.org/tutorials/layers">图像分类</a>中做的一样。直观上来说，无论在句子中的位置如何，词的特定序列或者 n-grams 通常都具有相同的意思。通过卷积操作引入一个结构先验（<em>structural prior</em>）可以使我们为相邻词之间的关系建模，因此也会给我们一个更好的表示。</p>
+<p>下图显示了一个大小为 $d \times m$ 的卷积核 $F$ 遍历每一个 3-gram 词窗口从而构建一个新的特征图。然后接上一个池化层（<em>pooling layer</em>）来组合相近的结果。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/Iz34b17.png" title="convolution" data-caption="convolution" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/Iz34b17.png" alt="convolution"></a><span class="caption">convolution</span></div>
+<center><font color='gray' size=2>来源：<a href="https://www.semanticscholar.org/paper/Learning-to-Rank-Short-Text-Pairs-with-Convolution-Severyn-Moschitti/452f7411af7d471dd3ba84c2b06b2aaffc38cdb9">Learning to Rank Short Text Pairs with Convolutional Deep Neural Networks</a> by Severyn et al. [2015]</font></center>
+
+<p>让我们来看下完整的模型结构。Dropout 是一种正则化方法，可以避免模型过拟合。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/KJAPMrv.png" title="model architecture" data-caption="model architecture" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/KJAPMrv.png" alt="model architecture"></a><span class="caption">model architecture</span></div>
+<center><font color=gray size=2>译者注：由于<a href="https://cdn-images-1.medium.com/max/1200/1*zwj1G4Hem-PX1I54j_9gAw.png">原图</a>分辨率较低，不太清楚，此图为我对其的重制版</font></center>
+
+<blockquote>
+<p>译者注：上图的重制 dot 代码如下：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">digraph G&#123;</span><br><span class="line">    rankdir=LR</span><br><span class="line">    node [shape=box, style=filled, fillcolor=&quot;.7 .3 1.0&quot;]</span><br><span class="line">    &quot;Embedding Layer&quot; -&gt; Droupout -&gt; Convolutuin1D -&gt; GlobalMaxPooling -&gt; &quot;Hidden Dense Layer&quot; -&gt; Dropout -&gt; &quot;Output Layer&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>正如前面的博文所说，<code>tf.estimator</code> 框架为训练模型提供了一个高层 API，定义了 <code>train()</code>、<code>evaluate()</code> 和 <code>predict()</code> 操作，能够自动处理检查点、载入、初始化、部署服务、构建计算图和会话。<code>tf.estimator</code> 已经提供了一小部分的预构建 Estimators，就像我们前面所用到的，但是大多数情况下你都需要<a href="https://www.tensorflow.org/extend/estimators">自己去构建</a>。</p>
+<p>写一个自定义的 Estimator 就意味着写一个能够返回一个 <code>EstimatorSpec</code> 的 <code>model_fn(features, labels, mode, params)</code> 函数。第一步就是将特征映射到我们的嵌入层：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">input_layer = tf.contrib.layers.embed_sequence(</span><br><span class="line">    features[<span class="string">&#x27;x&#x27;</span>],</span><br><span class="line">    vocab_size,</span><br><span class="line">    embedding_size,</span><br><span class="line">    initializer=params[<span class="string">&#x27;embedding_initializer&#x27;</span>]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>然后使用 <code>tf.layers</code> 来构建各层：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">training = (mode == tf.estimator.ModeKeys.TRAIN)</span><br><span class="line">dropout_emb = tf.layers.dropout(</span><br><span class="line">    inputs=input_layer,</span><br><span class="line">    rate=<span class="number">0.2</span>,</span><br><span class="line">    training=training</span><br><span class="line">)</span><br><span class="line">conv = tf.layers.con1d(</span><br><span class="line">    inputs=dropout_emb,</span><br><span class="line">    filters=<span class="number">32</span>,</span><br><span class="line">    kernel_size=<span class="number">3</span>,</span><br><span class="line">    padding=<span class="string">&#x27;same&#x27;</span>,</span><br><span class="line">    activation=tf.nn.relu</span><br><span class="line">)</span><br><span class="line">pool = tf.reduce_max(input_tensor=conv, axis=<span class="number">1</span>)</span><br><span class="line">hidden = tf.layers.dense(</span><br><span class="line">    inputs=pool,</span><br><span class="line">    units=<span class="number">250</span>,</span><br><span class="line">    activation=tf.nn.relu</span><br><span class="line">)</span><br><span class="line">dropout_hidden = tf.layers.dropout(</span><br><span class="line">    inputs=hidden,</span><br><span class="line">    rate=<span class="number">0.2</span>,</span><br><span class="line">    training=training</span><br><span class="line">)</span><br><span class="line">logits = tf.layers.dense(</span><br><span class="line">    inputs=dropout_hidden,</span><br><span class="line">    units=<span class="number">1</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>最后，我们将使用一个 <code>Head</code> 来简化 <code>model_fn</code> 的编写。这个 head 已经知道如何计算预测值、损失、train_op、评估指标以及导出输出，而且可以被多个模型重用。这种用法在预构建的 Estimator 中也在使用，而且可以在我们所有的模型之间提供一个统一的评估函数。我们将会使用 <code>binary_classification_head</code> 这个用于单标签二分类的 head，使用 <code>sigmoid_cross_entropy_with_logits</code> 作为损失函数。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">cnn_model_fn</span>(<span class="params">features, labels, mode, params</span>):</span><br><span class="line">    <span class="comment"># 一些其他代码</span></span><br><span class="line">    head = tf.contrib.estimator.binary_classification_head()</span><br><span class="line">    optimizer = tf.train.AdamOptimizer()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_train_op_fn</span>(<span class="params">loss</span>):</span><br><span class="line">        tf.summary.scalar(<span class="string">&#x27;loss&#x27;</span>, loss)</span><br><span class="line">        <span class="keyword">return</span> optimizer.minimize(</span><br><span class="line">            loss=loss,</span><br><span class="line">            global_step=tf.train.get_global_step()</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> head.create_estimator_spec(</span><br><span class="line">        features=features,</span><br><span class="line">        labels=labels,</span><br><span class="line">        mode=mode,</span><br><span class="line">        logits=logits,</span><br><span class="line">        train_op_fn=_train_op_fn</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+<p>最后就像之前一样运行这个模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">initializer = tf.random_uniform([vocab_size, embedding_size], -<span class="number">1.0</span>, <span class="number">1.0</span>)</span><br><span class="line">params = &#123;<span class="string">&#x27;embedding_initializer&#x27;</span>: initializer&#125;</span><br><span class="line">cnn_classifier = tf.estimator.Estimator(</span><br><span class="line">    model_fn=model_fn,</span><br><span class="line">    model_dir=os.path.join(model_dir, <span class="string">&#x27;cnn&#x27;</span>),</span><br><span class="line">    params=params</span><br><span class="line">)</span><br><span class="line">train_and_evaluate(cnn_classifier)</span><br></pre></td></tr></table></figure>
+<h2 id="LSTM-Networks"><a href="#LSTM-Networks" class="headerlink" title="LSTM Networks"></a>LSTM Networks</h2><p>使用 <code>Estimator</code> API 和相同的模型 <code>head</code>，我们还可以创建一个使用长短时记忆网络（LSTM）而不是卷积的分类器。诸如此类的循环模型（<em>recurrent models</em>）在 NLP 应用中是一种最成功的构建模块。一个 LSTM 顺序处理整篇文档，使用其内部的单元（<em>cell</em>）对序列进行递归，同时将序列的当前状态存储在内存中。</p>
+<p>由于循环模型的递归性质，相比 CNN，模型会变得更深和更复杂，这也会导致训练时间变长和更差的收敛，这也是循环模型的一个缺点。LSTMs（和一般的 RNNs）可能会遇到例如梯度消失和梯度爆炸等收敛问题，但是通过有效的调整，也可以使他们在许多问题上得到最优的结果。一般来说，CNNs 擅于进行特征提取，而 RNNs 则在那些模型效果取决于整个句子意义的任务上比较有优势，比如问答和机器翻译。</p>
+<p>每一个单元一次处理一个词嵌入，然后根据在时间点 $t$ 的嵌入向量 $x$ 和前一个在时间点 $t-1$ 的状态 $h$ 进行一个可微分计算（<em>differential computation</em>），然后更新其内部状态。为了能够更好地理解 LSTMs 是怎么工作的，你可以参见 Chris Olah 的<a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/">博文</a>。（<em>译者注：我之前将这篇博文翻译成了中文，可以参见<a href="https://alanlee.fun/2017/12/29/understanding-lstms/">理解 LSTM 网络</a></em>）。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/DP4o5jc.png" title="LSTM cell" data-caption="LSTM cell" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/DP4o5jc.png" alt="LSTM cell"></a><span class="caption">LSTM cell</span></div>
+<center><font color=gray size=2>来源：<a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/">Understanding LSTM Networks</a> by Chris Olah</font></center>
+
+<p>整个 LSTM 模型可以如简单的流程图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/K6fIRvT.png" title="LSTM model" data-caption="LSTM model" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/K6fIRvT.png" alt="LSTM model"></a><span class="caption">LSTM model</span></div>
+<center><font color=gray size=2>译者注：由于<a href="https://cdn-images-1.medium.com/max/1200/1*y3w54qFX7D2P0I4FKHUddQ.png">原图</a>分辨率和大小问题，此图为我对其的重制版</font></center>
+
+<blockquote>
+<p>译者注：上图的重制 dot 代码如下：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">digraph G&#123;</span><br><span class="line">    rankdir=LR</span><br><span class="line">    node [shape=box, style=filled, fillcolor=&quot;.7 .3 1.0&quot;]</span><br><span class="line">    &quot;Embedding Layer&quot; -&gt;  &quot;LSTM Cell&quot; -&gt; &quot;Output Layer&quot;;</span><br><span class="line">    &quot;LSTM Cell&quot; -&gt; &quot;LSTM Cell&quot; [label=&quot;Recurison&quot;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>在本文开头，我们将所有文档都裁剪成 200 个词，这对于构建一个合适的 tensor 是必要的。然而当一篇文档少于 200 个词的时候，我们不希望 LSTM 继续去补充长度到 200，因为这不仅不会增加任何有用信而且还会降低性能。因此，我们想要额外给网络提供句子的原本长度。在内部，模型然后把最新的状态复制到序列的末尾。这可以通过使用输入函数中的 <code>&quot;len&quot;</code> 特征实现。我们现在可以使用和上面相同的逻辑，简单地用 LSTM 单元替换掉卷积、池化和拉平层。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">lsmt_cell = tf.nn.rnn_cell.BasicLSTMCell(<span class="number">100</span>)</span><br><span class="line">_, final_states = tf.nn.dynamic_rnn(</span><br><span class="line">    lstm_cell,</span><br><span class="line">    inputs,</span><br><span class="line">    sequence_length=features[<span class="string">&#x27;len&#x27;</span>],</span><br><span class="line">    dtype=tf.float32</span><br><span class="line">)</span><br><span class="line">logits = tf.layers.dense(</span><br><span class="line">    inputs=final_states.h,</span><br><span class="line">    units=<span class="number">1</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<h2 id="Pre-trained-vectors"><a href="#Pre-trained-vectors" class="headerlink" title="Pre-trained vectors"></a>Pre-trained vectors</h2><p>我们前面所展示的大多数模型都是使用词嵌入作为第一层。到目前为止，我们都是随机初始化这个嵌入层。然后，<a href="https://arxiv.org/abs/1301.3781">很多先前的工作</a>已经表明使用在一个很大的无标签的词库中预训练的嵌入是很有好处的，尤其是当要在一个小的有标签的数据集上训练时。最流行的预训练嵌入是 <a href="https://www.tensorflow.org/tutorials/word2vec">word2vec</a>。通过从预训练嵌入来利用无标签数据中的知识是<a href="http://ruder.io/transfer-learning/">迁移学习</a>的一个例子。</p>
+<p>现在我们将为你展示如何在一个 <code>Estimator</code> 中使用他们。我们将会使用来自另外一个流行模型 <a href="https://nlp.stanford.edu/projects/glove/">GloVe</a> 的预训练词嵌入。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">embeddings = &#123;&#125;</span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;glove.6B.50d.txt&#x27;</span>, <span class="string">&#x27;r&#x27;</span>, encoding=<span class="string">&#x27;utf-8&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    <span class="keyword">for</span> line <span class="keyword">in</span> f:</span><br><span class="line">    values = line.strip().split()</span><br><span class="line">    w = values[<span class="number">0</span>]</span><br><span class="line">    vectors = np.asarray(values[:<span class="number">1</span>], dtype=<span class="string">&#x27;float32&#x27;</span>)</span><br><span class="line">    embeddings[w] = vectors</span><br></pre></td></tr></table></figure>
+<p>在从一个文件中载入词向量到内存后，我们使用和词汇表中相同的索引来将其存储为一个 <code>numpy.array</code>，这个数组大小为 <code>(5000, 50)</code>。每一行中都包含一个 50 维的词向量，行索引对应于该词在词汇表中的索引。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">embedding_matrix = np.random.uniform(-<span class="number">1</span>, <span class="number">1</span>, size=(vocab_size, embedding_size))</span><br><span class="line"><span class="keyword">for</span> w, i <span class="keyword">in</span> word_index.items():</span><br><span class="line">    v = embeddings.get(w)</span><br><span class="line">    <span class="keyword">if</span> v <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span> <span class="keyword">and</span> i &lt; vocab_size:</span><br><span class="line">    embedding_matrix[i] = v</span><br></pre></td></tr></table></figure>
+<p>最后，我们可以使用一个自定义的初始化函数，然后将其通过 <code>params</code> 对象传给我们的 <code>cnn_model_fn</code>，不用改动其他的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">my_initializer</span>(<span class="params">shape=<span class="literal">None</span>, dtype=tf.float32, partition_info=<span class="literal">None</span></span>):</span><br><span class="line">    <span class="keyword">assert</span> dtype <span class="keyword">is</span> tf.float32</span><br><span class="line">    <span class="keyword">return</span> embedding_matrix</span><br><span class="line"></span><br><span class="line">params = &#123;<span class="string">&#x27;embedding_initialize&#x27;</span>: my_initializer&#125;</span><br><span class="line">cnn_pretrained_classifier = tf.estimator.Estimator(</span><br><span class="line">    model_fn=cnn_model_fn,</span><br><span class="line">    model_dir=os.path.join(model_dir, <span class="string">&#x27;cnn_pretrained&#x27;</span>),</span><br><span class="line">    params=params</span><br><span class="line">)</span><br><span class="line">train_and_evaluate(cnn_pretrained_classifier)</span><br></pre></td></tr></table></figure>
+<h2 id="Running-TensorBoard"><a href="#Running-TensorBoard" class="headerlink" title="Running TensorBoard"></a>Running TensorBoard</h2><p>现在我们可以启动 TensorBoard，看下我们刚训练的几个模型在训练时间和性能上有何不同。</p>
+<p>在终端输入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt; tensorboard --logdir=&#123;model_dir&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以看到在训练和测试时收集的许多评估指标，包括每个模型在每个训练步骤的损失函数值和 PR 曲线。这对于我们选择性能最好的模型和分类阈值很有帮助。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/tw9TzgZ.png" title="pr curves" data-caption="pr curves" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/tw9TzgZ.png" alt="pr curves"></a><span class="caption">pr curves</span></div>
+<center><font color=gray size=2>每个模型在测试集上的 PR 曲线</font></center>
+
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/zbApsYm.png" title="loss" data-caption="loss" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/zbApsYm.png" alt="loss"></a><span class="caption">loss</span></div>
+<center><font color=gray size=2>训练损失与训练步数</font></center>
+
+<h2 id="Getting-Predictions"><a href="#Getting-Predictions" class="headerlink" title="Getting Predictions"></a>Getting Predictions</h2><p>为了得到对新句子的预测值，我们可以使用 <code>Estimator</code> 的 <code>predict</code> 方法，这个方法会载入每个模型的最新检查点然后执行评估。但是在将数据送入给模型之前我们需要先清洗一下，分词然后将每个词映射到相应的索引：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">text_to_index</span>(<span class="params">sentence</span>):</span><br><span class="line">    <span class="comment"># 去除标点符号，除了 &#x27;</span></span><br><span class="line">    translator = <span class="built_in">str</span>.maketrans(<span class="string">&#x27;&#x27;</span>, <span class="string">&#x27; &#x27;</span>, string.punctuation.replace(<span class="string">&quot;&#x27;&quot;</span>, <span class="string">&#x27;&#x27;</span>))</span><br><span class="line">    tokens = sentence.translate(translator).lower().split()</span><br><span class="line">    <span class="keyword">return</span> np.array([<span class="number">1</span>] + [word_index[t] <span class="keyword">if</span> t <span class="keyword">in</span> word_index <span class="keyword">else</span> <span class="number">2</span> <span class="keyword">for</span> t <span class="keyword">in</span> tokens])</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">print_predictions</span>(<span class="params">sentences, classifier</span>):</span><br><span class="line">    indexes = [text_to_index(sentence) <span class="keyword">for</span> sentence <span class="keyword">in</span> sentences]</span><br><span class="line">    x = sequence.pad_sequences(</span><br><span class="line">        indexes,</span><br><span class="line">        maxlen=sentence_size,</span><br><span class="line">        padding=<span class="string">&#x27;post&#x27;</span>,</span><br><span class="line">        value=<span class="number">0</span></span><br><span class="line">    )</span><br><span class="line">    length = np.array([<span class="built_in">min</span>(<span class="built_in">len</span>(x), sentence_size) <span class="keyword">for</span> x <span class="keyword">in</span> indexes])</span><br><span class="line">    predict_input_fn = tf.estimator.inputs.numpy_input_fn(x=&#123;<span class="string">&quot;x&quot;</span>: x, <span class="string">&quot;len&quot;</span>: length&#125;, shuffle=<span class="literal">False</span>)</span><br><span class="line">    predictions = [p[<span class="string">&#x27;logistic&#x27;</span>][<span class="number">0</span>] <span class="keyword">for</span> p <span class="keyword">in</span> classifier.predict(input_fn=predict_input_fn)]</span><br><span class="line">    <span class="built_in">print</span>(predictions)</span><br></pre></td></tr></table></figure>
+<p>需要注意的是检查点本身并不足以进行预测，用于构建 Estimator 的代码也是必需的，需要用这段代码将保存的权重和相应的 tensors 对应上。将保存的检查点和相应的代码联系起来是一种很好地做法。</p>
+<p>如果你有兴趣以完全可恢复的方式将模型导出到硬盘上，你可能需要查看 <a href="https://www.tensorflow.org/programmers_guide/saved_model#using_savedmodel_with_estimators">SavedModel</a> 类，这对于使用 <a href="https://github.com/tensorflow/serving">TensorFlow Serving</a> 通过 API 来提供模型特别有用。</p>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>本篇博文中，我们探索了如何使用 Estimators 在 IMDB Reviews Dataset 上进行文本分类。我们训练和可视化了我们自己的嵌入和载入的预训练的词嵌入。我们从最简单的模型开始逐渐扩展到卷积神经网络和 LSTMs。</p>
+<p>对于更多细节，你可以查看以下内容：</p>
+<ul>
+<li>一个 可以在本地或者 Colaboratory 上运行的 <a href="https://github.com/eisenjulian/nlp_estimator_tutorial/blob/master/nlp_estimators.ipynb">Jupyter Notebook</a></li>
+<li>本文的完整的<a href="https://github.com/eisenjulian/nlp_estimator_tutorial/blob/master/nlp_estimators.py">源代码</a></li>
+<li>TensorFlow 关于<a href="https://www.tensorflow.org/programmers_guide/embedding">嵌入</a>的指导</li>
+<li>TensorFlow 关于 <a href="https://www.tensorflow.org/tutorials/word2vec">Vector Representation of Words</a> 的教程</li>
+<li>NLTK 中关于如何设计语言处理 pipelines 的章节 <a href="http://www.nltk.org/book/ch03.html">Processing Raw Text</a></li>
+</ul>
+<p><em>Thanks for reading！</em></p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Translation/" rel="tag">Translation</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/11/17/introducing-plotly/"
+                    data-tooltip="Plotly 初步"
+                    aria-label="上一篇: Plotly 初步"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/07/14/remote-jupyter/"
+                    data-tooltip="在本地使用远程 Jupyter Lab 服务器"
+                    aria-label="下一篇: 在本地使用远程 Jupyter Lab 服务器"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/11/17/introducing-plotly/"
+                    data-tooltip="Plotly 初步"
+                    aria-label="上一篇: Plotly 初步"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/07/14/remote-jupyter/"
+                    data-tooltip="在本地使用远程 Jupyter Lab 服务器"
+                    aria-label="下一篇: 在本地使用远程 Jupyter Lab 服务器"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/';
+              
+            this.page.identifier = '2018/07/18/text-classification-with-tensorflow-estimator/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

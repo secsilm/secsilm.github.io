@@ -1,0 +1,762 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>为什么我的 client CPU 和 server GPU 都很闲？ - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题前段时间我在跑数据批处理任务时，发生了一件怪事：client 部署在 CPU 服务器上，server 部署在 GPU 服务器上（模型），client 处理过程中会向 server 发请求。执行了一段时间后通过监控发现，client 这边的 CPU 和 server 这边的 GPU 利用率都不满，client 那边几乎可以忽略不计，server 那边只有 40% 左右。这是为什么？谁在消耗时间？正常情况下 server 应该是满的。\n尝试和解决先来大致说下数据批处理流程。流程分为两部分：client 和 server。client 主要负责整个数据处理流程，其中包括向多个模型服务发起请求，不涉及 GPU，部署在 CPU 服务器上。server 就是模型服务，部署在 GPU 服务器上，负责 load 模型和 inference。开始处理的时候，会临时起多台 GPU server，然后上面加一层负载，client 就用这个负载地址来请求 server。\n那天在启动任务开始处理的时候，已经有其他任务在用 server 了，而且是同一个负载地址。我们在启动这个新任务的时候，为了满足计算需求，直接往这个负载下加了 10 台 GPU server。然后启动 client，任务开始。\n启动后 client 的情况：\n启动后的 client htop。\nserver 情况：\n启动后的 server GPU 利用率。\nserver 这边显示的是所有服务器的 GPU 的情况，包括旧任务的，而且此时旧任务还没有完成。但是新任务一开始基本就出现了利用率的下降，请求量也出现了下滑（但是没有利用率那么明显）：\n负载请求量。\n从日志中可以看到旧任务一些进程已经结束了，但是也不至于出现这么大的波动。这就很奇怪了，为什么新任务一开始 server 那边就打不满了呢，按理说应该更满才对，而且请求量也没上去，反而跌了。\n我先是用 py-spy 检查了其中一个进程到底在干什么，这个工具的一个重要功能就是可以检查处于运行状态下的进程在干什么。结果如下：\npy-spy 结果。\n可以看到，时间基本都消耗在了网络相关函数上，比如 readinto (sockent.py) 、send (requests/sessions.py) 、urlopen (urllib3/connectionpool.py) 、begin (http/client.py) 和 _make_request (urllib3/connectionpool.py) 。很明显，问题出在网络上。正常情况 BeautifulSoup 相关操作应该占比较大一部分。\n运维测试了下网络，延迟很低，网络很通畅……\n然后我在监控中看到 server 镜像版本是旧的，而且这个旧镜像是有问题的，根本启动不起来。从监控中也可以看到这几台 server 利用率一直是 0，也就是说根本没收到请求。如果 server 没起来，那么负载应该是不能连接的，但我在 client 这边并没看到负载连接失败的报错，而且我在 client 程序最前面加了一个负载连接测试，不通过会直接 raise error，程序就会退出，而现在程序是正常运行的。这是为什么呢？还记得前面说过这个负载是和旧任务共用的吗，问题就在这里，这里实际上用的还是旧任务的 server，所以不会出现连接错误。\n把这个问题解决了后，问题依旧，server GPU 利用率稍微降低了些，但波动很小：\n解决 server 镜像问题后的 GPU 利用率。\n尽管大家觉得还是很离奇，但是当时时间很晚了，大家建议尝试增加 client 这边的并行核数（joblib 的 n_cores），毕竟 client 这边不满 server 也不满的另一个可能的原因是并发不够，同时打出去的请求不够多。\n后来的小时测试发现速度增加了 5 万/小时，但是不知道这是谁的功劳，或者说这个速度是不是存在水分都不一定，因为我不是特别确定之前的速度。由于时间很晚了，这件事暂且告一段落了。\n后来同事向我反馈线上 api 总是超时，之前不会。我进去看了下日志发现是有个子任务超时了，进一步发现 dev 服务器上的 GPU 特别满，按理说应该不可能，请求的人没那么多。这时我突然想到，为了方便在负载地址和 dev 地址之间切换，我在配置文件里区分了 prd 和 dev，批处理数据时需要先用如下语句来初始化配置：\n1config = Config(&#x27;prd&#x27;)  # or &#x27;dev&#x27;\n这个语句在两个程序中会出现，我突然想到我在其中一个程序中似乎还是用的 dev ，有可能会导致批处理用了 dev 服务器上的模型服务。进去一看，果然！\n这就解释了为什么 client 和 server 都很闲：\n\nclient 很闲是因为 dev 服务器忙不过来，瓶颈在 GPU 这边，即使增加 client 核数也没用；\nserver 也不忙是因为一部分请求根本没发到负载。\n\n但是为什么 server GPU 利用率下降了那么多，只能用旧任务一些进程结束来解释了，当然负载可能也存在问题（后来决定按照任务来生成不同的负载地址，做一下隔离，能避免如服务器没起来但负载仍可以连接的情况，也可以更好地看到不同任务地情况）。\n改成 prd 后 client 这边 CPU 正常了：\n修正后的 client htop 结果。\n总结经过这件事，意识到几点：\n\n特别注意配置文件中的配置项是否正确。\n配置尽量初始化一次，然后全局使用。\nProfiling 工具很重要，尤其是能 profile running program 的。\n尝试了很多种方法后仍然不能解决问题，卡住了，先放一放。\nBe patient。\n\nEND","dateCreated":"2023-01-13T17:32:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2023-01-13T17:32:00+08:00","description":"本文分析了一个跑数据批处理任务时，client 和 server GPU 利用率都不满的问题，并对其进行了尝试和解决。最后发现是由于配置文件中的误配置引起的，改正后问题得到解决。[text-davinci-003]","headline":"为什么我的 client CPU 和 server GPU 都很闲？","image":[null,"https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/","keywords":"Python","thumbnailUrl":"https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png"}</script>
+    <meta name="description" content="本文分析了一个跑数据批处理任务时，client 和 server GPU 利用率都不满的问题，并对其进行了尝试和解决。最后发现是由于配置文件中的误配置引起的，改正后问题得到解决。[text-davinci-003]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="为什么我的 client CPU 和 server GPU 都很闲？">
+<meta property="og:url" content="https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文分析了一个跑数据批处理任务时，client 和 server GPU 利用率都不满的问题，并对其进行了尝试和解决。最后发现是由于配置文件中的误配置引起的，改正后问题得到解决。[text-davinci-003]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2023/01/13/lmQrzfRBYgPK1kx.png">
+<meta property="og:image" content="https://s2.loli.net/2023/01/13/4sflAvSYLXQ9UqK.png">
+<meta property="og:image" content="https://s2.loli.net/2023/01/13/vfqWox6Gac2usNm.png">
+<meta property="og:image" content="https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png">
+<meta property="og:image" content="https://s2.loli.net/2023/01/13/FrqfEgH4vQ3J9CM.png">
+<meta property="og:image" content="https://s2.loli.net/2023/01/13/uHivGBITrdQJhW2.png">
+<meta property="article:published_time" content="2023-01-13T09:32:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.201Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/01/13/lmQrzfRBYgPK1kx.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            为什么我的 client CPU 和 server GPU 都很闲？
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-01-13T17:32:00+08:00">
+	
+		    2023 年 1 月 13 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%9D%E8%AF%95%E5%92%8C%E8%A7%A3%E5%86%B3"><span class="toc-text">尝试和解决</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>前段时间我在跑数据批处理任务时，发生了一件怪事：client 部署在 CPU 服务器上，server 部署在 GPU 服务器上（模型），client 处理过程中会向 server 发请求。执行了一段时间后通过监控发现，client 这边的 CPU 和 server 这边的 GPU 利用率都不满，client 那边几乎可以忽略不计，server 那边只有 40% 左右。这是为什么？谁在消耗时间？正常情况下 server 应该是满的。</p>
+<h2 id="尝试和解决"><a href="#尝试和解决" class="headerlink" title="尝试和解决"></a>尝试和解决</h2><p>先来大致说下数据批处理流程。流程分为两部分：client 和 server。client 主要负责整个数据处理流程，其中包括向多个模型服务发起请求，不涉及 GPU，部署在 CPU 服务器上。server 就是模型服务，部署在 GPU 服务器上，负责 load 模型和 inference。开始处理的时候，会临时起多台 GPU server，然后上面加一层负载，client 就用这个负载地址来请求 server。</p>
+<p>那天在启动任务开始处理的时候，已经有其他任务在用 server 了，而且是同一个负载地址。我们在启动这个新任务的时候，为了满足计算需求，直接往这个负载下加了 10 台 GPU server。然后启动 client，任务开始。</p>
+<p>启动后 client 的情况：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/01/13/lmQrzfRBYgPK1kx.png" title="启动后的 client htop。" data-caption="启动后的 client htop。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/01/13/lmQrzfRBYgPK1kx.png" alt="启动后的 client htop。"></a><span class="caption">启动后的 client htop。</span></div>
+<p>server 情况：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/01/13/4sflAvSYLXQ9UqK.png" title="启动后的 server GPU 利用率。" data-caption="启动后的 server GPU 利用率。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/01/13/4sflAvSYLXQ9UqK.png" alt="启动后的 server GPU 利用率。"></a><span class="caption">启动后的 server GPU 利用率。</span></div>
+<p>server 这边显示的是所有服务器的 GPU 的情况，包括旧任务的，而且此时旧任务还没有完成。但是新任务一开始基本就出现了利用率的下降，请求量也出现了下滑（但是没有利用率那么明显）：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/01/13/vfqWox6Gac2usNm.png" title="负载请求量。" data-caption="负载请求量。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/01/13/vfqWox6Gac2usNm.png" alt="负载请求量。"></a><span class="caption">负载请求量。</span></div>
+<p>从日志中可以看到旧任务一些进程已经结束了，但是也不至于出现这么大的波动。这就很奇怪了，为什么新任务一开始 server 那边就打不满了呢，按理说应该更满才对，而且请求量也没上去，反而跌了。</p>
+<p>我先是用 <a href="https://github.com/benfred/py-spy">py-spy</a> 检查了其中一个进程到底在干什么，这个工具的一个重要功能就是可以检查处于运行状态下的进程在干什么。结果如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png" title="py-spy 结果。" data-caption="py-spy 结果。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/01/13/M7jK2QP1qUGCpVw.png" alt="py-spy 结果。"></a><span class="caption">py-spy 结果。</span></div>
+<p>可以看到，时间基本都消耗在了网络相关函数上，比如 <code>readinto (sockent.py)</code> 、<code>send (requests/sessions.py)</code> 、<code>urlopen (urllib3/connectionpool.py)</code> 、<code>begin (http/client.py)</code> 和 <code>_make_request (urllib3/connectionpool.py)</code> 。很明显，问题出在网络上。正常情况 <code>BeautifulSoup</code> 相关操作应该占比较大一部分。</p>
+<p>运维测试了下网络，延迟很低，网络很通畅……</p>
+<p>然后我在监控中看到 server 镜像版本是旧的，而且这个旧镜像是有问题的，根本启动不起来。从监控中也可以看到这几台 server 利用率一直是 0，也就是说根本没收到请求。如果 server 没起来，那么负载应该是不能连接的，但我在 client 这边并没看到负载连接失败的报错，而且我在 client 程序最前面加了一个负载连接测试，不通过会直接 raise error，程序就会退出，而现在程序是正常运行的。这是为什么呢？还记得前面说过这个负载是和旧任务共用的吗，问题就在这里，这里实际上用的还是旧任务的 server，所以不会出现连接错误。</p>
+<p>把这个问题解决了后，问题依旧，server GPU 利用率稍微降低了些，但波动很小：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/01/13/FrqfEgH4vQ3J9CM.png" title="解决 server 镜像问题后的 GPU 利用率。" data-caption="解决 server 镜像问题后的 GPU 利用率。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/01/13/FrqfEgH4vQ3J9CM.png" alt="解决 server 镜像问题后的 GPU 利用率。"></a><span class="caption">解决 server 镜像问题后的 GPU 利用率。</span></div>
+<p>尽管大家觉得还是很离奇，但是当时时间很晚了，大家建议尝试增加 client 这边的并行核数（joblib 的 n_cores），毕竟 client 这边不满 server 也不满的另一个可能的原因是并发不够，同时打出去的请求不够多。</p>
+<p>后来的小时测试发现速度增加了 5 万/小时，但是不知道这是谁的功劳，或者说这个速度是不是存在水分都不一定，因为我不是特别确定之前的速度。由于时间很晚了，这件事暂且告一段落了。</p>
+<p>后来同事向我反馈线上 api 总是超时，之前不会。我进去看了下日志发现是有个子任务超时了，进一步发现 dev 服务器上的 GPU 特别满，按理说应该不可能，请求的人没那么多。这时我突然想到，为了方便在负载地址和 dev 地址之间切换，我在配置文件里区分了 prd 和 dev，批处理数据时需要先用如下语句来初始化配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">config = Config(<span class="string">&#x27;prd&#x27;</span>)  <span class="comment"># or &#x27;dev&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>这个语句在两个程序中会出现，我突然想到<strong>我在其中一个程序中似乎还是用的 <code>dev</code> ，有可能会导致批处理用了 dev 服务器上的模型服务</strong>。进去一看，果然！</p>
+<p>这就解释了为什么 client 和 server 都很闲：</p>
+<ul>
+<li>client 很闲是因为 dev 服务器忙不过来，瓶颈在 GPU 这边，即使增加 client 核数也没用；</li>
+<li>server 也不忙是因为一部分请求根本没发到负载。</li>
+</ul>
+<p>但是为什么 server GPU 利用率下降了那么多，只能用旧任务一些进程结束来解释了，当然负载可能也存在问题（后来决定按照任务来生成不同的负载地址，做一下隔离，能避免如服务器没起来但负载仍可以连接的情况，也可以更好地看到不同任务地情况）。</p>
+<p>改成 <code>prd</code> 后 client 这边 CPU 正常了：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2023/01/13/uHivGBITrdQJhW2.png" title="修正后的 client htop 结果。" data-caption="修正后的 client htop 结果。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2023/01/13/uHivGBITrdQJhW2.png" alt="修正后的 client htop 结果。"></a><span class="caption">修正后的 client htop 结果。</span></div>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>经过这件事，意识到几点：</p>
+<ol>
+<li>特别注意配置文件中的配置项是否正确。</li>
+<li>配置尽量初始化一次，然后全局使用。</li>
+<li>Profiling 工具很重要，尤其是能 profile running program 的。</li>
+<li>尝试了很多种方法后仍然不能解决问题，卡住了，先放一放。</li>
+<li>Be patient。</li>
+</ol>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/04/09/tqdm-requests/"
+                    data-tooltip="tqdm+requests：显示下载速度"
+                    aria-label="上一篇: tqdm+requests：显示下载速度"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/12/27/nuphy-air75/"
+                    data-tooltip="NuPhy Air75 矮轴键盘体验"
+                    aria-label="下一篇: NuPhy Air75 矮轴键盘体验"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/04/09/tqdm-requests/"
+                    data-tooltip="tqdm+requests：显示下载速度"
+                    aria-label="上一篇: tqdm+requests：显示下载速度"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/12/27/nuphy-air75/"
+                    data-tooltip="NuPhy Air75 矮轴键盘体验"
+                    aria-label="下一篇: NuPhy Air75 矮轴键盘体验"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/';
+              
+            this.page.identifier = '2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

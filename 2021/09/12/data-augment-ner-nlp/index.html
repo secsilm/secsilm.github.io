@@ -1,0 +1,1019 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>NLP 中的通用数据增强方法及针对 NER 的变种 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n本文结合 A Visual Survey of Data Augmentation in NLP 和最新的综述论文 A Survey of Data Augmentation Approaches for NLP，大致总结了目前 NLP 领域的通用数据增强方法和几种针对如 NER 的序列标注模型进行适配的变种方法，关于后者，重点介绍了基于 mixup 改进的 SeqMix 方法。\n此外，本文较长，建议结合右侧目录食用。\n通用数据增强方法每个增强方法最后的有序列表是提出或使用该方法的论文列表。\nLexical Substitution在不改变语义的情况下，替换句子中的词。\nThesaurus-based substitution使用近义词随机替换句子中的某一个词。\n\n2015: Character-level Convolutional Networks for Text Classification\nSiamese Recurrent Architectures for Learning Sentence Similarity\nEDA: Easy Data Augmentation\n\nWord-Embeddings SubstitutionUntitled 1.png\nUntitled 2.png\n\nTinyBERT: Distilling BERT for Natural Language Understanding\nThat’s So Annoying!!!: A Lexical and Frame-Semantic Embedding Based Data Augmentation Approach to Automatic Categorization of Annoying Behaviors using #petpeeve Tweets\n\nMasked Language ModelBERT、ROBERTA、ALBERT……\nUntitled 3.png\n有一点需要指出，决定哪个词需要被替换，这是个需要仔细考虑的问题，不然替换后可能会导致语义变化。\nUntitled 4.png\n\nBAE: BERT-based Adversarial Examples for Text Classification\n\nTF-IDF based word replacement该方法的思想是，TF-IDF 得分较低的词是 uninformative 的，所以对他们进行替换无伤大雅。\nUntitled 5.png\n\n[提出者] 2020: Unsupervised Data Augmentation for Consistency Training\n\nBack TranslationSteps:\n\n将句子从一种语言翻译成另一种语言，如英语 → 法语\n再从法语翻译回英语\n检查翻译回来的句子和原来的句子是否一样。如果不一样，那就算一个增强样本。\n\nUntitled 6.png\nUntitled 7.png\n可以使用 TextBlob 来实现 BT，你甚至可以使用 Google Sheets：\nUntitled 8.png\n\n2020: Unsupervised Data Augmentation for Consistency Training。使用 BT 方法，仅仅使用 20 个标注样本训练的模型，性能超过使用 25000 个标注样本训练的模型，数据集为 IMDB。\n\nText Surface Transformation正则模式匹配，例如将动词在缩略形式和展开形式之间来回转换。\nUntitled 9.png\n但是存在一个问题是，It’s 有可能是 It is 也有可能是 It has：\nUntitled 10.png\n为了解决这个问题，作者提出一个解决方法：有歧义的时候就不转，没歧义的时候转。\nUntitled 11.png\n\n[提出者] 2018: Text Data Augmentation Made Simple By Leveraging NLP Cloud APIs\n\nRandom Noise Injection在文本中插入噪声，这样也可以增强模型鲁棒性。\nSpelling error injection随机拼错句子中的词。\nUntitled 12.png\nQWERTY Keyboard Error Injection模拟人们在键盘输入时因为键位离得近而打错的场景。要用什么字母来替换，基于键盘距离来计算。\nUntitled 13.png\nUnigram Noising根据单词频率分布进行替换。\nUntitled 14.png\n\n2020: Unsupervised Data Augmentation for Consistency Training\n2017: Data Noising as Smoothing in Neural Network Language Models\n\nBlank Noising使用一个 placeholder 来随即替换一个词。论文中使用 _ 来作为 placeholder，用此方法来避免过拟合和作为语言模型的平滑机制。此方法帮助他们改善困惑度和 BLEU 分数。\nUntitled 15.png\n\n[提出者] 2017: Data Noising as Smoothing in Neural Network Language Models\n\nSentence Shuffling随机打乱句子。\nUntitled 16.png\nRandom InsertionSteps:\n\n随机选择一个不是 stopword 的词\n找到这个词的近义词\n将该近义词插入到句子的一个随机位置\n\nUntitled 17.png\n\n[提出者] 2019: EDA: Easy Data Augmentation Techniques for Boosting Performance on Text Classification Tasks\n\nRandom Swap随机替换两个词的顺序。\nUntitled 18.png\n\n[提出者] 2019: EDA: Easy Data Augmentation Techniques for Boosting Performance on Text Classification Tasks\n\nRandom Deletion根据一定概率删除词。\nUntitled 19.png\n\n[提出者] 2019: EDA: Easy Data Augmentation Techniques for Boosting Performance on Text Classification Tasks\n\nInstance Crossover Augmentation由论文 1 提出，灵感来源于遗传学中的染色体交叉互换现象。\nSteps:\n\n分别将推文 1 和推文 2 拆成两部分\n将推文 1 的一部分与推文 2 的一部分拼接，组成新的增强推文\n\nUntitled 20.png\n论文中发现该方法对准确率没有影响，但是提高了 F1，表明对样本较少的类别还是有好处的。\nUntitled 21.png\n\n[提出者] 2019: Atalaya at TASS 2019: Data Augmentation and Robust Embeddings for Sentiment Analysis\n\nSyntax-tree Manipulation由论文 1 提出，对句法树依据一定规则进行修改，生成新的增强样本。例如将原先是主动语态的句子，改成被动语态。\nUntitled 22.png\n\n[提出者] 2018: Text Data Augmentation Made Simple By Leveraging NLP Cloud APIs\n\nMixUp for TextMixup 原本是用于 CV 领域的增强方法，由论文 1 提出。原本指在一个 batch 中随机选择两张图片，将他们按照一定比例进行叠加。这被认为是一种正则化手段。\nUntitled 23.png\n后来论文 2 将这个方法适配到 NLP 中，提出了两种适配方法。\nwordMixup和图片叠加是 pixel 相加类似，对于文本，那就是 embedding 相加。随机选择两个句子，将他们的 word embedding 按照一定比例相加，得到一个新的增强样本的 word embedding，作为一个训练样本。最终计算交叉熵损失时，其 ground truth label 就是按相同比例叠加的 label。\nUntitled 24.png\nsentMixup和 wordMixup 不同的是，此方法不是直接将 word embedding 相加，而是通过将原始 word embedding 通过一个 encoder，得到 sentence embedding，再将两个句子的 sentence embedding 按照一定比例相加。计算损失时处理方法同上。\nUntitled 25.png\n\n[CV提出者] 2018: mixup: Beyond Empirical Risk Minimization\n[NLP提出者] 2019: Augmenting Data with Mixup for Sentence Classification: An Empirical Study\n\nGenerative Methods在保有原本类别标签的同时，生成新的训练数据。\nConditional Pre-trained Language Models由论文 1 提出，论文 2 在多个 transformer-based 预训练模型上验证了此方法。\nSteps:\n\n在训练集中所有句子前追加其 label。\n Untitled 26.png\n\n使用预训练语言模型在这个新数据集中 finetune。对于 GPT2 来说就是生成任务，对于 BERT 来说就是 masked token prediction。\n Untitled 27.png\n\n使用上述训练好的语言模型，根据一定 prompt 生成新的训练样本。\n Untitled 28.png\n\n[提出者] 2019: Not Enough Data? Deep Learning to the Rescue!\n\n\n针对序列标注的数据增强方法DAGA，EMNLP 2020GitHub - ntunlp/daga: Data Augmentation with a Generation Approach for Low-resource Tagging Tasks\nSteps:\n\nLinearize。将 token 序列和 label 序列线性化成一个序列。有两种方法：tag-word 和 word-tag。论文发现 tag-word 性能较好，一个可能的原因是 tag-word 更符合 Modifier-Noun 模式，即修饰语-名词模式，这在数据集中非常常见。\n Untitled 29.png\n\nTrain。使用线性化后的数据集训练语言模型。\n Untitled 30.png\n\nPredict。给定第一个词 [BOS]，使用训练好的模型生成新数据。在预测 I have booked a flight to 的下一个词时，由于训练集中有大量 a flight/train/trip to S-LOC 这种模式，所以模型大概率会预测下一个词为 S-LOC。然后再接下来，同样，训练集中 S-LOC 后面接的都是地点如 London、Paris，所以下一个一定是地点词。由于这都是根据概率随机生成的，所以会有比较大的多样性。（感觉是复杂高级版本的实体替换？）\n Untitled 31.png\n\n\nLwTR，Label-wise token replacement，COLING 2020Steps:\n\n对于每个 token，使用一个二项分布来决定该 token 是否需要被替换。\n如果是，那么根据从训练集统计得到的 label-wise token distribution，随机选择一个 token 与之替换。\n\nUntitled 32.png\n此方法不会导致 label 序列变化。\nSR，Synonym replacement，COLING 2020和 LwTR 相似，只不过不再是从 label-wise token distribution 中选择 token 来替换，而是选择被替换 token 的同义词来替换，该同义词从 WordNet 中获得。\nUntitled 33.png\n由于某词和其同义词的长度可能不等，所以此方法可能会导致 label 序列变化。\nMR，Mention replacement，COLING 2020这里说的 mention 就是指的实体（应该不包括 O）。该方法本质上就是 SR 的 label-wise 版本。\nSteps:\n\n对于每个 mention，使用一个二项分布来决定该 mention 是否应该被替换。\n如果是，从训练集中随机选择一个相同类型的 mention 来与之替换。\n\nUntitled 34.png\n和 SR 同样存在长度可能不等的问题，所以也会导致 label 序列变化。\nSiS，Shuffle within segments，COLING 2020这里说的 segment，指的是相同 label 类型的连续序列，一个 segment 仅包含一种实体类型。\nSteps:\n\n将 token 序列 split 成多个 segment。\n对于每个 segment，使用一个二项分布来决定该 segment 是否应该被 shuffle。\n如果是，那么 shuffle。\n\nUntitled 35.png\n此方法不会导致 label 序列变化。\nSeqMix，EMNLP 2020该方法实际上也是对 CV 中 mixup 方法的 NLP 适配。\nGitHub - rz-zhang/SeqMix: The repository for our EMNLP’20 paper SeqMix: Augmenting Active Sequence Labeling via Sequence Mixup.\n整个方法分成 3 个部分：Pairing、Mixup 和 Scoring/Selecting。\n和 CV mixup 同理，此方法中，需要两个句子构成的句子对来进行 mixup。Pairing 就是如何挑选这个句子对的部分。挑选完句子对后，使用一定的 mixup 策略来混合句子对，得到一个或多个增强样本。而这个策略，论文提出了三种不同方法。得到增强样本后，我们需要评估该样本是不是合理，这就用到了 scoring/selecting 部分。该部分会对增强样本进行打分，如果该分值在合理范围内，那么就使用该增强样本。\nPairing\n许多序列标注任务中，我们实际感兴趣的 label（即上文说的 mention，论文中称其为 valid labels）是比较少比较稀疏的。例如 NER 任务中，大部分 label 都是 O，我们感兴趣的 PER、LOC 等却比较少。所以，论文设计了一个 pairing 函数，该函数根据 valid label density $\\eta$ 来 pairing，定义如下：\n\\eta = \\dfrac{n}{s}其中，$n$ 是 sub-sequence 中 valid label 的数量，$s$ 是 sub-sequence 的长度。\n然后设置一个阈值 $\\eta_0$，只有当 $\\eta \\ge \\eta_0$ 的时候，才是符合要求的句子。\nMixup\n假设 Pairing 后得到序列 1 和序列 2。然后我们有一个 token 表 W，及其响应的 embedding E。\n在 wordMixup 和 sentMixup 中，我们是直接将 mixup 后得到的 embedding 作为增强样本的 embedding 送入后续模型，不必得到增强样本的 token 序列。而在此论文中，修改了 mixup 策略，并且还能得到增强样本的 token 序列。\n选择 mixed token embedding：\n\n与 wordMixup 和 sentMixup 一样，根据比例 $\\lambda$ 混合序列 1 和 2 的 token embedding。$\\lambda$ 从一个 Beta 分布采样的来。\n根据 E，计算与混合得到的 embedding 距离最近的 embedding。\n根据 E、W 和得到的距离最近 embedding，找到该 embedding 对应的 token。\n\n这样就得到了增强样本的 token 序列，label 序列使用同样的比例进行混合。\n根据 token 范围不同和 label 序列是否混合，有以下几种策略变种：\nUntitled 36.png\n\nWhole sequence mixup：使用整个序列参与混合。\nSub-sequence mixup：使用序列的一部分参与混合。\nLabel-constrained sub-sequence mixup：使用序列的一部分参与混合，且所有 label 保持不变。\n\nScoring/Selecting\n混合比例 $\\lambda$ 决定了混合强度，0 或者 1 都表示和原来一样，0.5 则表示一半一半，意味着更强的多样性。但是更强的多样性，也就意味着得到的增强样本有更大风险低质量和强噪声。\n所以要通过一个打分函数来控制这个多样性。论文中使用的是 GPT-2 来计算增强样本序列的困惑度。然后判断该困惑度是否在合理区间内。\n综合来说，该结合 data augmentation 的 active learning 算法整体过程如下：\nUntitled 37.png\n其中 SeqMix 部分如下：\nUntitled 38.png\n作者做了一些实验验证 SeqMix 的性能。数据集使用的是 CoNLL-03、ACE05（14k 标注数据）和 Webpage（385 条标注数据），其中为了验证模型在 low-resource 下的有效性，作者从 CoNLL-03 中随机选择了 700 条数据作为最终训练集，替代原来的 CoNLL-03。而剩下两个数据集，由于标注比较稀疏，保持原样不变。\n作者按照算法 1 的流程，首先将 SeqMix 与其他 active learning 算法进行对比，SeqMix 部分默认使用 NTE query 策略。结果如图所示：\nUntitled 39.png\n结果显示：\n\nSeqMix 方法在所有 data usage、所有数据集上都优于仅使用 AL 的方法。\n数据越少，SeqMix 效果越明显，与其他 AL 方法的差距越大。\nsub-sequence 方法是三种 mixup 变种中效果最好的，加上 AL 时，使用 NTE 策略效果最好。\n\n随后作者使用 Wilcoxon Signed Rank Test 对该结果进行了统计假设检验。结果显示，whole-sequence mixup 在 ACE05 数据集上没有通过检验，其他方法和其他数据集均通过检验。再结合 Fig 2，可能表明该方法在数据量大时效果不明显或不稳定，这可能是由于该方法在序列较长时可能会生成语义不合理的句子。\n而 sub-sequence mixup 方法：\n\n保留了 sub-sequence 和原句剩余部分之间的 context 信息。\n继承了原句的局部信息。\n引入语言学多样性。\n\n为了验证 SeqMix 方法尤其是 sub-sequence 方法对所有的 AL 方法都有提升，作者进一步将 SeqMix 方法与不同的 AL 方法进行比较，结果如 Fig 3 所示，平均来看，sub-sequence + NTE 的提升最大。\nUntitled 40.png\n此外，作者基于上述实验结果，选用最优组合，即 sub-sequence + NTE，还做了对 discriminator 得分范围、valid label density $\\eta_0$、混合比例 $\\lambda$ 的分布参数 $\\alpha$、augment rate $r$ 的不同参数实验，结论总结如下：\nDiscriminator 得分范围\nUntitled 41\n第一列的表头 Data Usage 应该是错误的，应为 discriminator score range。\n使用的数据集为 CoNLL-03，700 个样本。从 200 个样本开始训练，每次 AL 增加 100 个样本，共进行 5 轮。由表可知，得分范围在 $(0,500)$ 时效果最好。\n注意得分实际上是困惑度。所以，得分越低，生成的增强样本语义上越好，也就是越顺，也会得到更好的效果。但是也不能无限降低，太苛刻，这样就得不到足够数量的增强样本了。\nValid label density $\\eta_0$\n前面说过，VLD 是由 sub-sequence 内的合法标签数 $n$（B-PER 和 I-PER 算两个）和其长度 $s$ 相除得到的。需要注意的是\n\n长度 $s$ 的计算。对于 whole-sequence mixup，$s$ 就是整个序列的长度，但是对于 sub-sequence mixup，$s$ 实际上是窗口的大小。\n实际代码中，是使用合法标签数 $n$ 来选取 valid sub-sequence 的，而不是直接计算比例 $\\eta$，所以才会出现下图中 2/4 和 3/6 虽然都是 $\\eta = 0.5$ 但是却并存的情况。\n\nUntitled 42.png\n由图可知，红色点线代表的 3/5 组合效果最好。\n混合比例 $\\lambda$ 的分布参数 $\\alpha$\n论文中称之为 Mixing parameter。$\\alpha$ 是 Beta 分布 的参数，本来 Beta 分布有两个参数，但是此处将两个参数设为相同，即 $\\lambda \\sim \\text{Be}(\\alpha, \\alpha)$。该分布有个特点，值域为$(0,1)$，参数越大，采样值越有可能在 0.5 附近。\nUntitled 43.png\n分布参数为 [0.5, 1, 2, 4, 8, 16] 时的分布形状\n实验结果如 Fig 4(b) 所示：\nUntitled 44.png\n可见 $\\alpha=8$ 时性能最好，此时 $\\lambda$ 越有可能在 0.5 附近，意味着为增强样本引入了更多的多样性。但是 $\\alpha$ 也不是越大越好，越大意味着 $\\lambda$ 的多样性就会减少，进入导致增强样本多样性减少。\nAugment rate $r$\n$r$ 的定义如下：\nr = \\dfrac{\\mathcal L^*}{\\psi \\left( \\mathcal U, \\mathcal K, \\gamma(\\cdot) \\right)}即增强样本数量与原样本数量 $\\mathcal K$ 的比例。分母表示使用策略函数 $\\gamma$ ，从 unlabelled dataset $\\mathcal U$ 中选出 Top $\\mathcal K$ 个样本。值域为 $[0, 1]$，所以按照论文中说法，每次最多增强 $\\mathcal K$ 个样本。那么每次增强多少呢？实验比较结果如下：\nUntitled 45.png\n这论文写的也太不严谨了，发现好几处错误了\n可见平均来说，0.2 的 augment rate 更为合适一点，说明模型更偏向“温和”一点的增强。总体来说，不宜超过 0.6。\n此外我个人觉得，数据量较少时，可能使用较小的 augment rate 好一点；而数据量较大时，可能偏向较大的 augment rate。\n一些可用的库\nGitHub - makcedward/nlpaug: Data augmentation for NLP\nGitHub - QData/TextAttack: TextAttack 🐙 is a Python framework for adversarial attacks, data augmentation, and model training in NLP https://textattack.readthedocs.io/en/latest/\nGitHub - sloria/TextBlob: Simple, Pythonic, text processing—Sentiment analysis, part-of-speech tagging, noun phrase extraction, translation, and more.\n\nReference主要参考的是前 3 个，后面几个是找到的但还没来得及看的。\n\nA Visual Survey of Data Augmentation in NLP\n[2105.03075] A Survey of Data Augmentation Approaches for NLP\nSeqMix: Augmenting Active Sequence Labeling via Sequence Mixup - ACL Anthology\n[1903.09460v1] Data Augmentation via Dependency Tree Morphing for Low-Resource Languages\n[2105.07464v6] Few-NERD: A Few-Shot Named Entity Recognition Dataset\ntata1661/FSL-Mate: FSL-Mate: A collection of resources for few-shot learning (FSL).\nSimple and Effective Few-Shot Named Entity Recognition with Structured Nearest Neighbor Learning - ACL Anthology\n\n","dateCreated":"2021-09-12T17:37:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2021-09-12T17:37:00+08:00","description":"\n本文结合 A Visual Survey of Data Augmentation in NLP 和最新的综述论文 A Survey of Data Augmentation Approaches for NLP，大致总结了目前 NLP 领域的通用数据增强方法和几种针对如 NER 的序列标注模型进行适配的变种方法，关于后者，重点介绍了基于 mixup 改进的 SeqMix 方法。","headline":"NLP 中的通用数据增强方法及针对 NER 的变种","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/09/12/data-augment-ner-nlp/","keywords":"NLP, Data Augmentation, NER, Active Learning"}</script>
+    <meta name="description" content="本文结合 A Visual Survey of Data Augmentation in NLP 和最新的综述论文 A Survey of Data Augmentation Approaches for NLP，大致总结了目前 NLP 领域的通用数据增强方法和几种针对如 NER 的序列标注模型进行适配的变种方法，关于后者，重点介绍了基于 mixup 改进的 SeqMix 方法。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="NLP 中的通用数据增强方法及针对 NER 的变种">
+<meta property="og:url" content="https://alanlee.fun/2021/09/12/data-augment-ner-nlp/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文结合 A Visual Survey of Data Augmentation in NLP 和最新的综述论文 A Survey of Data Augmentation Approaches for NLP，大致总结了目前 NLP 领域的通用数据增强方法和几种针对如 NER 的序列标注模型进行适配的变种方法，关于后者，重点介绍了基于 mixup 改进的 SeqMix 方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/sUcZ5pdbP7G9tho.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/NL9RQADWSv8ZMGn.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/hRaOzSZVvqfHDKp.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/4rmGNBaRkvIYHTP.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/6y5mkHKdogMGrUw.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/6vQJDdBZjOI1uLl.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/rnYF1db2yUXNRKZ.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/lYFzvbUxHpaWkrs.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/wAaOyxR5HCTkPGX.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/FX9WvKLchJrVpwC.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/jshHf3gCNerYtT4.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/qH4zZX5Cr9EgNTS.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/cWvgSFiNIlUAu3E.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/pA8BuUzJYKQxNh9.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/wqXM6JbgYo2xsz9.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/DsHEuyFWdtYbpqn.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/8pBU3bwPKanyNIr.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/YFP6GbC1n5qDyUV.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/EGvRroNYh3BtKfk.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/ZnbKR4GPx1X8BML.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/uJGm2BCWL6DSo4E.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/1ZqYlHfztpyGILS.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/bRWxcl6MuOKGFkj.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/OopbKIfaM6q5SFr.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/szIuHvWhGbA36Mt.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/FIjQylZeLCt7nHq.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/ZjGJSnVFDHXo1wU.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/dPR7BwotN6y1GgO.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/l6zgnPTBuFAtrdH.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/Fbecn6DB4JNz3fg.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/YU2m1DyAnagXs4t.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/FuBdemw8UWiPp27.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/BYMaf4PVueibHh7.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/yTYKz8Bh1UdWjL3.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/8lZJ1mfC26hsSGv.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/ZwOcriMu4FhV3G5.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/9FNgMth4ovfkqQa.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/R6yD7xGZMXAq2pv.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/XDjg5K4fWlH8txJ.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/SeUt6a7ykLAjvIg.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/bluBHSa9GyJNknD.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/B6RZo5Y8azr9XfQ.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/LnflW5gXT9NPwO4.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/zGUAd1tnB9D5WqN.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/12/ZCo8sVjdYAPJ2Gt.png">
+<meta property="article:published_time" content="2021-09-12T09:37:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.192Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="Data Augmentation">
+<meta property="article:tag" content="NER">
+<meta property="article:tag" content="Active Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2021/09/12/sUcZ5pdbP7G9tho.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            NLP 中的通用数据增强方法及针对 NER 的变种
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-09-12T17:37:00+08:00">
+	
+		    2021 年 9 月 12 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%80%9A%E7%94%A8%E6%95%B0%E6%8D%AE%E5%A2%9E%E5%BC%BA%E6%96%B9%E6%B3%95"><span class="toc-text">通用数据增强方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Lexical-Substitution"><span class="toc-text">Lexical Substitution</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Thesaurus-based-substitution"><span class="toc-text">Thesaurus-based substitution</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Word-Embeddings-Substitution"><span class="toc-text">Word-Embeddings Substitution</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Masked-Language-Model"><span class="toc-text">Masked Language Model</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TF-IDF-based-word-replacement"><span class="toc-text">TF-IDF based word replacement</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Back-Translation"><span class="toc-text">Back Translation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Text-Surface-Transformation"><span class="toc-text">Text Surface Transformation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Random-Noise-Injection"><span class="toc-text">Random Noise Injection</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Spelling-error-injection"><span class="toc-text">Spelling error injection</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#QWERTY-Keyboard-Error-Injection"><span class="toc-text">QWERTY Keyboard Error Injection</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Unigram-Noising"><span class="toc-text">Unigram Noising</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Blank-Noising"><span class="toc-text">Blank Noising</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Sentence-Shuffling"><span class="toc-text">Sentence Shuffling</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Random-Insertion"><span class="toc-text">Random Insertion</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Random-Swap"><span class="toc-text">Random Swap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Random-Deletion"><span class="toc-text">Random Deletion</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Instance-Crossover-Augmentation"><span class="toc-text">Instance Crossover Augmentation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Syntax-tree-Manipulation"><span class="toc-text">Syntax-tree Manipulation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MixUp-for-Text"><span class="toc-text">MixUp for Text</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#wordMixup"><span class="toc-text">wordMixup</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sentMixup"><span class="toc-text">sentMixup</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Generative-Methods"><span class="toc-text">Generative Methods</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Conditional-Pre-trained-Language-Models"><span class="toc-text">Conditional Pre-trained Language Models</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%92%88%E5%AF%B9%E5%BA%8F%E5%88%97%E6%A0%87%E6%B3%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E5%A2%9E%E5%BC%BA%E6%96%B9%E6%B3%95"><span class="toc-text">针对序列标注的数据增强方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#DAGA%EF%BC%8CEMNLP-2020"><span class="toc-text">DAGA，EMNLP 2020</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LwTR%EF%BC%8CLabel-wise-token-replacement%EF%BC%8CCOLING-2020"><span class="toc-text">LwTR，Label-wise token replacement，COLING 2020</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SR%EF%BC%8CSynonym-replacement%EF%BC%8CCOLING-2020"><span class="toc-text">SR，Synonym replacement，COLING 2020</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MR%EF%BC%8CMention-replacement%EF%BC%8CCOLING-2020"><span class="toc-text">MR，Mention replacement，COLING 2020</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SiS%EF%BC%8CShuffle-within-segments%EF%BC%8CCOLING-2020"><span class="toc-text">SiS，Shuffle within segments，COLING 2020</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SeqMix%EF%BC%8CEMNLP-2020"><span class="toc-text">SeqMix，EMNLP 2020</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%8F%AF%E7%94%A8%E7%9A%84%E5%BA%93"><span class="toc-text">一些可用的库</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+<p>本文结合 <a href="https://amitness.com/2020/05/data-augmentation-for-nlp/">A Visual Survey of Data Augmentation in NLP</a> 和最新的综述论文 <a href="https://arxiv.org/abs/2105.03075">A Survey of Data Augmentation Approaches for NLP</a>，大致总结了目前 NLP 领域的通用数据增强方法和几种针对如 NER 的序列标注模型进行适配的变种方法，关于后者，重点介绍了基于 mixup 改进的 SeqMix 方法。<br><span id="more"></span></p>
+<p>此外，<strong>本文较长，建议结合右侧目录食用</strong>。</p>
+<h1 id="通用数据增强方法"><a href="#通用数据增强方法" class="headerlink" title="通用数据增强方法"></a>通用数据增强方法</h1><p>每个增强方法最后的有序列表是提出或使用该方法的论文列表。</p>
+<h2 id="Lexical-Substitution"><a href="#Lexical-Substitution" class="headerlink" title="Lexical Substitution"></a>Lexical Substitution</h2><p>在不改变语义的情况下，替换句子中的词。</p>
+<h3 id="Thesaurus-based-substitution"><a href="#Thesaurus-based-substitution" class="headerlink" title="Thesaurus-based substitution"></a>Thesaurus-based substitution</h3><p>使用近义词随机替换句子中的某一个词。</p>
+<ol>
+<li>2015: Character-level Convolutional Networks for Text Classification</li>
+<li>Siamese Recurrent Architectures for Learning Sentence Similarity</li>
+<li>EDA: Easy Data Augmentation</li>
+</ol>
+<h3 id="Word-Embeddings-Substitution"><a href="#Word-Embeddings-Substitution" class="headerlink" title="Word-Embeddings Substitution"></a>Word-Embeddings Substitution</h3><div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/sUcZ5pdbP7G9tho.png" title="Untitled 1.png" data-caption="Untitled 1.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/sUcZ5pdbP7G9tho.png" alt="Untitled 1.png"></a><span class="caption">Untitled 1.png</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/NL9RQADWSv8ZMGn.png" title="Untitled 2.png" data-caption="Untitled 2.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/NL9RQADWSv8ZMGn.png" alt="Untitled 2.png"></a><span class="caption">Untitled 2.png</span></div>
+<ol>
+<li>TinyBERT: Distilling BERT for Natural Language Understanding</li>
+<li>That’s So Annoying!!!: A Lexical and Frame-Semantic Embedding Based Data Augmentation Approach to Automatic Categorization of Annoying Behaviors using #petpeeve Tweets</li>
+</ol>
+<h3 id="Masked-Language-Model"><a href="#Masked-Language-Model" class="headerlink" title="Masked Language Model"></a>Masked Language Model</h3><p>BERT、ROBERTA、ALBERT……</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/hRaOzSZVvqfHDKp.png" title="Untitled 3.png" data-caption="Untitled 3.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/hRaOzSZVvqfHDKp.png" alt="Untitled 3.png"></a><span class="caption">Untitled 3.png</span></div>
+<p>有一点需要指出，决定哪个词需要被替换，这是个需要仔细考虑的问题，不然替换后可能会导致语义变化。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/4rmGNBaRkvIYHTP.png" title="Untitled 4.png" data-caption="Untitled 4.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/4rmGNBaRkvIYHTP.png" alt="Untitled 4.png"></a><span class="caption">Untitled 4.png</span></div>
+<ol>
+<li>BAE: BERT-based Adversarial Examples for Text Classification</li>
+</ol>
+<h3 id="TF-IDF-based-word-replacement"><a href="#TF-IDF-based-word-replacement" class="headerlink" title="TF-IDF based word replacement"></a>TF-IDF based word replacement</h3><p>该方法的思想是，<strong>TF-IDF 得分较低的词是 uninformative 的</strong>，所以对他们进行替换无伤大雅。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/6y5mkHKdogMGrUw.png" title="Untitled 5.png" data-caption="Untitled 5.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/6y5mkHKdogMGrUw.png" alt="Untitled 5.png"></a><span class="caption">Untitled 5.png</span></div>
+<ol>
+<li>[提出者] 2020: Unsupervised Data Augmentation for Consistency Training</li>
+</ol>
+<h2 id="Back-Translation"><a href="#Back-Translation" class="headerlink" title="Back Translation"></a>Back Translation</h2><p>Steps:</p>
+<ol>
+<li>将句子从一种语言翻译成另一种语言，如英语 → 法语</li>
+<li>再从法语翻译回英语</li>
+<li>检查翻译回来的句子和原来的句子是否一样。如果不一样，那就算一个增强样本。</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/6vQJDdBZjOI1uLl.png" title="Untitled 6.png" data-caption="Untitled 6.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/6vQJDdBZjOI1uLl.png" alt="Untitled 6.png"></a><span class="caption">Untitled 6.png</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/rnYF1db2yUXNRKZ.png" title="Untitled 7.png" data-caption="Untitled 7.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/rnYF1db2yUXNRKZ.png" alt="Untitled 7.png"></a><span class="caption">Untitled 7.png</span></div>
+<p>可以使用 TextBlob 来实现 BT，你甚至可以使用 Google Sheets：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/lYFzvbUxHpaWkrs.png" title="Untitled 8.png" data-caption="Untitled 8.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/lYFzvbUxHpaWkrs.png" alt="Untitled 8.png"></a><span class="caption">Untitled 8.png</span></div>
+<ol>
+<li>2020: Unsupervised Data Augmentation for Consistency Training。使用 BT 方法，仅仅使用 20 个标注样本训练的模型，性能超过使用 25000 个标注样本训练的模型，数据集为 IMDB。</li>
+</ol>
+<h2 id="Text-Surface-Transformation"><a href="#Text-Surface-Transformation" class="headerlink" title="Text Surface Transformation"></a>Text Surface Transformation</h2><p>正则模式匹配，例如将动词在缩略形式和展开形式之间来回转换。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/wAaOyxR5HCTkPGX.png" title="Untitled 9.png" data-caption="Untitled 9.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/wAaOyxR5HCTkPGX.png" alt="Untitled 9.png"></a><span class="caption">Untitled 9.png</span></div>
+<p>但是存在一个问题是，<em>It’s</em> 有可能是 <em>It is</em> 也有可能是 <em>It has</em>：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/FX9WvKLchJrVpwC.png" title="Untitled 10.png" data-caption="Untitled 10.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/FX9WvKLchJrVpwC.png" alt="Untitled 10.png"></a><span class="caption">Untitled 10.png</span></div>
+<p>为了解决这个问题，作者提出一个解决方法：有歧义的时候就不转，没歧义的时候转。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/jshHf3gCNerYtT4.png" title="Untitled 11.png" data-caption="Untitled 11.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/jshHf3gCNerYtT4.png" alt="Untitled 11.png"></a><span class="caption">Untitled 11.png</span></div>
+<ol>
+<li>[提出者] 2018: Text Data Augmentation Made Simple By Leveraging NLP Cloud APIs</li>
+</ol>
+<h2 id="Random-Noise-Injection"><a href="#Random-Noise-Injection" class="headerlink" title="Random Noise Injection"></a>Random Noise Injection</h2><p>在文本中插入噪声，这样也可以增强模型鲁棒性。</p>
+<h3 id="Spelling-error-injection"><a href="#Spelling-error-injection" class="headerlink" title="Spelling error injection"></a>Spelling error injection</h3><p>随机拼错句子中的词。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/qH4zZX5Cr9EgNTS.png" title="Untitled 12.png" data-caption="Untitled 12.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/qH4zZX5Cr9EgNTS.png" alt="Untitled 12.png"></a><span class="caption">Untitled 12.png</span></div>
+<h3 id="QWERTY-Keyboard-Error-Injection"><a href="#QWERTY-Keyboard-Error-Injection" class="headerlink" title="QWERTY Keyboard Error Injection"></a>QWERTY Keyboard Error Injection</h3><p>模拟人们在键盘输入时因为键位离得近而打错的场景。要用什么字母来替换，基于键盘距离来计算。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/cWvgSFiNIlUAu3E.png" title="Untitled 13.png" data-caption="Untitled 13.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/cWvgSFiNIlUAu3E.png" alt="Untitled 13.png"></a><span class="caption">Untitled 13.png</span></div>
+<h3 id="Unigram-Noising"><a href="#Unigram-Noising" class="headerlink" title="Unigram Noising"></a>Unigram Noising</h3><p>根据单词频率分布进行替换。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/pA8BuUzJYKQxNh9.png" title="Untitled 14.png" data-caption="Untitled 14.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/pA8BuUzJYKQxNh9.png" alt="Untitled 14.png"></a><span class="caption">Untitled 14.png</span></div>
+<ol>
+<li>2020: Unsupervised Data Augmentation for Consistency Training</li>
+<li>2017: Data Noising as Smoothing in Neural Network Language Models</li>
+</ol>
+<h3 id="Blank-Noising"><a href="#Blank-Noising" class="headerlink" title="Blank Noising"></a>Blank Noising</h3><p>使用一个 placeholder 来随即替换一个词。论文中使用 <code>_</code> 来作为 placeholder，用此方法来避免过拟合和作为语言模型的平滑机制。此方法帮助他们改善困惑度和 BLEU 分数。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/wqXM6JbgYo2xsz9.png" title="Untitled 15.png" data-caption="Untitled 15.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/wqXM6JbgYo2xsz9.png" alt="Untitled 15.png"></a><span class="caption">Untitled 15.png</span></div>
+<ol>
+<li>[提出者] 2017: Data Noising as Smoothing in Neural Network Language Models</li>
+</ol>
+<h3 id="Sentence-Shuffling"><a href="#Sentence-Shuffling" class="headerlink" title="Sentence Shuffling"></a>Sentence Shuffling</h3><p>随机打乱句子。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/DsHEuyFWdtYbpqn.png" title="Untitled 16.png" data-caption="Untitled 16.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/DsHEuyFWdtYbpqn.png" alt="Untitled 16.png"></a><span class="caption">Untitled 16.png</span></div>
+<h3 id="Random-Insertion"><a href="#Random-Insertion" class="headerlink" title="Random Insertion"></a>Random Insertion</h3><p>Steps:</p>
+<ol>
+<li>随机选择一个不是 stopword 的词</li>
+<li>找到这个词的近义词</li>
+<li>将该近义词插入到句子的一个随机位置</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/8pBU3bwPKanyNIr.png" title="Untitled 17.png" data-caption="Untitled 17.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/8pBU3bwPKanyNIr.png" alt="Untitled 17.png"></a><span class="caption">Untitled 17.png</span></div>
+<ol>
+<li>[提出者] 2019: EDA: Easy Data Augmentation Techniques for Boosting Performance on Text Classification Tasks</li>
+</ol>
+<h3 id="Random-Swap"><a href="#Random-Swap" class="headerlink" title="Random Swap"></a>Random Swap</h3><p>随机替换两个词的顺序。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/YFP6GbC1n5qDyUV.png" title="Untitled 18.png" data-caption="Untitled 18.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/YFP6GbC1n5qDyUV.png" alt="Untitled 18.png"></a><span class="caption">Untitled 18.png</span></div>
+<ol>
+<li>[提出者] 2019: EDA: Easy Data Augmentation Techniques for Boosting Performance on Text Classification Tasks</li>
+</ol>
+<h3 id="Random-Deletion"><a href="#Random-Deletion" class="headerlink" title="Random Deletion"></a>Random Deletion</h3><p>根据一定概率删除词。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/EGvRroNYh3BtKfk.png" title="Untitled 19.png" data-caption="Untitled 19.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/EGvRroNYh3BtKfk.png" alt="Untitled 19.png"></a><span class="caption">Untitled 19.png</span></div>
+<ol>
+<li>[提出者] 2019: EDA: Easy Data Augmentation Techniques for Boosting Performance on Text Classification Tasks</li>
+</ol>
+<h2 id="Instance-Crossover-Augmentation"><a href="#Instance-Crossover-Augmentation" class="headerlink" title="Instance Crossover Augmentation"></a>Instance Crossover Augmentation</h2><p>由论文 1 提出，灵感来源于遗传学中的染色体交叉互换现象。</p>
+<p>Steps:</p>
+<ol>
+<li>分别将推文 1 和推文 2 拆成两部分</li>
+<li>将推文 1 的一部分与推文 2 的一部分拼接，组成新的增强推文</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/ZnbKR4GPx1X8BML.png" title="Untitled 20.png" data-caption="Untitled 20.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/ZnbKR4GPx1X8BML.png" alt="Untitled 20.png"></a><span class="caption">Untitled 20.png</span></div>
+<p>论文中发现该方法对准确率没有影响，但是提高了 F1，表明对样本较少的类别还是有好处的。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/uJGm2BCWL6DSo4E.png" title="Untitled 21.png" data-caption="Untitled 21.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/uJGm2BCWL6DSo4E.png" alt="Untitled 21.png"></a><span class="caption">Untitled 21.png</span></div>
+<ol>
+<li>[提出者] 2019: Atalaya at TASS 2019: Data Augmentation and Robust Embeddings for Sentiment Analysis</li>
+</ol>
+<h2 id="Syntax-tree-Manipulation"><a href="#Syntax-tree-Manipulation" class="headerlink" title="Syntax-tree Manipulation"></a>Syntax-tree Manipulation</h2><p>由论文 1 提出，对句法树依据一定规则进行修改，生成新的增强样本。例如将原先是主动语态的句子，改成被动语态。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/1ZqYlHfztpyGILS.png" title="Untitled 22.png" data-caption="Untitled 22.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/1ZqYlHfztpyGILS.png" alt="Untitled 22.png"></a><span class="caption">Untitled 22.png</span></div>
+<ol>
+<li>[提出者] 2018: Text Data Augmentation Made Simple By Leveraging NLP Cloud APIs</li>
+</ol>
+<h2 id="MixUp-for-Text"><a href="#MixUp-for-Text" class="headerlink" title="MixUp for Text"></a>MixUp for Text</h2><p>Mixup 原本是用于 CV 领域的增强方法，由论文 1 提出。原本指在一个 batch 中随机选择两张图片，将他们按照一定比例进行叠加。这被认为是一种正则化手段。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/bRWxcl6MuOKGFkj.png" title="Untitled 23.png" data-caption="Untitled 23.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/bRWxcl6MuOKGFkj.png" alt="Untitled 23.png"></a><span class="caption">Untitled 23.png</span></div>
+<p>后来论文 2 将这个方法适配到 NLP 中，提出了两种适配方法。</p>
+<h3 id="wordMixup"><a href="#wordMixup" class="headerlink" title="wordMixup"></a>wordMixup</h3><p>和图片叠加是 pixel 相加类似，对于文本，那就是 embedding 相加。随机选择两个句子，将他们的 word embedding 按照一定比例相加，得到一个新的增强样本的 word embedding，作为一个训练样本。最终计算交叉熵损失时，其 ground truth label 就是按相同比例叠加的 label。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/OopbKIfaM6q5SFr.png" title="Untitled 24.png" data-caption="Untitled 24.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/OopbKIfaM6q5SFr.png" alt="Untitled 24.png"></a><span class="caption">Untitled 24.png</span></div>
+<h3 id="sentMixup"><a href="#sentMixup" class="headerlink" title="sentMixup"></a>sentMixup</h3><p>和 wordMixup 不同的是，此方法不是直接将 word embedding 相加，而是通过将原始 word embedding 通过一个 encoder，得到 sentence embedding，再将两个句子的 sentence embedding 按照一定比例相加。计算损失时处理方法同上。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/szIuHvWhGbA36Mt.png" title="Untitled 25.png" data-caption="Untitled 25.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/szIuHvWhGbA36Mt.png" alt="Untitled 25.png"></a><span class="caption">Untitled 25.png</span></div>
+<ol>
+<li>[CV提出者] 2018: mixup: Beyond Empirical Risk Minimization</li>
+<li>[NLP提出者] 2019: Augmenting Data with Mixup for Sentence Classification: An Empirical Study</li>
+</ol>
+<h2 id="Generative-Methods"><a href="#Generative-Methods" class="headerlink" title="Generative Methods"></a>Generative Methods</h2><p>在保有原本类别标签的同时，生成新的训练数据。</p>
+<h3 id="Conditional-Pre-trained-Language-Models"><a href="#Conditional-Pre-trained-Language-Models" class="headerlink" title="Conditional Pre-trained Language Models"></a>Conditional Pre-trained Language Models</h3><p>由论文 1 提出，论文 2 在多个 transformer-based 预训练模型上验证了此方法。</p>
+<p>Steps:</p>
+<ol>
+<li><p>在训练集中所有句子<strong>前</strong>追加其 label。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/FIjQylZeLCt7nHq.png" title="Untitled 26.png" data-caption="Untitled 26.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/FIjQylZeLCt7nHq.png" alt="Untitled 26.png"></a><span class="caption">Untitled 26.png</span></div>
+</li>
+<li><p>使用预训练语言模型在这个新数据集中 finetune。对于 GPT2 来说就是生成任务，对于 BERT 来说就是 masked token prediction。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/ZjGJSnVFDHXo1wU.png" title="Untitled 27.png" data-caption="Untitled 27.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/ZjGJSnVFDHXo1wU.png" alt="Untitled 27.png"></a><span class="caption">Untitled 27.png</span></div>
+</li>
+<li><p>使用上述训练好的语言模型，根据一定 prompt 生成新的训练样本。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/dPR7BwotN6y1GgO.png" title="Untitled 28.png" data-caption="Untitled 28.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/dPR7BwotN6y1GgO.png" alt="Untitled 28.png"></a><span class="caption">Untitled 28.png</span></div>
+</li>
+<li><p>[提出者] 2019: Not Enough Data? Deep Learning to the Rescue!</p>
+</li>
+</ol>
+<h1 id="针对序列标注的数据增强方法"><a href="#针对序列标注的数据增强方法" class="headerlink" title="针对序列标注的数据增强方法"></a>针对序列标注的数据增强方法</h1><h2 id="DAGA，EMNLP-2020"><a href="#DAGA，EMNLP-2020" class="headerlink" title="DAGA，EMNLP 2020"></a><a href="https://aclanthology.org/2020.emnlp-main.488/">DAGA</a>，EMNLP 2020</h2><p><a href="https://github.com/ntunlp/daga">GitHub - ntunlp/daga: Data Augmentation with a Generation Approach for Low-resource Tagging Tasks</a></p>
+<p>Steps:</p>
+<ol>
+<li><p>Linearize。将 token 序列和 label 序列线性化成一个序列。有两种方法：tag-word 和 word-tag。论文发现 tag-word 性能较好，一个可能的原因是 tag-word 更符合 Modifier-Noun 模式，即修饰语-名词模式，这在数据集中非常常见。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/l6zgnPTBuFAtrdH.png" title="Untitled 29.png" data-caption="Untitled 29.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/l6zgnPTBuFAtrdH.png" alt="Untitled 29.png"></a><span class="caption">Untitled 29.png</span></div>
+</li>
+<li><p>Train。使用线性化后的数据集训练语言模型。</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/Fbecn6DB4JNz3fg.png" title="Untitled 30.png" data-caption="Untitled 30.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/Fbecn6DB4JNz3fg.png" alt="Untitled 30.png"></a><span class="caption">Untitled 30.png</span></div>
+</li>
+<li><p>Predict。给定第一个词 <em>[BOS]</em>，使用训练好的模型生成新数据。在预测 <em>I have booked a flight to</em> 的下一个词时，由于训练集中有大量 <em>a flight/train/trip to S-LOC</em> 这种模式，所以模型大概率会预测下一个词为 <em>S-LOC</em>。然后再接下来，同样，训练集中 <em>S-LOC</em> 后面接的都是地点如 <em>London</em>、<em>Paris</em>，所以下一个一定是地点词。由于这都是根据概率随机生成的，所以会有比较大的多样性。（感觉是复杂高级版本的实体替换？）</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/YU2m1DyAnagXs4t.png" title="Untitled 31.png" data-caption="Untitled 31.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/YU2m1DyAnagXs4t.png" alt="Untitled 31.png"></a><span class="caption">Untitled 31.png</span></div>
+</li>
+</ol>
+<h2 id="LwTR，Label-wise-token-replacement，COLING-2020"><a href="#LwTR，Label-wise-token-replacement，COLING-2020" class="headerlink" title="LwTR，Label-wise token replacement，COLING 2020"></a><a href="https://aclanthology.org/2020.coling-main.343/">LwTR</a>，Label-wise token replacement，COLING 2020</h2><p>Steps:</p>
+<ol>
+<li>对于每个 token，使用一个二项分布来决定该 token 是否需要被替换。</li>
+<li>如果是，那么根据从训练集统计得到的 label-wise token distribution，随机选择一个 token 与之替换。</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/FuBdemw8UWiPp27.png" title="Untitled 32.png" data-caption="Untitled 32.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/FuBdemw8UWiPp27.png" alt="Untitled 32.png"></a><span class="caption">Untitled 32.png</span></div>
+<p>此方法不会导致 label 序列变化。</p>
+<h2 id="SR，Synonym-replacement，COLING-2020"><a href="#SR，Synonym-replacement，COLING-2020" class="headerlink" title="SR，Synonym replacement，COLING 2020"></a>SR，Synonym replacement，COLING 2020</h2><p>和 LwTR 相似，只不过不再是从 label-wise token distribution 中选择 token 来替换，而是选择被替换 token 的同义词来替换，该同义词从 WordNet 中获得。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/BYMaf4PVueibHh7.png" title="Untitled 33.png" data-caption="Untitled 33.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/BYMaf4PVueibHh7.png" alt="Untitled 33.png"></a><span class="caption">Untitled 33.png</span></div>
+<p>由于某词和其同义词的长度可能不等，所以此方法可能会导致 label 序列变化。</p>
+<h2 id="MR，Mention-replacement，COLING-2020"><a href="#MR，Mention-replacement，COLING-2020" class="headerlink" title="MR，Mention replacement，COLING 2020"></a>MR，Mention replacement，COLING 2020</h2><p>这里说的 mention 就是指的实体（应该不包括 O）。该方法本质上就是 SR 的 label-wise 版本。</p>
+<p>Steps:</p>
+<ol>
+<li>对于每个 mention，使用一个二项分布来决定该 mention 是否应该被替换。</li>
+<li>如果是，从训练集中随机选择一个相同类型的 mention 来与之替换。</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/yTYKz8Bh1UdWjL3.png" title="Untitled 34.png" data-caption="Untitled 34.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/yTYKz8Bh1UdWjL3.png" alt="Untitled 34.png"></a><span class="caption">Untitled 34.png</span></div>
+<p>和 SR 同样存在长度可能不等的问题，所以也会导致 label 序列变化。</p>
+<h2 id="SiS，Shuffle-within-segments，COLING-2020"><a href="#SiS，Shuffle-within-segments，COLING-2020" class="headerlink" title="SiS，Shuffle within segments，COLING 2020"></a>SiS，Shuffle within segments，COLING 2020</h2><p>这里说的 segment，指的是相同 label 类型的连续序列，一个 segment 仅包含一种实体类型。</p>
+<p>Steps:</p>
+<ol>
+<li>将 token 序列 split 成多个 segment。</li>
+<li>对于每个 segment，使用一个二项分布来决定该 segment 是否应该被 shuffle。</li>
+<li>如果是，那么 shuffle。</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/8lZJ1mfC26hsSGv.png" title="Untitled 35.png" data-caption="Untitled 35.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/8lZJ1mfC26hsSGv.png" alt="Untitled 35.png"></a><span class="caption">Untitled 35.png</span></div>
+<p>此方法不会导致 label 序列变化。</p>
+<h2 id="SeqMix，EMNLP-2020"><a href="#SeqMix，EMNLP-2020" class="headerlink" title="SeqMix，EMNLP 2020"></a><a href="https://aclanthology.org/2020.emnlp-main.691/">SeqMix</a>，EMNLP 2020</h2><p>该方法实际上也是对 CV 中 mixup 方法的 NLP 适配。</p>
+<p><a href="https://github.com/rz-zhang/SeqMix">GitHub - rz-zhang/SeqMix: The repository for our EMNLP’20 paper SeqMix: Augmenting Active Sequence Labeling via Sequence Mixup.</a></p>
+<p>整个方法分成 3 个部分：Pairing、Mixup 和 Scoring/Selecting。</p>
+<p>和 CV mixup 同理，此方法中，需要两个句子构成的句子对来进行 mixup。Pairing 就是如何挑选这个句子对的部分。挑选完句子对后，使用一定的 mixup 策略来混合句子对，得到一个或多个增强样本。而这个策略，论文提出了三种不同方法。得到增强样本后，我们需要评估该样本是不是合理，这就用到了 scoring/selecting 部分。该部分会对增强样本进行打分，如果该分值在合理范围内，那么就使用该增强样本。</p>
+<p><strong>Pairing</strong></p>
+<p>许多序列标注任务中，我们实际感兴趣的 label（即上文说的 mention，论文中称其为 <em>valid labels</em>）是比较少比较稀疏的。例如 NER 任务中，大部分 label 都是 O，我们感兴趣的 PER、LOC 等却比较少。所以，论文设计了一个 pairing 函数，该函数根据 valid label density $\eta$ 来 pairing，定义如下：</p>
+<script type="math/tex; mode=display">\eta = \dfrac{n}{s}</script><p>其中，$n$ 是 <strong>sub-sequence</strong> 中 valid label 的数量，$s$ 是 <strong>sub-sequence</strong> 的长度。</p>
+<p>然后设置一个阈值 $\eta_0$，只有当 $\eta \ge \eta_0$ 的时候，才是符合要求的句子。</p>
+<p><strong>Mixup</strong></p>
+<p>假设 Pairing 后得到序列 1 和序列 2。然后我们有一个 token 表 W，及其响应的 embedding E。</p>
+<p>在 wordMixup 和 sentMixup 中，我们是直接将 mixup 后得到的 embedding 作为增强样本的 embedding 送入后续模型，不必得到增强样本的 token 序列。而在此论文中，修改了 mixup 策略，并且还能得到增强样本的 token 序列。</p>
+<p>选择 mixed token embedding：</p>
+<ol>
+<li>与 wordMixup 和 sentMixup 一样，根据比例 $\lambda$ 混合序列 1 和 2 的 token embedding。$\lambda$ 从一个 Beta 分布采样的来。</li>
+<li>根据 E，计算与混合得到的 embedding 距离最近的 embedding。</li>
+<li>根据 E、W 和得到的距离最近 embedding，找到该 embedding 对应的 token。</li>
+</ol>
+<p>这样就得到了增强样本的 token 序列，label 序列使用同样的比例进行混合。</p>
+<p>根据 token 范围不同和 label 序列是否混合，有以下几种策略变种：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/ZwOcriMu4FhV3G5.png" title="Untitled 36.png" data-caption="Untitled 36.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/ZwOcriMu4FhV3G5.png" alt="Untitled 36.png"></a><span class="caption">Untitled 36.png</span></div>
+<ul>
+<li>Whole sequence mixup：使用整个序列参与混合。</li>
+<li>Sub-sequence mixup：使用序列的一部分参与混合。</li>
+<li>Label-constrained sub-sequence mixup：使用序列的一部分参与混合，且所有 label 保持不变。</li>
+</ul>
+<p><strong>Scoring/Selecting</strong></p>
+<p>混合比例 $\lambda$ 决定了混合强度，0 或者 1 都表示和原来一样，0.5 则表示一半一半，意味着更强的多样性。但是更强的多样性，也就意味着得到的增强样本有更大风险低质量和强噪声。</p>
+<p>所以要通过一个打分函数来控制这个多样性。论文中使用的是 GPT-2 来计算增强样本序列的困惑度。然后判断该困惑度是否在合理区间内。</p>
+<p>综合来说，该结合 data augmentation 的 active learning 算法整体过程如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/9FNgMth4ovfkqQa.png" title="Untitled 37.png" data-caption="Untitled 37.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/9FNgMth4ovfkqQa.png" alt="Untitled 37.png"></a><span class="caption">Untitled 37.png</span></div>
+<p>其中 <em>SeqMix</em> 部分如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/R6yD7xGZMXAq2pv.png" title="Untitled 38.png" data-caption="Untitled 38.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/R6yD7xGZMXAq2pv.png" alt="Untitled 38.png"></a><span class="caption">Untitled 38.png</span></div>
+<p>作者做了一些实验验证 SeqMix 的性能。数据集使用的是 CoNLL-03、ACE05（14k 标注数据）和 Webpage（385 条标注数据），其中为了验证模型在 low-resource 下的有效性，作者从 CoNLL-03 中随机选择了 700 条数据作为最终训练集，替代原来的 CoNLL-03。而剩下两个数据集，由于标注比较稀疏，保持原样不变。</p>
+<p>作者按照算法 1 的流程，首先将 SeqMix 与其他 active learning 算法进行对比，SeqMix 部分默认使用 NTE query 策略。结果如图所示：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/XDjg5K4fWlH8txJ.png" title="Untitled 39.png" data-caption="Untitled 39.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/XDjg5K4fWlH8txJ.png" alt="Untitled 39.png"></a><span class="caption">Untitled 39.png</span></div>
+<p>结果显示：</p>
+<ol>
+<li>SeqMix 方法在所有 data usage、所有数据集上都优于仅使用 AL 的方法。</li>
+<li>数据越少，SeqMix 效果越明显，与其他 AL 方法的差距越大。</li>
+<li>sub-sequence 方法是三种 mixup 变种中效果最好的，加上 AL 时，使用 NTE 策略效果最好。</li>
+</ol>
+<p>随后作者使用 Wilcoxon Signed Rank Test 对该结果进行了统计假设检验。结果显示，whole-sequence mixup 在 ACE05 数据集上没有通过检验，其他方法和其他数据集均通过检验。再结合 Fig 2，可能表明该方法在数据量大时效果不明显或不稳定，这可能是由于该方法在序列较长时可能会生成语义不合理的句子。</p>
+<p>而 sub-sequence mixup 方法：</p>
+<ol>
+<li>保留了 sub-sequence 和原句剩余部分之间的 context 信息。</li>
+<li>继承了原句的局部信息。</li>
+<li>引入语言学多样性。</li>
+</ol>
+<p>为了验证 SeqMix 方法尤其是 sub-sequence 方法对所有的 AL 方法都有提升，作者进一步将 SeqMix 方法与不同的 AL 方法进行比较，结果如 Fig 3 所示，平均来看，sub-sequence + NTE 的提升最大。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/SeUt6a7ykLAjvIg.png" title="Untitled 40.png" data-caption="Untitled 40.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/SeUt6a7ykLAjvIg.png" alt="Untitled 40.png"></a><span class="caption">Untitled 40.png</span></div>
+<p>此外，作者基于上述实验结果，选用最优组合，即 sub-sequence + NTE，还做了对 discriminator 得分范围、valid label density $\eta_0$、混合比例 $\lambda$ 的分布参数 $\alpha$、augment rate $r$ 的不同参数实验，结论总结如下：</p>
+<p><strong>Discriminator 得分范围</strong></p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/bluBHSa9GyJNknD.png" title="Untitled 41" data-caption="Untitled 41" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/bluBHSa9GyJNknD.png" alt="Untitled 41"></a><span class="caption">Untitled 41</span></div>
+<p><em>第一列的表头 Data Usage 应该是错误的，应为 discriminator score range。</em></p>
+<p>使用的数据集为 CoNLL-03，700 个样本。从 200 个样本开始训练，每次 AL 增加 100 个样本，共进行 5 轮。由表可知，得分范围在 <strong>$(0,500)$</strong> 时效果最好。</p>
+<p>注意得分实际上是困惑度。所以，得分越低，生成的增强样本语义上越好，也就是越顺，也会得到更好的效果。但是也不能无限降低，太苛刻，这样就得不到足够数量的增强样本了。</p>
+<p>V<strong>alid label density $\eta_0$</strong></p>
+<p>前面说过，VLD 是由 sub-sequence 内的合法标签数 $n$（B-PER 和 I-PER 算两个）和其长度 $s$ 相除得到的。需要注意的是</p>
+<ol>
+<li>长度 $s$ 的计算。对于 whole-sequence mixup，$s$ 就是整个序列的长度，但是对于 sub-sequence mixup，$s$ 实际上是窗口的大小。</li>
+<li>实际代码中，是使用合法标签数 $n$ 来选取 valid sub-sequence 的，而不是直接计算比例 $\eta$，所以才会出现下图中 2/4 和 3/6 虽然都是 $\eta = 0.5$ 但是却并存的情况。</li>
+</ol>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/B6RZo5Y8azr9XfQ.png" title="Untitled 42.png" data-caption="Untitled 42.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/B6RZo5Y8azr9XfQ.png" alt="Untitled 42.png"></a><span class="caption">Untitled 42.png</span></div>
+<p>由图可知，红色点线代表的 3/5 组合效果最好。</p>
+<p><strong>混合比例 $\lambda$ 的分布参数 $\alpha$</strong></p>
+<p>论文中称之为 Mixing parameter。$\alpha$ 是 <a href="https://zh.wikipedia.org/zh-cn/%CE%92%E5%88%86%E5%B8%83">Beta 分布</a> 的参数，本来 Beta 分布有两个参数，但是此处将两个参数设为相同，即 $\lambda \sim \text{Be}(\alpha, \alpha)$。该分布有个特点，值域为$(0,1)$，参数越大，采样值越有可能在 0.5 附近。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/LnflW5gXT9NPwO4.png" title="Untitled 43.png" data-caption="Untitled 43.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/LnflW5gXT9NPwO4.png" alt="Untitled 43.png"></a><span class="caption">Untitled 43.png</span></div>
+<p>分布参数为 [0.5, 1, 2, 4, 8, 16] 时的分布形状</p>
+<p>实验结果如 Fig 4(b) 所示：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/zGUAd1tnB9D5WqN.png" title="Untitled 44.png" data-caption="Untitled 44.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/zGUAd1tnB9D5WqN.png" alt="Untitled 44.png"></a><span class="caption">Untitled 44.png</span></div>
+<p>可见 $\alpha=8$ 时性能最好，此时 $\lambda$ 越有可能在 0.5 附近，意味着为增强样本引入了更多的多样性。但是 $\alpha$ 也不是越大越好，越大意味着 $\lambda$ 的多样性就会减少，进入导致增强样本多样性减少。</p>
+<p><strong>Augment rate $r$</strong></p>
+<p>$r$ 的定义如下：</p>
+<script type="math/tex; mode=display">r = \dfrac{\mathcal L^*}{\psi \left( \mathcal U, \mathcal K, \gamma(\cdot) \right)}</script><p>即增强样本数量与原样本数量 $\mathcal K$ 的比例。分母表示使用策略函数 $\gamma$ ，从 unlabelled dataset $\mathcal U$ 中选出 Top $\mathcal K$ 个样本。值域为 $[0, 1]$，所以按照论文中说法，每次最多增强 $\mathcal K$ 个样本。那么每次增强多少呢？实验比较结果如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2021/09/12/ZCo8sVjdYAPJ2Gt.png" title="Untitled 45.png" data-caption="Untitled 45.png" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2021/09/12/ZCo8sVjdYAPJ2Gt.png" alt="Untitled 45.png"></a><span class="caption">Untitled 45.png</span></div>
+<p><em>这论文写的也太不严谨了，发现好几处错误了</em></p>
+<p>可见平均来说，0.2 的 augment rate 更为合适一点，说明模型更偏向“温和”一点的增强。总体来说，不宜超过 0.6。</p>
+<p>此外我个人觉得，数据量较少时，可能使用较小的 augment rate 好一点；而数据量较大时，可能偏向较大的 augment rate。</p>
+<h1 id="一些可用的库"><a href="#一些可用的库" class="headerlink" title="一些可用的库"></a>一些可用的库</h1><ul>
+<li><a href="https://github.com/makcedward/nlpaug">GitHub - makcedward/nlpaug: Data augmentation for NLP</a></li>
+<li><a href="https://github.com/QData/TextAttack">GitHub - QData/TextAttack: TextAttack 🐙 is a Python framework for adversarial attacks, data augmentation, and model training in NLP https://textattack.readthedocs.io/en/latest/</a></li>
+<li><a href="https://github.com/sloria/TextBlob">GitHub - sloria/TextBlob: Simple, Pythonic, text processing—Sentiment analysis, part-of-speech tagging, noun phrase extraction, translation, and more.</a></li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><p>主要参考的是前 3 个，后面几个是找到的但还没来得及看的。</p>
+<ul>
+<li><a href="https://amitness.com/2020/05/data-augmentation-for-nlp/">A Visual Survey of Data Augmentation in NLP</a></li>
+<li><a href="https://arxiv.org/abs/2105.03075">[2105.03075] A Survey of Data Augmentation Approaches for NLP</a></li>
+<li><a href="https://aclanthology.org/2020.emnlp-main.691/">SeqMix: Augmenting Active Sequence Labeling via Sequence Mixup - ACL Anthology</a></li>
+<li><a href="https://arxiv.org/abs/1903.09460v1">[1903.09460v1] Data Augmentation via Dependency Tree Morphing for Low-Resource Languages</a></li>
+<li><a href="https://arxiv.org/abs/2105.07464v6">[2105.07464v6] Few-NERD: A Few-Shot Named Entity Recognition Dataset</a></li>
+<li><a href="https://github.com/tata1661/FSL-Mate">tata1661/FSL-Mate: FSL-Mate: A collection of resources for few-shot learning (FSL).</a></li>
+<li><a href="https://aclanthology.org/2020.emnlp-main.516/">Simple and Effective Few-Shot Named Entity Recognition with Structured Nearest Neighbor Learning - ACL Anthology</a></li>
+</ul>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Active-Learning/" rel="tag">Active Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Data-Augmentation/" rel="tag">Data Augmentation</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/NER/" rel="tag">NER</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/11/07/transformers-classification-custom-dataset/"
+                    data-tooltip="使用 Transformers 在你自己的数据集上训练文本分类模型"
+                    aria-label="上一篇: 使用 Transformers 在你自己的数据集上训练文本分类模型"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/08/21/torch-gather/"
+                    data-tooltip="理解 PyTorch 中的 gather 函数"
+                    aria-label="下一篇: 理解 PyTorch 中的 gather 函数"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/11/07/transformers-classification-custom-dataset/"
+                    data-tooltip="使用 Transformers 在你自己的数据集上训练文本分类模型"
+                    aria-label="上一篇: 使用 Transformers 在你自己的数据集上训练文本分类模型"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/08/21/torch-gather/"
+                    data-tooltip="理解 PyTorch 中的 gather 函数"
+                    aria-label="下一篇: 理解 PyTorch 中的 gather 函数"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/09/12/data-augment-ner-nlp/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2021/09/12/data-augment-ner-nlp/';
+              
+            this.page.identifier = '2021/09/12/data-augment-ner-nlp/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

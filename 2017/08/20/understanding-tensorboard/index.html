@@ -1,0 +1,820 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>理解 TensorBoard - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\nTensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小弟不才，如有错误，欢迎评论区指出。\n\n全部代码和 TensorBoard 文件均在 我的 GitHub 上，你也可以从 百度网盘 下载，密码 t27f ，只不过如果以后内容更新，网盘中的内容不会更新。\nTensorboard 使用的版本为 0.1.4，对应于 TensorFlow 1.3.0，但训练代码未在 TensorFlow 1.3.0 上测试，不过应该是可以运行的。Windows 下 TensorFlow 的安装可以看 【TensorFlow】Windows10 64位下安装TensorFlow - 官方原生支持 。\n\n更新这里我会列出对本文的更新。\n\n2017 年 8 月 22 日：TensorBoard 0.1.4 发布，更新界面截图。\n\n\nTensorBoard 是如何工作的？简单来说，TensorBoard 是通过一些操作（summary operations）将数据记录到文件（event files）中，然后再读取文件来完成作图的。想要在浏览器上看到 TensorBoard 页面，大概需要这几步：\n\nsummary。在定义计算图的时候，在适当的位置加上一些 summary 操作 。\nmerge。你很可能加了很多 summary 操作，我们需要使用 tf.summary.merge_all 来将这些 summary 操作聚合成一个操作，由它来产生所有 summary 数据。\nrun。在没有运行的时候这些操作是不会执行任何东西的，仅仅是定义了一下而已。在运行（开始训练）的时候，我们需要通过 tf.summary.FileWriter() 指定一个目录来告诉程序把产生的文件放到哪。然后在运行的时候使用 add_summary() 来将某一步的 summary 数据记录到文件中。\n\n当训练完成后，在命令行使用 tensorboard --logdir=path/to/log-directory 来启动 TensorBoard，按照提示在浏览器打开页面，注意把 path/to/log-directory 替换成你上面指定的目录。\n\nOVERVIEW总体上，目前 TensorBoard 主要包括下面几个面板：\n\n\n其中 TEXT 是 最新版（应该是 1.3）才加进去的，实验性功能，官方都没怎么介绍。除了 AUDIO（没用过）、EMBEDDINGS（还不是很熟） 和 TEXT（没用过） 这几个，这篇博客主要说剩下的几个，其他的等回头熟练了再来说，尽量避免误人子弟。\nTensorBoard 的工作原理是读取模型训练时产生的 TensorFlow events 文件，这个文件包括了一些 summary 数据（就是作图时用的数据）。\n\nSCALARS\n*TensorBoard 的默认打开样式*\n\nTensorBoard 打开时默认直接进入 `SCALARS`，并且默认使用 `.*` 正则表达式显示所有图（其他面板同理，下面就不再赘述），你用到的面板会在顶部导航栏直接显示，而其他用不到的（你代码中没有相关代码）则会收起到 `INACTIVE` 中。\n\n\n\nSCALARS 面板主要用于记录诸如准确率、损失和学习率等单个值的变化趋势。在代码中用 tf.summary.scalar() 来将其记录到文件中。对应于我的代码中，我是使用其记录了训练准确率和损失。\n训练准确率：\n1234with tf.name_scope(&#x27;accuracy&#x27;):    correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))    tf.summary.scalar(&#x27;accuracy&#x27;, accuracy)\n\n*全部 run 的 acuracy*\n\n\n可以看到这些曲线并不是那么平滑，这是因为我记录的步数比较少，也就是点比较少，如果每一步都记录或者间隔比较短，那么最后的文件会很大。下同\n\n损失：\n123456with tf.name_scope(&#x27;loss&#x27;):    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y)) + \\        BETA * tf.add_n([tf.nn.l2_loss(v)                        for v in trainable_vars if not &#x27;b&#x27; in v.name])    tf.summary.scalar(&#x27;loss&#x27;, loss)\n\n*全部 run 的 loss*\n\n每个图的右下角都有 3 个小图标，第一个是查看大图，第二个是是否对 y 轴对数化，第三个是如果你拖动或者缩放了坐标轴，再重新回到原始位置。\n\n*Fit domain to data*\n\ntf.summary.scalar(name, tensor) 有两个参数：\n\nname：可以理解为图的标题。在 GRAPHS 中则是该节点的名字\ntensor：包含单个值的 tensor，说白了就是作图的时候要用的数据\n\n在上面的图中，可以看到除了 accuracy 和 loss 外，还有一个 eval_accuracy，这个是我用来记录验证准确率的，代码中相关的部分如下：\n12345eval_writer = tf.summary.FileWriter(LOGDIR + &#x27;/eval&#x27;)# Some other codeseval_writer.add_summary(tf.Summary(value=[tf.Summary.Value(tag=&#x27;eval_accuracy&#x27;, simple_value=np.mean(test_acc))]), i)\n\n*全部 run 的 eval_accuracy*\n\n这里我是手动添加了一个验证准确率到 SCALARS 中，其实想要记录验证准确率完全不必这么做，和训练准确率不同的只是 feed 的数据不一样而已。然而由于我的显存不够一次装下整个验证集，所以我就分了两部分计算然后求平均值来得到整个验证集的准确率。如果谁有更好的方法，请给我发邮件或者在评论区评论，非常感谢 :-)\n当我们有很多的 tag （图）的时候，我们可以在左上角写正则表达式来选择其中一些 tag，比如我想选择包括 accuracy 的 tag，那么我直接写上 accuracy 就可以了，右侧就会多出一个 accuracy 的 tag，显示匹配出的结果。\n页面左上是 Show data download links 和 Ignore outliers in chart scaling，这两个比较好理解，第一个就是显示数据下载链接，可以把 TensorBoard 作图用的数据下载下来，点击后可以在图的右下角可以看到下载链接以及选择下载哪一个 run 的，下载格式支持 CSV 和 JSON。第二个是排除异常点，默认选中。\n当我们用鼠标在图上滑过的时候可以显示出每个 run 对应的点的值，这个显示顺序是由 Tooltip sorting method 来控制的，有 default、descending（降序）、asceding （升序）和 nearest 四个选项，大家可以试试点几下。\n而下面的 Smoothing 指的是作图时曲线的平滑程度，使用的是类似指数平滑的处理方法。如果不平滑处理的话，有些曲线波动很大，难以看出趋势。0 就是不平滑处理，1 就是最平滑，默认是 0.6。\nHorizontal Axis 顾名思义指的是横轴的设置：\n\nSTEP：默认选项，指的是横轴显示的是训练迭代次数\nRELATIVE：这个相对指的是相对时间，相对于训练开始的时间，也就是说是训练用时 ，单位是小时\nWALL：指训练的绝对时间\n\n最下面的 Runs 列出了各个 run，你可以选择只显示某一个或某几个。\n\nIMAGES如果你的模型输入是图像（的像素值），然后你想看看模型每次的输入图像是什么样的，以保证每次输入的图像没有问题（因为你可能在模型中对图像做了某种变换，而这种变换是很容易出问题的），IMAGES 面板就是干这个的，它可以显示出相应的输入图像，默认显示最新的输入图像，如下图：\n\n第 45000 次迭代时输入的 3 个图像\n图的右下角的两个图标，第一个是查看大图，第二个是查看原图（真实大小，默认显示的是放大后的）。左侧和 SCALARS 差不多，我就不赘述了。\n而在代码中，需要在合适的位置使用 tf.summary.image() 来把图像记录到文件中，其参数和 tf.summary.scalar() 大致相同，多了一个 max_outputs ，指的是最多显示多少张图片，默认为 3。对应于我的代码，如下：\n1234x = tf.placeholder(tf.float32, shape=[None, N_FEATURES], name=&#x27;x&#x27;)x_image = tf.transpose(tf.reshape(x, [-1, 3, 32, 32]), perm=[0, 2, 3, 1])tf.summary.image(&#x27;input&#x27;, x_image, max_outputs=3)y = tf.placeholder(tf.float32, [None, N_CLASSES], name=&#x27;labels&#x27;)\n\nGRAPHS这个应该是最常用的面板了。很多时候我们的模型很复杂，包含很多层，我们想要总体上看下构建的网络到底是什么样的，这时候就用到 GRAPHS 面板了，在这里可以展示出你所构建的网络整体结构，显示数据流的方向和大小，也可以显示训练时每个节点的用时、耗费的内存大小以及参数多少。默认显示的图分为两部分：主图（Main Graph）和辅助节点（Auxiliary Nodes）。其中主图显示的就是网络结构，辅助节点则显示的是初始化、训练、保存等节点。我们可以双击某个节点或者点击节点右上角的 + 来展开查看里面的情况，也可以对齐进行缩放，每个节点的命名都是我们在代码中使用 tf.name_scope() 定义好的。下面介绍下该面板左侧的功能。\n\n计算图\n左上是 Fit to screen，顾名思义就是将图缩放到适合屏幕。下面的 Download PNG 则是将图保存到本地。Run 和 Session Run 分别是不同的训练和迭代步数。比如我这里以不同的超参训练了 6 次，那么 就有 6 个 run，而你所记录的迭代次数（并不是每一步都会记录当前状态的，那样的话太多了，一般都是每隔多少次记录一次）则显示在 Session Run 里。再下面大家应该都能看懂，我就不详细说每个功能的意思了。\n\n选择迭代步数\nTensorBoard 默认是不会记录每个节点的用时、耗费的内存大小等这些信息的，那么如何才能在图上显示这些信息呢？关键就是如下这些代码，主要就是在 sess.run() 中加入 options 和 run_metadata 参数。\n12345678run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)run_metadata = tf.RunMetadata()s, lss, acc , _ = sess.run([merged_summary, loss, accuracy, train_step],                            feed_dict=&#123;x: batch_x, y: batch_y, phase: 1&#125;,                           options=run_options,                           run_metadata=run_metadata)summary_writer.add_run_metadata(run_metadata, &#x27;step&#123;&#125;&#x27;.format(i))summary_writer.add_summary(s, i)\n然后我们就可以选择 Compute time 或者 Memory 来查看相应信息，颜色深浅代表耗时多少或者内存耗用多少。\n\n计算耗时\n我们也可以将某个节点从主图移除，将其放到辅助节点中，以便于我们更清晰的观察整个网络。具体操作是 右键该节点，选择 Remove from main graph 。\n\nDISTRIBUTIONSDISTRIBUTIONS 主要用来展示网络中各参数随训练步数的增加的变化情况，可以说是 多分位数折线图 的堆叠。下面我就下面这张图来解释下。\n\n权重分布\n这张图表示的是第二个卷积层的权重变化。横轴表示训练步数，纵轴表示权重值。而从上到下的折现分别表示权重分布的不同分位数：[maximum, 93%, 84%, 69%, 50%, 31%, 16%, 7%, minimum]。对应于我的代码，部分如下：\n123456789with tf.name_scope(name):    W = tf.Variable(tf.truncated_normal(        [k, k, channels_in, channels_out], stddev=0.1), name=&#x27;W&#x27;)    b = tf.Variable(tf.constant(0.1, shape=[channels_out]), name=&#x27;b&#x27;)    conv = tf.nn.conv2d(inpt, W, strides=[1, s, s, 1], padding=&#x27;SAME&#x27;)    act = tf.nn.relu(conv)    tf.summary.histogram(&#x27;weights&#x27;, W)    tf.summary.histogram(&#x27;biases&#x27;, b)    tf.summary.histogram(&#x27;activations&#x27;, act)\n\nHISTOGRAMSHISTOGRAMS 和 DISTRIBUTIONS 是对同一数据不同方式的展现。与 DISTRIBUTIONS 不同的是，HISTOGRAMS 可以说是 频数分布直方图 的堆叠。\n\n权重分布\n横轴表示权重值，纵轴表示训练步数。颜色越深表示时间越早，越浅表示时间越晚（越接近训练结束）。除此之外，HISTOGRAMS 还有个 Histogram mode，有两个选项：OVERLAY 和 OFFSET。选择 OVERLAY 时横轴为权重值，纵轴为频数，每一条折线为训练步数。颜色深浅与上面同理。默认为 OFFSET 模式。\n\n后记这篇博文写了好久，从准备数据到开始动笔写，中间一直被各种事干扰。由于我水平有限，我只能尽最大程度的给出尽可能正确的解释，然而还有很多我目前还兼顾不到，很多话也不是很通顺。如有错误，欢迎在评论区或者给我私信或者给我邮件指出。\n\nREFERENCES\nTensorBoard: Visualizing Learning\nHow does one interpret histograms given by TensorFlow in TensorBoard?\nTensorBoard\nTensorBoard Histogram Dashboard\nUnderstanding TensorBoard (weight) histograms\nHands-on TensorBoard (TensorFlow Dev Summit 2017)\n\n\n\nEND","dateCreated":"2017-08-20T10:01:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2017-08-20T10:01:00+08:00","description":"\nTensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 前者 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小弟不才，如有错误，欢迎评论区指出。","headline":"理解 TensorBoard","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/08/20/understanding-tensorboard/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/08/20/understanding-tensorboard/","keywords":"TensorFlow"}</script>
+    <meta name="description" content="TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="理解 TensorBoard">
+<meta property="og:url" content="https://alanlee.fun/2017/08/20/understanding-tensorboard/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="TensorBoard 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版 和 【Python | TensorBoard】用 PCA 可视化 MNIST 手写数">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-08-20T02:01:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.201Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="TensorFlow">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            理解 TensorBoard
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-08-20T10:01:00+08:00">
+	
+		    2017 年 8 月 20 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0"><span class="toc-text">更新</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TensorBoard-%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84%EF%BC%9F"><span class="toc-text">TensorBoard 是如何工作的？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OVERVIEW"><span class="toc-text">OVERVIEW</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SCALARS"><span class="toc-text">SCALARS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IMAGES"><span class="toc-text">IMAGES</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GRAPHS"><span class="toc-text">GRAPHS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DISTRIBUTIONS"><span class="toc-text">DISTRIBUTIONS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HISTOGRAMS"><span class="toc-text">HISTOGRAMS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-text">后记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#REFERENCES"><span class="toc-text">REFERENCES</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p><a href="https://www.tensorflow.org/get_started/summaries_and_tensorboard">TensorBoard</a> 是用于可视化 TensorFlow 模型的训练过程的工具（the flow of tensors），在你安装 TensorFlow 的时候就已经安装了 TensorBoard。我在前面的 <a href="https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/">【TensorFlow】TensorFlow 的卷积神经网络 CNN - TensorBoard版</a> 和 <a href="https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/">【Python | TensorBoard】用 PCA 可视化 MNIST 手写数字识别数据集</a> 分别非常简单的介绍了一下这个工具，没有详细说明，这次来（尽可能详细的）整体说一下，而且这次也是对 <a href="https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/">前者</a> 代码的一个升级，很大程度的改变了代码结构，将输入和训练分离开来，结构更清晰。小弟不才，如有错误，欢迎评论区指出。</p>
+<span id="more"></span>
+<p>全部代码和 TensorBoard 文件均在 <a href="https://github.com/secsilm/understanding-tensorboard">我的 GitHub</a> 上，你也可以从 <a href="https://pan.baidu.com/s/1hrUGI0k">百度网盘</a> 下载，密码 <code>t27f</code> ，只不过如果以后内容更新，网盘中的内容不会更新。</p>
+<p><strong>Tensorboard 使用的版本为 0.1.4，对应于 TensorFlow 1.3.0，但训练代码未在 TensorFlow 1.3.0 上测试，不过应该是可以运行的。Windows 下 TensorFlow 的安装可以看 <a href="https://alanlee.fun/2016/12/01/installing-tensorflow/">【TensorFlow】Windows10 64位下安装TensorFlow - 官方原生支持</a></strong> 。</p>
+<hr>
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><p>这里我会列出对本文的更新。</p>
+<ul>
+<li>2017 年 8 月 22 日：TensorBoard 0.1.4 发布，更新界面截图。</li>
+</ul>
+<hr>
+<h2 id="TensorBoard-是如何工作的？"><a href="#TensorBoard-是如何工作的？" class="headerlink" title="TensorBoard 是如何工作的？"></a>TensorBoard 是如何工作的？</h2><p>简单来说，TensorBoard 是通过一些操作（summary operations）将数据记录到文件（event files）中，然后再读取文件来完成作图的。想要在浏览器上看到 TensorBoard 页面，大概需要这几步：</p>
+<ol>
+<li><strong>summary</strong>。在定义计算图的时候，在适当的位置加上一些 <a href="https://www.tensorflow.org/api_guides/python/summary">summary 操作</a> 。</li>
+<li><strong>merge</strong>。你很可能加了很多 summary 操作，我们需要使用 <code>tf.summary.merge_all</code> 来将这些 summary 操作聚合成一个操作，由它来产生所有 summary 数据。</li>
+<li><strong>run</strong>。在没有运行的时候这些操作是不会执行任何东西的，仅仅是定义了一下而已。在运行（开始训练）的时候，我们需要通过 <code>tf.summary.FileWriter()</code> 指定一个目录来告诉程序把产生的文件放到哪。然后在运行的时候使用 <code>add_summary()</code> 来将某一步的 summary 数据记录到文件中。</li>
+</ol>
+<p>当训练完成后，在命令行使用 <code>tensorboard --logdir=path/to/log-directory</code> 来启动 TensorBoard，按照提示在浏览器打开页面，注意把 <code>path/to/log-directory</code> 替换成你上面指定的目录。</p>
+<hr>
+<h2 id="OVERVIEW"><a href="#OVERVIEW" class="headerlink" title="OVERVIEW"></a>OVERVIEW</h2><p>总体上，目前 TensorBoard 主要包括下面几个面板：</p>
+<div><img src=https://i.imgur.com/TK5BIH4.png width=100%></div>
+
+<p>其中 <code>TEXT</code> 是 最新版（应该是 1.3）才加进去的，实验性功能，官方都没怎么介绍。除了 <code>AUDIO</code>（没用过）、<code>EMBEDDINGS</code>（还不是很熟） 和 <code>TEXT</code>（没用过） 这几个，这篇博客主要说剩下的几个，其他的等回头熟练了再来说，尽量避免误人子弟。</p>
+<p>TensorBoard 的工作原理是读取模型训练时产生的 TensorFlow events 文件，这个文件包括了一些 summary 数据（就是作图时用的数据）。</p>
+<hr>
+<h2 id="SCALARS"><a href="#SCALARS" class="headerlink" title="SCALARS"></a>SCALARS</h2><div><img src=http://i.imgur.com/s9drW9Z.png width=100%></div>
+<center><font color=gray>*TensorBoard 的默认打开样式*</font></center>
+
+TensorBoard 打开时默认直接进入 `SCALARS`，并且默认使用 `.*` 正则表达式显示所有图（其他面板同理，下面就不再赘述），你用到的面板会在顶部导航栏直接显示，而其他用不到的（你代码中没有相关代码）则会收起到 `INACTIVE` 中。
+
+<div align="center"><img src=http://i.imgur.com/W8ewfgz.png></div>
+
+<p><code>SCALARS</code> 面板主要用于记录诸如准确率、损失和学习率等单个值的变化趋势。在代码中用 <a href="https://www.tensorflow.org/api_docs/python/tf/summary/scalar"><code>tf.summary.scalar()</code></a> 来将其记录到文件中。对应于我的代码中，我是使用其记录了训练准确率和损失。</p>
+<p>训练准确率：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> tf.name_scope(<span class="string">&#x27;accuracy&#x27;</span>):</span><br><span class="line">    correct_prediction = tf.equal(tf.argmax(logits, <span class="number">1</span>), tf.argmax(y, <span class="number">1</span>))</span><br><span class="line">    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))</span><br><span class="line">    tf.summary.scalar(<span class="string">&#x27;accuracy&#x27;</span>, accuracy)</span><br></pre></td></tr></table></figure>
+<p><div><img src=http://i.imgur.com/fpWU4rj.png width=100%></div></p>
+<center><font color=gray>*全部 run 的 acuracy*</font></center>
+
+<blockquote>
+<p>可以看到这些曲线并不是那么平滑，这是因为我记录的步数比较少，也就是点比较少，如果每一步都记录或者间隔比较短，那么最后的文件会很大。下同</p>
+</blockquote>
+<p>损失：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> tf.name_scope(<span class="string">&#x27;loss&#x27;</span>):</span><br><span class="line">    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y)) + \</span><br><span class="line">        BETA * tf.add_n([tf.nn.l2_loss(v)</span><br><span class="line">                        <span class="keyword">for</span> v <span class="keyword">in</span> trainable_vars <span class="keyword">if</span> <span class="keyword">not</span> <span class="string">&#x27;b&#x27;</span> <span class="keyword">in</span> v.name])</span><br><span class="line"></span><br><span class="line">    tf.summary.scalar(<span class="string">&#x27;loss&#x27;</span>, loss)</span><br></pre></td></tr></table></figure>
+<p><div><img src=http://i.imgur.com/zLPpuJt.png width=100% alt="loss"></div></p>
+<center><font color=gray>*全部 run 的 loss*</font></center>
+
+<p>每个图的右下角都有 3 个小图标，第一个是查看大图，第二个是是否对 y 轴对数化，第三个是如果你拖动或者缩放了坐标轴，再重新回到原始位置。</p>
+<p><img src=http://img.blog.csdn.net/20170822104513317?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast width=100% alt="fit-domain-to-data"></p>
+<center><font color=gray>*Fit domain to data*</font></center>
+
+<p><code>tf.summary.scalar(name, tensor)</code> 有两个参数：</p>
+<ul>
+<li><code>name</code>：可以理解为图的标题。在 <code>GRAPHS</code> 中则是该节点的名字</li>
+<li><code>tensor</code>：包含单个值的 tensor，说白了就是作图的时候要用的数据</li>
+</ul>
+<p>在上面的图中，可以看到除了 <code>accuracy</code> 和 <code>loss</code> 外，还有一个 <code>eval_accuracy</code>，这个是我用来记录验证准确率的，代码中相关的部分如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">eval_writer = tf.summary.FileWriter(LOGDIR + <span class="string">&#x27;/eval&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Some other codes</span></span><br><span class="line"></span><br><span class="line">eval_writer.add_summary(tf.Summary(value=[tf.Summary.Value(tag=<span class="string">&#x27;eval_accuracy&#x27;</span>, simple_value=np.mean(test_acc))]), i)</span><br></pre></td></tr></table></figure>
+<p><div><img src=http://i.imgur.com/XxQ1oRW.png width=100% alt="eval-accuracy"></div></p>
+<center><font color=gray>*全部 run 的 eval_accuracy*</font></center>
+
+<p>这里我是手动添加了一个验证准确率到 <code>SCALARS</code> 中，其实想要记录验证准确率完全不必这么做，和训练准确率不同的只是 feed 的数据不一样而已。然而由于我的显存不够一次装下整个验证集，所以我就分了两部分计算然后求平均值来得到整个验证集的准确率。<em>如果谁有更好的方法，请给我发邮件或者在评论区评论，非常感谢 :-)</em></p>
+<p>当我们有很多的 tag （图）的时候，我们可以在左上角写正则表达式来选择其中一些 tag，比如我想选择包括 <code>accuracy</code> 的 tag，那么我直接写上 <code>accuracy</code> 就可以了，右侧就会多出一个 <code>accuracy</code> 的 tag，显示匹配出的结果。</p>
+<p>页面左上是 <code>Show data download links</code> 和 <code>Ignore outliers in chart scaling</code>，这两个比较好理解，第一个就是显示数据下载链接，可以把 TensorBoard 作图用的数据下载下来，点击后可以在图的右下角可以看到下载链接以及选择下载哪一个 run 的，下载格式支持 CSV 和 JSON。第二个是排除异常点，默认选中。</p>
+<p>当我们用鼠标在图上滑过的时候可以显示出每个 run 对应的点的值，这个显示顺序是由 <code>Tooltip sorting method</code> 来控制的，有 <code>default</code>、<code>descending</code>（降序）、<code>asceding</code> （升序）和 <code>nearest</code> 四个选项，大家可以试试点几下。</p>
+<p>而下面的 <code>Smoothing</code> 指的是作图时曲线的平滑程度，使用的是<strong>类似</strong>指数平滑的处理方法。如果不平滑处理的话，有些曲线波动很大，难以看出趋势。0 就是不平滑处理，1 就是最平滑，默认是 0.6。</p>
+<p><code>Horizontal Axis</code> 顾名思义指的是横轴的设置：</p>
+<ul>
+<li><code>STEP</code>：默认选项，指的是横轴显示的是训练迭代次数</li>
+<li><code>RELATIVE</code>：这个相对指的是相对时间，相对于训练开始的时间，也就是说是<em>训练用时</em> ，单位是小时</li>
+<li><code>WALL</code>：指训练的绝对时间</li>
+</ul>
+<p>最下面的 <code>Runs</code> 列出了各个 run，你可以选择只显示某一个或某几个。</p>
+<hr>
+<h2 id="IMAGES"><a href="#IMAGES" class="headerlink" title="IMAGES"></a>IMAGES</h2><p>如果你的模型输入是图像（的像素值），然后你想看看模型每次的输入图像是什么样的，以保证每次输入的图像没有问题（因为你可能在模型中对图像做了某种变换，而这种变换是很容易出问题的），<code>IMAGES</code> 面板就是干这个的，它可以显示出相应的输入图像，默认显示最新的输入图像，如下图：</p>
+<p><div><img src=http://i.imgur.com/nqVkbBo.png width=100% alt="images"></div></p>
+<p><center><font color=gray><em>第 45000 次迭代时输入的 3 个图像</em></font><center></p>
+<p>图的右下角的两个图标，第一个是查看大图，第二个是查看原图（真实大小，默认显示的是放大后的）。左侧和 <code>SCALARS</code> 差不多，我就不赘述了。</p>
+<p>而在代码中，需要在合适的位置使用 <a href="https://www.tensorflow.org/api_docs/python/tf/summary/image"><code>tf.summary.image()</code></a> 来把图像记录到文件中，其参数和 <code>tf.summary.scalar()</code> 大致相同，多了一个 <code>max_outputs</code> ，指的是最多显示多少张图片，默认为 3。对应于我的代码，如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">x = tf.placeholder(tf.float32, shape=[<span class="literal">None</span>, N_FEATURES], name=<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">x_image = tf.transpose(tf.reshape(x, [-<span class="number">1</span>, <span class="number">3</span>, <span class="number">32</span>, <span class="number">32</span>]), perm=[<span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>])</span><br><span class="line">tf.summary.image(<span class="string">&#x27;input&#x27;</span>, x_image, max_outputs=<span class="number">3</span>)</span><br><span class="line">y = tf.placeholder(tf.float32, [<span class="literal">None</span>, N_CLASSES], name=<span class="string">&#x27;labels&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="GRAPHS"><a href="#GRAPHS" class="headerlink" title="GRAPHS"></a>GRAPHS</h2><p>这个应该是最常用的面板了。很多时候我们的模型很复杂，包含很多层，我们想要总体上看下构建的网络到底是什么样的，这时候就用到 <code>GRAPHS</code> 面板了，在这里可以展示出你所构建的网络整体结构，显示数据流的方向和大小，也可以显示训练时每个节点的用时、耗费的内存大小以及参数多少。默认显示的图分为两部分：主图（Main Graph）和辅助节点（Auxiliary Nodes）。其中主图显示的就是网络结构，辅助节点则显示的是初始化、训练、保存等节点。我们可以双击某个节点或者点击节点右上角的 <code>+</code> 来展开查看里面的情况，也可以对齐进行缩放，每个节点的命名都是我们在代码中使用 <code>tf.name_scope()</code> 定义好的。下面介绍下该面板左侧的功能。</p>
+<p><div><img src=http://i.imgur.com/r8mXplM.png width=100% alt="graph"></div></p>
+<p><center><font color=gray><em>计算图</em></font><center></p>
+<p>左上是 <code>Fit to screen</code>，顾名思义就是将图缩放到适合屏幕。下面的 <code>Download PNG</code> 则是将图保存到本地。<code>Run</code> 和 <code>Session Run</code> 分别是不同的训练和迭代步数。比如我这里以不同的超参训练了 6 次，那么 就有 6 个 run，而你所记录的迭代次数（并不是每一步都会记录当前状态的，那样的话太多了，一般都是每隔多少次记录一次）则显示在 <code>Session Run</code> 里。再下面大家应该都能看懂，我就不详细说每个功能的意思了。</p>
+<p><div align="center"><img src=https://i.imgur.com/sJFNrmY.png alt="run"></div></p>
+<p><center><font color=gray><em>选择迭代步数</em></font><center></p>
+<p>TensorBoard 默认是不会记录每个节点的用时、耗费的内存大小等这些信息的，那么如何才能在图上显示这些信息呢？关键就是如下这些代码，主要就是在 <code>sess.run()</code> 中加入 <code>options</code> 和 <code>run_metadata</code> 参数。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)</span><br><span class="line">run_metadata = tf.RunMetadata()</span><br><span class="line">s, lss, acc , _ = sess.run([merged_summary, loss, accuracy, train_step], </span><br><span class="line">                           feed_dict=&#123;x: batch_x, y: batch_y, phase: <span class="number">1</span>&#125;,</span><br><span class="line">                           options=run_options,</span><br><span class="line">                           run_metadata=run_metadata)</span><br><span class="line">summary_writer.add_run_metadata(run_metadata, <span class="string">&#x27;step&#123;&#125;&#x27;</span>.<span class="built_in">format</span>(i))</span><br><span class="line">summary_writer.add_summary(s, i)</span><br></pre></td></tr></table></figure>
+<p>然后我们就可以选择 <code>Compute time</code> 或者 <code>Memory</code> 来查看相应信息，颜色深浅代表耗时多少或者内存耗用多少。</p>
+<p><div><img src=https://i.imgur.com/TIMp4tq.png width=100% alt="compute-time-memory"></div></p>
+<p><center><font color=gray><em>计算耗时</em></font><center></p>
+<p>我们也可以将某个节点从主图移除，将其放到辅助节点中，以便于我们更清晰的观察整个网络。具体操作是 <em>右键该节点，选择 <code>Remove from main graph</code></em> 。</p>
+<hr>
+<h2 id="DISTRIBUTIONS"><a href="#DISTRIBUTIONS" class="headerlink" title="DISTRIBUTIONS"></a>DISTRIBUTIONS</h2><p><code>DISTRIBUTIONS</code> 主要用来展示网络中各参数随训练步数的增加的变化情况，可以说是 <em>多分位数折线图</em> 的堆叠。下面我就下面这张图来解释下。</p>
+<p><div><img src=http://i.imgur.com/ztasEZc.png width=100% alt="conv1-weights"></div></p>
+<p><center><font color=gray><em>权重分布</em></font><center></p>
+<p>这张图表示的是第二个卷积层的权重变化。横轴表示训练步数，纵轴表示权重值。而从上到下的折现分别表示权重分布的不同分位数：<code>[maximum, 93%, 84%, 69%, 50%, 31%, 16%, 7%, minimum]</code>。对应于我的代码，部分如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> tf.name_scope(name):</span><br><span class="line">    W = tf.Variable(tf.truncated_normal(</span><br><span class="line">        [k, k, channels_in, channels_out], stddev=<span class="number">0.1</span>), name=<span class="string">&#x27;W&#x27;</span>)</span><br><span class="line">    b = tf.Variable(tf.constant(<span class="number">0.1</span>, shape=[channels_out]), name=<span class="string">&#x27;b&#x27;</span>)</span><br><span class="line">    conv = tf.nn.conv2d(inpt, W, strides=[<span class="number">1</span>, s, s, <span class="number">1</span>], padding=<span class="string">&#x27;SAME&#x27;</span>)</span><br><span class="line">    act = tf.nn.relu(conv)</span><br><span class="line">    tf.summary.histogram(<span class="string">&#x27;weights&#x27;</span>, W)</span><br><span class="line">    tf.summary.histogram(<span class="string">&#x27;biases&#x27;</span>, b)</span><br><span class="line">    tf.summary.histogram(<span class="string">&#x27;activations&#x27;</span>, act)</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="HISTOGRAMS"><a href="#HISTOGRAMS" class="headerlink" title="HISTOGRAMS"></a>HISTOGRAMS</h2><p><strong><code>HISTOGRAMS</code> 和 <code>DISTRIBUTIONS</code> 是对同一数据不同方式的展现</strong>。与 <code>DISTRIBUTIONS</code> 不同的是，<code>HISTOGRAMS</code> 可以说是 <em>频数分布直方图</em> 的堆叠。</p>
+<p><div><img src=http://i.imgur.com/efGIjU9.png width=100% alt="conv1-weights-hist"></div></p>
+<p><center><font color=gray><em>权重分布</em></font><center></p>
+<p>横轴表示权重值，纵轴表示训练步数。颜色越深表示时间越早，越浅表示时间越晚（越接近训练结束）。除此之外，<code>HISTOGRAMS</code> 还有个 <code>Histogram mode</code>，有两个选项：<code>OVERLAY</code> 和 <code>OFFSET</code>。选择 <code>OVERLAY</code> 时横轴为权重值，纵轴为频数，每一条折线为训练步数。颜色深浅与上面同理。默认为 <code>OFFSET</code> 模式。</p>
+<hr>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>这篇博文写了好久，从准备数据到开始动笔写，中间一直被各种事干扰。由于我水平有限，我只能尽最大程度的给出尽可能正确的解释，然而还有很多我目前还兼顾不到，很多话也不是很通顺。如有错误，欢迎在评论区或者给我私信或者给我邮件指出。</p>
+<hr>
+<h2 id="REFERENCES"><a href="#REFERENCES" class="headerlink" title="REFERENCES"></a>REFERENCES</h2><ul>
+<li><a href="https://www.tensorflow.org/get_started/summaries_and_tensorboard">TensorBoard: Visualizing Learning</a></li>
+<li><a href="https://stats.stackexchange.com/questions/220491/how-does-one-interpret-histograms-given-by-tensorflow-in-tensorboard">How does one interpret histograms given by TensorFlow in TensorBoard?</a></li>
+<li><a href="https://github.com/tensorflow/tensorboard/blob/master/README.md">TensorBoard</a></li>
+<li><a href="https://www.tensorflow.org/get_started/tensorboard_histograms">TensorBoard Histogram Dashboard</a></li>
+<li><a href="https://stackoverflow.com/questions/42315202/understanding-tensorboard-weight-histograms">Understanding TensorBoard (weight) histograms</a></li>
+<li><a href="https://www.youtube.com/watch?v=eBbEDRsCmv4&amp;t=1105s">Hands-on TensorBoard (TensorFlow Dev Summit 2017)</a></li>
+</ul>
+<hr>
+<!-- toc -->
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><!-- more -->
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/08/30/ensemble-methods/"
+                    data-tooltip="使用集成学习提升机器学习算法性能"
+                    aria-label="上一篇: 使用集成学习提升机器学习算法性能"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/06/02/tensorflow-DNNRegressor/"
+                    data-tooltip="TensorFlow DNNRegressor 的简单使用"
+                    aria-label="下一篇: TensorFlow DNNRegressor 的简单使用"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/08/30/ensemble-methods/"
+                    data-tooltip="使用集成学习提升机器学习算法性能"
+                    aria-label="上一篇: 使用集成学习提升机器学习算法性能"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/06/02/tensorflow-DNNRegressor/"
+                    data-tooltip="TensorFlow DNNRegressor 的简单使用"
+                    aria-label="下一篇: TensorFlow DNNRegressor 的简单使用"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/08/20/understanding-tensorboard/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2017/08/20/understanding-tensorboard/';
+              
+            this.page.identifier = '2017/08/20/understanding-tensorboard/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

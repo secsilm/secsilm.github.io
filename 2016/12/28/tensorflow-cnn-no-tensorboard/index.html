@@ -1,0 +1,745 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。\n本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。\n这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。\n\n\n更新这里我会列出对本文的更新。\n\n2017年3月17日：增加实现 TensorBoard 的文章的链接。\n\n\n原理关于卷积神经网络（Convolutional Neural Network，以下简称 CNN）网上有很多优秀的教程，我在这里也不再重复造轮子，强烈推荐 斯坦福的CS321n，讲的很全面。\n还是和以前一样，我在这里简单说下 CNN 的原理。首先来看下一个典型的 CNN - LeNet5 的结构图，\n这里写图片描述\n这个 CNN 是 Yann LeCun 在 1998 年发表的论文 Gradient-Based Learning Applied to Document Recognition 中所提出的，用于字符识别。如上图，模型输入是一个字符图像，然后对输入进行卷积操作（矩阵点乘求和）得到 C1 卷积层，再进行下采样操作（缩减维度）得到 S2 池化层或者叫下采样层，然后重复一遍刚才的操作，将二维数据 拉平，连着一个多层的普通神金网络，最终得到输出。训练这个模型的方法还是梯度下降法，或者其变种。\n\n数据集数据集仍然采用 CIFAR10，包含 60000 张 32×32 的彩色RGB图像，共有 10 类，每类有 6000 张图像。完整数据集可以从 这里 下载，注意选择 Python 版本，大概是 163 MB。\n下载好后解压会看到有 5 个训练文件和 1 个测试文件，还有一个说明文件 batches.meta，这个文件说明了每个数字类别（0-9）具体代表哪些类别。这几个文件都是用 cPickle 打包好的，所以载入数据也要用 cPickle 来载入。注意 Python2 和 Python3 的载入方式稍微有些不同，具体见代码，我使用的是 Python3。\n目前在此数据集上做的实验在没有数据增加的情况下最低的错误率是 18%，数据增加的情况下最低的错误率是 11%，都是采用的卷积神经网络（CNN）的结构。\n数据集中的图像和分类大致是这样的：\n\n\n代码由于完整代码较长，这里仅列出关键代码，便于理解整个模型，完整代码可从 这里 下载。12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091# coding: utf-8with tf.device(&#x27;/cpu:0&#x27;):        # 模型参数    learning_rate = 1e-3    training_iters = 500    batch_size = 50    display_step = 5    n_features = 3072  # 32*32*3    n_classes = 10    n_fc1 = 384    n_fc2 = 192    # 构建模型    x = tf.placeholder(tf.float32, [None, n_features])    y = tf.placeholder(tf.float32, [None, n_classes])    w = &#123;        &#x27;conv1&#x27;: tf.Variable(tf.truncated_normal([5, 5, 3, 64], stddev=5e-2)),        &#x27;conv2&#x27;: tf.Variable(tf.truncated_normal([5, 5, 64, 64], stddev=0.1)),        &#x27;fc1&#x27;: tf.Variable(tf.truncated_normal([8*8*64, n_fc1], stddev=0.04)),        &#x27;fc2&#x27;: tf.Variable(tf.truncated_normal([n_fc1, n_fc2], stddev=0.1)),        &#x27;fc3&#x27;: tf.Variable(tf.truncated_normal([n_fc2, n_classes], stddev=1/192.0))    &#125;    b = &#123;        &#x27;conv1&#x27;: tf.Variable(tf.constant(0.0, dtype=tf.float32, shape=[64])),        &#x27;conv2&#x27;: tf.Variable(tf.constant(0.1, dtype=tf.float32, shape=[64])),        &#x27;fc1&#x27;: tf.Variable(tf.constant(0.1, dtype=tf.float32, shape=[n_fc1])),        &#x27;fc2&#x27;: tf.Variable(tf.constant(0.1, dtype=tf.float32, shape=[n_fc2])),        &#x27;fc3&#x27;: tf.Variable(tf.constant(0.0, dtype=tf.float32, shape=[n_classes]))    &#125;    x4d = tf.reshape(x, [-1, 32, 32, 3])    # 卷积层 1    conv1 = tf.nn.conv2d(x4d, w[&#x27;conv1&#x27;], strides=[1, 1, 1, 1], padding=&#x27;SAME&#x27;)    conv1 = tf.nn.bias_add(conv1, b[&#x27;conv1&#x27;])    conv1 = tf.nn.relu(conv1)    # 池化层 1    pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding=&#x27;SAME&#x27;)    # LRN层，Local Response Normalization    norm1 = tf.nn.lrn(pool1, 4, bias=1.0, alpha=0.001/9.0, beta=0.75)    # 卷积层 2    conv2 = tf.nn.conv2d(norm1, w[&#x27;conv2&#x27;], strides=[1, 1, 1, 1], padding=&#x27;SAME&#x27;)    conv2 = tf.nn.bias_add(conv2, b[&#x27;conv2&#x27;])    conv2 = tf.nn.relu(conv2)    # LRN层，Local Response Normalization    norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001/9.0, beta=0.75)    # 池化层 2    pool2 = tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding=&#x27;SAME&#x27;)    reshape = tf.reshape(pool2, [-1, 8*8*64])    dim = reshape.get_shape()[1].value    fc1 = tf.add(tf.matmul(reshape, w[&#x27;fc1&#x27;]), b[&#x27;fc1&#x27;])    fc1 = tf.nn.relu(fc1)    # 全连接层 2    fc2 = tf.add(tf.matmul(fc1, w[&#x27;fc2&#x27;]), b[&#x27;fc2&#x27;])    fc2 = tf.nn.relu(fc2)    # 全连接层 3, 即分类层    fc3 = tf.add(tf.matmul(fc2, w[&#x27;fc3&#x27;]), b[&#x27;fc3&#x27;])    # 定义损失    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc3, y))    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)    # 评估模型    correct_pred = tf.equal(tf.argmax(fc3, 1), tf.argmax(y, 1))    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))    init = tf.global_variables_initializer()with tf.Session() as sess:    sess.run(init)    c = []    total_batch = int(X_train.shape[0] / batch_size)    for i in range(training_iters):        avg_cost = 0        for batch in range(total_batch):            batch_x = X_train[batch*batch_size : (batch+1)*batch_size, :]            batch_y = y_train[batch*batch_size : (batch+1)*batch_size, :]            _, co = sess.run([optimizer, cost], feed_dict=&#123;x: batch_x, y: batch_y&#125;)            avg_cost += co            c.append(avg_cost)        if (i+1) % display_step == 0:            print(&quot;Iter &quot; + str(i+1) + &quot;, Training Loss= &quot; + &quot;&#123;:.6f&#125;&quot;.format(avg_cost))        print(&quot;Optimization Finished!&quot;)    # Test    test_acc = sess.run(accuracy, feed_dict=&#123;x: X_test, y: y_test&#125;)    print(&quot;Testing Accuracy:&quot;, test_acc)\n\n结果这里写图片描述\n其中的缩写仍然遵照我以前博文的习惯：\n\nlr：learning rate，学习率\nti：training iters，训练迭代次数\nbs：batch size，batch大小\nacc：测试准确率\n\n每次结果都会不一样，上图是最好的结果的时候，其他结果图的下载链接和上面一样，测试准确率大约为 60%，其实这个准确率并不高，和 TensorFlow 的官方文档 所得到的 86% 还差一段距离，和官方文档的差距在于我并没有对数据进行更多的预处理，例如图像裁剪到 24×24 的尺寸、标准化、随机左右翻转图像或者随机改变图像亮度和对比度以扩大数据集等等，等有时间再进行进一步的实验，与本次实验进行对比。\n在其他条件一样的情况下，本次实验得到的准确率可能并不是最高的，鉴于机器太垃圾，运行一次实验需要两三天，未能进行更多的测试。\n\n\nEND","dateCreated":"2016-12-28T12:13:13+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2016-12-28T12:13:13+08:00","description":"前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。\n本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。\n这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。","headline":"TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/","keywords":"Python, TensorFlow, Machine Learning"}</script>
+    <meta name="description" content="前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。 本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。 这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版">
+<meta property="og:url" content="https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="前面 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 46.98%。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。 本文代码基于 TensorFlow 的官方文档 做了些许修改，完整代码及结果图片可从 这里 下载。 这篇 文章是对本文的一个升级，增加了 TensorBoard 的实现，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20161228111539022?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://i.imgur.com/Rzsw6mo.png">
+<meta property="og:image" content="http://img.blog.csdn.net/20161228121428562?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="article:published_time" content="2016-12-28T04:13:13.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.198Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="TensorFlow">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20161228111539022?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2016-12-28T12:13:13+08:00">
+	
+		    2016 年 12 月 28 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p><a href="http://blog.csdn.net/u010099080/article/details/53234227">前面</a> 有篇博文讲了多层感知器，也就是一般的前馈神经网络，文章里使用 CIFAR10 数据集得到的测试准确率是 <strong>46.98%</strong>。今天我们使用更适合处理图像的卷积神经网络来处理相同的数据集 - CIFAR10，来看下准确率能达到多少。</p>
+<p>本文代码基于 <a href="https://www.tensorflow.org/tutorials/deep_cnn/">TensorFlow 的官方文档</a> 做了些许修改，完整代码及结果图片可从 <a href="http://download.csdn.net/download/u010099080/9723302">这里</a> 下载。</p>
+<p><a href="http://blog.csdn.net/u010099080/article/details/62882006">这篇</a> 文章是对本文的一个升级，增加了 TensorBoard 的实现，可以在浏览器中查看可视化结果，包括准确率、损失、计算图、训练时间和内存信息等。</p>
+<span id="more"></span>
+<hr>
+<h1 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h1><p>这里我会列出对本文的更新。</p>
+<ul>
+<li>2017年3月17日：增加实现 TensorBoard 的文章的链接。</li>
+</ul>
+<hr>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>关于卷积神经网络（Convolutional Neural Network，以下简称 <strong>CNN</strong>）网上有很多优秀的教程，我在这里也不再重复造轮子，强烈推荐 <a href="http://cs231n.github.io/convolutional-networks/">斯坦福的CS321n</a>，讲的很全面。</p>
+<p>还是和以前一样，我在这里简单说下 CNN 的原理。首先来看下一个典型的 CNN - LeNet5 的结构图，</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20161228111539022?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20161228111539022?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p>这个 CNN 是 Yann LeCun 在 1998 年发表的论文 <a href="http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf">Gradient-Based Learning Applied to Document Recognition</a> 中所提出的，用于字符识别。如上图，模型输入是一个字符图像，然后对输入进行卷积操作（矩阵点乘求和）得到 <code>C1</code> <strong>卷积层</strong>，再进行下采样操作（缩减维度）得到 <code>S2</code> <strong>池化层</strong>或者叫下采样层，然后重复一遍刚才的操作，将二维数据 <em>拉平</em>，连着一个多层的普通神金网络，最终得到输出。训练这个模型的方法还是梯度下降法，或者其变种。</p>
+<hr>
+<h1 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h1><p>数据集仍然采用 CIFAR10，包含 <strong>60000</strong> 张 <strong>32×32</strong> 的彩色RGB图像，共有 <strong>10</strong> 类，每类有 <strong>6000</strong> 张图像。完整数据集可以从 <a href="https://www.cs.toronto.edu/~kriz/cifar.html">这里</a> 下载，注意选择 Python 版本，大概是 163 MB。</p>
+<p>下载好后解压会看到有 5 个训练文件和 1 个测试文件，还有一个说明文件 <code>batches.meta</code>，这个文件说明了每个数字类别（0-9）具体代表哪些类别。这几个文件都是用 <code>cPickle</code> 打包好的，所以载入数据也要用 <code>cPickle</code> 来载入。注意 <code>Python2</code> 和 <code>Python3</code> 的载入方式稍微有些不同，具体见代码，我使用的是 <code>Python3</code>。</p>
+<p>目前在此数据集上做的实验在没有数据增加的情况下最低的错误率是 18%，数据增加的情况下最低的错误率是 11%，都是采用的卷积神经网络（CNN）的结构。</p>
+<p>数据集中的图像和分类大致是这样的：</p>
+<p><img src="http://i.imgur.com/Rzsw6mo.png" alt=""></p>
+<hr>
+<h1 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h1><p>由于完整代码较长，这里仅列出关键代码，便于理解整个模型，完整代码可从 <a href="http://download.csdn.net/download/u010099080/9723302">这里</a> 下载。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> tf.device(<span class="string">&#x27;/cpu:0&#x27;</span>):</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 模型参数</span></span><br><span class="line">    learning_rate = <span class="number">1e-3</span></span><br><span class="line">    training_iters = <span class="number">500</span></span><br><span class="line">    batch_size = <span class="number">50</span></span><br><span class="line">    display_step = <span class="number">5</span></span><br><span class="line">    n_features = <span class="number">3072</span>  <span class="comment"># 32*32*3</span></span><br><span class="line">    n_classes = <span class="number">10</span></span><br><span class="line">    n_fc1 = <span class="number">384</span></span><br><span class="line">    n_fc2 = <span class="number">192</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 构建模型</span></span><br><span class="line">    x = tf.placeholder(tf.float32, [<span class="literal">None</span>, n_features])</span><br><span class="line">    y = tf.placeholder(tf.float32, [<span class="literal">None</span>, n_classes])</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    w = &#123;</span><br><span class="line">        <span class="string">&#x27;conv1&#x27;</span>: tf.Variable(tf.truncated_normal([<span class="number">5</span>, <span class="number">5</span>, <span class="number">3</span>, <span class="number">64</span>], stddev=<span class="number">5e-2</span>)),</span><br><span class="line">        <span class="string">&#x27;conv2&#x27;</span>: tf.Variable(tf.truncated_normal([<span class="number">5</span>, <span class="number">5</span>, <span class="number">64</span>, <span class="number">64</span>], stddev=<span class="number">0.1</span>)),</span><br><span class="line">        <span class="string">&#x27;fc1&#x27;</span>: tf.Variable(tf.truncated_normal([<span class="number">8</span>*<span class="number">8</span>*<span class="number">64</span>, n_fc1], stddev=<span class="number">0.04</span>)),</span><br><span class="line">        <span class="string">&#x27;fc2&#x27;</span>: tf.Variable(tf.truncated_normal([n_fc1, n_fc2], stddev=<span class="number">0.1</span>)),</span><br><span class="line">        <span class="string">&#x27;fc3&#x27;</span>: tf.Variable(tf.truncated_normal([n_fc2, n_classes], stddev=<span class="number">1</span>/<span class="number">192.0</span>))</span><br><span class="line">    &#125;</span><br><span class="line">    b = &#123;</span><br><span class="line">        <span class="string">&#x27;conv1&#x27;</span>: tf.Variable(tf.constant(<span class="number">0.0</span>, dtype=tf.float32, shape=[<span class="number">64</span>])),</span><br><span class="line">        <span class="string">&#x27;conv2&#x27;</span>: tf.Variable(tf.constant(<span class="number">0.1</span>, dtype=tf.float32, shape=[<span class="number">64</span>])),</span><br><span class="line">        <span class="string">&#x27;fc1&#x27;</span>: tf.Variable(tf.constant(<span class="number">0.1</span>, dtype=tf.float32, shape=[n_fc1])),</span><br><span class="line">        <span class="string">&#x27;fc2&#x27;</span>: tf.Variable(tf.constant(<span class="number">0.1</span>, dtype=tf.float32, shape=[n_fc2])),</span><br><span class="line">        <span class="string">&#x27;fc3&#x27;</span>: tf.Variable(tf.constant(<span class="number">0.0</span>, dtype=tf.float32, shape=[n_classes]))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    x4d = tf.reshape(x, [-<span class="number">1</span>, <span class="number">32</span>, <span class="number">32</span>, <span class="number">3</span>])</span><br><span class="line">    <span class="comment"># 卷积层 1</span></span><br><span class="line">    conv1 = tf.nn.conv2d(x4d, w[<span class="string">&#x27;conv1&#x27;</span>], strides=[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>], padding=<span class="string">&#x27;SAME&#x27;</span>)</span><br><span class="line">    conv1 = tf.nn.bias_add(conv1, b[<span class="string">&#x27;conv1&#x27;</span>])</span><br><span class="line">    conv1 = tf.nn.relu(conv1)</span><br><span class="line">    <span class="comment"># 池化层 1</span></span><br><span class="line">    pool1 = tf.nn.max_pool(conv1, ksize=[<span class="number">1</span>, <span class="number">3</span>, <span class="number">3</span>, <span class="number">1</span>], strides=[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>], padding=<span class="string">&#x27;SAME&#x27;</span>)</span><br><span class="line">    <span class="comment"># LRN层，Local Response Normalization</span></span><br><span class="line">    norm1 = tf.nn.lrn(pool1, <span class="number">4</span>, bias=<span class="number">1.0</span>, alpha=<span class="number">0.001</span>/<span class="number">9.0</span>, beta=<span class="number">0.75</span>)</span><br><span class="line">    <span class="comment"># 卷积层 2</span></span><br><span class="line">    conv2 = tf.nn.conv2d(norm1, w[<span class="string">&#x27;conv2&#x27;</span>], strides=[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>], padding=<span class="string">&#x27;SAME&#x27;</span>)</span><br><span class="line">    conv2 = tf.nn.bias_add(conv2, b[<span class="string">&#x27;conv2&#x27;</span>])</span><br><span class="line">    conv2 = tf.nn.relu(conv2)</span><br><span class="line">    <span class="comment"># LRN层，Local Response Normalization</span></span><br><span class="line">    norm2 = tf.nn.lrn(conv2, <span class="number">4</span>, bias=<span class="number">1.0</span>, alpha=<span class="number">0.001</span>/<span class="number">9.0</span>, beta=<span class="number">0.75</span>)</span><br><span class="line">    <span class="comment"># 池化层 2</span></span><br><span class="line">    pool2 = tf.nn.max_pool(norm2, ksize=[<span class="number">1</span>, <span class="number">3</span>, <span class="number">3</span>, <span class="number">1</span>], strides=[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>], padding=<span class="string">&#x27;SAME&#x27;</span>)</span><br><span class="line">    reshape = tf.reshape(pool2, [-<span class="number">1</span>, <span class="number">8</span>*<span class="number">8</span>*<span class="number">64</span>])</span><br><span class="line">    dim = reshape.get_shape()[<span class="number">1</span>].value</span><br><span class="line">    fc1 = tf.add(tf.matmul(reshape, w[<span class="string">&#x27;fc1&#x27;</span>]), b[<span class="string">&#x27;fc1&#x27;</span>])</span><br><span class="line">    fc1 = tf.nn.relu(fc1)</span><br><span class="line">    <span class="comment"># 全连接层 2</span></span><br><span class="line">    fc2 = tf.add(tf.matmul(fc1, w[<span class="string">&#x27;fc2&#x27;</span>]), b[<span class="string">&#x27;fc2&#x27;</span>])</span><br><span class="line">    fc2 = tf.nn.relu(fc2)</span><br><span class="line">    <span class="comment"># 全连接层 3, 即分类层</span></span><br><span class="line">    fc3 = tf.add(tf.matmul(fc2, w[<span class="string">&#x27;fc3&#x27;</span>]), b[<span class="string">&#x27;fc3&#x27;</span>])</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 定义损失</span></span><br><span class="line">    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc3, y))</span><br><span class="line">    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)</span><br><span class="line">    <span class="comment"># 评估模型</span></span><br><span class="line">    correct_pred = tf.equal(tf.argmax(fc3, <span class="number">1</span>), tf.argmax(y, <span class="number">1</span>))</span><br><span class="line">    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))</span><br><span class="line"></span><br><span class="line">    init = tf.global_variables_initializer()</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</span><br><span class="line">    sess.run(init)</span><br><span class="line">    c = []</span><br><span class="line">    total_batch = <span class="built_in">int</span>(X_train.shape[<span class="number">0</span>] / batch_size)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(training_iters):</span><br><span class="line">        avg_cost = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> batch <span class="keyword">in</span> <span class="built_in">range</span>(total_batch):</span><br><span class="line">            batch_x = X_train[batch*batch_size : (batch+<span class="number">1</span>)*batch_size, :]</span><br><span class="line">            batch_y = y_train[batch*batch_size : (batch+<span class="number">1</span>)*batch_size, :]</span><br><span class="line">            _, co = sess.run([optimizer, cost], feed_dict=&#123;x: batch_x, y: batch_y&#125;)</span><br><span class="line">            avg_cost += co</span><br><span class="line">    </span><br><span class="line">        c.append(avg_cost)</span><br><span class="line">        <span class="keyword">if</span> (i+<span class="number">1</span>) % display_step == <span class="number">0</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Iter &quot;</span> + <span class="built_in">str</span>(i+<span class="number">1</span>) + <span class="string">&quot;, Training Loss= &quot;</span> + <span class="string">&quot;&#123;:.6f&#125;&quot;</span>.<span class="built_in">format</span>(avg_cost))</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Optimization Finished!&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Test</span></span><br><span class="line">    test_acc = sess.run(accuracy, feed_dict=&#123;x: X_test, y: y_test&#125;)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Testing Accuracy:&quot;</span>, test_acc)</span><br></pre></td></tr></table></figure></p>
+<hr>
+<h1 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h1><div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20161228121428562?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20161228121428562?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p>其中的缩写仍然遵照我以前博文的习惯：</p>
+<ul>
+<li>lr：learning rate，学习率</li>
+<li>ti：training iters，训练迭代次数</li>
+<li>bs：batch size，batch大小</li>
+<li>acc：测试准确率</li>
+</ul>
+<p>每次结果都会不一样，上图是最好的结果的时候，其他结果图的下载链接和上面一样，测试准确率大约为 60%，其实这个准确率并不高，和 <a href="https://www.tensorflow.org/tutorials/deep_cnn/">TensorFlow 的官方文档</a> 所得到的 86% 还差一段距离，和官方文档的差距在于我并没有对数据进行更多的预处理，例如图像裁剪到 24×24 的尺寸、标准化、随机左右翻转图像或者随机改变图像亮度和对比度以扩大数据集等等，等有时间再进行进一步的实验，与本次实验进行对比。</p>
+<p><em>在其他条件一样的情况下，本次实验得到的准确率可能并不是最高的，鉴于机器太垃圾，运行一次实验需要两三天，未能进行更多的测试。</em></p>
+<hr>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0"><span class="toc-text">更新</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-text">原理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text">数据集</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81"><span class="toc-text">代码</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C"><span class="toc-text">结果</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1><!-- more -->
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/02/16/tensorflow-1.0/"
+                    data-tooltip="TensorFlow 1.0 发布"
+                    aria-label="上一篇: TensorFlow 1.0 发布"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/10/tensorboard-mnist-pca/"
+                    data-tooltip="在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
+                    aria-label="下一篇: 在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/02/16/tensorflow-1.0/"
+                    data-tooltip="TensorFlow 1.0 发布"
+                    aria-label="上一篇: TensorFlow 1.0 发布"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/10/tensorboard-mnist-pca/"
+                    data-tooltip="在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
+                    aria-label="下一篇: 在 TensorBoard 中用 PCA 可视化 MNIST 手写数字识别数据集"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/';
+              
+            this.page.identifier = '2016/12/28/tensorflow-cnn-no-tensorboard/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

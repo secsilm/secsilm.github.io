@@ -1,0 +1,937 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>BERT 是如何构建模型的 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\nPhoto by Damian Patkowski on Unsplash\n\nGood things take time, as they should.\n\n前面我写了一篇文章来讲 BERT 是如何分词的，现在，轮到该说说 BERT 模型是如何定义的了。\nBERT 模型的大致结构可能大家已经很清楚了，实际上核心就是 Transformer encoder。本文主要是结合代码（modeling.py）实现来看下模型的定义，以及相关辅助函数，带你解读整个 modeling.py。\nmodeling.py 共有 2 个类，16 个函数，我先放一张 modeling.py 中类、方法和函数的总的调用关系图，大致了解一下：\nmodeling-call-graph\n本文先介绍下文件中仅有也比较重要的两个类：BertConfig 和 BertModel。然后根据构建 BERT 模型「三步走」的顺序，分别介绍下这三步，同时介绍一下相关函数。\nBertConfigBERT 模型的配置类，BERT 的超参配置都在这里。其参数（蓝色）和方法（黄色）总览如下：\nbert-config\n下面我分别介绍下参数和方法的意义。\n参数\nvocab_size：词汇表大小。\nhidden_size=768：encoder 层和 pooler 层大小。这实际上就是 embedding_size，BERT 干的事情就是不停地优化 embedding。。。\nnum_hidden_layers=12：encoder 中隐层个数。\nnum_attention_heads=12：每个 attention 层的 head 个数。\nintermediate_size=3072：中间层大小。\nhidden_act=&quot;gelu&quot;：隐层激活函数。\nhidden_dropout_prob=0.1：所有全连接层的 dropout 概率，包括 embedding 和 pooler。\nattention_probs_dropout_prob=0.1：attention 层的 dropout 概率。\nmax_position_embeddings=512：最大序列长度。\ntype_vocab_size=16：token_type_ids 的词汇表大小。\ninitializer_range=0.02：初始化所有权重时的标准差。\n\n方法\nfrom_dict(cls, json_object)：从一个字典来构建配置。\nfrom_json_file(cls, json_file)：从一个 json 文件来构建配置。\nto_dict(self)：将配置保存为字典。\nto_json_string(self)：将配置保存为 json 字符串。\n\nBertModelBERT 模型类，主角，BERT 模型的详细定义就在这里了。其参数（蓝色）、方法（框内黄色）和对其他类、函数的调用关系总览如下：\nbert-model\n下面我分别介绍下参数和方法的意义。\n参数\nconfig：配置，BertConfig 实例。\nis_training：是否开启训练模式，否则是评估/预测模式。也控制了是否使用 dropout。\ninput_ids：输入文本对应的 id，大小为 [batch_size, seq_length]。\ninput_mask=None：int32 类型，大小和 input_ids 相同。\ntoken_type_ids=None：int32 类型，大小和 input_ids 相同。\nuse_one_hot_embeddings=False：是否使用 one-hot embedding，否则使用 tf.embedding_lookup()。\nscope=None：变量 scope，默认为 bert。\n\n方法\n__init__()：重头戏，模型的构建在此完成，三步走完成。主要分为三个模块：embeddings、encoder 和 pooler。首先构建输入，包括 input_ids、input_mask 等。其次进入 embeddings 模块，进行一系列 embedding 操作，涉及 embedding_lookup() 和 embedding_postprocessor() 两个函数。然后进入 encoder 模块，就是 transformer 模型和 attention 发挥作用的地方了，主要涉及 transformer_model() 函数，得到 encoder 各层输出。最后进入 pooler 模块，只取 encoder 最后一层的输出的第一个 token 的信息，送入到一个大小为 hidden_size 的全连接层，得到 pooled_output，这就是最终输出了。\nget_pooled_output(self)：获取 pooler 的输出。\nget_sequence_output(self)：获取 encoder 最后的隐层输出，输出大小为 [batch_size, seq_length, hidden_size]。\nget_all_encoder_layers(self)：获取 encoder 中所有层。返回大小应该是 [num_hidden_layers, batch_size, seq_length, hidden_size]。\nget_embedding_output(self)：获取对 input_ids 的 embedding 结果，大小为 [batch_size, seq_length, hidden_size]，这是 word embedding、positional embedding、token type embedding（论文中的 segment embedding）和 layer normalization 一系列操作的结果，也是 transformer 的输入。\nget_embedding_table(self)：获取 embedding table，大小为 [vocab_size, embedding_size]，即词汇表中的词对应的 embedding。\n\nEmbedding如前所述，构建 BERT 模型主要有三块：embeddings、encoder 和 pooler。先来介绍下 embeddings。\n顾名思义，此步就是对输入进行嵌入。在初始词向量的基础上，BERT 又加入 Token type embedding（即论文中的 segment embedding）和 Position embedding 来增强表示。\n计算初始词向量对应于 embedding_lookup() 函数，参数为\n\ninput_ids\nvocab_size\nembedding_size=128\ninitializer_range=0.02\nword_embedding_name=&quot;word_embeddings&quot;\nuse_one_hot_embeddings=False\n\n此函数根据 input_ids 找对应的 embedding，输入大小为 [batch_size, seq_length]，输出两个值：\n\noutput，大小为 [batch_size, seq_length, embedding_size]。\nembedding_table，大小为 [vocab_size, embedding_size]。\n\n后续的骚操作对应于 embedding_postprocessor() 函数，参数为：\n\ninput_tensor\nuse_token_type=False\ntoken_type_ids=None\ntoken_type_vocab_size=16\ntoken_type_embedding_name=&quot;token_type_embeddings&quot;\nuse_position_embeddings=True\nposition_embedding_name=&quot;position_embeddings&quot;\ninitializer_range=0.02\nmax_position_embeddings=512\ndropout_prob=0.1\n\n该函数在初始 embedding（input_tensor）的基础上再进行一顿 embedding 骚操作，然后加上 layer normalization 和 dropout 层。\n根据 use_token_type 和 use_position_embeddings 的值，最多会进行两种骚操作：\n\nToken type embedding：即论文中的 segment embedding，首先会创建一个 token_type_table，然后拿着 token_type_ids 去查，得到 token type embedding，该 embedding 的 shape 和原 embedding 是一样的，直接将其加到原 embedding 就行。\nPosition embedding：位置信息嵌入。这里有一个需要注意的地方：max_position_embeddings，这个参数的值必须 ≥ seq_length，因为代码中会首先构造一个大小为 [max_position_embeddings, embedding_size] 的 full_position_embeddings，然后再使用 tf.slice 截取 seq_length 大小，从而得到一个 [1, seq_length, embedding_size] 的 embedding，最后加上原 embedding 即可。这里注意，为什么得到的 embedding 第一维是 1 呢？因为一个 batch 内的位置嵌入是相同的，假如一个 batch 有两句话，那么这两句话第一个字的位置嵌入都是 1 对应的 embedding，是相同的，所以可以直接 broadcast 到整个 batch 维度上。而 token type embedding 这些是不同的。\n\n在 Token type embedding 代码实现部分，根据 token_type_table 获取 token_type_ids 的对应 embedding 的时候，BERT 使用的是 one-hot 方法，即 token_type_ids 的 one-hot 矩阵乘 token_type_table，而不是使用的直接按索引取的方法。根据 BERT 代码注释，这是因为对于该 embedding，token_type_vocab_size 通常很小（一般为 2），此时 one-hot 方法更快：\n\nThis vocab will be small so we always do one-hot here, since it is always faster for a small vocabulary.\n\n我一开始并没想通这点，于是做了个测试，结果如下：\none-hot-vs-index\n可见两者差距甚小，在 vocab size 比较小的时候，one-hot 甚至会比索引方法慢。one-hot 方法需要进行矩阵乘法，而索引方法则是直接按索引取值，所以 one-hot 应该慢点才对，此问题尚未想清楚，欢迎评论区讨论。\nOK 回到正题，一顿操作后 embeddings 的维度维持不变，仍然是 [batch_size, seq_length, embedding_size]。归来仍是少年。\nEmbeddings 部分结束。\nEncoderEmbeddings 部分结束后的输出大小是 [batch_size, seq_length, embedding_size]，这个将会输入给 encoder。\n该部分首先创建一个 attention_mask，然后作为参数传给 transformer encoder 模型，最终得到多层 encoder layer 的输出。实际传给下一步 pooler 的时候，使用的是最后一层输出。\n创建 attention_mask 部分使用的是 create_attention_mask_from_input_mask() 函数，参数为：\n\nfrom_tensor\nto_mask\n\n此函数将一个二维的 mask 变成一个三维的 attention mask，最终的输出 shape 为 [batch_size, from_seq_length, to_seq_length]。from_tensor 在这里的唯一作用就是提供一下 batch_size 和 from_seq_length。事实上该 attention_mask 是全 1 的：\n\nWe don’t assume that from_tensor is a mask (although it could be). We don’t actually care if we attend from padding tokens (only to padding) tokens so we create a tensor of all ones.\n\n核心 transformer encoder 的部分对应于 transformer_model() 函数，参数为：\n\ninput_tensor\nattention_mask=None\nhidden_size=768\nnum_hidden_layers=12\nnum_attention_heads=12\nintermediate_size=3072\nintermediate_act_fn=gelu\nhidden_dropout_prob=0.1\nattention_probs_dropout_prob=0.1\ninitializer_range=0.02\ndo_return_all_layers=False\n\n要注意的一点是，hidden_size 必须能够整除 num_attention_heads，因为每个 head 的大小就是两者相除得到的，两者关系如下图：\nannotation-on-attention\n和其他函数的调用关系如下图：\ntransformer-model\n这个函数是重头戏，大致的整体流程如下图，我省略了 transpose 之类的转 shape 的操作：\nbert-transformer-model\nOK，是不是看起来也没那么复杂？核心就是 hidden layer，我下面简单解释下一个 hidden layer 的流程：\n\ntransformer 的输入（input_tensor 是初始值，后续的输入是 layer_input，即上一层的输出）的 shape 是 [batch_size, seq_length, hidden_size]，而 hidden_size 和 embedding_size（或者叫 input_width）是相等的，即你可以认为输入就是 embedding 结果。\n\n\n输入送入 attention layer，得到输出 attention output。\n一层线性映射，神经元数量（hidden_size）和 embedding_size 相同。\ndropout 和 layer normalization，注意后者的输入是前者 + layer_input。\n一层非线性映射，默认情况下神经元数量要远大于线性映射层的数量。\n再来一层线性映射，重新将维度拉回 embedding_size。\ndropout 和 layer normalization，注意后者的输入是前者 + 4 的输出。\n完事，得到这一个 hidden layer 的输出，然后作为下一层 hidden layer 的输入。\n\n这样一来，一个 hidden layer 得到一个输出，总共会得到 num_hidden_layers 个 输出，都 append 到一个 list。如果 do_return_all_layers=True 的话，就把这些输出全都 reshape 成原来的样子然后返回。否则，直接把最后一层的输出 reshape 成原来的样子然后返回。\n经过一顿操作，归来还是少年。\n第一步的 attention layer 在这里有非常重要的作用，后面几步基本就是对其输出做一些映射变换，比较好理解。这里的 attention 其实是 MultiHead self-attention，我们先回顾下其数学形式：\n\\text{MultiHead}(Q, K, V) = \\text{Concat}(\\text{head}_1,\\dots,\\text{head}_\\text{h})W^O其中，\n\\text{head}_\\text{i} = \\text{Attention}(QW_i^Q, KW_i^K, VW_i^V)而，\n\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\dfrac{QK^T}{\\sqrt{d_k}}\\right)V现在来说下 attention layer 的实现。\nattention layer 对应函数为 attention_layer()，参数为：\n\nfrom_tensor\nto_tensor\nattention_mask=None\nnum_attention_heads=1\nsize_per_head=512\nquery_act=None\nkey_act=None\nvalue_act=None\nattention_probs_dropout_prob=0.0\ninitializer_range=0.02\ndo_return_2d_tensor=False\nbatch_size=None\nfrom_seq_length=None\nto_seq_length=None\n\n大致的整体流程如下图，我同样省略了 transpose 之类的转 shape 的操作：\nbert-attention-layer\n看了这个图之后，相信大家会觉得过程并没那么复杂，我来简单解释下：\n\n首先得到 Q、K、V 三个矩阵，都是分别经过一层相同大小的线性映射。其中 Q 通过 from_tensor 得到，K、V 通过 to_tensor 得到。\nQ、K 经过矩阵乘法和 scale 得到初步的 raw attention score，注意 shape 为 [batch_size, num_attention_heads, from_seq_length, to_seq_length]。如果有 attention mask，那么将其加到 raw attention score 上。\n上面得到的 raw attention score 经过 softmax，得到概率形式的 attention probability。\ndropout。\nattention probability 和 V 做矩阵乘法，得到 context layer。这就是最终的返回结果。注意 shape 为 [batch_size, from_seq_length, num_attention_heads * size_per_head]，通常来说最后一维就是 embedding size。\n\nOK，Encoder 部分到此结束。\nPooler前面 Encoder 部分得到的多层输出，最终是取最后一层输出来输入给 Pooler 部分。这部分相对简单，只是取每个 sequence 的第一个 token，即原本的输入大小为 [batch_size, seq_length, hidden_size]，变换后大小为 [batch_size, hidden_size]，去掉了 seq_length 维度，相当于是每个 sequence 都只用第一个 token 来表示。然后接上一层 hidden_size 大小的线性映射即可，激励函数为 tf.tanh。\n至此就得到了 BertModel 的输出了。\n此外，再插播一个关于第一步实现方面的疑问。原代码中第一步的实现是这样的：\n1first_token_tensor = tf.squeeze(self.sequence_output[:, 0:1, :], axis=1)\n此处用切片操作（0:1）来取第一个元素，保持了结果的 rank 和 sequence_output 的 rank 相同，sequence_output 的大小为 [batch_size, seq_length, hidden_size]，切片操作后的大小变为 [batch_size, 1, hidden_size]。然后再用 tf.squeeze 来将第二个维度压缩掉，即大小变为 [batch_size, hidden_size]。\n其实我觉得，这步操作可以简化，不使用切片操作即可一步到位，即：\n1first_token_tensor = self.sequence_output[:, 0, :]\n不是很明白原代码那样写是有何意图，此问题尚未想清楚，欢迎评论区讨论。\n总结简而言之，BERT 的大致流程就是：引入配置 BertConfig -&gt; 定义初始化输入大小等常量 -&gt; 对输入进行初步 embedding -&gt; 加入 token type embedding 和 position embedding -&gt; 创建 encoder 获取输出 -&gt; 获取 pooled 输出，就是最终输出了，在 run_classifier.py 中会将此输出接上一个 Dropout，然后接上一个 softmax 分类层。\nrun_classifier.py 中涉及 modeling.py 的地方有三处：modeling.BertModel、modeling.get_assignment_map_from_checkpoint、modeling.BertConfig.from_json_file。\nBERT 构建模型部分到此结束。\nReference\ngoogle-research/bert: TensorFlow code and pre-trained models for BERT\n[1810.04805] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding\n[1706.03762] Attention Is All You Need\nThe Illustrated Transformer – Jay Alammar – Visualizing machine learning one concept at a time.\nBERT Explained – A list of Frequently Asked Questions – Let the Machines Learn\n\nEND附录这里是一些正文没有提到的函数的解释。\n\n函数 gelu(x)：GELU（Gaussian Error Linear Unit）激活函数，是 RELU 的平滑版本，见论文 Gaussian Error Linear Units (GELUs)。\n函数 get_activation(activation_string)：就是一个映射，将类似 &#39;relu&#39; 这样的 str 格式的 activation_string，变成 tf 中实际的函数 tf.nn.relu。就是一些 if 判断。\n函数 get_assignment_map_from_checkpoint(tvars, init_checkpoint)：获取 assignment_map，同时也返回 initialized_variable_names。\n什么是 assignment_map？这其实是 tf.compat.v1.train.init_from_checkpoint(ckpt_dir_or_file, assignment_map) 的一个参数，用于指定当前 graph 的哪些变量的值需要从其他 checkpoint 中导入，dict 格式，key 为 checkpoint 中的变量（即旧变量），value 为当前 graph 中的变量（即新变量）。\ninitialized_variable_names 和 assignment_map 基本相同，后面 run_classifier.py 中会用其查询某变量值是否是从外部 checkpoint 中导入的。\n\n\ndropout(input_tensor, dropout_prob)：dropout 层。\nlayer_norm(input_tensor, name=None)：layer normalization 层，关于 layer normalization 和 batch normalization 的区别，参见 Weight Normalization and Layer Normalization Explained (Normalization in Deep Learning Part 2) | Machine Learning Explained 和 What are the practical differences between batch normalization, and layer normalization in deep neural networks? - Quora，简而言之就是 layer normalization 是在 feature 维度进行 normalization，而 batch normalization 是在 batch 维度进行。\nlayer_norm_and_dropout(input_tensor, dropout_prob, name=None)：先 layer normalization 后 dropout。\ncreate_initializer(initializer_range=0.02)：创建一个 truncated_normal_initializer 来初始化参数。\nget_shape_list(tensor, expected_rank=None, name=None)：获取 tensor的 shape，list 形式返回。要注意的一点是，如果这个 tensor 有动态维度，即某个维度为 None ，那么返回的时候，该维度会是一个 tensor。例如有一个 shape 为 [None, 3] 的 tensor，调用该函数时的返回就类似于 [&lt;tf.Tensor &#39;strided_slice:0&#39; shape=() dtype=int32&gt;, 3]。函数内部实现是先获取动态维度的索引，然后使用 tf.shape() 来取得对应索引的 tensor 形式的维度。\nreshape_to_matrix(input_tensor)：将一个 rank &gt;= 2 的 tensor reshape 成 rank = 2 的 tensor，即矩阵。具体是固定最后一个维度，将剩余维度都压缩到一个维度，即 reshape((-1, shape[-1]))。注意 TensorFlow 中的 rank 不同于数学中的 rank 概念，数学中是秩)，而 TF 中是 ndims，即 len(shape)。\nreshape_from_matrix(output_tensor, orig_shape_list)：和 reshape_to_matrix() 相反，将已经 reshape 成矩阵的 tensor 重新 reshape 到原来的样子。\nassert_rank(tensor, expected_rank, name=None)：检查 tensor 的 rank 是否符合要求（=/in expected_rank），不符合则抛出 ValueError 异常。注意此函数是用 dict 来存储 expected_rank 的。\n\n","dateCreated":"2020-05-08T20:39:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-05-08T20:39:00+08:00","description":"\nPhoto by Damian Patkowski on Unsplash","headline":"BERT 是如何构建模型的","image":[null,"https://i.loli.net/2020/05/08/3FURPrcgIfEiC1Z.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/05/08/bert-model/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/05/08/bert-model/","keywords":"Python, NLP, TensorFlow, Machine Learning","thumbnailUrl":"https://i.loli.net/2020/05/08/3FURPrcgIfEiC1Z.jpg"}</script>
+    <meta name="description" content="Photo by Damian Patkowski on Unsplash">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="BERT 是如何构建模型的">
+<meta property="og:url" content="https://alanlee.fun/2020/05/08/bert-model/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="Photo by Damian Patkowski on Unsplash">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/05/08/5nrJU9Wp2iEjys8.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/08/QoS24DFAiIfTcXp.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/08/9S1dBiTvKnlZhWO.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/08/i9HUJeR5lOTp8Mc.png">
+<meta property="og:image" content="https://i.loli.net/2019/10/18/yx8dXqg647Yt5ZG.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/08/AdR8HFNm2rpvt3a.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/08/4YT12ot7JdHjclL.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/08/PlfinUDWQ4Bueq1.png">
+<meta property="article:published_time" content="2020-05-08T12:39:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.191Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="TensorFlow">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/08/5nrJU9Wp2iEjys8.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://i.loli.net/2020/05/08/3FURPrcgIfEiC1Z.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://i.loli.net/2020/05/08/3FURPrcgIfEiC1Z.jpg"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('https://i.loli.net/2020/05/08/3FURPrcgIfEiC1Z.jpg');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            BERT 是如何构建模型的
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-05-08T20:39:00+08:00">
+	
+		    2020 年 5 月 8 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#BertConfig"><span class="toc-text">BertConfig</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E6%95%B0"><span class="toc-text">参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95"><span class="toc-text">方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BertModel"><span class="toc-text">BertModel</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E6%95%B0-1"><span class="toc-text">参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-1"><span class="toc-text">方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Embedding"><span class="toc-text">Embedding</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Encoder"><span class="toc-text">Encoder</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Pooler"><span class="toc-text">Pooler</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-text">附录</span></a></li></ol>
+<p><em>Photo by Damian Patkowski on Unsplash</em><br><span id="more"></span></p>
+<blockquote>
+<p>Good things take time, as they should.</p>
+</blockquote>
+<p>前面我写了一篇文章来讲 <a href="https://alanlee.fun/2019/10/16/bert-tokenizer/">BERT 是如何分词的</a>，现在，轮到该说说 BERT 模型是如何定义的了。</p>
+<p>BERT 模型的大致结构可能大家已经很清楚了，实际上核心就是 Transformer encoder。本文主要是结合代码（<code>modeling.py</code>）实现来看下模型的定义，以及相关辅助函数，带你解读整个 <code>modeling.py</code>。</p>
+<p><code>modeling.py</code> 共有 2 个类，16 个函数，我先放一张 <code>modeling.py</code> 中类、方法和函数的总的调用关系图，大致了解一下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/08/5nrJU9Wp2iEjys8.png" title="modeling-call-graph" data-caption="modeling-call-graph" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/08/5nrJU9Wp2iEjys8.png" alt="modeling-call-graph"></a><span class="caption">modeling-call-graph</span></div>
+<p>本文先介绍下文件中仅有也比较重要的两个类：<code>BertConfig</code> 和 <code>BertModel</code>。然后根据构建 BERT 模型「三步走」的顺序，分别介绍下这三步，同时介绍一下相关函数。</p>
+<h2 id="BertConfig"><a href="#BertConfig" class="headerlink" title="BertConfig"></a>BertConfig</h2><p>BERT 模型的配置类，BERT 的超参配置都在这里。其参数（蓝色）和方法（黄色）总览如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/08/QoS24DFAiIfTcXp.png" title="bert-config" data-caption="bert-config" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/08/QoS24DFAiIfTcXp.png" alt="bert-config"></a><span class="caption">bert-config</span></div>
+<p>下面我分别介绍下参数和方法的意义。</p>
+<h3 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h3><ul>
+<li><code>vocab_size</code>：词汇表大小。</li>
+<li><code>hidden_size=768</code>：encoder 层和 pooler 层大小。这实际上就是 embedding_size，BERT 干的事情就是不停地优化 embedding。。。</li>
+<li><code>num_hidden_layers=12</code>：encoder 中隐层个数。</li>
+<li><code>num_attention_heads=12</code>：每个 attention 层的 head 个数。</li>
+<li><code>intermediate_size=3072</code>：中间层大小。</li>
+<li><code>hidden_act=&quot;gelu&quot;</code>：隐层激活函数。</li>
+<li><code>hidden_dropout_prob=0.1</code>：所有全连接层的 dropout 概率，包括 embedding 和 pooler。</li>
+<li><code>attention_probs_dropout_prob=0.1</code>：attention 层的 dropout 概率。</li>
+<li><code>max_position_embeddings=512</code>：最大序列长度。</li>
+<li><code>type_vocab_size=16</code>：<code>token_type_ids</code> 的词汇表大小。</li>
+<li><code>initializer_range=0.02</code>：初始化所有权重时的标准差。</li>
+</ul>
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><ul>
+<li><code>from_dict(cls, json_object)</code>：从一个字典来构建配置。</li>
+<li><code>from_json_file(cls, json_file)</code>：从一个 json 文件来构建配置。</li>
+<li><code>to_dict(self)</code>：将配置保存为字典。</li>
+<li><code>to_json_string(self)</code>：将配置保存为 json 字符串。</li>
+</ul>
+<h2 id="BertModel"><a href="#BertModel" class="headerlink" title="BertModel"></a>BertModel</h2><p>BERT 模型类，主角，BERT 模型的详细定义就在这里了。其参数（蓝色）、方法（框内黄色）和对其他类、函数的调用关系总览如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/08/9S1dBiTvKnlZhWO.png" title="bert-model" data-caption="bert-model" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/08/9S1dBiTvKnlZhWO.png" alt="bert-model"></a><span class="caption">bert-model</span></div>
+<p>下面我分别介绍下参数和方法的意义。</p>
+<h3 id="参数-1"><a href="#参数-1" class="headerlink" title="参数"></a>参数</h3><ul>
+<li><code>config</code>：配置，<code>BertConfig</code> 实例。</li>
+<li><code>is_training</code>：是否开启训练模式，否则是评估/预测模式。也控制了是否使用 dropout。</li>
+<li><code>input_ids</code>：输入文本对应的 id，大小为 <code>[batch_size, seq_length]</code>。</li>
+<li><code>input_mask=None</code>：int32 类型，大小和 <code>input_ids</code> 相同。</li>
+<li><code>token_type_ids=None</code>：int32 类型，大小和 <code>input_ids</code> 相同。</li>
+<li><code>use_one_hot_embeddings=False</code>：是否使用 one-hot embedding，否则使用 <code>tf.embedding_lookup()</code>。</li>
+<li><code>scope=None</code>：变量 scope，默认为 <code>bert</code>。</li>
+</ul>
+<h3 id="方法-1"><a href="#方法-1" class="headerlink" title="方法"></a>方法</h3><ul>
+<li><code>__init__()</code>：重头戏，模型的构建在此完成，三步走完成。主要分为三个模块：embeddings、encoder 和 pooler。首先构建输入，包括 <code>input_ids</code>、<code>input_mask</code> 等。其次进入 embeddings 模块，进行一系列 embedding 操作，涉及 <code>embedding_lookup()</code> 和 <code>embedding_postprocessor()</code> 两个函数。然后进入 encoder 模块，就是 transformer 模型和 attention 发挥作用的地方了，主要涉及 <code>transformer_model()</code> 函数，得到 encoder 各层输出。最后进入 pooler 模块，只取 encoder 最后一层的输出的第一个 token 的信息，送入到一个大小为 <code>hidden_size</code> 的全连接层，得到 <code>pooled_output</code>，这就是最终输出了。</li>
+<li><code>get_pooled_output(self)</code>：获取 pooler 的输出。</li>
+<li><code>get_sequence_output(self)</code>：获取 encoder 最后的隐层输出，输出大小为 <code>[batch_size, seq_length, hidden_size]</code>。</li>
+<li><code>get_all_encoder_layers(self)</code>：获取 encoder 中所有层。返回大小应该是 <code>[num_hidden_layers, batch_size, seq_length, hidden_size]</code>。</li>
+<li><code>get_embedding_output(self)</code>：获取对 <code>input_ids</code> 的 embedding 结果，大小为 <code>[batch_size, seq_length, hidden_size]</code>，这是 word embedding、positional embedding、token type embedding（论文中的 segment embedding）和 layer normalization 一系列操作的结果，也是 transformer 的输入。</li>
+<li><code>get_embedding_table(self)</code>：获取 embedding table，大小为 <code>[vocab_size, embedding_size]</code>，即词汇表中的词对应的 embedding。</li>
+</ul>
+<h2 id="Embedding"><a href="#Embedding" class="headerlink" title="Embedding"></a>Embedding</h2><p>如前所述，构建 BERT 模型主要有三块：embeddings、encoder 和 pooler。先来介绍下 embeddings。</p>
+<p>顾名思义，此步就是对输入进行嵌入。在初始词向量的基础上，BERT 又加入 Token type embedding（即论文中的 segment embedding）和 Position embedding 来增强表示。</p>
+<p>计算初始词向量对应于 <code>embedding_lookup()</code> 函数，参数为</p>
+<ul>
+<li><code>input_ids</code></li>
+<li><code>vocab_size</code></li>
+<li><code>embedding_size=128</code></li>
+<li><code>initializer_range=0.02</code></li>
+<li><code>word_embedding_name=&quot;word_embeddings&quot;</code></li>
+<li><code>use_one_hot_embeddings=False</code></li>
+</ul>
+<p>此函数根据 <code>input_ids</code> 找对应的 embedding，输入大小为 <code>[batch_size, seq_length]</code>，输出两个值：</p>
+<ul>
+<li><code>output</code>，大小为 <code>[batch_size, seq_length, embedding_size]</code>。</li>
+<li><code>embedding_table</code>，大小为 <code>[vocab_size, embedding_size]</code>。</li>
+</ul>
+<p>后续的骚操作对应于 <code>embedding_postprocessor()</code> 函数，参数为：</p>
+<ul>
+<li><code>input_tensor</code></li>
+<li><code>use_token_type=False</code></li>
+<li><code>token_type_ids=None</code></li>
+<li><code>token_type_vocab_size=16</code></li>
+<li><code>token_type_embedding_name=&quot;token_type_embeddings&quot;</code></li>
+<li><code>use_position_embeddings=True</code></li>
+<li><code>position_embedding_name=&quot;position_embeddings&quot;</code></li>
+<li><code>initializer_range=0.02</code></li>
+<li><code>max_position_embeddings=512</code></li>
+<li><code>dropout_prob=0.1</code></li>
+</ul>
+<p>该函数在初始 embedding（<code>input_tensor</code>）的基础上再进行一顿 embedding 骚操作，然后加上 layer normalization 和 dropout 层。</p>
+<p>根据 <code>use_token_type</code> 和 <code>use_position_embeddings</code> 的值，最多会进行两种骚操作：</p>
+<ul>
+<li>Token type embedding：即论文中的 segment embedding，首先会创建一个 <code>token_type_table</code>，然后拿着 <code>token_type_ids</code> 去查，得到 token type embedding，该 embedding 的 shape 和原 embedding 是一样的，直接将其加到原 embedding 就行。</li>
+<li>Position embedding：位置信息嵌入。这里有一个需要注意的地方：<code>max_position_embeddings</code>，这个参数的值必须 ≥ <code>seq_length</code>，因为代码中会首先构造一个大小为 <code>[max_position_embeddings, embedding_size]</code> 的 <code>full_position_embeddings</code>，然后再使用 <a href="https://www.tensorflow.org/api_docs/python/tf/slice"><code>tf.slice</code></a> 截取 <code>seq_length</code> 大小，从而得到一个 <code>[1, seq_length, embedding_size]</code> 的 embedding，最后加上原 embedding 即可。这里注意，为什么得到的 embedding 第一维是 1 呢？因为一个 batch 内的位置嵌入是相同的，假如一个 batch 有两句话，那么这两句话第一个字的位置嵌入都是 1 对应的 embedding，是相同的，所以可以直接 broadcast 到整个 batch 维度上。而 token type embedding 这些是不同的。</li>
+</ul>
+<p>在 Token type embedding 代码实现部分，根据 token_type_table 获取 token_type_ids 的对应 embedding 的时候，BERT 使用的是 one-hot 方法，即 token_type_ids 的 one-hot 矩阵乘 token_type_table，而不是使用的直接按索引取的方法。根据 BERT 代码注释，这是因为对于该 embedding，token_type_vocab_size 通常很小（一般为 2），此时 one-hot 方法更快：</p>
+<blockquote>
+<p>This vocab will be small so we always do one-hot here, since it is always faster for a small vocabulary.</p>
+</blockquote>
+<p>我一开始并没想通这点，于是做了个测试，结果如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/08/i9HUJeR5lOTp8Mc.png" title="one-hot-vs-index" data-caption="one-hot-vs-index" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/08/i9HUJeR5lOTp8Mc.png" alt="one-hot-vs-index"></a><span class="caption">one-hot-vs-index</span></div>
+<p>可见两者差距甚小，在 vocab size 比较小的时候，one-hot 甚至会比索引方法慢。one-hot 方法需要进行矩阵乘法，而索引方法则是直接按索引取值，所以 one-hot 应该慢点才对，<strong>此问题尚未想清楚，欢迎评论区讨论。</strong></p>
+<p>OK 回到正题，一顿操作后 embeddings 的维度维持不变，仍然是 <code>[batch_size, seq_length, embedding_size]</code>。归来仍是少年。</p>
+<p>Embeddings 部分结束。</p>
+<h2 id="Encoder"><a href="#Encoder" class="headerlink" title="Encoder"></a>Encoder</h2><p>Embeddings 部分结束后的输出大小是 <code>[batch_size, seq_length, embedding_size]</code>，这个将会输入给 encoder。</p>
+<p>该部分首先创建一个 <code>attention_mask</code>，然后作为参数传给 transformer encoder 模型，最终得到多层 encoder layer 的输出。实际传给下一步 pooler 的时候，使用的是最后一层输出。</p>
+<p>创建 <code>attention_mask</code> 部分使用的是 <code>create_attention_mask_from_input_mask()</code> 函数，参数为：</p>
+<ul>
+<li><code>from_tensor</code></li>
+<li><code>to_mask</code></li>
+</ul>
+<p>此函数将一个二维的 mask 变成一个三维的 attention mask，最终的输出 shape 为 <code>[batch_size, from_seq_length, to_seq_length]</code>。<code>from_tensor</code> 在这里的唯一作用就是提供一下 <code>batch_size</code> 和 <code>from_seq_length</code>。事实上该 <code>attention_mask</code> 是全 1 的：</p>
+<blockquote>
+<p>We don’t assume that <code>from_tensor</code> is a mask (although it could be). We don’t actually care if we attend <em>from</em> padding tokens (only <em>to</em> padding) tokens so we create a tensor of all ones.</p>
+</blockquote>
+<p>核心 transformer encoder 的部分对应于 <code>transformer_model()</code> 函数，参数为：</p>
+<ul>
+<li><code>input_tensor</code></li>
+<li><code>attention_mask=None</code></li>
+<li><code>hidden_size=768</code></li>
+<li><code>num_hidden_layers=12</code></li>
+<li><code>num_attention_heads=12</code></li>
+<li><code>intermediate_size=3072</code></li>
+<li><code>intermediate_act_fn=gelu</code></li>
+<li><code>hidden_dropout_prob=0.1</code></li>
+<li><code>attention_probs_dropout_prob=0.1</code></li>
+<li><code>initializer_range=0.02</code></li>
+<li><code>do_return_all_layers=False</code></li>
+</ul>
+<p>要注意的一点是，<code>hidden_size</code> 必须能够整除 <code>num_attention_heads</code>，因为每个 head 的大小就是两者相除得到的，两者关系如下图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2019/10/18/yx8dXqg647Yt5ZG.png" title="annotation-on-attention" data-caption="annotation-on-attention" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2019/10/18/yx8dXqg647Yt5ZG.png" alt="annotation-on-attention"></a><span class="caption">annotation-on-attention</span></div>
+<p>和其他函数的调用关系如下图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/08/AdR8HFNm2rpvt3a.png" title="transformer-model" data-caption="transformer-model" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/08/AdR8HFNm2rpvt3a.png" alt="transformer-model"></a><span class="caption">transformer-model</span></div>
+<p>这个函数是重头戏，大致的整体流程如下图，我省略了 transpose 之类的转 shape 的操作：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/08/4YT12ot7JdHjclL.png" title="bert-transformer-model" data-caption="bert-transformer-model" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/08/4YT12ot7JdHjclL.png" alt="bert-transformer-model"></a><span class="caption">bert-transformer-model</span></div>
+<p>OK，是不是看起来也没那么复杂？核心就是 hidden layer，我下面简单解释下一个 hidden layer 的流程：</p>
+<blockquote>
+<p>transformer 的输入（<code>input_tensor</code> 是初始值，后续的输入是 <code>layer_input</code>，即上一层的输出）的 shape 是 <code>[batch_size, seq_length, hidden_size]</code>，而 <code>hidden_size</code> 和 <code>embedding_size</code>（或者叫 <code>input_width</code>）是相等的，即你可以认为输入就是 embedding 结果。</p>
+</blockquote>
+<ol>
+<li>输入送入 attention layer，得到输出 attention output。</li>
+<li>一层线性映射，神经元数量（<code>hidden_size</code>）和 <code>embedding_size</code> 相同。</li>
+<li>dropout 和 layer normalization，注意后者的输入是前者 + <code>layer_input</code>。</li>
+<li>一层非线性映射，默认情况下神经元数量要远大于线性映射层的数量。</li>
+<li>再来一层线性映射，重新将维度拉回 <code>embedding_size</code>。</li>
+<li>dropout 和 layer normalization，注意后者的输入是前者 + 4 的输出。</li>
+<li>完事，得到这一个 hidden layer 的输出，然后作为下一层 hidden layer 的输入。</li>
+</ol>
+<p>这样一来，一个 hidden layer 得到一个输出，总共会得到 <code>num_hidden_layers</code> 个 输出，都 append 到一个 list。如果 <code>do_return_all_layers=True</code> 的话，就把这些输出全都 reshape 成原来的样子然后返回。否则，直接把最后一层的输出 reshape 成原来的样子然后返回。</p>
+<p>经过一顿操作，归来还是少年。</p>
+<p>第一步的 attention layer 在这里有非常重要的作用，后面几步基本就是对其输出做一些映射变换，比较好理解。这里的 attention 其实是 MultiHead self-attention，我们先回顾下其数学形式：</p>
+<script type="math/tex; mode=display">\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1,\dots,\text{head}_\text{h})W^O</script><p>其中，</p>
+<script type="math/tex; mode=display">\text{head}_\text{i} = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)</script><p>而，</p>
+<script type="math/tex; mode=display">\text{Attention}(Q, K, V) = \text{softmax}\left(\dfrac{QK^T}{\sqrt{d_k}}\right)V</script><p>现在来说下 attention layer 的实现。</p>
+<p>attention layer 对应函数为 <code>attention_layer()</code>，参数为：</p>
+<ul>
+<li><code>from_tensor</code></li>
+<li><code>to_tensor</code></li>
+<li><code>attention_mask=None</code></li>
+<li><code>num_attention_heads=1</code></li>
+<li><code>size_per_head=512</code></li>
+<li><code>query_act=None</code></li>
+<li><code>key_act=None</code></li>
+<li><code>value_act=None</code></li>
+<li><code>attention_probs_dropout_prob=0.0</code></li>
+<li><code>initializer_range=0.02</code></li>
+<li><code>do_return_2d_tensor=False</code></li>
+<li><code>batch_size=None</code></li>
+<li><code>from_seq_length=None</code></li>
+<li><code>to_seq_length=None</code></li>
+</ul>
+<p>大致的整体流程如下图，我同样省略了 transpose 之类的转 shape 的操作：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/05/08/PlfinUDWQ4Bueq1.png" title="bert-attention-layer" data-caption="bert-attention-layer" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/05/08/PlfinUDWQ4Bueq1.png" alt="bert-attention-layer"></a><span class="caption">bert-attention-layer</span></div>
+<p>看了这个图之后，相信大家会觉得过程并没那么复杂，我来简单解释下：</p>
+<ol>
+<li>首先得到 Q、K、V 三个矩阵，都是分别经过一层相同大小的线性映射。其中 Q 通过 <code>from_tensor</code> 得到，K、V 通过 <code>to_tensor</code> 得到。</li>
+<li>Q、K 经过矩阵乘法和 scale 得到初步的 raw attention score，注意 shape 为 <code>[batch_size, num_attention_heads, from_seq_length, to_seq_length]</code>。如果有 attention mask，那么将其加到 raw attention score 上。</li>
+<li>上面得到的 raw attention score 经过 softmax，得到概率形式的 attention probability。</li>
+<li>dropout。</li>
+<li>attention probability 和 V 做矩阵乘法，得到 context layer。这就是最终的返回结果。注意 shape 为 <code>[batch_size, from_seq_length, num_attention_heads * size_per_head]</code>，通常来说最后一维就是 embedding size。</li>
+</ol>
+<p>OK，Encoder 部分到此结束。</p>
+<h2 id="Pooler"><a href="#Pooler" class="headerlink" title="Pooler"></a>Pooler</h2><p>前面 Encoder 部分得到的多层输出，最终是取最后一层输出来输入给 Pooler 部分。这部分相对简单，只是取每个 sequence 的第一个 token，即原本的输入大小为 <code>[batch_size, seq_length, hidden_size]</code>，变换后大小为 <code>[batch_size, hidden_size]</code>，去掉了 <code>seq_length</code> 维度，相当于是每个 sequence 都只用第一个 token 来表示。然后接上一层 <code>hidden_size</code> 大小的线性映射即可，激励函数为 <code>tf.tanh</code>。</p>
+<p>至此就得到了 <code>BertModel</code> 的输出了。</p>
+<p>此外，再插播一个关于第一步实现方面的疑问。<a href="https://github.com/google-research/bert/blob/eedf5716ce1268e56f0a50264a88cafad334ac61/modeling.py#L227">原代码</a>中第一步的实现是这样的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">first_token_tensor = tf.squeeze(self.sequence_output[:, <span class="number">0</span>:<span class="number">1</span>, :], axis=<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<p>此处用切片操作（<code>0:1</code>）来取第一个元素，保持了结果的 rank 和 <code>sequence_output</code> 的 rank 相同，<code>sequence_output</code> 的大小为 <code>[batch_size, seq_length, hidden_size]</code>，切片操作后的大小变为 <code>[batch_size, 1, hidden_size]</code>。然后再用 <a href="https://www.tensorflow.org/api_docs/python/tf/squeeze"><code>tf.squeeze</code></a> 来将第二个维度压缩掉，即大小变为 <code>[batch_size, hidden_size]</code>。</p>
+<p>其实我觉得，这步操作可以简化，不使用切片操作即可一步到位，即：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">first_token_tensor = self.sequence_output[:, <span class="number">0</span>, :]</span><br></pre></td></tr></table></figure>
+<p>不是很明白原代码那样写是有何意图，<strong>此问题尚未想清楚，欢迎评论区讨论。</strong></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>简而言之，BERT 的大致流程就是：引入配置 BertConfig -&gt; 定义初始化输入大小等常量 -&gt; 对输入进行初步 embedding -&gt; 加入 token type embedding 和 position embedding -&gt; 创建 encoder 获取输出 -&gt; 获取 pooled 输出，就是最终输出了，在 <code>run_classifier.py</code> 中会将此输出接上一个 Dropout，然后接上一个 softmax 分类层。</p>
+<p><code>run_classifier.py</code> 中涉及 <code>modeling.py</code> 的地方有三处：<code>modeling.BertModel</code>、<code>modeling.get_assignment_map_from_checkpoint</code>、<code>modeling.BertConfig.from_json_file</code>。</p>
+<p>BERT 构建模型部分到此结束。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://github.com/google-research/bert">google-research/bert: TensorFlow code and pre-trained models for BERT</a></li>
+<li><a href="https://arxiv.org/abs/1810.04805">[1810.04805] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</a></li>
+<li><a href="https://arxiv.org/abs/1706.03762">[1706.03762] Attention Is All You Need</a></li>
+<li><a href="http://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer – Jay Alammar – Visualizing machine learning one concept at a time.</a></li>
+<li><a href="https://yashuseth.blog/2019/06/12/bert-explained-faqs-understand-bert-working/">BERT Explained – A list of Frequently Asked Questions – Let the Machines Learn</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><p>这里是一些正文没有提到的函数的解释。</p>
+<ul>
+<li>函数 <code>gelu(x)</code>：GELU（Gaussian Error Linear Unit）激活函数，是 RELU 的平滑版本，见论文 <a href="https://arxiv.org/abs/1606.08415">Gaussian Error Linear Units (GELUs)</a>。</li>
+<li>函数 <code>get_activation(activation_string)</code>：就是一个映射，将类似 <code>&#39;relu&#39;</code> 这样的 <code>str</code> 格式的 <code>activation_string</code>，变成 tf 中实际的函数 <code>tf.nn.relu</code>。就是一些 <code>if</code> 判断。</li>
+<li>函数 <code>get_assignment_map_from_checkpoint(tvars, init_checkpoint)</code>：获取 <code>assignment_map</code>，同时也返回 <code>initialized_variable_names</code>。<ul>
+<li>什么是 <code>assignment_map</code>？这其实是 <a href="https://www.tensorflow.org/api_docs/python/tf/compat/v1/train/init_from_checkpoint"><code>tf.compat.v1.train.init_from_checkpoint(ckpt_dir_or_file, assignment_map)</code></a> 的一个参数，用于指定当前 graph 的哪些变量的值需要从其他 checkpoint 中导入，dict 格式，key 为 checkpoint 中的变量（即旧变量），value 为当前 graph 中的变量（即新变量）。</li>
+<li><code>initialized_variable_names</code> 和 <code>assignment_map</code> 基本相同，后面 <code>run_classifier.py</code> 中会用其查询某变量值是否是从外部 checkpoint 中导入的。</li>
+</ul>
+</li>
+<li><code>dropout(input_tensor, dropout_prob)</code>：dropout 层。</li>
+<li><code>layer_norm(input_tensor, name=None)</code>：<a href="https://arxiv.org/abs/1607.06450">layer normalization</a> 层，关于 layer normalization 和 batch normalization 的区别，参见 <a href="https://mlexplained.com/2018/01/13/weight-normalization-and-layer-normalization-explained-normalization-in-deep-learning-part-2/">Weight Normalization and Layer Normalization Explained (Normalization in Deep Learning Part 2) | Machine Learning Explained</a> 和 <a href="https://www.quora.com/What-are-the-practical-differences-between-batch-normalization-and-layer-normalization-in-deep-neural-networks">What are the practical differences between batch normalization, and layer normalization in deep neural networks? - Quora</a>，简而言之就是 layer normalization 是在 feature 维度进行 normalization，而 batch normalization 是在 batch 维度进行。</li>
+<li><code>layer_norm_and_dropout(input_tensor, dropout_prob, name=None)</code>：先 layer normalization 后 dropout。</li>
+<li><code>create_initializer(initializer_range=0.02)</code>：创建一个 truncated_normal_initializer 来初始化参数。</li>
+<li><code>get_shape_list(tensor, expected_rank=None, name=None)</code>：获取 tensor<br>的 shape，list 形式返回。要注意的一点是，如果这个 tensor 有动态维度，即某个维度为 <code>None</code> ，那么返回的时候，该维度会是一个 tensor。例如有一个 shape 为 <code>[None, 3]</code> 的 tensor，调用该函数时的返回就类似于 <code>[&lt;tf.Tensor &#39;strided_slice:0&#39; shape=() dtype=int32&gt;, 3]</code>。函数内部实现是先获取动态维度的索引，然后使用 <code>tf.shape()</code> 来取得对应索引的 tensor 形式的维度。</li>
+<li><code>reshape_to_matrix(input_tensor)</code>：将一个 rank &gt;= 2 的 tensor reshape 成 rank = 2 的 tensor，即矩阵。具体是固定最后一个维度，将剩余维度都压缩到一个维度，即 <code>reshape((-1, shape[-1]))</code>。注意 TensorFlow 中的 rank 不同于数学中的 rank 概念，数学中是<a href="https://zh.wikipedia.org/wiki/%E7%A7%A9_(%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0">秩</a>)，而 TF 中是 ndims，即 <code>len(shape)</code>。</li>
+<li><code>reshape_from_matrix(output_tensor, orig_shape_list)</code>：和 <code>reshape_to_matrix()</code> 相反，将已经 reshape 成矩阵的 tensor 重新 reshape 到原来的样子。</li>
+<li><code>assert_rank(tensor, expected_rank, name=None)</code>：检查 tensor 的 rank 是否符合要求（=/in expected_rank），不符合则抛出 <code>ValueError</code> 异常。注意此函数是用 dict 来存储 <code>expected_rank</code> 的。</li>
+</ul>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/15/bandizip-noads/"
+                    data-tooltip="Bandizip 无广告版"
+                    aria-label="上一篇: Bandizip 无广告版"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/10/hexo-add-ads/"
+                    data-tooltip="Hexo 博客添加 Google Adsense ads.txt"
+                    aria-label="下一篇: Hexo 博客添加 Google Adsense ads.txt"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/05/08/bert-model/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/05/08/bert-model/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/05/08/bert-model/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/05/15/bandizip-noads/"
+                    data-tooltip="Bandizip 无广告版"
+                    aria-label="上一篇: Bandizip 无广告版"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/10/hexo-add-ads/"
+                    data-tooltip="Hexo 博客添加 Google Adsense ads.txt"
+                    aria-label="下一篇: Hexo 博客添加 Google Adsense ads.txt"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/05/08/bert-model/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/05/08/bert-model/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/05/08/bert-model/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/05/08/bert-model/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/05/08/bert-model/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/05/08/bert-model/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/05/08/bert-model/';
+              
+            this.page.identifier = '2020/05/08/bert-model/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

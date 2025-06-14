@@ -1,0 +1,741 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>沉默的代价 —— 来自 zip 的教训 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n波澜不惊记不太清楚那天的天气了。我像往常一样起床上班地铁轰隆一小时。\n到公司抓紧时间写好处理数据的代码，然后告诉运维帮我开 24 台 GPU 服务器。\n“ip.txt”\n没过一会儿，运维甩给我一个包含 24 个服务器 IP 的文件。\n“我有一些依赖要安装，代码要放上去，还得配 aws，难不成我要一台一台连接上去，然后一台一台敲上去？”\n我咨询了下运维有没有什么捷径可走，运维说 xshell。此时的我有点疑惑，因为我之前几乎没怎么用过 xshell，向来都是 VS Code 和 Windows Terminal。\n下了一个 30 天试用版，地方也好找，“发送键到所有会话”，啪啪啪在一台机器上输入命令，命令马上复制到了其他机器，很快就部署完了。\n开始启动 1000 核的 client，开个 htop 看到 client 这边波澜不惊，开个 nvtop 发现 server 那边也是波澜不惊，只不过是高水位的波澜不惊。\nClient htop。情况类似，忽略内存情况，CPU 占用非常低，毕竟不是 CPU-bound 任务。\nServer nvtop。情况类似，GPU 打得满满的。\n我去接杯水，看着他们波澜不惊，我心里也波澜不惊了。\n惊涛骇浪由于我是处理完一批上传一批结果的，所以最终全部处理完之后，需要合并一下结果。单看每一份文件似乎没啥问题，但是合并完去重之后发现，非常多重复的，理论上来说是不可能的，肯定是哪里出了问题。\n于是我回去翻代码，看看是哪里写重了还是循环里变量重复使用还是怎么回事，然后我把注意力放到了下面的这段代码上：\n1234567891011121314texts = [&#x27;Here&#x27;, &#x27;are&#x27;, &#x27;some&#x27;, &#x27;texts&#x27;]ids = [&#x27;Here&#x27;, &#x27;are&#x27;, &#x27;text&#x27;, &#x27;ids&#x27;]batch_size = 2lines = []for i in range(0, len(texts), batch_size):    batch_texts = texts[i : i+batch_size]    try:        batch_probs = parser.parse(batch_texts)        batch_probs = [&#x27;\\t&#x27;.join(map(str, probs)) for probs in batch_probs]\t  except Exception as e:        logger.error(f&quot;&#123;e&#125;&quot;)        batch_probs = [&#x27;\\t&#x27;.join([&#x27;None&#x27;] * 5)] * len(batch_texts)    lines.extend([f&quot;&#123;id_&#125;\\t&#123;probs&#125;&quot; for id_, probs in zip(ids, batch_probs)])upload_s3(lines)\n注意最后一行的 zip，第一个是每个样本对应的 id，shape 为 (len(texts),) ；第二个是样本对应的概率 shape 为 (batch_size, num_labels) 。\n所以问题就来了，len(texts) != batch_size ，也就是说 zip 的两个参数长度不等。那么此时 Python 会怎么办？\n取短舍长。\n当较短的参数消耗完时，迭代就会停止：\n12&gt;&gt;&gt; list(zip(range(3), [&#x27;fee&#x27;, &#x27;fi&#x27;, &#x27;fo&#x27;, &#x27;fum&#x27;]))[(0, &#x27;fee&#x27;), (1, &#x27;fi&#x27;), (2, &#x27;fo&#x27;)]\n而不是抛出异常，甚至 warning 也不会抛出。所以运行时你不会发现任何问题。这就很危险了。\n幸好 Python 社区也注意到了这个问题，2020 年 Brandt Bucher 发了一个 PEP 618，提议为 zip 函数增加一个参数 strict 以进行长度检查。该 PEP 最终通过并合并在了 3.10 版本中。所以如果你是用的是 &gt;=3.10 的版本并且想要两个参数完全相等，那么可以指定 strict=True 来强制限定，如果长度不等则会抛出 ValueError 异常：\n1234&gt;&gt;&gt; list(zip(range(3), [&#x27;fee&#x27;, &#x27;fi&#x27;, &#x27;fo&#x27;, &#x27;fum&#x27;], strict=True))Traceback (most recent call last):  ...ValueError: zip() argument 2 is longer than argument 1\n所以，我得改下代码重新跑，再花一次 24 台 GPU 服务器的钱。虽然钱不是我出，但是还是觉得挺愧疚。\n风平浪静由于各种原因，切版本是不太现实的。所以直接将 ids 改为 batch_ids 即可。但为了以后一旦写错让程序抛出异常，我还是在 zip 前手动加了一个 assert 来进行长度检查。以后在涉及 zip 的地方，一定要多加检查，使用 assert 或者 strict=True 来显式抛出异常。Python 的默认行为也太容易出错了，我觉得至少得抛出个 warning 吧。\n所以，zip，顾名思义，拉链。拉链的两边长度不等时，根据生活经验，你只能拉到较短一边的尽头。Python 中的 zip 同理，如果 A 和 B 长度不等，那么 zip(A, B) 的结果长度就是 min(A, B)。这不是问题。\n问题在于，这是静默发生的。\n算是一个自己不小心挖的坑吧，修复 bug，再次运行，回归风平浪静。\nReference\nPEP 618 – Add Optional Length-Checking To zip | peps.python.org\n官方文档关于 zip 参数长度的说明\n\nEND","dateCreated":"2022-03-29T18:05:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2022-03-29T18:05:00+08:00","description":"zip 的默认行为及实际中带来的隐患。","headline":"沉默的代价 —— 来自 zip 的教训","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2022/03/29/python-zip-check-length/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2022/03/29/python-zip-check-length/","keywords":"NLP, Sequence Classification"}</script>
+    <meta name="description" content="zip 的默认行为及实际中带来的隐患。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="沉默的代价 —— 来自 zip 的教训">
+<meta property="og:url" content="https://alanlee.fun/2022/03/29/python-zip-check-length/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="zip 的默认行为及实际中带来的隐患。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2022/03/29/uLCjwnT6g4mhMJr.png">
+<meta property="og:image" content="https://s2.loli.net/2022/03/29/tPS5Cr9i8nZUsVI.png">
+<meta property="article:published_time" content="2022-03-29T10:05:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.197Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="Sequence Classification">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2022/03/29/uLCjwnT6g4mhMJr.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            沉默的代价 —— 来自 zip 的教训
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2022-03-29T18:05:00+08:00">
+	
+		    2022 年 3 月 29 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A2%E6%BE%9C%E4%B8%8D%E6%83%8A"><span class="toc-text">波澜不惊</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%83%8A%E6%B6%9B%E9%AA%87%E6%B5%AA"><span class="toc-text">惊涛骇浪</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A3%8E%E5%B9%B3%E6%B5%AA%E9%9D%99"><span class="toc-text">风平浪静</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="波澜不惊"><a href="#波澜不惊" class="headerlink" title="波澜不惊"></a>波澜不惊</h2><p>记不太清楚那天的天气了。我像往常一样起床上班地铁轰隆一小时。</p>
+<p>到公司抓紧时间写好处理数据的代码，然后告诉运维帮我开 24 台 GPU 服务器。</p>
+<p>“ip.txt”</p>
+<p>没过一会儿，运维甩给我一个包含 24 个服务器 IP 的文件。</p>
+<p>“我有一些依赖要安装，代码要放上去，还得配 aws，难不成我要一台一台连接上去，然后一台一台敲上去？”</p>
+<p>我咨询了下运维有没有什么捷径可走，运维说 xshell。此时的我有点疑惑，因为我之前几乎没怎么用过 xshell，向来都是 VS Code 和 Windows Terminal。</p>
+<p>下了一个 30 天试用版，地方也好找，“发送键到所有会话”，啪啪啪在一台机器上输入命令，命令马上复制到了其他机器，很快就部署完了。</p>
+<p>开始启动 1000 核的 client，开个 htop 看到 client 这边波澜不惊，开个 <a href="https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/">nvtop</a> 发现 server 那边也是波澜不惊，只不过是高水位的波澜不惊。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/03/29/uLCjwnT6g4mhMJr.png" title="Client htop。情况类似，忽略内存情况，CPU 占用非常低，毕竟不是 CPU-bound 任务。" data-caption="Client htop。情况类似，忽略内存情况，CPU 占用非常低，毕竟不是 CPU-bound 任务。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/03/29/uLCjwnT6g4mhMJr.png" alt="Client htop。情况类似，忽略内存情况，CPU 占用非常低，毕竟不是 CPU-bound 任务。"></a><span class="caption">Client htop。情况类似，忽略内存情况，CPU 占用非常低，毕竟不是 CPU-bound 任务。</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/03/29/tPS5Cr9i8nZUsVI.png" title="Server nvtop。情况类似，GPU 打得满满的。" data-caption="Server nvtop。情况类似，GPU 打得满满的。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/03/29/tPS5Cr9i8nZUsVI.png" alt="Server nvtop。情况类似，GPU 打得满满的。"></a><span class="caption">Server nvtop。情况类似，GPU 打得满满的。</span></div>
+<p>我去接杯水，看着他们波澜不惊，我心里也波澜不惊了。</p>
+<h2 id="惊涛骇浪"><a href="#惊涛骇浪" class="headerlink" title="惊涛骇浪"></a>惊涛骇浪</h2><p>由于我是处理完一批上传一批结果的，所以最终全部处理完之后，需要合并一下结果。单看每一份文件似乎没啥问题，但是合并完去重之后发现，非常多重复的，理论上来说是不可能的，肯定是哪里出了问题。</p>
+<p>于是我回去翻代码，看看是哪里写重了还是循环里变量重复使用还是怎么回事，然后我把注意力放到了下面的这段代码上：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">texts = [<span class="string">&#x27;Here&#x27;</span>, <span class="string">&#x27;are&#x27;</span>, <span class="string">&#x27;some&#x27;</span>, <span class="string">&#x27;texts&#x27;</span>]</span><br><span class="line">ids = [<span class="string">&#x27;Here&#x27;</span>, <span class="string">&#x27;are&#x27;</span>, <span class="string">&#x27;text&#x27;</span>, <span class="string">&#x27;ids&#x27;</span>]</span><br><span class="line">batch_size = <span class="number">2</span></span><br><span class="line">lines = []</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="built_in">len</span>(texts), batch_size):</span><br><span class="line">    batch_texts = texts[i : i+batch_size]</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        batch_probs = parser.parse(batch_texts)</span><br><span class="line">        batch_probs = [<span class="string">&#x27;\t&#x27;</span>.join(<span class="built_in">map</span>(<span class="built_in">str</span>, probs)) <span class="keyword">for</span> probs <span class="keyword">in</span> batch_probs]</span><br><span class="line">	  <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        logger.error(<span class="string">f&quot;<span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">        batch_probs = [<span class="string">&#x27;\t&#x27;</span>.join([<span class="string">&#x27;None&#x27;</span>] * <span class="number">5</span>)] * <span class="built_in">len</span>(batch_texts)</span><br><span class="line">    lines.extend([<span class="string">f&quot;<span class="subst">&#123;id_&#125;</span>\t<span class="subst">&#123;probs&#125;</span>&quot;</span> <span class="keyword">for</span> id_, probs <span class="keyword">in</span> <span class="built_in">zip</span>(ids, batch_probs)])</span><br><span class="line">upload_s3(lines)</span><br></pre></td></tr></table></figure>
+<p>注意最后一行的 <code>zip</code>，第一个是每个样本对应的 id，shape 为 <code>(len(texts),)</code> ；第二个是样本对应的概率 shape 为 <code>(batch_size, num_labels)</code> 。</p>
+<p>所以问题就来了，<code>len(texts) != batch_size</code> ，也就是说 zip 的两个参数长度不等。那么此时 Python 会怎么办？</p>
+<p><strong>取短舍长。</strong></p>
+<p>当较短的参数消耗完时，迭代就会停止：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">list</span>(<span class="built_in">zip</span>(<span class="built_in">range</span>(<span class="number">3</span>), [<span class="string">&#x27;fee&#x27;</span>, <span class="string">&#x27;fi&#x27;</span>, <span class="string">&#x27;fo&#x27;</span>, <span class="string">&#x27;fum&#x27;</span>]))</span><br><span class="line">[(<span class="number">0</span>, <span class="string">&#x27;fee&#x27;</span>), (<span class="number">1</span>, <span class="string">&#x27;fi&#x27;</span>), (<span class="number">2</span>, <span class="string">&#x27;fo&#x27;</span>)]</span><br></pre></td></tr></table></figure>
+<p>而不是抛出异常，甚至 warning 也不会抛出。所以运行时你不会发现任何问题。这就很危险了。</p>
+<p>幸好 Python 社区也注意到了这个问题，2020 年 Brandt Bucher 发了一个 <a href="https://peps.python.org/pep-0618/">PEP 618</a>，提议为 zip 函数增加一个参数 <code>strict</code> 以进行长度检查。该 PEP 最终通过并合并在了 3.10 版本中。所以如果你是用的是 &gt;=3.10 的版本并且想要两个参数完全相等，那么可以指定 <code>strict=True</code> 来强制限定，如果长度不等则会抛出 <code>ValueError</code> 异常：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">list</span>(<span class="built_in">zip</span>(<span class="built_in">range</span>(<span class="number">3</span>), [<span class="string">&#x27;fee&#x27;</span>, <span class="string">&#x27;fi&#x27;</span>, <span class="string">&#x27;fo&#x27;</span>, <span class="string">&#x27;fum&#x27;</span>], strict=<span class="literal">True</span>))</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  ...</span><br><span class="line">ValueError: <span class="built_in">zip</span>() argument <span class="number">2</span> <span class="keyword">is</span> longer than argument <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>所以，我得改下代码重新跑，再花一次 24 台 GPU 服务器的钱。虽然钱不是我出，但是还是觉得挺愧疚。</p>
+<h2 id="风平浪静"><a href="#风平浪静" class="headerlink" title="风平浪静"></a>风平浪静</h2><p>由于各种原因，切版本是不太现实的。所以直接将 <code>ids</code> 改为 <code>batch_ids</code> 即可。但为了以后一旦写错让程序抛出异常，我还是在 <code>zip</code> 前手动加了一个 <code>assert</code> 来进行长度检查。以后在涉及 <code>zip</code> 的地方，一定要多加检查，使用 <code>assert</code> 或者 <code>strict=True</code> 来显式抛出异常。Python 的默认行为也太容易出错了，我觉得至少得抛出个 warning 吧。</p>
+<p>所以，zip，顾名思义，拉链。拉链的两边长度不等时，根据生活经验，你只能拉到较短一边的尽头。Python 中的 <code>zip</code> 同理，如果 A 和 B 长度不等，那么 <code>zip(A, B)</code> 的结果长度就是 <code>min(A, B)</code>。这不是问题。</p>
+<p>问题在于，这是<strong>静默</strong>发生的。</p>
+<p>算是一个自己不小心挖的坑吧，修复 bug，再次运行，回归风平浪静。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://peps.python.org/pep-0618/">PEP 618 – Add Optional Length-Checking To zip | peps.python.org</a></li>
+<li><a href="https://docs.python.org/zh-cn/3/library/functions.html#:~:text=%E5%80%BC%E5%BE%97%E8%80%83%E8%99%91%E7%9A%84%E6%98%AF%EF%BC%8C%E4%BC%A0%E7%BB%99%20zip%28%29%20%E7%9A%84%E5%8F%AF%E8%BF%AD%E4%BB%A3%E5%AF%B9%E8%B1%A1%E5%8F%AF%E8%83%BD%E9%95%BF%E5%BA%A6%E4%B8%8D%E5%90%8C%EF%BC%9B%E6%9C%89%E6%97%B6%E6%98%AF%E6%9C%89%E6%84%8F%E4%B8%BA%E4%B9%8B%EF%BC%8C%E6%9C%89%E6%97%B6%E6%98%AF%E5%9B%A0%E4%B8%BA%E5%87%86%E5%A4%87%E8%BF%99%E4%BA%9B%E5%AF%B9%E8%B1%A1%E7%9A%84%E4%BB%A3%E7%A0%81%E5%AD%98%E5%9C%A8%E9%94%99%E8%AF%AF%E3%80%82">官方文档关于 zip 参数长度的说明</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Sequence-Classification/" rel="tag">Sequence Classification</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/04/23/disqus-comments-not-showing/"
+                    data-tooltip="Disqus 有评论但没显示的一种解决方案"
+                    aria-label="上一篇: Disqus 有评论但没显示的一种解决方案"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/02/04/embed-altair-plot/"
+                    data-tooltip="嵌入 Altair 绘图到 Hexo 博客中"
+                    aria-label="下一篇: 嵌入 Altair 绘图到 Hexo 博客中"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/04/23/disqus-comments-not-showing/"
+                    data-tooltip="Disqus 有评论但没显示的一种解决方案"
+                    aria-label="上一篇: Disqus 有评论但没显示的一种解决方案"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/02/04/embed-altair-plot/"
+                    data-tooltip="嵌入 Altair 绘图到 Hexo 博客中"
+                    aria-label="下一篇: 嵌入 Altair 绘图到 Hexo 博客中"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/03/29/python-zip-check-length/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2022/03/29/python-zip-check-length/';
+              
+            this.page.identifier = '2022/03/29/python-zip-check-length/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

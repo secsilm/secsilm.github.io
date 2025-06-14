@@ -1,0 +1,737 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>在本地使用远程 Jupyter Lab 服务器 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。\n\n前言一般来说，我们都是在本地使用 Jupyter Lab，但有时候我们需要（想）在远程服务器上运行 Jupyter Lab，因为配置相对我们本地的 PC 要好点，这时候就需要在服务器上启动一个 lab，然后在本地浏览器访问。其实这方面在官方文档上已经有相关说明，而且网络上也有其他方法（端口转发），如 Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group。这两种方法不太相同，官网的实现效果是在本地浏览器输入服务器 IP + 端口，而后者的方法是采用了端口转发的方法，不管服务器的 IP 和端口是多少，最后只需要在本地浏览器输入 localhost:8888 就行，和在本地运行 Jupyter Lab 是一样的。\n本质上来说，我们需要实现的是这样一个东西：\n\n在远程服务器上启动 Jupyter Lab\n在本地浏览器上访问使用远程服务器的 Jupyter Lab，所有的计算都在远程服务器完成\n\n其实我刚开始用的是 Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group 的方法，即端口转发，但是我在成功了一次后就在也没成功了，后续连接一直报 ERROR_CONNECTION_RESET 错误，搜寻无果，无奈之下就又去官网看了看。\nERROR_CONNECTION_RESET\n官方文档是真的详细……什么加密安全都想好了，但是对我来说，我用不着这些，因为我就是在局域网内用，而且就我一个人用，也不公开，所以说流程就可以简化很多了。\n步骤你要做的很简单：\n\n【本地】登入远程服务器：ssh USER@IP -p PORT\n【远程服务器】在 ~/.jupyter/jupyter_notebook_config.json 中写入如下内容，尤其是 &quot;ip&quot;: &quot;*&quot;，这样让服务器监听所有 ip： 123456&#123;  &quot;NotebookApp&quot;: &#123;    &quot;ip&quot;: &quot;*&quot;,    &quot;open_browser&quot;: false  &#125;&#125;\n【远程服务器】启动 Jupyter Lab：jupyter lab --port LAB_PORT --no-browser\n【本地】打开浏览器（chrome），地址栏输入 IP:LAB_PORT 回车，done\n\n在第 2 步时，如果你想为自己的 Jupyter Lab 设置一个密码，那么你可以在终端内输入 jupyter notebook password，然后会提示你输入密码，此时输入你想要设置的密码就行，不必像其他教程那样用工具生成加密的密码，因为 Jupyter Notebook 会为你自动生成。你可以在 ~/.jupyter/jupyter_notebook_config.json 中看到类似如下的内容，其中 ***** 是一长串的加密过后的密码。\n1234567&#123;  &quot;NotebookApp&quot;: &#123;    &quot;password&quot;: &quot;sha1:*****&quot;,    &quot;ip&quot;: &quot;*&quot;,    &quot;open_browser&quot;: false  &#125;&#125;\n然后当你在本地浏览器输入 IP:LAB_PORT 回车时，会要求你输入密码：\njupyter lab password\n这种方法适合在本地 PC 和远程服务器在同一个局域网内的情况，对于不在局域网内的情况还不行，应该是需要在远程服务器上配置防火墙开放端口，但是由于我没有 root 权限，设置不了防火墙。\nReferences\nRunning a notebook server — Jupyter Notebook 5.5.0 documentation\nWorking with Jupyter notebook on a remote server | Oxford Protein Informatics Group\nSetting up a Jupyter Lab remote server | Kernel of Truth\n\nEND","dateCreated":"2018-07-14T10:35:34+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2018-07-14T10:35:34+08:00","description":"\n\n注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。","headline":"在本地使用远程 Jupyter Lab 服务器","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2018/07/14/remote-jupyter/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2018/07/14/remote-jupyter/","keywords":"Python"}</script>
+    <meta name="description" content="注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="在本地使用远程 Jupyter Lab 服务器">
+<meta property="og:url" content="https://alanlee.fun/2018/07/14/remote-jupyter/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看项目地址。强烈推荐使用 Jupyter Lab。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/nOvsXbY.png">
+<meta property="og:image" content="https://i.imgur.com/UvPymtH.png">
+<meta property="article:published_time" content="2018-07-14T02:35:34.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.197Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/nOvsXbY.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            在本地使用远程 Jupyter Lab 服务器
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-07-14T10:35:34+08:00">
+	
+		    2018 年 7 月 14 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A4"><span class="toc-text">步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-text">References</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<blockquote>
+<p>注：本文中所说的内容同样适用于 Jupyter Notebook，如需了解 Jupyter Lab 可以查看<a href="https://github.com/jupyterlab/jupyterlab">项目地址</a>。<strong>强烈推荐使用 Jupyter Lab。</strong><br><span id="more"></span></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>一般来说，我们都是在本地使用 Jupyter Lab，但有时候我们需要（想）在远程服务器上运行 Jupyter Lab，因为配置相对我们本地的 PC 要好点，这时候就需要在服务器上启动一个 lab，然后在本地浏览器访问。其实这方面在<a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html">官方文档</a>上已经有相关说明，而且网络上也有其他方法（端口转发），如 <a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a>。这两种方法不太相同，官网的实现效果是在本地浏览器输入服务器 IP + 端口，而后者的方法是采用了端口转发的方法，不管服务器的 IP 和端口是多少，最后只需要在本地浏览器输入 <code>localhost:8888</code> 就行，和在本地运行 Jupyter Lab 是一样的。</p>
+<p>本质上来说，我们需要实现的是这样一个东西：</p>
+<ol>
+<li>在远程服务器上启动 Jupyter Lab</li>
+<li>在本地浏览器上访问使用远程服务器的 Jupyter Lab，所有的计算都在远程服务器完成</li>
+</ol>
+<p>其实我刚开始用的是 <a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a> 的方法，即端口转发，但是我在成功了一次后就在也没成功了，后续连接一直报 <code>ERROR_CONNECTION_RESET</code> 错误，搜寻无果，无奈之下就又去官网看了看。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/nOvsXbY.png" title="ERROR_CONNECTION_RESET" data-caption="ERROR_CONNECTION_RESET" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/nOvsXbY.png" alt="ERROR_CONNECTION_RESET"></a><span class="caption">ERROR_CONNECTION_RESET</span></div>
+<p>官方文档是真的详细……什么加密安全都想好了，但是对我来说，我用不着这些，因为我就是在局域网内用，而且就我一个人用，也不公开，所以说流程就可以简化很多了。</p>
+<h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><p>你要做的很简单：</p>
+<ol>
+<li>【本地】登入远程服务器：<code>ssh USER@IP -p PORT</code></li>
+<li>【远程服务器】在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中写入如下内容，尤其是 <code>&quot;ip&quot;: &quot;*&quot;</code>，这样让服务器监听所有 ip： <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;NotebookApp&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;ip&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;open_browser&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure></li>
+<li>【远程服务器】启动 Jupyter Lab：<code>jupyter lab --port LAB_PORT --no-browser</code></li>
+<li>【本地】打开浏览器（chrome），地址栏输入 <code>IP:LAB_PORT</code> 回车，done</li>
+</ol>
+<p>在第 2 步时，如果你想为自己的 Jupyter Lab 设置一个密码，那么你可以在终端内输入 <code>jupyter notebook password</code>，然后会提示你输入密码，此时输入你想要设置的密码就行，不必像其他教程那样用工具生成加密的密码，因为 Jupyter Notebook 会为你自动生成。你可以在 <code>~/.jupyter/jupyter_notebook_config.json</code> 中看到类似如下的内容，其中 <code>*****</code> 是一长串的加密过后的密码。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;NotebookApp&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;password&quot;</span><span class="punctuation">:</span> <span class="string">&quot;sha1:*****&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;ip&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;open_browser&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>然后当你在本地浏览器输入 <code>IP:LAB_PORT</code> 回车时，会要求你输入密码：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/UvPymtH.png" title="jupyter lab password" data-caption="jupyter lab password" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/UvPymtH.png" alt="jupyter lab password"></a><span class="caption">jupyter lab password</span></div>
+<p>这种方法适合在本地 PC 和远程服务器在同一个局域网内的情况，对于不在局域网内的情况还不行，应该是需要在远程服务器上配置防火墙开放端口，但是由于我没有 root 权限，设置不了防火墙。</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
+<li><a href="http://jupyter-notebook.readthedocs.io/en/stable/public_server.html">Running a notebook server — Jupyter Notebook 5.5.0 documentation</a></li>
+<li><a href="http://www.blopig.com/blog/2018/03/running-jupyter-notebook-on-a-remote-server-via-ssh/">Working with Jupyter notebook on a remote server | Oxford Protein Informatics Group</a></li>
+<li><a href="https://agent-jay.github.io/2018/03/jupyterserver/">Setting up a Jupyter Lab remote server | Kernel of Truth</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    data-tooltip="使用 TensorFlow Estimators 进行文本分类"
+                    aria-label="上一篇: 使用 TensorFlow Estimators 进行文本分类"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/06/04/understanding-objective-functions-in-neural-networks/"
+                    data-tooltip="理解神经网络中的目标函数"
+                    aria-label="下一篇: 理解神经网络中的目标函数"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/07/18/text-classification-with-tensorflow-estimator/"
+                    data-tooltip="使用 TensorFlow Estimators 进行文本分类"
+                    aria-label="上一篇: 使用 TensorFlow Estimators 进行文本分类"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/06/04/understanding-objective-functions-in-neural-networks/"
+                    data-tooltip="理解神经网络中的目标函数"
+                    aria-label="下一篇: 理解神经网络中的目标函数"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/07/14/remote-jupyter/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2018/07/14/remote-jupyter/';
+              
+            this.page.identifier = '2018/07/14/remote-jupyter/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

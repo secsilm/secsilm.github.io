@@ -1,0 +1,795 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>使用 GitHub Actions 自动发布 Hexo 博客 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n好久没写博客了，准确来说，好久没发布博客了，写了一些，但是由于电脑环境的变化，之前的的环境都找不到了，再弄的话又挺麻烦。之前就想着要切换到 GitHub Actions 自动发布，自己只管写 markdown。趁着这次机会，有了一些集中的时间，来把这个事情搞定。\n在本篇文章中，我将分享如何利用 GitHub Actions 实现自动发布 Hexo 博客。这将极大地简化发布博客的流程，让你专注于内容创作，而无需手动部署。以下是具体步骤及可能遇到的问题和解决方案。\n本地调试在将 GitHub Actions 配置上线之前，建议在本地进行调试，确保你可以在本地正常生成和部署页面。可以开个 docker 来模拟环境。\n设置 GitHub Action注意下面的 action 可能会有更新版本，你写的时候可以查看下相关 action 的最新版本。\n\n下文中 dev 仓库指你的博客源代码所在仓库，一般是私有的。prd 仓库指你的静态页面所在仓库，一般是公开的，名字叫 &lt;username&gt;.github.io 。\n \n设置密钥为了确保 GitHub Actions 能够推送代码到目标仓库，需要在 GitHub 仓库的设置中添加密钥。\n首先在你本机生成密钥对：\n1ssh-keygen -f github-deploy-key\n一路回车下去，当前目录下就会生成 github-deploy-key 和 github-deploy-key.pub 。\n然后来设置 dev 和 prd 仓库。\n\n对于 dev 仓库：进入仓库页面 → Settings → Secrets and variables → actions → New repository secret，Name 填 HEXO_DEPLOY_PRI ，Secret 填 github-deploy-key 的内容。\n\ndev 仓库设置。\n\n对于 prd 仓库：进入仓库页面 → Settings → Deploy keys → Add deploy key，Title 填 HEXO_DEPLOY_PUB ，Key 填 github-deploy-key.pub 的内容。\n\nprd 仓库设置。\nGitHub Action 配置文件拆解我先分段讲下流程，最后再给出完整的配置文件。\n设置触发条件当你将更改推送到 dev repo 时，会触发 GitHub Actions 进行自动部署。确保此处正确配置为你希望触发的分支：\n1234on:  push:    branches:    - master\n配置 runner 镜像和 node 版本这里我们使用 ubuntu 镜像，node 版本为 20.x ：\n1234runs-on: ubuntu-latest    strategy:      matrix:        node-version: [20.x]\nPull dev 仓库我们需要拉取代码以进行 build，在 GitHub Actions 中，这一步通常由 actions/checkout 完成：\n1- uses: actions/checkout@v4\n配置环境设置 Node.js 和 git 环境：\n12345678910111213141516- name: Use Node.js $&#123;&#123; matrix.node-version &#125;&#125;  uses: actions/setup-node@v4  with:    node-version: $&#123;&#123; matrix.node-version &#125;&#125;- name: Configuration environment  env:    HEXO_DEPLOY_PRI: $&#123;&#123;secrets.HEXO_DEPLOY_PRI&#125;&#125;  run: |    sudo timedatectl set-timezone &quot;Asia/Shanghai&quot;    mkdir -p ~/.ssh/    echo &quot;$HEXO_DEPLOY_PRI&quot; | tr -d &#x27;\\r&#x27; &gt; ~/.ssh/id_rsa    chmod 600 ~/.ssh/id_rsa    ssh-keyscan github.com &gt;&gt; ~/.ssh/known_hosts    git config --global user.name &quot;secsilm&quot;    git config --global user.email &quot;secsilm@outlook.com&quot;\n\n设置时区很重要。平常我们在自己电脑上部署都是 GMT+8 时区，但是执行 GitHub action 的 runner 在美国，可不是这个时区，所以我们要改下时区，否则如果你的博文地址是 年/月/日 这种形式的话，可能会出现有些博文访问不了的问题。\nSSH 密钥。你也可以选择使用 PAT（Personal Access Token）来进行验证。我看大多数都是用 ssh 进行提交。注意如果你选择 ssh，而之前你部署的时候使用的是 http，那么你需要修改 dev 目录下 _config.yml 中的 deploy 字段中的 repo，改为 ssh 地址，即：\n 1234567891011# 原来是：deploy:  type: git  repo: https://github.com/secsilm/secsilm.github.io.git  branch: master# 应改为：deploy:  type: git  repo: git@github.com:secsilm/secsilm.github.io.git  branch: master\n ssh 地址可以在你 prd 仓库的 clone 那里找到。\n\n\n安装依赖安装 Hexo 和主题所需的依赖项：\n1234567- name: Install dependencies  run: |    npm i -g hexo-cli    npm ci    cd themes/tranquilpeak/    npm ci    npm run prod\n这一步安装了 Hexo CLI 和项目的依赖项，并构建了主题。构建主题这步我发现其他人都没有，但是我这里如果没有的话就会报错，我用的是 tranquilpeak 主题，可能跟这个主题会动态生成 css 文件有关？node 我也不太懂。\n另外我上面使用的 npm ci 而不是 npm i ，主要区别在于前者会严格根据 package-lock.json 中的版本安装包，避免潜在的版本依赖问题。\nHexo 部署这一步包括生成静态文件并将其推送到 prd 仓库：\n1234- name: Deploy hexo  run: |    hexo clean    hexo d -g\n这步我看有些人用的是第三方的 action，你感兴趣的话也可以找找看。\n完整的 GitHub Actions 配置文件以下是完整的 GitHub Actions 配置文件，将这个完整的配置文件保存到 dev 仓库下的 .github/workflows/deploy.yml 即可：\n1234567891011121314151617181920212223242526272829303132333435363738394041424344name: Deploy hexo blogon:  push:    branches:    - masterjobs:  build:    runs-on: ubuntu-latest    strategy:      matrix:        node-version: [20.x]    steps:      - uses: actions/checkout@v4      - name: Use Node.js $&#123;&#123; matrix.node-version &#125;&#125;        uses: actions/setup-node@v4        with:          node-version: $&#123;&#123; matrix.node-version &#125;&#125;      - name: Configuration environment        env:          HEXO_DEPLOY_PRI: $&#123;&#123;secrets.HEXO_DEPLOY_PRI&#125;&#125;        run: |          sudo timedatectl set-timezone &quot;Asia/Shanghai&quot;          mkdir -p ~/.ssh/          echo &quot;$HEXO_DEPLOY_PRI&quot; | tr -d &#x27;\\r&#x27; &gt; ~/.ssh/id_rsa          chmod 600 ~/.ssh/id_rsa          ssh-keyscan github.com &gt;&gt; ~/.ssh/known_hosts          git config --global user.name &quot;secsilm&quot;          git config --global user.email &quot;secsilm@outlook.com&quot;      - name: Install dependencies        run: |          npm i -g hexo-cli          npm ci          cd themes/tranquilpeak/          npm ci          npm run prod      - name: Deploy hexo        run: |          hexo clean          hexo d -g\n测试你可以进行一次更改提交，看看 action 是否正常执行。你可以在 GitHub Actions 页面查看每次运行的日志。\n一切正常的话，你就可以舍弃你的本地环境，直接在 _posts 目录下新建或上传博文 markdown 文件，提交，然后就等着你的新博文发布吧！我的这篇博文就是第一篇通过 action 发布的博文！🎉🎉🎉\nGitHub Actions 的免费额度为每月 2000 分钟，runner 可用内存为 500 MB，具体见这里。你可以点击你的头像 -&gt; Settings -&gt; Billing and plans -&gt; Plans and usage 页面中的 Usage this month 部分看到你当前已使用的分钟数。\n\n在 Actions 页面下查看运行记录。\n点进一个运行记录，可查看运行日志。\n一些其他问题执行成功，但 html 空白我之前用的主题是好几年前的旧版本了，使用的也是很老的 node 版本（12？）。这次我先是直接使用了比较新的 20 版本。但是生成后发现 html 全是空白的。我 3 年前折腾的时候也遇到过这个问题，当时就是 node 和 hexo 版本不兼容，node 版本太高，然后选择降级 node。现在应该也是这个问题，但是这次我选择的是升级 hexo 版本（注意不是 hexo-cli 版本），hexo 与 node 的版本兼容关系见 Node.js 版本限制。\nhexo 的版本在 package.json 里指定，你可以在里面找到你当前的版本，比如我当前就是 3.4.4 ：\n在 package.json 中检查你的 hexo 版本。\nGitHub 上的一个 issue 讨论说 TA 直接升级 hexo 就行了，但是我想其他依赖可能也需要升级，所以直接用 hexo init 来生成一份最新的 package.json ，然后与我现在的进行对照合并，形成一个最新版本的依赖。然后 npm i 。\n 新的 package.json\n\n123456789101112131415161718192021222324252627282930313233&#123;  &quot;name&quot;: &quot;hexo-site&quot;,  &quot;version&quot;: &quot;0.0.0&quot;,  &quot;private&quot;: true,  &quot;scripts&quot;: &#123;    &quot;build&quot;: &quot;hexo generate&quot;,    &quot;clean&quot;: &quot;hexo clean&quot;,    &quot;deploy&quot;: &quot;hexo deploy&quot;,    &quot;server&quot;: &quot;hexo server&quot;  &#125;,  &quot;hexo&quot;: &#123;    &quot;version&quot;: &quot;7.3.0&quot;  &#125;,  &quot;dependencies&quot;: &#123;    &quot;hexo&quot;: &quot;^7.0.0&quot;,    &quot;hexo-generator-archive&quot;: &quot;^2.0.0&quot;,    &quot;hexo-generator-category&quot;: &quot;^2.0.0&quot;,    &quot;hexo-generator-index&quot;: &quot;^3.0.0&quot;,    &quot;hexo-generator-tag&quot;: &quot;^2.0.0&quot;,    &quot;hexo-renderer-ejs&quot;: &quot;^2.0.0&quot;,    &quot;hexo-renderer-marked&quot;: &quot;^6.0.0&quot;,    &quot;hexo-renderer-stylus&quot;: &quot;^3.0.0&quot;,    &quot;hexo-server&quot;: &quot;^3.0.0&quot;,    &quot;hexo-deployer-git&quot;: &quot;^4.0.0&quot;,    &quot;hexo-generator-feed&quot;: &quot;^3.0.0&quot;,    &quot;hexo-generator-json-content&quot;: &quot;^3.0.1&quot;,    &quot;hexo-generator-sitemap&quot;: &quot;^1.2.0&quot;,    &quot;hexo-inject&quot;: &quot;^1.0.0&quot;,    &quot;hexo-renderer-kramed&quot;: &quot;^0.1.4&quot;,    &quot;hexo-renderer-mathjax&quot;: &quot;^0.6.0&quot;,    &quot;hexo-wordcount&quot;: &quot;^3.0.2&quot;  &#125;&#125;\n\n\n对于主题的依赖，是按照文档直接安装最新版本，然后 npm i 。此外，如果你对主题做了一些改动，记得也要应用这些改动。记得先备份下主题的 _config.yml ，然后安装新版本后，将该文件替换掉。\n最后 hexo d -g 验证下，应该就好了。\nCNAME 和 ads.txt 空白我的博客使用了自定义域名 alanlee.fun，第一次提交后发现通过这个域名访问不到了，显示不是 GitHub Page 站点，然后我通过 secsilm.github.io 却可以访问，这个就证明部署是没问题的，问题应该出在 CNAME 文件上。CNAME 文件用于指定自定义域名，里面写上你的域名即可，比如我的 alanlee.fun 。我点进去 prd 仓库看了下发现这个文件是空的，当时用于设置 Google ads 的 ads.txt 也是空的。\n这就很奇怪了。按理说这些文件放在 dev 仓库根目录下的 source 里即可，我的也正常放置了。我 Google 了一圈发现有人说得放到主题目录下的 source 目录。说实话我有点不信，但是死马当活马医，我先把 CNAME 复制了一份到主题目录下的 source 目录，然后 hexo d -g ，结果发现还真有了，正常了。顺带着 ads.txt 也正常了，说明应该不是这个问题。不过我也没再继续深究，挺神奇的。\nReference\nHexo + github actions 自動化部署 | Winnie’s blog\n利用 GitHub Actions 实现自动化部署 Hexo 到 Github Pages\n利用 Github Actions 自动部署 Hexo 博客 | Sanonz\ntimezone - How to install tzdata on a ubuntu docker image? - Server Fault\nHow to change time-zone settings from the command line - Ask Ubuntu\nAbout billing for GitHub Actions - GitHub Docs\n\nEND","dateCreated":"2024-07-05T17:45:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2024-07-05T17:45:00+08:00","description":"本文介绍如何使用GitHub Actions自动发布Hexo博客，包括本地调试、配置密钥、设置GitHub Actions触发条件、环境配置、依赖安装及Hexo部署。文章还提供了解决可能遇到的问题（如HTML空白）的策略，使博客发布更高效。[ChatGPT 4o]","headline":"使用 GitHub Actions 自动发布 Hexo 博客","image":[null,"https://s2.loli.net/2024/07/05/w8VojuCK6Im7f1A.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/","keywords":"hexo","thumbnailUrl":"https://s2.loli.net/2024/07/05/w8VojuCK6Im7f1A.png"}</script>
+    <meta name="description" content="本文介绍如何使用GitHub Actions自动发布Hexo博客，包括本地调试、配置密钥、设置GitHub Actions触发条件、环境配置、依赖安装及Hexo部署。文章还提供了解决可能遇到的问题（如HTML空白）的策略，使博客发布更高效。[ChatGPT 4o]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="使用 GitHub Actions 自动发布 Hexo 博客">
+<meta property="og:url" content="https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文介绍如何使用GitHub Actions自动发布Hexo博客，包括本地调试、配置密钥、设置GitHub Actions触发条件、环境配置、依赖安装及Hexo部署。文章还提供了解决可能遇到的问题（如HTML空白）的策略，使博客发布更高效。[ChatGPT 4o]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2024/07/05/pmhD2MEzBsWui4Z.png">
+<meta property="og:image" content="https://s2.loli.net/2024/07/05/k3U5xLhbiuZt9rG.png">
+<meta property="og:image" content="https://s2.loli.net/2024/07/05/QT1Yf2dhjscg6WS.png">
+<meta property="og:image" content="https://s2.loli.net/2024/07/05/U8loJ4R3PwbZjvy.png">
+<meta property="og:image" content="https://s2.loli.net/2024/07/05/k25MFUjwvPdXsrV.png">
+<meta property="article:published_time" content="2024-07-05T09:45:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.192Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="hexo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2024/07/05/pmhD2MEzBsWui4Z.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2024/07/05/w8VojuCK6Im7f1A.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://s2.loli.net/2024/07/05/w8VojuCK6Im7f1A.png"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-center
+                    "
+             style="background-image:url('https://s2.loli.net/2024/07/05/w8VojuCK6Im7f1A.png');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            使用 GitHub Actions 自动发布 Hexo 博客
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2024-07-05T17:45:00+08:00">
+	
+		    2024 年 7 月 5 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E8%B0%83%E8%AF%95"><span class="toc-text">本地调试</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE-GitHub-Action"><span class="toc-text">设置 GitHub Action</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E5%AF%86%E9%92%A5"><span class="toc-text">设置密钥</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GitHub-Action-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E6%8B%86%E8%A7%A3"><span class="toc-text">GitHub Action 配置文件拆解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E8%A7%A6%E5%8F%91%E6%9D%A1%E4%BB%B6"><span class="toc-text">设置触发条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE-runner-%E9%95%9C%E5%83%8F%E5%92%8C-node-%E7%89%88%E6%9C%AC"><span class="toc-text">配置 runner 镜像和 node 版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Pull-dev-%E4%BB%93%E5%BA%93"><span class="toc-text">Pull dev 仓库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83"><span class="toc-text">配置环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96"><span class="toc-text">安装依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Hexo-%E9%83%A8%E7%BD%B2"><span class="toc-text">Hexo 部署</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E7%9A%84-GitHub-Actions-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">完整的 GitHub Actions 配置文件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%85%B6%E4%BB%96%E9%97%AE%E9%A2%98"><span class="toc-text">一些其他问题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E6%88%90%E5%8A%9F%EF%BC%8C%E4%BD%86-html-%E7%A9%BA%E7%99%BD"><span class="toc-text">执行成功，但 html 空白</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CNAME-%E5%92%8C-ads-txt-%E7%A9%BA%E7%99%BD"><span class="toc-text">CNAME 和 ads.txt 空白</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>好久没写博客了，准确来说，好久没发布博客了，写了一些，但是由于电脑环境的变化，之前的的环境都找不到了，再弄的话又挺麻烦。之前就想着要切换到 GitHub Actions 自动发布，自己只管写 markdown。趁着这次机会，有了一些集中的时间，来把这个事情搞定。</p>
+<p>在本篇文章中，我将分享如何利用 GitHub Actions 实现自动发布 Hexo 博客。这将极大地简化发布博客的流程，让你专注于内容创作，而无需手动部署。以下是具体步骤及可能遇到的问题和解决方案。</p>
+<h1 id="本地调试"><a href="#本地调试" class="headerlink" title="本地调试"></a>本地调试</h1><p>在将 GitHub Actions 配置上线之前，建议在本地进行调试，确保你可以在本地正常生成和部署页面。可以开个 docker 来模拟环境。</p>
+<h1 id="设置-GitHub-Action"><a href="#设置-GitHub-Action" class="headerlink" title="设置 GitHub Action"></a>设置 GitHub Action</h1><div class="alert warning"><p>注意下面的 action 可能会有更新版本，你写的时候可以查看下相关 action 的最新版本。</p>
+</div>
+<div class="alert info"><p>下文中 dev 仓库指你的博客源代码所在仓库，一般是私有的。prd 仓库指你的静态页面所在仓库，一般是公开的，名字叫 <code>&lt;username&gt;.github.io</code> 。</p>
+</div> 
+<h2 id="设置密钥"><a href="#设置密钥" class="headerlink" title="设置密钥"></a>设置密钥</h2><p>为了确保 GitHub Actions 能够推送代码到目标仓库，需要在 GitHub 仓库的设置中添加密钥。</p>
+<p>首先在你本机生成密钥对：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -f github-deploy-key</span><br></pre></td></tr></table></figure>
+<p>一路回车下去，当前目录下就会生成 <code>github-deploy-key</code> 和 <code>github-deploy-key.pub</code> 。</p>
+<p>然后来设置 dev 和 prd 仓库。</p>
+<ul>
+<li>对于 dev 仓库：进入仓库页面 → Settings → Secrets and variables → actions → New repository secret，Name 填 <code>HEXO_DEPLOY_PRI</code> ，Secret 填 <code>github-deploy-key</code> 的内容。</li>
+</ul>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/07/05/pmhD2MEzBsWui4Z.png" title="dev 仓库设置。" data-caption="dev 仓库设置。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2024/07/05/pmhD2MEzBsWui4Z.png" alt="dev 仓库设置。"></a><span class="caption">dev 仓库设置。</span></div>
+<ul>
+<li>对于 prd 仓库：进入仓库页面 → Settings → Deploy keys → Add deploy key，Title 填 <code>HEXO_DEPLOY_PUB</code> ，Key 填 <code>github-deploy-key.pub</code> 的内容。</li>
+</ul>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/07/05/k3U5xLhbiuZt9rG.png" title="prd 仓库设置。" data-caption="prd 仓库设置。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2024/07/05/k3U5xLhbiuZt9rG.png" alt="prd 仓库设置。"></a><span class="caption">prd 仓库设置。</span></div>
+<h2 id="GitHub-Action-配置文件拆解"><a href="#GitHub-Action-配置文件拆解" class="headerlink" title="GitHub Action 配置文件拆解"></a>GitHub Action 配置文件拆解</h2><p>我先分段讲下流程，最后再给出完整的配置文件。</p>
+<h3 id="设置触发条件"><a href="#设置触发条件" class="headerlink" title="设置触发条件"></a>设置触发条件</h3><p>当你将更改推送到 dev repo 时，会触发 GitHub Actions 进行自动部署。确保此处正确配置为你希望触发的分支：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">on:</span></span><br><span class="line">  <span class="attr">push:</span></span><br><span class="line">    <span class="attr">branches:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
+<h3 id="配置-runner-镜像和-node-版本"><a href="#配置-runner-镜像和-node-版本" class="headerlink" title="配置 runner 镜像和 node 版本"></a>配置 runner 镜像和 node 版本</h3><p>这里我们使用 ubuntu 镜像，node 版本为 <code>20.x</code> ：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">runs-on:</span> <span class="string">ubuntu-latest</span></span><br><span class="line">    <span class="attr">strategy:</span></span><br><span class="line">      <span class="attr">matrix:</span></span><br><span class="line">        <span class="attr">node-version:</span> [<span class="number">20.</span><span class="string">x</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="Pull-dev-仓库"><a href="#Pull-dev-仓库" class="headerlink" title="Pull dev 仓库"></a>Pull dev 仓库</h3><p>我们需要拉取代码以进行 build，在 GitHub Actions 中，这一步通常由 <code>actions/checkout</code> 完成：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br></pre></td></tr></table></figure>
+<h3 id="配置环境"><a href="#配置环境" class="headerlink" title="配置环境"></a>配置环境</h3><p>设置 Node.js 和 git 环境：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Use</span> <span class="string">Node.js</span> <span class="string">$&#123;&#123;</span> <span class="string">matrix.node-version</span> <span class="string">&#125;&#125;</span></span><br><span class="line">  <span class="attr">uses:</span> <span class="string">actions/setup-node@v4</span></span><br><span class="line">  <span class="attr">with:</span></span><br><span class="line">    <span class="attr">node-version:</span> <span class="string">$&#123;&#123;</span> <span class="string">matrix.node-version</span> <span class="string">&#125;&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Configuration</span> <span class="string">environment</span></span><br><span class="line">  <span class="attr">env:</span></span><br><span class="line">    <span class="attr">HEXO_DEPLOY_PRI:</span> <span class="string">$&#123;&#123;secrets.HEXO_DEPLOY_PRI&#125;&#125;</span></span><br><span class="line">  <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">    sudo timedatectl set-timezone &quot;Asia/Shanghai&quot;</span></span><br><span class="line"><span class="string">    mkdir -p ~/.ssh/</span></span><br><span class="line"><span class="string">    echo &quot;$HEXO_DEPLOY_PRI&quot; | tr -d &#x27;\r&#x27; &gt; ~/.ssh/id_rsa</span></span><br><span class="line"><span class="string">    chmod 600 ~/.ssh/id_rsa</span></span><br><span class="line"><span class="string">    ssh-keyscan github.com &gt;&gt; ~/.ssh/known_hosts</span></span><br><span class="line"><span class="string">    git config --global user.name &quot;secsilm&quot;</span></span><br><span class="line"><span class="string">    git config --global user.email &quot;secsilm@outlook.com&quot;</span></span><br></pre></td></tr></table></figure>
+<ol>
+<li>设置时区很重要。平常我们在自己电脑上部署都是 GMT+8 时区，但是执行 GitHub action 的 runner 在美国，可不是这个时区，所以我们要改下时区，否则如果你的博文地址是 <code>年/月/日</code> 这种形式的话，可能会出现有些博文访问不了的问题。</li>
+<li><p>SSH 密钥。你也可以选择使用 <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">PAT</a>（Personal Access Token）来进行验证。我看大多数都是用 ssh 进行提交。注意如果你选择 ssh，而之前你部署的时候使用的是 http，那么你需要修改 dev 目录下 <code>_config.yml</code> 中的 <code>deploy</code> 字段中的 <code>repo</code>，改为 ssh 地址，即：</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 原来是：</span></span><br><span class="line">deploy:</span><br><span class="line">  <span class="built_in">type</span>: git</span><br><span class="line">  repo: https://github.com/secsilm/secsilm.github.io.git</span><br><span class="line">  branch: master</span><br><span class="line"></span><br><span class="line"><span class="comment"># 应改为：</span></span><br><span class="line">deploy:</span><br><span class="line">  <span class="built_in">type</span>: git</span><br><span class="line">  repo: git@github.com:secsilm/secsilm.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
+<p> ssh 地址可以在你 prd 仓库的 clone 那里找到。</p>
+</li>
+</ol>
+<h3 id="安装依赖"><a href="#安装依赖" class="headerlink" title="安装依赖"></a>安装依赖</h3><p>安装 Hexo 和主题所需的依赖项：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">dependencies</span></span><br><span class="line">  <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">    npm i -g hexo-cli</span></span><br><span class="line"><span class="string">    npm ci</span></span><br><span class="line"><span class="string">    cd themes/tranquilpeak/</span></span><br><span class="line"><span class="string">    npm ci</span></span><br><span class="line"><span class="string">    npm run prod</span></span><br></pre></td></tr></table></figure>
+<p>这一步安装了 Hexo CLI 和项目的依赖项，并构建了主题。构建主题这步我发现其他人都没有，但是我这里如果没有的话就会报错，我用的是 tranquilpeak 主题，可能跟这个主题会动态生成 css 文件有关？node 我也不太懂。</p>
+<p>另外我上面使用的 <code>npm ci</code> 而不是 <code>npm i</code> ，主要区别在于前者会严格根据 <code>package-lock.json</code> 中的版本安装包，避免潜在的版本依赖问题。</p>
+<h3 id="Hexo-部署"><a href="#Hexo-部署" class="headerlink" title="Hexo 部署"></a>Hexo 部署</h3><p>这一步包括生成静态文件并将其推送到 prd 仓库：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Deploy</span> <span class="string">hexo</span></span><br><span class="line">  <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">    hexo clean</span></span><br><span class="line"><span class="string">    hexo d -g</span></span><br></pre></td></tr></table></figure>
+<p>这步我看有些人用的是第三方的 action，你感兴趣的话也可以找找看。</p>
+<h3 id="完整的-GitHub-Actions-配置文件"><a href="#完整的-GitHub-Actions-配置文件" class="headerlink" title="完整的 GitHub Actions 配置文件"></a>完整的 GitHub Actions 配置文件</h3><p>以下是完整的 GitHub Actions 配置文件，将这个完整的配置文件保存到 dev 仓库下的 <code>.github/workflows/deploy.yml</code> 即可：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">Deploy</span> <span class="string">hexo</span> <span class="string">blog</span></span><br><span class="line"></span><br><span class="line"><span class="attr">on:</span></span><br><span class="line">  <span class="attr">push:</span></span><br><span class="line">    <span class="attr">branches:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">master</span></span><br><span class="line"></span><br><span class="line"><span class="attr">jobs:</span></span><br><span class="line">  <span class="attr">build:</span></span><br><span class="line">    <span class="attr">runs-on:</span> <span class="string">ubuntu-latest</span></span><br><span class="line">    <span class="attr">strategy:</span></span><br><span class="line">      <span class="attr">matrix:</span></span><br><span class="line">        <span class="attr">node-version:</span> [<span class="number">20.</span><span class="string">x</span>]</span><br><span class="line"></span><br><span class="line">    <span class="attr">steps:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Use</span> <span class="string">Node.js</span> <span class="string">$&#123;&#123;</span> <span class="string">matrix.node-version</span> <span class="string">&#125;&#125;</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/setup-node@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">node-version:</span> <span class="string">$&#123;&#123;</span> <span class="string">matrix.node-version</span> <span class="string">&#125;&#125;</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Configuration</span> <span class="string">environment</span></span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">          <span class="attr">HEXO_DEPLOY_PRI:</span> <span class="string">$&#123;&#123;secrets.HEXO_DEPLOY_PRI&#125;&#125;</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">          sudo timedatectl set-timezone &quot;Asia/Shanghai&quot;</span></span><br><span class="line"><span class="string">          mkdir -p ~/.ssh/</span></span><br><span class="line"><span class="string">          echo &quot;$HEXO_DEPLOY_PRI&quot; | tr -d &#x27;\r&#x27; &gt; ~/.ssh/id_rsa</span></span><br><span class="line"><span class="string">          chmod 600 ~/.ssh/id_rsa</span></span><br><span class="line"><span class="string">          ssh-keyscan github.com &gt;&gt; ~/.ssh/known_hosts</span></span><br><span class="line"><span class="string">          git config --global user.name &quot;secsilm&quot;</span></span><br><span class="line"><span class="string">          git config --global user.email &quot;secsilm@outlook.com&quot;</span></span><br><span class="line"><span class="string"></span>      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">dependencies</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">          npm i -g hexo-cli</span></span><br><span class="line"><span class="string">          npm ci</span></span><br><span class="line"><span class="string">          cd themes/tranquilpeak/</span></span><br><span class="line"><span class="string">          npm ci</span></span><br><span class="line"><span class="string">          npm run prod</span></span><br><span class="line"><span class="string"></span>      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Deploy</span> <span class="string">hexo</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">|</span></span><br><span class="line"><span class="string">          hexo clean</span></span><br><span class="line"><span class="string">          hexo d -g</span></span><br></pre></td></tr></table></figure>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>你可以进行一次更改提交，看看 action 是否正常执行。你可以在 GitHub Actions 页面查看每次运行的日志。</p>
+<p>一切正常的话，你就可以舍弃你的本地环境，直接在 <code>_posts</code> 目录下新建或上传博文 markdown 文件，提交，然后就等着你的新博文发布吧！我的这篇博文就是第一篇通过 action 发布的博文！🎉🎉🎉</p>
+<div class="alert warning"><p>GitHub Actions 的免费额度为每月 2000 分钟，runner 可用内存为 500 MB，具体见<a href="https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes">这里</a>。你可以点击你的头像 -&gt; Settings -&gt; Billing and plans -&gt; Plans and usage 页面中的 <code>Usage this month</code> 部分看到你当前已使用的分钟数。</p>
+</div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/07/05/QT1Yf2dhjscg6WS.png" title="在 Actions 页面下查看运行记录。" data-caption="在 Actions 页面下查看运行记录。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2024/07/05/QT1Yf2dhjscg6WS.png" alt="在 Actions 页面下查看运行记录。"></a><span class="caption">在 Actions 页面下查看运行记录。</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/07/05/U8loJ4R3PwbZjvy.png" title="点进一个运行记录，可查看运行日志。" data-caption="点进一个运行记录，可查看运行日志。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2024/07/05/U8loJ4R3PwbZjvy.png" alt="点进一个运行记录，可查看运行日志。"></a><span class="caption">点进一个运行记录，可查看运行日志。</span></div>
+<h1 id="一些其他问题"><a href="#一些其他问题" class="headerlink" title="一些其他问题"></a>一些其他问题</h1><h2 id="执行成功，但-html-空白"><a href="#执行成功，但-html-空白" class="headerlink" title="执行成功，但 html 空白"></a>执行成功，但 html 空白</h2><p>我之前用的主题是好几年前的旧版本了，使用的也是很老的 node 版本（12？）。这次我先是直接使用了比较新的 <code>20</code> 版本。但是生成后发现 html 全是空白的。我 3 年前折腾的时候也遇到过这个问题，<a href="https://alanlee.fun/2021/02/28/hexo-empty-html/">当时</a>就是 <strong>node 和 hexo 版本不兼容</strong>，node 版本太高，然后选择降级 node。现在应该也是这个问题，但是这次我选择的是升级 hexo 版本（<strong>注意不是 hexo-cli 版本</strong>），hexo 与 node 的版本兼容关系见 <a href="https://hexo.io/zh-cn/docs/#Node-js-%E7%89%88%E6%9C%AC%E9%99%90%E5%88%B6">Node.js 版本限制</a>。</p>
+<p>hexo 的版本在 <code>package.json</code> 里指定，你可以在里面找到你当前的版本，比如我当前就是 <code>3.4.4</code> ：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2024/07/05/k25MFUjwvPdXsrV.png" title="在 package.json 中检查你的 hexo 版本。" data-caption="在 package.json 中检查你的 hexo 版本。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2024/07/05/k25MFUjwvPdXsrV.png" alt="在 package.json 中检查你的 hexo 版本。"></a><span class="caption">在 package.json 中检查你的 hexo 版本。</span></div>
+<p>GitHub 上的一个 issue 讨论说 TA 直接升级 hexo 就行了，但是我想其他依赖可能也需要升级，所以直接用 <code>hexo init</code> 来生成一份最新的 <code>package.json</code> ，然后与我现在的进行对照合并，形成一个最新版本的依赖。然后 <code>npm i</code> 。</p>
+<details><summary> 新的 <code>package.json</code></summary>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;hexo-site&quot;</span>,</span><br><span class="line">  <span class="string">&quot;version&quot;</span>: <span class="string">&quot;0.0.0&quot;</span>,</span><br><span class="line">  <span class="string">&quot;private&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">  <span class="string">&quot;scripts&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;build&quot;</span>: <span class="string">&quot;hexo generate&quot;</span>,</span><br><span class="line">    <span class="string">&quot;clean&quot;</span>: <span class="string">&quot;hexo clean&quot;</span>,</span><br><span class="line">    <span class="string">&quot;deploy&quot;</span>: <span class="string">&quot;hexo deploy&quot;</span>,</span><br><span class="line">    <span class="string">&quot;server&quot;</span>: <span class="string">&quot;hexo server&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&quot;hexo&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;version&quot;</span>: <span class="string">&quot;7.3.0&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&quot;dependencies&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;hexo&quot;</span>: <span class="string">&quot;^7.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-generator-archive&quot;</span>: <span class="string">&quot;^2.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-generator-category&quot;</span>: <span class="string">&quot;^2.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-generator-index&quot;</span>: <span class="string">&quot;^3.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-generator-tag&quot;</span>: <span class="string">&quot;^2.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-renderer-ejs&quot;</span>: <span class="string">&quot;^2.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-renderer-marked&quot;</span>: <span class="string">&quot;^6.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-renderer-stylus&quot;</span>: <span class="string">&quot;^3.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-server&quot;</span>: <span class="string">&quot;^3.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-deployer-git&quot;</span>: <span class="string">&quot;^4.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-generator-feed&quot;</span>: <span class="string">&quot;^3.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-generator-json-content&quot;</span>: <span class="string">&quot;^3.0.1&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-generator-sitemap&quot;</span>: <span class="string">&quot;^1.2.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-inject&quot;</span>: <span class="string">&quot;^1.0.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-renderer-kramed&quot;</span>: <span class="string">&quot;^0.1.4&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-renderer-mathjax&quot;</span>: <span class="string">&quot;^0.6.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hexo-wordcount&quot;</span>: <span class="string">&quot;^3.0.2&quot;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</details>
+
+<p>对于主题的依赖，是按照文档直接安装最新版本，然后 <code>npm i</code> 。此外，如果你对主题做了一些改动，记得也要应用这些改动。记得先备份下主题的 <code>_config.yml</code> ，然后安装新版本后，将该文件替换掉。</p>
+<p>最后 <code>hexo d -g</code> 验证下，应该就好了。</p>
+<h2 id="CNAME-和-ads-txt-空白"><a href="#CNAME-和-ads-txt-空白" class="headerlink" title="CNAME 和 ads.txt 空白"></a>CNAME 和 ads.txt 空白</h2><p>我的博客使用了自定义域名 <a href="https://alanlee.fun/">alanlee.fun</a>，第一次提交后发现通过这个域名访问不到了，显示不是 GitHub Page 站点，然后我通过 <a href="https://secsilm.github.io/">secsilm.github.io</a> 却可以访问，这个就证明部署是没问题的，问题应该出在 CNAME 文件上。CNAME 文件用于指定自定义域名，里面写上你的域名即可，比如我的 <code>alanlee.fun</code> 。我点进去 prd 仓库看了下发现这个文件是空的，当时用于设置 Google ads 的 <code>ads.txt</code> 也是空的。</p>
+<p>这就很奇怪了。按理说这些文件放在 dev 仓库根目录下的 <code>source</code> 里即可，我的也正常放置了。我 Google 了一圈发现有人说得放到主题目录下的 <code>source</code> 目录。说实话我有点不信，但是死马当活马医，我先把 CNAME 复制了一份到主题目录下的 <code>source</code> 目录，然后 <code>hexo d -g</code> ，结果发现还真有了，正常了。顺带着 <code>ads.txt</code> 也正常了，说明应该不是这个问题。不过我也没再继续深究，挺神奇的。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://op30132.github.io/2020/02/05/github-action/">Hexo + github actions 自動化部署 | Winnie’s blog</a></li>
+<li><a href="https://hackergavin.com/2024/01/11/hexo-automate-deploy/">利用 GitHub Actions 实现自动化部署 Hexo 到 Github Pages</a></li>
+<li><a href="https://sanonz.github.io/2020/deploy-a-hexo-blog-from-github-actions/">利用 Github Actions 自动部署 Hexo 博客 | Sanonz</a></li>
+<li><a href="https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image">timezone - How to install tzdata on a ubuntu docker image? - Server Fault</a></li>
+<li><a href="https://askubuntu.com/questions/3375/how-to-change-time-zone-settings-from-the-command-line/3381#3381">How to change time-zone settings from the command line - Ask Ubuntu</a></li>
+<li><a href="https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes">About billing for GitHub Actions - GitHub Docs</a></li>
+</ul>
+<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/hexo/" rel="tag">hexo</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/11/02/korean-unicode-normalization/"
+                    data-tooltip="记一个韩文字符规范化的坑"
+                    aria-label="上一篇: 记一个韩文字符规范化的坑"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/23/llama1/"
+                    data-tooltip="关于 LLaMA 1"
+                    aria-label="下一篇: 关于 LLaMA 1"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/11/02/korean-unicode-normalization/"
+                    data-tooltip="记一个韩文字符规范化的坑"
+                    aria-label="上一篇: 记一个韩文字符规范化的坑"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/23/llama1/"
+                    data-tooltip="关于 LLaMA 1"
+                    aria-label="下一篇: 关于 LLaMA 1"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/';
+              
+            this.page.identifier = '2024/07/05/deploy-hexo-with-github-action/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

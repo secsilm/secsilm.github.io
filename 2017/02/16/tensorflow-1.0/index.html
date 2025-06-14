@@ -1,0 +1,748 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>TensorFlow 1.0 发布 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。\nNOW\n首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Google Research Blog 也于昨天在 博客 中公布了这一消息。\n\n这里写图片描述\n\n改动这一版本的改动还是比较大的，很多旧的 API 都已经不再使用。在 博客 中可以看到 1.0 版本更快、更灵活、更稳定（production-ready） 。TensorFlow 1.0 版本保证 Python API 的稳定性，即使以后添加新的特性也不用担心会破坏现有代码。\n博客中提到的其他新版本两点（为避免翻译造成的偏差，我就直接引用原文了）：\n\nPython APIs have been changed to resemble NumPy more closely. For this and other backwards-incompatible changes made to support API stability going forward, please use our handy migration guide and conversion script.\nExperimental APIs for Java and Go\nHigher-level API modules tf.layers, tf.metrics, and tf.losses - brought over from tf.contrib.learn after incorporating skflow and TF Slim\nExperimental release of XLA, a domain-specific compiler for TensorFlow graphs, that targets CPUs and GPUs. XLA is rapidly evolving - expect to see more progress in upcoming releases.\nIntroduction of the TensorFlow Debugger (tfdbg), a command-line interface and API for debugging live TensorFlow programs.\nNew Android demos for object detection and localization, and camera-based image stylization.\nInstallation improvements: Python 3 docker images have been added, and TensorFlow’s pip packages are now PyPI compliant. This means TensorFlow can now be installed with a simple invocation of pip install tensorflow.\n\n\n升级升级很简单（在这里感谢一下为简化 TensorFlow 安装过程的工程师们），就是一行语句，这也是安装命令：\n对于 GPU 版本：\n1pip3 install --upgrade tensorflow-gpu\n对于 CPU 版本：\n1pip3 install --upgrade tensorflow\n升级过程\n右键在新标签页打开图片可查看大图\n输入完回车就开始升级过程，会下载并卸载重装一些必要的包，时间长短视网速而定。\n\n更新你的旧代码有两种方法更新你的代码，一种就是我上面提到的用脚本自动升级，另一种就是手动更改，具体可以参考 这里 。\n使用脚本由于版本改动较大，TensorFlow 甚至出了一个 tf_upgrade.py 脚本来帮助你更新代码，从 这里 获取这份代码，或者点击 这里 直接下载。\n对于更新单个文件，可以使用下面的命令：\n1python tf_upgrade.py --infile InputFile --outfile OutputFile\n其中 InputFile 和 OutputFile 分别为你的旧代码和新代码，根据你的文件名做相应的替换。例如我的旧代码是 test.py，将要生成的新代码是 test_1.0.py，则：\n1python tf_upgrade.py --infile test.py --outfile test_1.0.py\n同时，tf_upgrade.py 会生成一个名为 report.txt 的文件，该文件记录了对旧文件做的所有改动，同时也给出了可能需要你手动更改的建议。\n对于文件夹（目录），和单个文件类似，使用\n1python tf_upgrade.py --intree InputDir --outtree OutputDir\n例如，我的 programs 位于 /home/user/cool 目录，新的生成的文件我想放到 /home/user/cool_1.0 里，则\n1python tf_upgrade.py --intree /home/user/cool --outtree /home/user/cool_1.0\n手动更改除了使用脚本自动更新外，还可以使用手动替换的方式。需要替换的东西有很多，我就不一一列举了，大家可以参考 官网 。\n\n\nEND","dateCreated":"2017-02-16T10:46:55+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2017-02-16T10:46:55+08:00","description":"前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。\nNOW\n首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Google Research Blog 也于昨天在 博客 中公布了这一消息。","headline":"TensorFlow 1.0 发布","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/02/16/tensorflow-1.0/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/02/16/tensorflow-1.0/","keywords":"TensorFlow"}</script>
+    <meta name="description" content="前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。 NOW 首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Google Research Blog 也于昨天在 博客 中公布了这一消息。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="TensorFlow 1.0 发布">
+<meta property="og:url" content="https://alanlee.fun/2017/02/16/tensorflow-1.0/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="前面写了 TensorFlow 在Windows上的安装教程，当时版本还是 0.12 。 NOW 首届 TensorFlow 开发者大会（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，TensorFlow 1.0 版本发布。Google Research Blog 也于昨天在 博客 中公布了这一消息。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20170216155804609?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://img.blog.csdn.net/20170216162553891?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="article:published_time" content="2017-02-16T02:46:55.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.198Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="TensorFlow">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20170216155804609?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            TensorFlow 1.0 发布
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-02-16T10:46:55+08:00">
+	
+		    2017 年 2 月 16 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>前面写了 <a href="https://secsilm.github.io/2016/12/01/installing-tensorflow/">TensorFlow 在Windows上的安装教程</a>，当时版本还是 0.12 。</p>
+<p>NOW</p>
+<p>首届 <a href="https://events.withgoogle.com/tensorflow-dev-summit/watch-the-videos/#content">TensorFlow 开发者大会</a>（TensorFlow Dev Summit）已于美国时间昨日召开，YouTube 还进行了直播。更重要的是，<strong>TensorFlow 1.0</strong> 版本发布。Google Research Blog 也于昨天在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html">博客</a> 中公布了这一消息。</p>
+<span id="more"></span>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20170216155804609?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20170216155804609?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<hr>
+<h2 id="改动"><a href="#改动" class="headerlink" title="改动"></a>改动</h2><p>这一版本的改动还是比较大的，很多旧的 API 都已经不再使用。在 <a href="https://research.googleblog.com/2017/02/announcing-tensorflow-10.html">博客</a> 中可以看到 1.0 版本更快、更灵活、更稳定（production-ready） 。TensorFlow 1.0 版本保证 Python API 的稳定性，即使以后添加新的特性也不用担心会破坏现有代码。</p>
+<p>博客中提到的其他新版本两点（<em>为避免翻译造成的偏差，我就直接引用原文了</em>）：</p>
+<ul>
+<li>Python APIs have been changed to resemble NumPy more closely. For this and other backwards-incompatible changes made to support API stability going forward, please use our handy <a href="https://tensorflow.org/install/migration">migration guide</a> and <a href="https://github.com/tensorflow/tensorflow/tree/r1.0/tensorflow/tools/compatibility">conversion script</a>.</li>
+<li>Experimental APIs for <a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/java">Java</a> and <a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/go">Go</a></li>
+<li>Higher-level API modules tf.layers, tf.metrics, and tf.losses - brought over from <a href="https://www.tensorflow.org/get_started/tflearn">tf.contrib.learn</a> after incorporating <a href="https://github.com/tensorflow/skflow">skflow</a> and <a href="https://github.com/tensorflow/models/blob/master/inception/inception/slim/README.md">TF Slim</a></li>
+<li>Experimental release of <a href="http://tensorflow.org/performance/xla">XLA</a>, a domain-specific compiler for TensorFlow graphs, that targets CPUs and GPUs. XLA is rapidly evolving - expect to see more progress in upcoming releases.</li>
+<li>Introduction of the TensorFlow Debugger (<a href="https://www.tensorflow.org/programmers_guide/debugger">tfdbg</a>), a command-line interface and API for debugging live TensorFlow programs.</li>
+<li>New <a href="https://github.com/tensorflow/tensorflow/tree/r1.0/tensorflow/examples/android">Android demos</a> for object detection and localization, and camera-based image stylization.</li>
+<li><a href="https://www.tensorflow.org/install">Installation</a> improvements: Python 3 docker images have been added, and TensorFlow’s pip packages are now PyPI compliant. This means TensorFlow can now be installed with a simple invocation of <code>pip install tensorflow</code>.</li>
+</ul>
+<hr>
+<h2 id="升级"><a href="#升级" class="headerlink" title="升级"></a>升级</h2><p>升级很简单（在这里感谢一下为简化 TensorFlow 安装过程的工程师们），就是一行语句，这也是安装命令：</p>
+<p>对于 GPU 版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip3 install --upgrade tensorflow-gpu</span><br></pre></td></tr></table></figure>
+<p>对于 CPU 版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip3 install --upgrade tensorflow</span><br></pre></td></tr></table></figure>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20170216162553891?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="升级过程" data-caption="升级过程" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20170216162553891?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="升级过程"></a><span class="caption">升级过程</span></div>
+<p><em>右键在新标签页打开图片可查看大图</em></p>
+<p>输入完回车就开始升级过程，会下载并卸载重装一些必要的包，时间长短视网速而定。</p>
+<hr>
+<h2 id="更新你的旧代码"><a href="#更新你的旧代码" class="headerlink" title="更新你的旧代码"></a>更新你的旧代码</h2><p>有两种方法更新你的代码，一种就是我上面提到的用脚本自动升级，另一种就是手动更改，具体可以参考 <a href="https://www.tensorflow.org/install/migration">这里</a> 。</p>
+<h3 id="使用脚本"><a href="#使用脚本" class="headerlink" title="使用脚本"></a>使用脚本</h3><p>由于版本改动较大，TensorFlow 甚至出了一个 <code>tf_upgrade.py</code> 脚本来帮助你更新代码，从 <a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/compatibility/tf_upgrade.py">这里</a> 获取这份代码，或者点击 <a href="http://download.csdn.net/detail/u010099080/9756279">这里</a> 直接下载。</p>
+<p>对于更新单个文件，可以使用下面的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --infile InputFile --outfile OutputFile</span><br></pre></td></tr></table></figure>
+<p>其中 <code>InputFile</code> 和 <code>OutputFile</code> 分别为你的旧代码和新代码，根据你的文件名做相应的替换。例如我的旧代码是 <code>test.py</code>，将要生成的新代码是 <code>test_1.0.py</code>，则：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --infile test.py --outfile test_1.0.py</span><br></pre></td></tr></table></figure>
+<p>同时，<code>tf_upgrade.py</code> 会生成一个名为 <code>report.txt</code> 的文件，该文件记录了对旧文件做的所有改动，同时也给出了可能需要你手动更改的建议。</p>
+<p>对于文件夹（目录），和单个文件类似，使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --intree InputDir --outtree OutputDir</span><br></pre></td></tr></table></figure>
+<p>例如，我的 programs 位于 <code>/home/user/cool</code> 目录，新的生成的文件我想放到 <code>/home/user/cool_1.0</code> 里，则</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python tf_upgrade.py --intree /home/user/cool --outtree /home/user/cool_1.0</span><br></pre></td></tr></table></figure>
+<h3 id="手动更改"><a href="#手动更改" class="headerlink" title="手动更改"></a>手动更改</h3><p>除了使用脚本自动更新外，还可以使用手动替换的方式。需要替换的东西有很多，我就不一一列举了，大家可以参考 <a href="https://www.tensorflow.org/install/migration">官网</a> 。</p>
+<hr>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%B9%E5%8A%A8"><span class="toc-text">改动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7"><span class="toc-text">升级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E4%BD%A0%E7%9A%84%E6%97%A7%E4%BB%A3%E7%A0%81"><span class="toc-text">更新你的旧代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%84%9A%E6%9C%AC"><span class="toc-text">使用脚本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E6%9B%B4%E6%94%B9"><span class="toc-text">手动更改</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><!-- more -->
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/02/26/tensorflow-cudnn-version/"
+                    data-tooltip="Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
+                    aria-label="上一篇: Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                    aria-label="下一篇: TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/02/26/tensorflow-cudnn-version/"
+                    data-tooltip="Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
+                    aria-label="上一篇: Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2016/12/28/tensorflow-cnn-no-tensorboard/"
+                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                    aria-label="下一篇: TensorFlow 中的卷积神经网络 CNN - 无TensorBoard版"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/16/tensorflow-1.0/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2017/02/16/tensorflow-1.0/';
+              
+            this.page.identifier = '2017/02/16/tensorflow-1.0/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

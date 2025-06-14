@@ -1,0 +1,777 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>理解最长公共子序列算法 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n最近看一篇 Google 的论文：《Encode, Tag, Realize: High-Precision Text Editing》，看源码的时候发现其前期预处理的时候用了最长公共子序列（Longest Common Subsequence，LCS）算法来生成词汇表。之前只是知道这个算法，但是具体解法并不是很清楚。如果你经常刷题，可能会很熟悉了，但是我对刷题一直保持排斥态度，所以不太懂。趁这个机会来看看这个 LCS。\n定义根据 Wikipedia：\n\nThe longest common subsequence (LCS) problem is the problem of finding the longest subsequence common to all sequences in a set of sequences (often just two sequences). \n\n也就是说寻找多个序列（通常是两个）之间的最长的公共子序列，输入是多个序列，输出是一个子序列。还有一个和这个很相似的问题：最长公共子串（Longest Common Substring），和 LCS 的区别就在于子序列不要求连续，而子串是要求连续的，即 subsequence 和 substring 的区别。例如 ABCBDAB 和 BDCABA，最长公共子序列是 BCBA，就是不连续的。\n解法其解法大致有两种：穷举法和动态规划法。\n其实还有一种方法是递归法，动态规划法是对其的一种改进（也使用了递归），就暂且不说这种方法了。\n以下均以寻找两个字符串之间的 LCS 为例。\n穷举穷举是最直接的方法，也是最耗时的。其思想是：先找到两个字符串中较短的字符串，找出其所有子序列，然后依次查看每个子序列是否在较长字符串中，最后得出一个公共子序列列表，进而得到最长的公共子序列。\n主函数如下：\n\n为了尽量保持文章简洁，其他辅助函数未列出，完整代码见文章底部 GitHub 地址。\n\n12345678910111213def lcs_brute_force(s1, s2):    if len(s1) &lt; len(s2):        short = s1        long_ = s2    else:        short = s2        long_ = s1    cs = []    for sub in get_all_subsequences(short):        if is_subsequence(sub, long_):            cs.append(sub)    max_len = len(max(cs, key=len))    return (s for s in cs if len(s) == max_len)\n一个长度为 $n$ 的字符串，共有 $2^n$ 个子序列：\nC_n^0 + C_n^1 + C_n^2 + \\cdots + C_n^n = \\sum_{i=0}^n C_n^i = 2^n假设字符串 $X$ 的长度为 $m$，字符串 $Y$ 的长度为 $n$，且 $m &gt; n$，那么寻找其 LCS 就需要先找到 $Y$ 的所有子序列，然后去 $X$ 中查。显然时间复杂度为 $O(2^n)$，指数级的复杂度，这很明显不是一个适合大规模应用的算法。\n动态规划动态规划法（Dynamic Programming，DP）要含蓄得多，并不直接大海捞针式地穷举所有可能，而是根据将这个大问题分解为很多小问题，逐个解决小问题从而得到大问题的解。那么在这里，「小问题」就指的是诸多子串之间的 LCS。\n总体上来说，动态规划法的思路分两步走：构建和重建。构建是要构建一个表 $T$，记录 $X_{:i}$ 和 $Y_{:j}$ 之间的 LCS 长度。重建是要根据表 $T$ 去重建恢复具体的 LCS，即具体的字符。\n构建构建部分是基于以下几点的：\n\n若 $X_i = Y_j = t$，则 $t$ 是 $X_{:i}$ 和 $Y_{:j}$ 之间的 LCS 的最后一个字符。\n若 $X_i \\neq Y_j$，则寻找 $X_{:(i-1)}$ 和 $Y_{:j}$，或者 $X_{:i}$ 和 $Y_{:(j-1)}$ 之间的 LCS，这两者之间的最长者，即为 $X$ 和 $Y$ 的 LCS。\n\n可以看到这其实是一个递归的思路，每次都寻找 $X$ 和 $Y$ 中相等元素加入 LCS，LCS 的长度 +1。这一步结束之后便会生成一个 $(m+1) \\times (n+1)$ 的表 $T$，这个表的第一行和第一列是初始值，均为 $0$，其他值记录的是相应子串之间的 LCS 长度。\n代码实现如下（来自 lasertagger）：\n123456789101112def lcs_table(source, target):    &quot;&quot;&quot;构建表 T。&quot;&quot;&quot;    rows = len(source)    cols = len(target)    lcs_table = [[0] * (cols + 1) for _ in range(rows + 1)]    for i in range(1, rows + 1):        for j in range(1, cols + 1):            if source[i - 1] == target[j - 1]:                lcs_table[i][j] = lcs_table[i - 1][j - 1] + 1            else:                lcs_table[i][j] = max(lcs_table[i - 1][j], lcs_table[i][j - 1])    return lcs_table\n为了更直观的展示构建过程，我制作了一个 GIF 来说明：\n\nsource 为 $X$，target 为 $Y$。\n\nconstruct table\n重建也叫回溯，指从表 $T$ 的右下角开始向上回溯，重建整个 LCS。\n记 $\\text{LCS}_{X, Y}$ 为 $X$ 和 $Y$ 的之间的 LCS。\n回溯时：\n\n和构建时相同，若 $X_{i-1} = Y_{j-1} = t$，则将 $t$ 加入当前 LSC 列表，然后继续从 $T[i-1, j-1]$ 回溯，即向左上方走。\n若 $X_i \\neq Y_j$：\n若 $T[i, j-1] &gt; T[i-1, j]$，即 $\\text{LCS}_{X_{i}, Y_{j-1}} &gt; \\text{LCS}_{X_{i-1}, Y_{j}}$，说明 $\\text{LCS}_{X, Y}$ 肯定是包括 $\\text{LCS}_{X_{i}, Y_{j-1}}$ 的，所以从 $T[i, j-1]$ 处继续回溯。\n否则，从 $T[i-1, j]$ 处开始回溯。\n\n\n\n代码实现如下（改自 lasertagger）：\n1234567891011121314151617181920212223242526272829def _backtrack(table, source, target, i, j):    &quot;&quot;&quot;回溯 LCS 表来重建 LCS。Backtracks the Longest Common Subsequence table to reconstruct the LCS.  Args:    table: LCS 表，注意该表的大小为 (len(source) + 1) × (len(target) + 1)。    source: 源字符串，list 形式。    target: 目标字符串，list 形式。    i: 当前行的索引。    j: 当前列的索引。  Returns:    LCS 列表。  &quot;&quot;&quot;    if i == 0 or j == 0:        # 如果i或者j为0，则说明有一方已经是空字符串，此时直接返回空        return []    if source[i - 1] == target[j - 1]:  # 为什么不是 source[i] 和 target[j] 呢？实际上就是，因为 table 表的大小是要比实际 source 和 target 长度大 1 的，所以要减 1，不然就 index out of range 了。        # Append the aligned token to output.        # 如果 source[i - 1] 和 target[j - 1] 相等，则表示该值便是当前的 source 和 target 的 LCS 的最后一个 token，        # 然后 source 和 target 分别往前推一个 token 再去寻找，也是一个递归的过程        return _backtrack(table, source, target, i - 1, j - 1) + [target[j - 1]]    if table[i][j - 1] &gt; table[i - 1][j]:        # 如果不相等的话，接下来就是寻找相等的元素，这些元素才可能属于 LCS。        # 如果不等且 source[:i] 和 target[:j-1] 的 LCS 长度，大于 source[:i-1] 和 target[:j] 的 LCS 长度，        # 那么就从 source[:i] 和 target[:j-1] 寻找相等的元素        return _backtrack(table, source, target, i, j - 1)    else:        # 和上面同理        return _backtrack(table, source, target, i - 1, j)\n同样为了直观理解，我制作了一个 GIF：\n\nsource 为 $X$，target 为 $Y$。\n\nreconstruct\nLCS 并不一定唯一以上图中的两个字符串为例，ABCBDAB 和 BDCABA 之间的 LCS 并不唯一，共有 [&#39;BDAB&#39;, &#39;BCAB&#39;, &#39;BCBA&#39;] 三个，穷举法可以都找到。然而上述的动态规划法却只能找到其中一个。\n为什么？\n两个数的大小存在三种情况，然而在判断 $T[i, j-1]$ 和 $T[i-1, j]$ 的大小时，上述算法只是比较前者是否大于后者，而相等和小于的情况被同等对待。这就造成了不能找到全部 LCS 的情况。\n若 $T[i, j-1] = T[i-1, j]$，说明 $\\text{LCS}_{X_{i}, Y_{j-1}}$ 和 $\\text{LCS}_{X_{i-1}, Y_{j}}$ 都有可能是 $\\text{LCS}_{X, Y}$ 的一部分，因此需要分两条路走，然后合并两条路得到的结果，这样就可以得到全部的 LCS。\n构建部分不用改动，重建部分我用一个简单的树结构来存储 LCS 字符，对上述结构进行了改造：\n123456789101112131415161718192021222324252627class Tree:    &quot;&quot;&quot;一个简单的树结构。&quot;&quot;&quot;    def __init__(self, data=None, left=None, right=None):        self.data = data        self.left = left        self.right = rightdef backtrack(table, source, target, i, j):    &quot;&quot;&quot;改造的回溯函数。&quot;&quot;&quot;    tree = Tree()    if i == 0 or j == 0:        return Tree()    if source[i - 1] == target[j - 1]:        tree.data = target[j - 1]        tree.left = backtrack(table, source, target, i - 1, j - 1)        return Tree(            data=target[j - 1], left=backtrack(table, source, target, i - 1, j - 1)        )    if table[i][j - 1] &gt; table[i - 1][j]:        return Tree(left=backtrack(table, source, target, i, j - 1))    elif table[i][j - 1] == table[i - 1][j]:        left = backtrack(table, source, target, i, j - 1)        right = backtrack(table, source, target, i - 1, j)        return Tree(left=left, right=right)    else:        return Tree(right=backtrack(table, source, target, i - 1, j))\n重建完这个「树」之后，对齐进行类似 NLR（前序）的遍历即可得到全部 LCS：\n\n由于节点默认的 data 为 None，因此遍历结束后需要去除这些 None，详细可见 GitHub 完整代码。\n\n12345678def traverse_tree(root):    if root is None:        return []    if root.left == None and root.right == None:        return [str(root.data)]    return [        str(root.data) + p for p in traverse_tree(root.left) + traverse_tree(root.right)    ]\n完整代码见 GitHub。\nReference\nLongest common subsequence - Algorithmist\n最长公共子序列 | 编程之法：面试和算法心得\nLongest Common Subsequence Simulation (LCS) @jon.andika\nComplexity\nBinomial Expansion - Combinatorics\n\nEND","dateCreated":"2020-04-07T14:21:19+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-04-07T14:21:19+08:00","description":"\n最近看一篇 Google 的论文：《Encode, Tag, Realize: High-Precision Text Editing》，看源码的时候发现其前期预处理的时候用了最长公共子序列（Longest Common Subsequence，LCS）算法来生成词汇表。之前只是知道这个算法，但是具体解法并不是很清楚。如果你经常刷题，可能会很熟悉了，但是我对刷题一直保持排斥态度，所以不太懂。趁这个机会来看看这个 LCS。","headline":"理解最长公共子序列算法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/04/07/understanding-lcs/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/04/07/understanding-lcs/","keywords":"NLP"}</script>
+    <meta name="description" content="最近看一篇 Google 的论文：《Encode, Tag, Realize: High-Precision Text Editing》，看源码的时候发现其前期预处理的时候用了最长公共子序列（Longest Common Subsequence，LCS）算法来生成词汇表。之前只是知道这个算法，但是具体解法并不是很清楚。如果你经常刷题，可能会很熟悉了，但是我对刷题一直保持排斥态度，所以不太懂。趁这">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="理解最长公共子序列算法">
+<meta property="og:url" content="https://alanlee.fun/2020/04/07/understanding-lcs/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="最近看一篇 Google 的论文：《Encode, Tag, Realize: High-Precision Text Editing》，看源码的时候发现其前期预处理的时候用了最长公共子序列（Longest Common Subsequence，LCS）算法来生成词汇表。之前只是知道这个算法，但是具体解法并不是很清楚。如果你经常刷题，可能会很熟悉了，但是我对刷题一直保持排斥态度，所以不太懂。趁这">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/04/07/XpuyFOMH6jJYdxT.gif">
+<meta property="og:image" content="https://i.loli.net/2020/04/07/prjqf28TRKsJbBO.gif">
+<meta property="article:published_time" content="2020-04-07T06:21:19.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.200Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="NLP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/07/XpuyFOMH6jJYdxT.gif">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            理解最长公共子序列算法
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-04-07T14:21:19+08:00">
+	
+		    2020 年 4 月 7 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89"><span class="toc-text">定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E6%B3%95"><span class="toc-text">解法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A9%B7%E4%B8%BE"><span class="toc-text">穷举</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92"><span class="toc-text">动态规划</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA"><span class="toc-text">构建</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%87%8D%E5%BB%BA"><span class="toc-text">重建</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LCS-%E5%B9%B6%E4%B8%8D%E4%B8%80%E5%AE%9A%E5%94%AF%E4%B8%80"><span class="toc-text">LCS 并不一定唯一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81"><span class="toc-text">完整代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>最近看一篇 Google 的论文：《<a href="https://arxiv.org/pdf/1909.01187.pdf">Encode, Tag, Realize: High-Precision Text Editing</a>》，看源码的时候发现其前期预处理的时候用了最长公共子序列（Longest Common Subsequence，LCS）算法来生成词汇表。之前只是知道这个算法，但是具体解法并不是很清楚。如果你经常刷题，可能会很熟悉了，但是我对刷题一直保持排斥态度，所以不太懂。趁这个机会来看看这个 LCS。<br><span id="more"></span></p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>根据 <a href="https://en.wikipedia.org/wiki/Longest_common_subsequence_problem">Wikipedia</a>：</p>
+<blockquote>
+<p>The longest common subsequence (LCS) problem is the problem of finding the longest subsequence common to all sequences in a set of sequences (often just two sequences). </p>
+</blockquote>
+<p>也就是说寻找多个序列（通常是两个）之间的最长的公共子序列，输入是多个序列，输出是一个子序列。还有一个和这个很相似的问题：最长公共子串（Longest Common Substring），和 LCS 的区别就在于子序列不要求连续，而子串是要求连续的，即 subsequence 和 substring 的区别。例如 <code>ABCBDAB</code> 和 <code>BDCABA</code>，最长公共子序列是 <code>BCBA</code>，就是不连续的。</p>
+<h2 id="解法"><a href="#解法" class="headerlink" title="解法"></a>解法</h2><p>其解法大致有两种：穷举法和动态规划法。</p>
+<p>其实还有一种方法是递归法，动态规划法是对其的一种改进（也使用了递归），就暂且不说这种方法了。</p>
+<p>以下均以寻找两个字符串之间的 LCS 为例。</p>
+<h3 id="穷举"><a href="#穷举" class="headerlink" title="穷举"></a>穷举</h3><p>穷举是最直接的方法，也是最耗时的。其思想是：先找到两个字符串中较短的字符串，找出其所有子序列，然后依次查看每个子序列是否在较长字符串中，最后得出一个公共子序列列表，进而得到最长的公共子序列。</p>
+<p>主函数如下：</p>
+<blockquote>
+<p>为了尽量保持文章简洁，其他辅助函数未列出，完整代码见文章底部 GitHub 地址。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">lcs_brute_force</span>(<span class="params">s1, s2</span>):</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(s1) &lt; <span class="built_in">len</span>(s2):</span><br><span class="line">        short = s1</span><br><span class="line">        long_ = s2</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        short = s2</span><br><span class="line">        long_ = s1</span><br><span class="line">    cs = []</span><br><span class="line">    <span class="keyword">for</span> sub <span class="keyword">in</span> get_all_subsequences(short):</span><br><span class="line">        <span class="keyword">if</span> is_subsequence(sub, long_):</span><br><span class="line">            cs.append(sub)</span><br><span class="line">    max_len = <span class="built_in">len</span>(<span class="built_in">max</span>(cs, key=<span class="built_in">len</span>))</span><br><span class="line">    <span class="keyword">return</span> (s <span class="keyword">for</span> s <span class="keyword">in</span> cs <span class="keyword">if</span> <span class="built_in">len</span>(s) == max_len)</span><br></pre></td></tr></table></figure>
+<p>一个长度为 $n$ 的字符串，共有 $2^n$ 个子序列：</p>
+<script type="math/tex; mode=display">C_n^0 + C_n^1 + C_n^2 + \cdots + C_n^n = \sum_{i=0}^n C_n^i = 2^n</script><p>假设字符串 $X$ 的长度为 $m$，字符串 $Y$ 的长度为 $n$，且 $m &gt; n$，那么寻找其 LCS 就需要先找到 $Y$ 的所有子序列，然后去 $X$ 中查。显然时间复杂度为 $O(2^n)$，指数级的复杂度，这很明显不是一个适合大规模应用的算法。</p>
+<h3 id="动态规划"><a href="#动态规划" class="headerlink" title="动态规划"></a>动态规划</h3><p>动态规划法（Dynamic Programming，DP）要含蓄得多，并不直接大海捞针式地穷举所有可能，而是根据将这个大问题分解为很多小问题，逐个解决小问题从而得到大问题的解。那么在这里，「小问题」就指的是<strong>诸多子串之间的 LCS</strong>。</p>
+<p>总体上来说，动态规划法的思路分两步走：构建和重建。构建是要构建一个表 $T$，记录 $X_{:i}$ 和 $Y_{:j}$ 之间的 LCS 长度。重建是要根据表 $T$ 去重建恢复具体的 LCS，即具体的字符。</p>
+<h4 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h4><p>构建部分是基于以下几点的：</p>
+<ul>
+<li>若 $X_i = Y_j = t$，则 $t$ 是 $X_{:i}$ 和 $Y_{:j}$ 之间的 LCS 的最后一个字符。</li>
+<li>若 $X_i \neq Y_j$，则寻找 $X_{:(i-1)}$ 和 $Y_{:j}$，或者 $X_{:i}$ 和 $Y_{:(j-1)}$ 之间的 LCS，这两者之间的最长者，即为 $X$ 和 $Y$ 的 LCS。</li>
+</ul>
+<p>可以看到这其实是一个递归的思路，每次都寻找 $X$ 和 $Y$ 中相等元素加入 LCS，LCS 的长度 +1。这一步结束之后便会生成一个 $(m+1) \times (n+1)$ 的表 $T$，这个表的第一行和第一列是初始值，均为 $0$，其他值记录的是相应子串之间的 LCS 长度。</p>
+<p>代码实现如下（来自 <a href="https://github.com/google-research/lasertagger/blob/8739f5c0c0c03f2b931311fe7fb9339d028ab82d/phrase_vocabulary_optimization.py#L90-L101">lasertagger</a>）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">lcs_table</span>(<span class="params">source, target</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;构建表 T。&quot;&quot;&quot;</span></span><br><span class="line">    rows = <span class="built_in">len</span>(source)</span><br><span class="line">    cols = <span class="built_in">len</span>(target)</span><br><span class="line">    lcs_table = [[<span class="number">0</span>] * (cols + <span class="number">1</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(rows + <span class="number">1</span>)]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, rows + <span class="number">1</span>):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, cols + <span class="number">1</span>):</span><br><span class="line">            <span class="keyword">if</span> source[i - <span class="number">1</span>] == target[j - <span class="number">1</span>]:</span><br><span class="line">                lcs_table[i][j] = lcs_table[i - <span class="number">1</span>][j - <span class="number">1</span>] + <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                lcs_table[i][j] = <span class="built_in">max</span>(lcs_table[i - <span class="number">1</span>][j], lcs_table[i][j - <span class="number">1</span>])</span><br><span class="line">    <span class="keyword">return</span> lcs_table</span><br></pre></td></tr></table></figure>
+<p>为了更直观的展示构建过程，我制作了一个 GIF 来说明：</p>
+<blockquote>
+<p>source 为 $X$，target 为 $Y$。</p>
+</blockquote>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/04/07/XpuyFOMH6jJYdxT.gif" title="construct table" data-caption="construct table" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/04/07/XpuyFOMH6jJYdxT.gif" alt="construct table"></a><span class="caption">construct table</span></div>
+<h4 id="重建"><a href="#重建" class="headerlink" title="重建"></a>重建</h4><p>也叫回溯，指从表 $T$ 的右下角开始向上回溯，重建整个 LCS。</p>
+<p>记 $\text{LCS}_{X, Y}$ 为 $X$ 和 $Y$ 的之间的 LCS。</p>
+<p>回溯时：</p>
+<ul>
+<li>和构建时相同，若 $X_{i-1} = Y_{j-1} = t$，则将 $t$ 加入当前 LSC 列表，然后继续从 $T[i-1, j-1]$ 回溯，即向左上方走。</li>
+<li>若 $X_i \neq Y_j$：<ul>
+<li>若 $T[i, j-1] &gt; T[i-1, j]$，即 $\text{LCS}_{X_{i}, Y_{j-1}} &gt; \text{LCS}_{X_{i-1}, Y_{j}}$，说明 $\text{LCS}_{X, Y}$ 肯定是包括 $\text{LCS}_{X_{i}, Y_{j-1}}$ 的，所以从 $T[i, j-1]$ 处继续回溯。</li>
+<li>否则，从 $T[i-1, j]$ 处开始回溯。</li>
+</ul>
+</li>
+</ul>
+<p>代码实现如下（改自 <a href="https://github.com/google-research/lasertagger/blob/8739f5c0c0c03f2b931311fe7fb9339d028ab82d/phrase_vocabulary_optimization.py#L104-L125">lasertagger</a>）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">_backtrack</span>(<span class="params">table, source, target, i, j</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;回溯 LCS 表来重建 LCS。Backtracks the Longest Common Subsequence table to reconstruct the LCS.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Args:</span></span><br><span class="line"><span class="string">    table: LCS 表，注意该表的大小为 (len(source) + 1) × (len(target) + 1)。</span></span><br><span class="line"><span class="string">    source: 源字符串，list 形式。</span></span><br><span class="line"><span class="string">    target: 目标字符串，list 形式。</span></span><br><span class="line"><span class="string">    i: 当前行的索引。</span></span><br><span class="line"><span class="string">    j: 当前列的索引。</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Returns:</span></span><br><span class="line"><span class="string">    LCS 列表。</span></span><br><span class="line"><span class="string">  &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> i == <span class="number">0</span> <span class="keyword">or</span> j == <span class="number">0</span>:</span><br><span class="line">        <span class="comment"># 如果i或者j为0，则说明有一方已经是空字符串，此时直接返回空</span></span><br><span class="line">        <span class="keyword">return</span> []</span><br><span class="line">    <span class="keyword">if</span> source[i - <span class="number">1</span>] == target[j - <span class="number">1</span>]:  <span class="comment"># 为什么不是 source[i] 和 target[j] 呢？实际上就是，因为 table 表的大小是要比实际 source 和 target 长度大 1 的，所以要减 1，不然就 index out of range 了。</span></span><br><span class="line">        <span class="comment"># Append the aligned token to output.</span></span><br><span class="line">        <span class="comment"># 如果 source[i - 1] 和 target[j - 1] 相等，则表示该值便是当前的 source 和 target 的 LCS 的最后一个 token，</span></span><br><span class="line">        <span class="comment"># 然后 source 和 target 分别往前推一个 token 再去寻找，也是一个递归的过程</span></span><br><span class="line">        <span class="keyword">return</span> _backtrack(table, source, target, i - <span class="number">1</span>, j - <span class="number">1</span>) + [target[j - <span class="number">1</span>]]</span><br><span class="line">    <span class="keyword">if</span> table[i][j - <span class="number">1</span>] &gt; table[i - <span class="number">1</span>][j]:</span><br><span class="line">        <span class="comment"># 如果不相等的话，接下来就是寻找相等的元素，这些元素才可能属于 LCS。</span></span><br><span class="line">        <span class="comment"># 如果不等且 source[:i] 和 target[:j-1] 的 LCS 长度，大于 source[:i-1] 和 target[:j] 的 LCS 长度，</span></span><br><span class="line">        <span class="comment"># 那么就从 source[:i] 和 target[:j-1] 寻找相等的元素</span></span><br><span class="line">        <span class="keyword">return</span> _backtrack(table, source, target, i, j - <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="comment"># 和上面同理</span></span><br><span class="line">        <span class="keyword">return</span> _backtrack(table, source, target, i - <span class="number">1</span>, j)</span><br></pre></td></tr></table></figure>
+<p>同样为了直观理解，我制作了一个 GIF：</p>
+<blockquote>
+<p>source 为 $X$，target 为 $Y$。</p>
+</blockquote>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/04/07/prjqf28TRKsJbBO.gif" title="reconstruct" data-caption="reconstruct" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/04/07/prjqf28TRKsJbBO.gif" alt="reconstruct"></a><span class="caption">reconstruct</span></div>
+<h2 id="LCS-并不一定唯一"><a href="#LCS-并不一定唯一" class="headerlink" title="LCS 并不一定唯一"></a>LCS 并不一定唯一</h2><p>以上图中的两个字符串为例，<code>ABCBDAB</code> 和 <code>BDCABA</code> 之间的 LCS 并不唯一，共有 <code>[&#39;BDAB&#39;, &#39;BCAB&#39;, &#39;BCBA&#39;]</code> 三个，穷举法可以都找到。然而上述的动态规划法却只能找到其中一个。</p>
+<p>为什么？</p>
+<p>两个数的大小存在三种情况，然而在判断 $T[i, j-1]$ 和 $T[i-1, j]$ 的大小时，上述算法只是比较前者是否大于后者，而相等和小于的情况被同等对待。这就造成了不能找到全部 LCS 的情况。</p>
+<p>若 $T[i, j-1] = T[i-1, j]$，说明 $\text{LCS}_{X_{i}, Y_{j-1}}$ 和 $\text{LCS}_{X_{i-1}, Y_{j}}$ 都有可能是 $\text{LCS}_{X, Y}$ 的一部分，因此需要分两条路走，然后合并两条路得到的结果，这样就可以得到全部的 LCS。</p>
+<p>构建部分不用改动，重建部分我用一个简单的树结构来存储 LCS 字符，对上述结构进行了改造：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Tree</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;一个简单的树结构。&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, data=<span class="literal">None</span>, left=<span class="literal">None</span>, right=<span class="literal">None</span></span>):</span><br><span class="line">        self.data = data</span><br><span class="line">        self.left = left</span><br><span class="line">        self.right = right</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">backtrack</span>(<span class="params">table, source, target, i, j</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;改造的回溯函数。&quot;&quot;&quot;</span></span><br><span class="line">    tree = Tree()</span><br><span class="line">    <span class="keyword">if</span> i == <span class="number">0</span> <span class="keyword">or</span> j == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> Tree()</span><br><span class="line">    <span class="keyword">if</span> source[i - <span class="number">1</span>] == target[j - <span class="number">1</span>]:</span><br><span class="line">        tree.data = target[j - <span class="number">1</span>]</span><br><span class="line">        tree.left = backtrack(table, source, target, i - <span class="number">1</span>, j - <span class="number">1</span>)</span><br><span class="line">        <span class="keyword">return</span> Tree(</span><br><span class="line">            data=target[j - <span class="number">1</span>], left=backtrack(table, source, target, i - <span class="number">1</span>, j - <span class="number">1</span>)</span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">if</span> table[i][j - <span class="number">1</span>] &gt; table[i - <span class="number">1</span>][j]:</span><br><span class="line">        <span class="keyword">return</span> Tree(left=backtrack(table, source, target, i, j - <span class="number">1</span>))</span><br><span class="line">    <span class="keyword">elif</span> table[i][j - <span class="number">1</span>] == table[i - <span class="number">1</span>][j]:</span><br><span class="line">        left = backtrack(table, source, target, i, j - <span class="number">1</span>)</span><br><span class="line">        right = backtrack(table, source, target, i - <span class="number">1</span>, j)</span><br><span class="line">        <span class="keyword">return</span> Tree(left=left, right=right)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> Tree(right=backtrack(table, source, target, i - <span class="number">1</span>, j))</span><br></pre></td></tr></table></figure>
+<p>重建完这个「树」之后，对齐进行类似 NLR（前序）的遍历即可得到全部 LCS：</p>
+<blockquote>
+<p>由于节点默认的 <code>data</code> 为 <code>None</code>，因此遍历结束后需要去除这些 <code>None</code>，详细可见 GitHub 完整代码。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">traverse_tree</span>(<span class="params">root</span>):</span><br><span class="line">    <span class="keyword">if</span> root <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        <span class="keyword">return</span> []</span><br><span class="line">    <span class="keyword">if</span> root.left == <span class="literal">None</span> <span class="keyword">and</span> root.right == <span class="literal">None</span>:</span><br><span class="line">        <span class="keyword">return</span> [<span class="built_in">str</span>(root.data)]</span><br><span class="line">    <span class="keyword">return</span> [</span><br><span class="line">        <span class="built_in">str</span>(root.data) + p <span class="keyword">for</span> p <span class="keyword">in</span> traverse_tree(root.left) + traverse_tree(root.right)</span><br><span class="line">    ]</span><br></pre></td></tr></table></figure>
+<h2 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h2><p><a href="https://github.com/secsilm/understanding-lcs">见 GitHub</a>。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://algorithmist.com/wiki/Longest_common_subsequence">Longest common subsequence - Algorithmist</a></li>
+<li><a href="https://wizardforcel.gitbooks.io/the-art-of-programming-by-july/content/a.12.html">最长公共子序列 | 编程之法：面试和算法心得</a></li>
+<li><a href="http://lcs-demo.sourceforge.net/">Longest Common Subsequence Simulation (LCS) @jon.andika</a></li>
+<li><a href="https://www.cs.cmu.edu/~adamchik/15-121/lectures/Algorithmic%20Complexity/complexity.html">Complexity</a></li>
+<li><a href="https://www.dartmouth.edu/~chance/teaching_aids/books_articles/probability_book/Chapter3.pdf">Binomial Expansion - Combinatorics</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/08/changes/"
+                    data-tooltip="博文变动记录"
+                    aria-label="上一篇: 博文变动记录"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/03/15/meet-label-studio/"
+                    data-tooltip="试用开源标注平台 Label Studio"
+                    aria-label="下一篇: 试用开源标注平台 Label Studio"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/04/08/changes/"
+                    data-tooltip="博文变动记录"
+                    aria-label="上一篇: 博文变动记录"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/03/15/meet-label-studio/"
+                    data-tooltip="试用开源标注平台 Label Studio"
+                    aria-label="下一篇: 试用开源标注平台 Label Studio"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/04/07/understanding-lcs/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/04/07/understanding-lcs/';
+              
+            this.page.identifier = '2020/04/07/understanding-lcs/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

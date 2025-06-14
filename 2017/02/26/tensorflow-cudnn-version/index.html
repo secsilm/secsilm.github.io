@@ -1,0 +1,728 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。\n但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……\n\n\n运行环境运行环境是首要前提 。\n\nOS：Windows 10 家庭中文版\nCUDA：Cuda compilation tools, release 8.0, V8.0.44\ncuDNN：5.0\nTensorFlow: 1.0.0\n\npython -c &quot;import tensorflow; print(tensorflow.__version__)&quot; 的输出：\n123456I c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library cublas64_80.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library cudnn64_5.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library cufft64_80.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library nvcuda.dll locallyI c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\dso_loader.cc:135] successfully opened CUDA library curand64_80.dll locally1.0.0\n\n问题运行 python cifar10_train.py 的报错信息如下：\n12E c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\stream_executor\\cuda\\cuda_dnn.cc:390] Loaded runtime CuDNN library: 5005 (compatibility version 5000) but source was compiled with 5105 (compatibility version 5100).  If using a binary install, upgrade your CuDNN library to match.  If building from sources, make sure the library loaded at runtime matches a compatible version specified during compile configuration.F c:\\tf_jenkins\\home\\workspace\\release-win\\device\\gpu\\os\\windows\\tensorflow\\core\\kernels\\conv_ops.cc:605] Check failed: stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)\n\n解决从报错信息很明显可以看出，是 cuDNN 的版本问题，那么我只需要升级 cuDNN 版本就可以了。我现在的版本是 5.0，升级到 5.1 即可。可从 官网 下载或者从 这里 直接下载我下载好的。\n下载好后就是替换原有的 5.0 版本了。如果原先你安装 cuDNN 的时候是用将 C:\\cuda\\bin 加进 Path 环境变量的方法安装的，那么你直接用 5.1 版本文件替换原有文件应该就可以。\n但是我第一次安装的时候稍微麻烦一些，是用 此文 中的方法安装的，即将对应文件复制到对应位置，所以你在升级 cuDNN 版本的时候也要将对应文件复制到对应位置就可以了。当然，你也可以直接使用第一种方法。\n然后，再次运行 python cifar10_train.py 就可以顺畅的玩耍了。\n\n\nEND","dateCreated":"2017-02-26T11:45:44+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2017-02-26T11:45:44+08:00","description":"由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。\n但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例子运行 python cifar10_train.py 的时候，问题又出现了……","headline":"Check failed stream->parent()->GetConvolveAlgorithms(&algorithms)解决办法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/","keywords":"Python, TensorFlow"}</script>
+    <meta name="description" content="由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法">
+<meta property="og:url" content="https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 TensorFlow 官方的 CNN 例子的时候，总是报 ImportError 错误，找不到 cifar10 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：models 。 但是呢，在我 clone 了 models 到本地后，按照 TensorFlow 官方的例">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-02-26T03:45:44.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.198Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="TensorFlow">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Check failed stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)解决办法
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-02-26T11:45:44+08:00">
+	
+		    2017 年 2 月 26 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>由于我很早就在 GitHub 下载了 TensorFlow 的源码库没有更新，在运行 <a href="https://www.tensorflow.org/tutorials/deep_cnn">TensorFlow 官方的 CNN 例子</a>的时候，总是报 <code>ImportError</code> 错误，找不到 <code>cifar10</code> 模块，后来发现是 TensorFlow 的源码库更新了，这些模型实现都被移到了一个新的源码库：<a href="https://github.com/tensorflow/models">models</a> 。</p>
+<p>但是呢，在我 <code>clone</code> 了 <code>models</code> 到本地后，按照 TensorFlow 官方的例子运行 <code>python cifar10_train.py</code> 的时候，问题又出现了……</p>
+<span id="more"></span>
+<hr>
+<h1 id="运行环境"><a href="#运行环境" class="headerlink" title="运行环境"></a>运行环境</h1><p><strong>运行环境是首要前提 。</strong></p>
+<ul>
+<li>OS：Windows 10 家庭中文版</li>
+<li>CUDA：<code>Cuda compilation tools, release 8.0, V8.0.44</code></li>
+<li>cuDNN：5.0</li>
+<li>TensorFlow: 1.0.0</li>
+</ul>
+<p><code>python -c &quot;import tensorflow; print(tensorflow.__version__)&quot;</code> 的输出：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library cublas64_80.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library cudnn64_5.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library cufft64_80.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library nvcuda.dll locally</span><br><span class="line">I c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\dso_loader.cc:135] successfully opened CUDA library curand64_80.dll locally</span><br><span class="line">1.0.0</span><br></pre></td></tr></table></figure>
+<hr>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>运行 <code>python cifar10_train.py</code> 的报错信息如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">E c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\stream_executor\cuda\cuda_dnn.cc:390] Loaded runtime CuDNN library: 5005 (compatibility version 5000) but <span class="built_in">source</span> was compiled with 5105 (compatibility version 5100).  If using a binary install, upgrade your CuDNN library to match.  If building from sources, make sure the library loaded at runtime matches a compatible version specified during compile configuration.</span><br><span class="line">F c:\tf_jenkins\home\workspace\release-win\device\gpu\os\windows\tensorflow\core\kernels\conv_ops.cc:605] Check failed: stream-&gt;parent()-&gt;GetConvolveAlgorithms(&amp;algorithms)</span><br></pre></td></tr></table></figure>
+<hr>
+<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>从报错信息很明显可以看出，是 cuDNN 的版本问题，那么我只需要<strong>升级 cuDNN 版本</strong>就可以了。我现在的版本是 5.0，升级到 5.1 即可。可从 <a href="https://developer.nvidia.com/rdp/cudnn-download">官网</a> 下载或者从 <a href="http://download.csdn.net/detail/u010099080/9764330">这里</a> 直接下载我下载好的。</p>
+<p>下载好后就是替换原有的 5.0 版本了。如果原先你安装 cuDNN 的时候是用将 <code>C:\cuda\bin</code> 加进 <code>Path</code> 环境变量的方法安装的，那么你直接用 5.1 版本文件替换原有文件应该就可以。</p>
+<p>但是我第一次安装的时候稍微麻烦一些，是用 <a href="http://blog.csdn.net/u010099080/article/details/53418159">此文</a> 中的方法安装的，即将对应文件复制到对应位置，所以你在升级 cuDNN 版本的时候也要将对应文件复制到对应位置就可以了。当然，你也可以直接使用第一种方法。</p>
+<p>然后，再次运行 <code>python cifar10_train.py</code> 就可以顺畅的玩耍了。</p>
+<hr>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83"><span class="toc-text">运行环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3"><span class="toc-text">解决</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1><!-- more -->
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/03/17/tensorflow-cnn-tensorboard/"
+                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
+                    aria-label="上一篇: TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/02/16/tensorflow-1.0/"
+                    data-tooltip="TensorFlow 1.0 发布"
+                    aria-label="下一篇: TensorFlow 1.0 发布"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/03/17/tensorflow-cnn-tensorboard/"
+                    data-tooltip="TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
+                    aria-label="上一篇: TensorFlow 中的卷积神经网络 CNN - TensorBoard 版"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/02/16/tensorflow-1.0/"
+                    data-tooltip="TensorFlow 1.0 发布"
+                    aria-label="下一篇: TensorFlow 1.0 发布"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/';
+              
+            this.page.identifier = '2017/02/26/tensorflow-cudnn-version/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

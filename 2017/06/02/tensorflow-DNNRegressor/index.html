@@ -1,0 +1,792 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>TensorFlow DNNRegressor 的简单使用 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\ntf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。\n此文的代码和所生成的 TensorBoard 文件可以从 secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。 下载。\ntf.contrib.learntf.contrib.learn 是 TensorFlow 提供的一个机器学习高级 API 模块，让用户可以更方便的配置、训练和评估各种各样的机器学习模型，里面内置了很多模型可以直接调用，使用类似 scikit-learn 的 API 。大致有以下几种模型，具体可参考 Learn (contrib)：\n\nK-means 聚类 tf.contrib.learn.KMeansClustering\n神经网络分类器 tf.contrib.learn.DNNClassifier\n神经网络回归器 tf.contrib.learn.DNNRegressor\n广度深度回归 tf.contrib.learn.DNNLinearCombinedRegressor\n广度深度分类 tf.contrib.learn.DNNLinearCombinedClassifier\n线性分类tf.contrib.learn.LinearClassifier\n线性回归 tf.contrib.learn.LinearRegressor\n逻辑斯谛回归 tf.contrib.learn.LogisticRegressor\n\nDNNRegressor下面以波士顿房价预测的例子来说明一下 DNNRegressor 的使用。\n波士顿房价数据集大小为 506*14，也就是说有 506 个样本，每个样本有 13 个特征，另外一个是要预测的房价。数据集我们直接使用 scikit-learn 的 load_boston() 函数直接载入，这里引用下UCI 的解释：\n\n\nCRIM      per capita crime rate by town\nZN        proportion of residential land zoned for lots over 25,000 sq.ft.\nINDUS     proportion of non-retail business acres per town\nCHAS      Charles River dummy variable (= 1 if tract bounds river; 0 otherwise)\nNOX       nitric oxides concentration (parts per 10 million)\nRM        average number of rooms per dwelling\nAGE       proportion of owner-occupied units built prior to 1940\nDIS       weighted distances to five Boston employment centres\nRAD       index of accessibility to radial highways\nTAX      full-value property-tax rate per $10,000\nPTRATIO  pupil-teacher ratio by town\nB        1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town\nLSTAT    % lower status of the population\nMEDV     Median value of owner-occupied homes in $1000’s\n\n\n开始前先说明一下，DNNRegressor 的使用逻辑和其他库的不太一样，如果你比较熟悉 TensorFlow 的话就比较好理解：我们是先定义一些计算图，这时候并不真正的传入数据，然后在训练的时候去执行这个计算图，也就是说这时候才开始将真正的数据穿进去。相当于是组装一条产品的生产线，刚开始我们只是把这台生产线组装好，并不开始真正的生产产品（保有数据），到最后阶段（训练阶段）才会真正的把原材料「喂给」生产线上来生产产品。\n下面的程序大致上是这么几个步骤：\n\n载入数据\n定义 FeatureColumn\n定义 regressor\n训练\n评估\n预测\n\n载入数据如上所说，这里我们使用 scikit-learn 的 load_boston() 函数来载入数据。\n1234boston = load_boston()boston_df = pd.DataFrame(np.c_[boston.data, boston.target], columns=np.append(boston.feature_names, &#x27;MEDV&#x27;))LABEL_COLUMN = [&#x27;MEDV&#x27;]FEATURE_COLUMNS = [f for f in boston_df if not f in LABEL_COLUMN]\nboston 是一个 numpy 多维数组，为了后面方便转换成 pandas 的 DataFrame 类型，MEDV 就是我们要预测的变量。\n然后我们使用 train_test_split() 来按照 7:3 的比例来分割数据集。\n12X_train, X_test, y_train, y_test = train_test_split(boston_df[FEATURE_COLUMNS], boston_df[LABEL_COLUMN], test_size=0.3)print(&#x27;训练集：&#123;&#125;\\n测试集：&#123;&#125;&#x27;.format(X_train.shape, X_test.shape))\n12训练集：(354, 13)测试集：(152, 13)\n在进行下一步之前，我们先来简单的看下这个数据集的分布情况。\n各个变量的 violin 图，从这些图我们可以看出每个变量的分布情况：\nviolinplot\n14 个变量之间的相关情况：\ncorrplot\n从这个图我们可以看出 RM（住宅平均房间数）与最终的售价是最正相关的，而 LSTAT（人口中地位低下者的比例）是最负相关的。\n定义 FeatureColumnTensorFlow 使用 FeatureColumn 来表示数据集中的一个的特征，我们需要根据特征类型（连续或者分类）把原来的特征都转换成 FeatureColumn。此处数据已经都是连续数值了，所以直接使用 tf.contrib.layers.real_valued_column() 来转换成 FeatureColumn，如果是分类变量，则需要使用 tf.contrib.layers.sparse_column_with_keys() 或者 tf.contrib.layers.sparse_column_with_hash_bucket()。\n1feature_cols = [tf.contrib.layers.real_valued_column(k) for k in FEATURE_COLUMNS]\n定义 regressor这里就到定义模型的时候了，也就是 DNNRegressor，将我们前面定义的 FeatureColumn 传进去，再设置下隐藏层的层数和神经元数量，指定模型保存目录（训练完成后可以使用 tensorboard 可视化网络结构和训练过程）。\n123regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_cols,                                           hidden_units=[64, 128],                                           model_dir=&#x27;./models/dnnregressor&#x27;)\n定义 input_fn定义完 regressor 之后就是模型的训练了，但是在训练开始前，我们需要定义一下传给模型训练的数据的格式，这就是 input_fn 的作用。input_fn 必须返回 feature_cols 和 labels。\n\nfeature_cols 是一个字典， key 是特征的名字，value 是对应的数据（Tensor 格式）\nlabels 是一个 Tensor，就是你要预测的变量\n\n1234567891011121314def input_fn(df, label):    feature_cols = &#123;k: tf.constant(df[k].values) for k in FEATURE_COLUMNS&#125;    label = tf.constant(label.values)    return feature_cols, labeldef train_input_fn():    &#x27;&#x27;&#x27;训练阶段使用的 input_fn&#x27;&#x27;&#x27;    return input_fn(X_train, y_train)def test_input_fn():    &#x27;&#x27;&#x27;测试阶段使用的 input_fn&#x27;&#x27;&#x27;    return input_fn(X_test, y_test)\n训练定义完 input_fn 我们就可以开始真正的训练过程了。\n1regressor.fit(input_fn=train_input_fn, steps=5000)\n训练阶段和测试阶段所用的数据是不一样的，所以在上面我又分别为训练和测试写了一个 input_fn。当然除了这种方式还有其他方式，你可以只写一个 input_fn，然后在 fit 的时候使用类似 input_fn=lambda: input_fn(training_set) 来制定传入的数据集。注意你不能直接使用 input_fn=input_fn(training_set) ，因为 input_fn 参数的值是一个函数。\n测试12ev = regressor.evaluate(input_fn=test_input_fn, steps=1)print(&#x27;ev: &#123;&#125;&#x27;.format(ev))\n测试结果是一个字典，包括最终损失和迭代步数：\n1ev: &#123;&#x27;loss&#x27;: 32.229404, &#x27;global_step&#x27;: 5000&#125;\n我们从 TensorBoard 可以看到最终的训练损失和测试损失：\nloss\n整个计算图是这样的：\ngraph\n预测使用训练好的模型对测试数据进行预测，只输出前 10 项预测结果：\n12predict = regressor.predict(input_fn=test_input_fn, as_iterable=False)print(predict[:10])\n12[ 25.04570198  31.65488815  11.31779861  14.20497131  31.12402344  37.50260925  25.20910835  24.17683983  20.83440208  35.22043991]\nTrouble ShootingInternalError (see above for traceback): Blas SGEMM launch failed如果你的程序报类似这样的错，说明你在使用 GPU 计算（默认行为）且你的 GPU 可用显存不足，TensorFlow 总是试图为自己分配全部显存，例如你的显存是 2GB，那么他就会试图为自己分配 2GB，但是一般情况下你的显存不会一点都不被其他程序占用的，导致 TensorFlow 分配显存失败。\n解决办法是在定义 regressor 的时候使用 config 参数中的 gpu_memory_fraction 来指定分配给 TensorFlow 的显存大小（比例）：\n123456# log_device_placement 用于记录并输出使用的设备，可以不用写config = tf.contrib.learn.RunConfig(gpu_memory_fraction=0.3, log_device_placement=True)regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_cols,                                           hidden_units=[64, 128],                                           model_dir=&#x27;./models/dnnregressor&#x27;,                                           config=config)\nEND","dateCreated":"2017-06-02T22:03:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2017-06-02T22:03:00+08:00","description":"\ntf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。","headline":"TensorFlow DNNRegressor 的简单使用","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/","keywords":"TensorFlow, Machine Learning"}</script>
+    <meta name="description" content="tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="TensorFlow DNNRegressor 的简单使用">
+<meta property="og:url" content="https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="tf.contrib.learn.DNNRegressor 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/4kCw6Qo.png">
+<meta property="og:image" content="https://i.imgur.com/grQ9VAA.png">
+<meta property="og:image" content="https://i.imgur.com/nldZ5mk.png">
+<meta property="og:image" content="https://i.imgur.com/YIAt4Zq.png">
+<meta property="article:published_time" content="2017-06-02T14:03:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.198Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="TensorFlow">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/4kCw6Qo.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            TensorFlow DNNRegressor 的简单使用
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-06-02T22:03:00+08:00">
+	
+		    2017 年 6 月 2 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-contrib-learn"><span class="toc-text">tf.contrib.learn</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DNNRegressor"><span class="toc-text">DNNRegressor</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BD%BD%E5%85%A5%E6%95%B0%E6%8D%AE"><span class="toc-text">载入数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89-FeatureColumn"><span class="toc-text">定义 FeatureColumn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89-regressor"><span class="toc-text">定义 regressor</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89-input-fn"><span class="toc-text">定义 input_fn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83"><span class="toc-text">训练</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%84%E6%B5%8B"><span class="toc-text">预测</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Trouble-Shooting"><span class="toc-text">Trouble Shooting</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#InternalError-see-above-for-traceback-Blas-SGEMM-launch-failed"><span class="toc-text">InternalError (see above for traceback): Blas SGEMM launch failed</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p><code>tf.contrib.learn.DNNRegressor</code> 是 TensoFlow 中实现的一个神经网络回归器。一般神经网络用于分类问题的比较多，但是同样可以用于回归问题和无监督学习问题。<br><span id="more"></span></p>
+<p>此文的代码和所生成的 TensorBoard 文件可以从 <a href="https://github.com/secsilm/TensorFlow-DNNRegressor">secsilm/TensorFlow-DNNRegressor: 文章 TensorFlow DNNRegressor 的简单使用 的代码及 TensorBoard 文件。</a> 下载。</p>
+<h2 id="tf-contrib-learn"><a href="#tf-contrib-learn" class="headerlink" title="tf.contrib.learn"></a><code>tf.contrib.learn</code></h2><p><code>tf.contrib.learn</code> 是 TensorFlow 提供的一个机器学习高级 API 模块，让用户可以更方便的配置、训练和评估各种各样的机器学习模型，里面内置了很多模型可以直接调用，使用类似 <a href="http://scikit-learn.org/stable/">scikit-learn</a> 的 API 。大致有以下几种模型，具体可参考 <a href="https://www.tensorflow.org/api_guides/python/contrib.learn">Learn (contrib)</a>：</p>
+<ul>
+<li>K-means 聚类 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/KMeansClustering"><code>tf.contrib.learn.KMeansClustering</code></a></li>
+<li>神经网络分类器 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/DNNClassifier"><code>tf.contrib.learn.DNNClassifier</code></a></li>
+<li>神经网络回归器 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/DNNRegressor"><code>tf.contrib.learn.DNNRegressor</code></a></li>
+<li>广度深度回归 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/DNNLinearCombinedRegressor"><code>tf.contrib.learn.DNNLinearCombinedRegressor</code></a></li>
+<li>广度深度分类 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/DNNLinearCombinedClassifier"><code>tf.contrib.learn.DNNLinearCombinedClassifier</code></a></li>
+<li>线性分类<a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/LinearClassifier"><code>tf.contrib.learn.LinearClassifier</code></a></li>
+<li>线性回归 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/LinearRegressor"><code>tf.contrib.learn.LinearRegressor</code></a></li>
+<li>逻辑斯谛回归 <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/learn/LogisticRegressor"><code>tf.contrib.learn.LogisticRegressor</code></a></li>
+</ul>
+<h2 id="DNNRegressor"><a href="#DNNRegressor" class="headerlink" title="DNNRegressor"></a>DNNRegressor</h2><p>下面以波士顿房价预测的例子来说明一下 DNNRegressor 的使用。</p>
+<p>波士顿房价数据集大小为 506*14，也就是说有 506 个样本，每个样本有 13 个特征，另外一个是要预测的房价。数据集我们直接使用 scikit-learn 的 <code>load_boston()</code> 函数直接载入，这里引用下UCI 的解释：</p>
+<blockquote>
+<ol>
+<li>CRIM      per capita crime rate by town</li>
+<li>ZN        proportion of residential land zoned for lots over 25,000 sq.ft.</li>
+<li>INDUS     proportion of non-retail business acres per town</li>
+<li>CHAS      Charles River dummy variable (= 1 if tract bounds river; 0 otherwise)</li>
+<li>NOX       nitric oxides concentration (parts per 10 million)</li>
+<li>RM        average number of rooms per dwelling</li>
+<li>AGE       proportion of owner-occupied units built prior to 1940</li>
+<li>DIS       weighted distances to five Boston employment centres</li>
+<li>RAD       index of accessibility to radial highways</li>
+<li>TAX      full-value property-tax rate per $10,000</li>
+<li>PTRATIO  pupil-teacher ratio by town</li>
+<li>B        1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town</li>
+<li>LSTAT    % lower status of the population</li>
+<li>MEDV     Median value of owner-occupied homes in $1000’s</li>
+</ol>
+</blockquote>
+<p>开始前先说明一下，DNNRegressor 的使用逻辑和其他库的不太一样，如果你比较熟悉 TensorFlow 的话就比较好理解：我们是先定义一些计算图，这时候并不真正的传入数据，然后在训练的时候去执行这个计算图，也就是说这时候才开始将真正的数据穿进去。相当于是组装一条产品的生产线，刚开始我们只是把这台生产线组装好，并不开始真正的生产产品（保有数据），到最后阶段（训练阶段）才会真正的把原材料「喂给」生产线上来生产产品。</p>
+<p>下面的程序大致上是这么几个步骤：</p>
+<ol>
+<li>载入数据</li>
+<li>定义 <code>FeatureColumn</code></li>
+<li>定义 regressor</li>
+<li>训练</li>
+<li>评估</li>
+<li>预测</li>
+</ol>
+<h3 id="载入数据"><a href="#载入数据" class="headerlink" title="载入数据"></a>载入数据</h3><p>如上所说，这里我们使用 scikit-learn 的 <code>load_boston()</code> 函数来载入数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">boston = load_boston()</span><br><span class="line">boston_df = pd.DataFrame(np.c_[boston.data, boston.target], columns=np.append(boston.feature_names, <span class="string">&#x27;MEDV&#x27;</span>))</span><br><span class="line">LABEL_COLUMN = [<span class="string">&#x27;MEDV&#x27;</span>]</span><br><span class="line">FEATURE_COLUMNS = [f <span class="keyword">for</span> f <span class="keyword">in</span> boston_df <span class="keyword">if</span> <span class="keyword">not</span> f <span class="keyword">in</span> LABEL_COLUMN]</span><br></pre></td></tr></table></figure>
+<p><code>boston</code> 是一个 numpy 多维数组，为了后面方便转换成 pandas 的 DataFrame 类型，<code>MEDV</code> 就是我们要预测的变量。</p>
+<p>然后我们使用 <code>train_test_split()</code> 来按照 7:3 的比例来分割数据集。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">X_train, X_test, y_train, y_test = train_test_split(boston_df[FEATURE_COLUMNS], boston_df[LABEL_COLUMN], test_size=<span class="number">0.3</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;训练集：&#123;&#125;\n测试集：&#123;&#125;&#x27;</span>.<span class="built_in">format</span>(X_train.shape, X_test.shape))</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">训练集：(354, 13)</span><br><span class="line">测试集：(152, 13)</span><br></pre></td></tr></table></figure>
+<p>在进行下一步之前，我们先来简单的看下这个数据集的分布情况。</p>
+<p>各个变量的 violin 图，从这些图我们可以看出每个变量的分布情况：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/4kCw6Qo.png" title="violinplot" data-caption="violinplot" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/4kCw6Qo.png" alt="violinplot"></a><span class="caption">violinplot</span></div>
+<p>14 个变量之间的相关情况：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/grQ9VAA.png" title="corrplot" data-caption="corrplot" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/grQ9VAA.png" alt="corrplot"></a><span class="caption">corrplot</span></div>
+<p>从这个图我们可以看出 RM（住宅平均房间数）与最终的售价是最正相关的，而 LSTAT（人口中地位低下者的比例）是最负相关的。</p>
+<h3 id="定义-FeatureColumn"><a href="#定义-FeatureColumn" class="headerlink" title="定义 FeatureColumn"></a>定义 <code>FeatureColumn</code></h3><p>TensorFlow 使用 <a href="https://www.tensorflow.org/tutorials/linear#feature_columns_and_transformations"><code>FeatureColumn</code></a> 来表示数据集中的一个的特征，我们需要根据特征类型（连续或者分类）把原来的特征都转换成 <code>FeatureColumn</code>。此处数据已经都是连续数值了，所以直接使用 <code>tf.contrib.layers.real_valued_column()</code> 来转换成 <code>FeatureColumn</code>，如果是分类变量，则需要使用 <code>tf.contrib.layers.sparse_column_with_keys()</code> 或者 <code>tf.contrib.layers.sparse_column_with_hash_bucket()</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">feature_cols = [tf.contrib.layers.real_valued_column(k) <span class="keyword">for</span> k <span class="keyword">in</span> FEATURE_COLUMNS]</span><br></pre></td></tr></table></figure>
+<h3 id="定义-regressor"><a href="#定义-regressor" class="headerlink" title="定义 regressor"></a>定义 regressor</h3><p>这里就到定义模型的时候了，也就是 DNNRegressor，将我们前面定义的 <code>FeatureColumn</code> 传进去，再设置下隐藏层的层数和神经元数量，指定模型保存目录（训练完成后可以使用 tensorboard 可视化网络结构和训练过程）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_cols, </span><br><span class="line">                                          hidden_units=[<span class="number">64</span>, <span class="number">128</span>], </span><br><span class="line">                                          model_dir=<span class="string">&#x27;./models/dnnregressor&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="定义-input-fn"><a href="#定义-input-fn" class="headerlink" title="定义 input_fn"></a>定义 <code>input_fn</code></h3><p>定义完 regressor 之后就是模型的训练了，但是在训练开始前，我们需要定义一下传给模型训练的数据的格式，这就是 <a href="https://www.tensorflow.org/get_started/input_fn"><code>input_fn</code></a> 的作用。<code>input_fn</code> 必须返回 <code>feature_cols</code> 和 <code>labels</code>。</p>
+<ul>
+<li><code>feature_cols</code> 是一个字典， key 是特征的名字，value 是对应的数据（Tensor 格式）</li>
+<li><code>labels</code> 是一个 Tensor，就是你要预测的变量</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">input_fn</span>(<span class="params">df, label</span>):</span><br><span class="line">    feature_cols = &#123;k: tf.constant(df[k].values) <span class="keyword">for</span> k <span class="keyword">in</span> FEATURE_COLUMNS&#125;</span><br><span class="line">    label = tf.constant(label.values)</span><br><span class="line">    <span class="keyword">return</span> feature_cols, label</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">train_input_fn</span>():</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;训练阶段使用的 input_fn&#x27;&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">return</span> input_fn(X_train, y_train)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">test_input_fn</span>():</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;测试阶段使用的 input_fn&#x27;&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">return</span> input_fn(X_test, y_test)</span><br></pre></td></tr></table></figure>
+<h3 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h3><p>定义完 <code>input_fn</code> 我们就可以开始真正的训练过程了。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">regressor.fit(input_fn=train_input_fn, steps=<span class="number">5000</span>)</span><br></pre></td></tr></table></figure>
+<p>训练阶段和测试阶段所用的数据是不一样的，所以在上面我又分别为训练和测试写了一个 <code>input_fn</code>。当然除了这种方式还有其他方式，你可以只写一个 <code>input_fn</code>，然后在 <code>fit</code> 的时候使用类似 <code>input_fn=lambda: input_fn(training_set)</code> 来制定传入的数据集。注意你不能直接使用 <code>input_fn=input_fn(training_set)</code> ，因为 <code>input_fn</code> 参数的值是一个<strong>函数</strong>。</p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ev = regressor.evaluate(input_fn=test_input_fn, steps=<span class="number">1</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;ev: &#123;&#125;&#x27;</span>.<span class="built_in">format</span>(ev))</span><br></pre></td></tr></table></figure>
+<p>测试结果是一个字典，包括最终损失和迭代步数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ev: &#123;&#x27;loss&#x27;: 32.229404, &#x27;global_step&#x27;: 5000&#125;</span><br></pre></td></tr></table></figure>
+<p>我们从 TensorBoard 可以看到最终的训练损失和测试损失：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/nldZ5mk.png" title="loss" data-caption="loss" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/nldZ5mk.png" alt="loss"></a><span class="caption">loss</span></div>
+<p>整个计算图是这样的：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/YIAt4Zq.png" title="graph" data-caption="graph" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/YIAt4Zq.png" alt="graph"></a><span class="caption">graph</span></div>
+<h3 id="预测"><a href="#预测" class="headerlink" title="预测"></a>预测</h3><p>使用训练好的模型对测试数据进行预测，只输出前 10 项预测结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">predict = regressor.predict(input_fn=test_input_fn, as_iterable=<span class="literal">False</span>)</span><br><span class="line"><span class="built_in">print</span>(predict[:<span class="number">10</span>])</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[ <span class="number">25.04570198</span>  <span class="number">31.65488815</span>  <span class="number">11.31779861</span>  <span class="number">14.20497131</span>  <span class="number">31.12402344</span></span><br><span class="line">  <span class="number">37.50260925</span>  <span class="number">25.20910835</span>  <span class="number">24.17683983</span>  <span class="number">20.83440208</span>  <span class="number">35.22043991</span>]</span><br></pre></td></tr></table></figure>
+<h2 id="Trouble-Shooting"><a href="#Trouble-Shooting" class="headerlink" title="Trouble Shooting"></a>Trouble Shooting</h2><h3 id="InternalError-see-above-for-traceback-Blas-SGEMM-launch-failed"><a href="#InternalError-see-above-for-traceback-Blas-SGEMM-launch-failed" class="headerlink" title="InternalError (see above for traceback): Blas SGEMM launch failed"></a><code>InternalError (see above for traceback): Blas SGEMM launch failed</code></h3><p>如果你的程序报类似这样的错，说明你在使用 GPU 计算（默认行为）且你的 GPU 可用显存不足，TensorFlow 总是试图为自己分配全部显存，例如你的显存是 2GB，那么他就会试图为自己分配 2GB，但是一般情况下你的显存不会一点都不被其他程序占用的，导致 TensorFlow 分配显存失败。</p>
+<p><strong>解决办法</strong>是在定义 regressor 的时候使用 <code>config</code> 参数中的 <code>gpu_memory_fraction</code> 来指定分配给 TensorFlow 的显存大小（比例）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># log_device_placement 用于记录并输出使用的设备，可以不用写</span></span><br><span class="line">config = tf.contrib.learn.RunConfig(gpu_memory_fraction=<span class="number">0.3</span>, log_device_placement=<span class="literal">True</span>)</span><br><span class="line">regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_cols, </span><br><span class="line">                                          hidden_units=[<span class="number">64</span>, <span class="number">128</span>], </span><br><span class="line">                                          model_dir=<span class="string">&#x27;./models/dnnregressor&#x27;</span>, </span><br><span class="line">                                          config=config)</span><br></pre></td></tr></table></figure>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/08/20/understanding-tensorboard/"
+                    data-tooltip="理解 TensorBoard"
+                    aria-label="上一篇: 理解 TensorBoard"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/05/18/installing-xgboost/"
+                    data-tooltip="XGBoost 在 Windows 10 和 Ubuntu 上的安装"
+                    aria-label="下一篇: XGBoost 在 Windows 10 和 Ubuntu 上的安装"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/08/20/understanding-tensorboard/"
+                    data-tooltip="理解 TensorBoard"
+                    aria-label="上一篇: 理解 TensorBoard"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/05/18/installing-xgboost/"
+                    data-tooltip="XGBoost 在 Windows 10 和 Ubuntu 上的安装"
+                    aria-label="下一篇: XGBoost 在 Windows 10 和 Ubuntu 上的安装"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/';
+              
+            this.page.identifier = '2017/06/02/tensorflow-DNNRegressor/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

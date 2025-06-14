@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://alanlee.fun/all-archives/index.html</loc>
+    
+    <lastmod>2025-06-14T12:46:16.202Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/all-categories/index.html</loc>
+    
+    <lastmod>2025-06-14T12:46:16.202Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/all-tags/index.html</loc>
+    
+    <lastmod>2025-06-14T12:46:16.202Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/06/04/understanding-objective-functions-in-neural-networks/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/04/13/understanding-pca/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/03/29/understanding-svd/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/08/20/understanding-tensorboard/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/03/09/using-https-namecheap-hexo/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/01/13/why-are-my-cpu-client-and-gpu-server-idle/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/10/25/windows-terminal-hotkeys/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/06/17/xiaomi-tv-youtube/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/about/index.html</loc>
+    
+    <lastmod>2025-06-14T12:46:16.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/05/17/travel-international-workers-day-2023-Yeya-Lake/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.200Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/08/27/ubuntu-installing-tensorflow/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.200Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/05/18/ubuntu-ssr/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.200Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/05/22/understanding-edit-distance/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.200Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/12/22/understanding-estimators-datasets/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.200Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/04/07/understanding-lcs/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.200Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/12/29/understanding-lstms/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.200Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/10/22/tensorflow-linear-regression/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/11/06/tensorflow-logistic-regression/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/11/19/tensorflow-mlp/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/07/18/text-classification-with-tensorflow-estimator/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/08/21/torch-gather/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/11/07/transformers-classification-custom-dataset/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/04/09/tqdm-requests/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/05/17/travel-international-workers-day-2023-Beijing-Wildlife-Park/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/05/17/travel-international-workers-day-2023-Jinhai-Lake/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.199Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/08/09/sklearn-tfidf/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/12/10/tensorboard-mnist-pca/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/02/16/tensorflow-1.0/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/06/02/tensorflow-DNNRegressor/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/12/28/tensorflow-cnn-no-tensorboard/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/03/17/tensorflow-cnn-tensorboard/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/02/26/tensorflow-cudnn-version/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/10/29/tensorflow-hyperparams/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.198Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/12/27/nuphy-air75/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/04/27/pandas-read-excel-with-merged-cells/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/03/04/pattern-matching-python310/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/07/04/pixel-check-update/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/11/30/pyconchina2020/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/03/29/python-zip-check-length/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/01/17/python-unboundlocalerror/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/07/14/remote-jupyter/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/10/26/sklearn-logistics-regression-parameters/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/11/16/self-attentive-parser-paper/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.197Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/02/25/lemmatization-vs-stemming/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/11/23/llama1/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/01/11/machine-learning-book-note/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2015/12/21/matlab-fitlm/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2024/12/28/my-2024/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/03/15/meet-label-studio/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2024/11/03/my-home-purchase-story/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/01/03/neteasemusic-year-report-2017/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/01/13/neteasemusic-year-report-2018/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.196Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/11/25/install-nvtop-ubuntu/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/05/18/installing-xgboost/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2016/12/01/installing-tensorflow/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2025/06/03/introducing-mcp-part-1/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/11/17/introducing-plotly/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2025/06/14/introducing-mcp-part-2/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/07/02/introducing-supervisor/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/01/08/introducing-upsetplot/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2024/11/02/korean-unicode-normalization/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.195Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/05/22/find-subsequences/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/12/17/five-years/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/05/01/ghost-ssl-cert/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/12/30/google-sitemap/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/10/08/gradient-descent-methods/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/04/10/hexo-add-ads/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/02/28/hexo-empty-html/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/12/04/install-basic-deep-learning-env/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/09/19/install-ghost/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.194Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/02/04/embed-altair-plot/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.193Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/03/15/embed-bokeh-plot/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.193Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/08/30/ensemble-methods/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.193Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2017/12/25/export-csdn-blogs-to-md/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.193Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/10/16/bert-tokenizer/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/10/28/bisect-speed/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/11/22/c++-for-python-programmers/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/04/08/changes/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/06/04/count-lstm-params/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2021/09/12/data-augment-ner-nlp/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2024/07/05/deploy-hexo-with-github-action/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/04/23/disqus-comments-not-showing/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.192Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2022/08/22/about-c4-dataset/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.191Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2019/04/10/analyzing-python-servey/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.191Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.191Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/05/15/bandizip-noads/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.191Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2023/05/26/batch-export-qq-emails/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.191Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/2020/05/08/bert-model/</loc>
+    
+    <lastmod>2025-06-14T12:46:16.191Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://alanlee.fun/404.html</loc>
+    
+    <lastmod>2025-06-14T12:46:16.191Z</lastmod>
+    
+  </url>
+  
+</urlset>

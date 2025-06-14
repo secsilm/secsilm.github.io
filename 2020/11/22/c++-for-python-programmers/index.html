@@ -1,0 +1,896 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>给 Python 程序员的 C++ 简易入门 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n\n译者注：本文原文成文较早，里面一些语法可能已经不是最新的了，但是其大部分观点在我看来仍然具有点拨意义，帮助你快速对 C++ 有个认识。\n\n本文改编自 Michigan State University 的 Rich Enbody 和 Bill Punch 的一篇文档。\n本文目的本文是给 Python 程序员的 C++ 简易入门，帮助你开始学习 C++。这不是一份完整的 C++ 入门。简洁优先于细节。\n为什么是 C++？为什么 Python 程序员要在乎 C++ 呢？\nC++ 及其父语言 C 更接近于操作系统底层和硬件，所以 C++ 通常拥有更好的性能，但是也不一定。而且 C++ 也是一门通用和强大的语言，所以值得一学。如果你深入底层地去看的话，你会发现很多应用和系统使用的都是 C++ 或者 C。\n当你学习 C++ 的时候要记住的一件事是一定要留意 STL：the C++ Standard Template Library，C++ 标准模板库。教科书中经常会忽略 STL，但是这是一个非常强大的工具集，而且以后会成为你的好朋友。\n当然也有其他值得一学地语言，但是本文只关注从 Python 转到 C++。要注意的是 C++ 比 Java 和 C# 早，所以你可能会发现很多相似之处（和重大不同）。一旦你学会了 C++，再转到其他两门语言也相对容易。\n最后，选择语言这件事也不是一个非此即彼的情况（either/or situation）。你可以用 Python 编程，然后在需要速度或者调用系统底层组件的时候使用 C++。封装 C++ 库然后给 Python 调用是一件很容易的事情（许多有用的库已经帮你封装好了）。Python 和其他语言融合很容易，有许多工具比如 Bgen、PySTL（译者注：貌似已经不怎么维护了） 和 Sip。\n在 Michigan State University，我们 Computer Science and Computer Engineering 的第一个课程主要用的是 Python，第二个课程用的是 C++，Linux 环境。\nHello World！传统的 C 编程以打印 “Hello World!” 为初学者的第一个程序。这也是第一本 C 编程书籍 —— 由 Kernighan 和 Ritchie 编写的《 The C Programming Language》的开始。由于 C++ 来自 C，我们也以这种方式开始。\n1234567#include &lt;iostream&gt;using namespace std;int main()&#123;    cout &lt;&lt; &quot;Hello World!&quot;;    return 0;&#125;\nPython 程序员注意到的第一件事可能就是打印一个字符串这么简单的事情，竟然需要这么多的代码量，significant overhead。#include 就像 Python 中的 import（不完全正确，但是这个类比暂时是可以的），将 input/output stream 库导进来，也就是 cout 定义的地方。using namespace 指定了 namespace，所以我们可以直接用 cout 而不用 std::cout。（译者注：感觉类似于 `from a import `*）\nint main() 表示一个函数定义的开始，函数名叫 main，花括号 &#123; 和 &#125; 表示一个代码块的开始和结束，在这里就是 main 函数块的开始和结束。\ncout &lt;&lt; &quot;Hello World!&quot;; 将字符串传给 cout，标准输出流，即在屏幕上显示该字符串。缩进在 C++ 中是可选的，但如果你不使用缩进，那么代码可读性就会很差。如果你像在 Python 中那样缩进，那么你的代码可读性就会好很多。\nGotcha #1：C++ 语句以英文分号 ; 结尾（尽管不是严格正确，但目前来说是的）。\n运行程序C++ 是一个编译型语言，所以你在运行之前必须要编译（compile）。编译就是将 C++ 代码转成处理器能理解的机器语言。编译和运行 C++ 代码的方法根据平台不同而不同，此处我以 Linux 为例。\n在 Linux 上你可以使用 VI、EMACS 等编辑器写代码。C++ 代码文件的后缀是 .cpp，所以你可以将你的代码保存为 hello.cpp。\nGNU 编译器 g++ 是很常见的一种编译器，你可以简单一行命令编译你的 C++ 代码：\n1g++ hello.cpp\n如果编译成功，就会默认生成一个名为 a.out 可执行程序，所以你可以在终端输入 a.out 回车执行。如果编译时发现了语法错误，屏幕上会输出错误信息。\n在 Windows 平台，你可以使用 Visual C++ 开发环境 Visual Studio 来写 C++ 代码，这是一个很好的软件，但是也比较复杂。编译、编辑代码都在这个软件内进行。在该软件内，编译称为 build，运行也只是其中的一个命令。\nC++ 是强类型的C++ 是一个强类型语言，虽然不是那么严谨，但是目前这样说是可以的。也就是说，所有对象都必须在使用之前进行声明。Python 可以根据值来得出对象的类型，而 C++ 必须先知道。Python 中可以允许赋不同类型的值给同一个对象，而 C++ 中必须保持一致，声明的时候就已经决定了这个对象的类型。\n例如，一个变量的类型必须在使用之前进行声明。\n1int x; x = 2;\nGotcha #2：使用变量之前忘记声明。（不用担心，如果你真的忘了，编译器会提醒你的。）注意每一个语句都以分号结尾（Gotcha #1）。\nC++ 类型一些 C++ 类型你可能比较熟悉：\n\nint\nfloat\nbool：和 Boolean 一样\nstring：可能需要 #include&lt;string&gt;\n\n其他一些你可能不太熟悉：\n\nchar：单个字符，而不是一个长度为 1 的 string。\n\n一些区别：\n\nint 没有扩展精度（extended precision）。一个 int 是由机器的字长（word size）限制的，通常是 32 位，但是以后 64 位的会越来越多（译者注：限制已经是 64 位的天下了），最大值约为 20 亿。\nint 有很多变体：short，long，unsigned 和 unsigned long 等，但是目前你可以仅使用 int。\n\n赋值赋值的语法和 Python 类似：\n1x = 4;\n但是多重赋值（multi-assignment）是不允许的：\n1x, y = y, x\n变量是不同的C++ 中，变量是一个有名字的内存地址。声明一个变量就是给一个内存地址起一个名字，并将变量类型与这个内存地址关联起来。\n1int x, y; x = 7; y = x;\nPython 中表达式 y = x 表示的是 x 和 y 指向同一个对象（即同一个对象的两个名字），而在 C++ 中，表示的是将 x 的值复制到那个名字为 y 的内存地址上。\n这个区别可以用下面这个例子来解释。在这个例子中我们可以看到改变两个指向相同对象的不同名称的变量中的一个，是否会影响到另一个变量的值。\nPython 中我们可以将一个 list 命名为 A，同时也将之命名为 B，is 操作符表明 A 和 B 指向同一个对象。如果你更改 B 的第一个元素，那么 A 也会跟着更改：\n1234567&gt;&gt;&gt; A = [2,3] &gt;&gt;&gt; B = A &gt;&gt;&gt; B is A True &gt;&gt;&gt; B[0]=100 &gt;&gt;&gt; A[100, 3]\n在 C++ 中实现要相对复杂一点。我们将会使用和 Python list 比较相似的 C++ array，除了 array 的大小是固定的。C++ 中你不能将一个 array 直接赋值给另一个 array。你需要使用循环来依次赋值，输出也是。\n1234567891011121314151617181920212223242526#include &lt;iostream&gt;using namespace std;int main()&#123;    // declare array A of length 2 and assign its elements    // to have values 2 and 3    int A[2] = &#123;2,3&#125;;    // declare array B of length 2, but don&#x27;t assign its    // elements (yet)    int B[2];    // loop through both arrays A and B assigning to each    // element of B the corresponding value of A    for (int i = 0; i &lt; 2; i++)    &#123;        B[i] = A[i];    &#125;    // change the first element of B    B[0]= 100;    // loop through A and B printing out each element    for (int i = 0; i &lt; 2; i++)    &#123;        cout &lt;&lt; &quot;A,B: &quot; &lt;&lt; A[i] &lt;&lt; &quot;, &quot; &lt;&lt; B[i] &lt;&lt; endl;    &#125;    return 0;&#125;\n你会看到 A 的值不会随着 B 改变。\n算术运算符C++ 中的算术表达式和 Python 差不多：\n\n+, -, *, /, %\n+=, -=, *=, /=\n但是没有 **\n\n自增和 Python 中不同：\n\ny = ++x; 相当于 x = x + 1; y = x;\ny = x++; 相当于 y = x; x = x + 1;\n\n自减类似。\n关系运算符关系运算符也是差不多的：\n\n==, !=, &lt;, &gt;, &lt;=, &gt;=\n\n但是\n\n&amp;&amp; 意思是 与\n|| 意思是 或\n\nGotcha #3：下面这个表达式在 C++ 中的值和在 Python 或者数学中是不一样的：假设 x = 3，那么这个表达式的值是什么：5 &lt; x &lt; 10？\nC++ 中，会先执行 5 &lt; x，值为 false，也就是 0，然后 0 替代 5 &lt; x 继续执行：0 &lt; 10，结果为 true，所以整个表达式的结果是 TRUE！（这显然是和数学与 Python 中的结果是相反的。）\n为了得到正确的结果，你必须写成这样：\n1(5 &lt; x) &amp;&amp; (x &lt; 10)\n条件：ifC++ 中的 if 和 Python 中也是相似的，除了\n\n表达式要用括号括住\n不用冒号\n缩进同样不是必须的，但是强烈推荐\n\n例如：\n12if (x &gt; 4)    y = 7;\nC++ 中也有 else：\n1234if (x &lt;= 5)    y = 8;else    z = 10;\n然而 C++ 中没有 elif，你得使用 else if：\n123456if (y == 7)    x = 2;else if (x != 2)    y = 5;else    z = 10;\nPython suites 就是 C++ blocksPython 使用缩进来表示 suites，C++ 使用花括号来分隔 blocks。但缩进是强烈推荐的。\n例如：\n12345if ((x &lt;= 5) &amp;&amp; (y != 7))&#123;    z = 12;    w = 13;&#125;\n注释注释的用法也是相似的，只是不是以 # 开头：\n123// 这是单行注释/* 这是    多行注释 */\nC++ 没有 docstring。\nwhile 循环C++ 中 while 循环也是相似的，和 if 语句规则一样：\n\n需要用括号括住表达式\n花括号来标记 block\n\n例如：\n12345while (x &lt; 5) &#123;\t\ty = z + x;\t\tx = x + 1; &#125;\n类似地，C++ 也有：\n\ncontinue\nbreak\n\n但是没有与 Python 中 while 对应的 else。\nfor 循环C++ 中的 for 循环与 Python 比较不同，有好的也有不好的。不好的地方是 C++ 没有 Python 中方便的 for ... in ... 循环。\n但是，好消息是 C++ 的 for 循环与 Python 中的 for x in range(...) 类似。\n例如，在 Python 中：\n1for x in range(5): print x,\n等价于 C++ 的：\n12for (int x = 0; x &lt; 5; x++)    cout &lt;&lt; x;\nC++ 的 for 由三部分：\n1for (int x = 0; x &lt; 5; x++)\n\n初始化表达式 int x =0 只在开始时执行一次\n条件表达式 x &lt; 5 在每次遍历开始之前执行，如果条件为 true，那么循环体就会执行\n最后的表达式 x++ 在每次遍历的最后执行\n\n注意，如果条件表达式为 false，那么循环体一次也不会执行。\n像 while 一样，C++ 中的 for 也有：\n\ncontinue\nbreak\n\n但是也没有与 for 对应的 else。\nC++中 “for “和 “while “的等价关系C++ 中，for 是 while 的一种特殊形式。理解这一点对理解循环是如何工作的很重要。注意，这种等价关系在 Python 中不成立。\n我们用一个例子来解释：\n12for (int x = 0; x &lt; 5; x++)    cout &lt;&lt; x;\n等价于\n123456int x = 0;while (x &lt; 5)&#123;    cout &lt;&lt; x;    x++;&#125;\n输出C++ 的输出和 Python 相比看似相似，但是也有不同点。具体来说，Python 使用的是类似于 C 的输出表达式，这种表达式同样适用于 C++。\n例如，Python 中我们可以如下进行输出：\n1print &quot;int %d and float %5.3f&quot; % (45, 3.1416)\nC 中（也适用于 C++）也是类似的：\n12printf(&quot;int %d and float %5.3f \\n&quot;, 45, 3.1416);Note\n注意回车符 \\n（carriage return），要想得到和 Python 一样的结果，那么在 C 中必须加这个字符。\n然而 C++ 标准与刚才的 C 语法有着很大的不同。\n首先，C++ 需要先在程序最开始的地方加上 #include &lt;iomanip&gt;（与 #include &lt;iostream&gt; 一起）。\n12345cout&lt;&lt; setprecision(4);// significant digits is 4cout&lt;&lt; &quot;int &quot;&lt;&lt; 45 &lt;&lt;&quot; and float &quot;&lt;&lt; setw(5)&lt;&lt; 3.1416;cout &lt;&lt; endl;// endl is an explicit carriage return\n文件输入与输出此处有着非常大的不同。具体来说，对于文件输入，Python 的语法要比 C++ 短很多。\n例如，Python 中我们只简单地这么写就可以了：\n12for line in file(&quot;Data.txt&quot;):\t\tprint line\n此外，我们也可以先显式地先打开文件 —— 一个与 C++ 更相似地流程：\n123inStream = open(&quot;Data.txt&quot;, &quot;r&quot;)for line in inStream:\t\tprint line\nC++ 中，我们必须先导入文件流库，声明对象，显式地打开文件，显式地检查我们是否到了文件末尾：\n123456789101112131415161718192021#include &lt;iostream&gt;// include library for file streams#include &lt;fstream&gt;#include &lt;string&gt;using namespace std;int main()&#123;\t\t// declare the input stream\t\tifstream InStream;\t\t// a string\t\tstring line;\t\t// open file\t\tInStream.open(&quot;Data.txt&quot;);\t\t// read a line and check for end-of-file (eof)\t\twhile (getline(InStream, line))\t\t&#123;\t\t\t\t// output the line\t\t\t\tcout &lt;&lt; line &lt;&lt; endl;\t\t&#125;\t\treturn 0;&#125;\nGotcha #4：注意 while 循环是如何工作的：我们先得到输入（使用 getline ），然后再检查是否到了文件末尾，再在循环体底部得到下一个输入。使用 while 循环时一个常见的错误是，把 getline 放到循环体的开头，从而导致循环次数过多。（这种情况也适用于 Python，不过相比 C++，在 Python 中你可能更少使用 while。）\n函数函数的使用也是相似的，但是有一些非常重要的区别，你必须非常小心！\n让我们先从熟悉的地方开始。\nPython 中：\n12def fun(x):\t\treturn x + 2\nC++ 中，情况也是类似的，只不过最值得注意的地方是，需要声明参数 x 的类型。\n1234int fun(int x)&#123;\t\treturn x + 2;&#125;\nC++ 和 Python 中的函数都是只返回一个对象。然而 Python 中有内置的可以包含多个值的对象，比如元组 tuples。虽然在 C++ 中也可以构建类似的对象，但更倾向于使用参数来“返回”多个值 —— 类似于在 Python 中改变可变参数的方式。\n参数：值和引用C++ 中默认的传参方式是传值 —— 类似于 Python 中传不可变对象。即，在函数中改变相应的对象，并不会改变原始对象。换言之，改变 parameter 并不会改变 argument。\n\n译者注：关于 parameter 和 argument，中文比较普遍的翻译分别是“形参”和“实参”。两者区别见下图，一图胜千言：\n\nparameter vs argument\nparameter vs argument，来自 https://getkt.com/blog/types-of-function-arguments-in-python/\n传值让我们先来看下 C++ 中的传值示例。输出在注释中。特别地，注意在函数中改变 x 并不会改变 main 中的 x ：\n1234567891011121314int fun(int x)&#123;\t\tx = x + 2;\t\t// prints 5\t\tcout &lt;&lt; x;&#125;int main()&#123;\t\tint x = 3;\t\tfun(x);\t\t// prints 3，即仍然保持不变\t\tcout &lt;&lt; x;\t\treturn 0;&#125;\n传引用C++ 中传引用是有一个特殊标记的：&amp;，将这个符号加在需要传引用的参数名前。在这个例子中，函数中的 x 和 main 函数中的 x 指向同一个对象，所以改变函数中的 x 也会改变 main 函数中的 x （因为指向的是同一个对象）。值得注意的是，如果函数的 parameter name 是 y 而不是 x ，那么上述结论仍然是不变的。\n例如：\n12345678910111213int fun(int&amp; x)&#123;\t\tx = x + 2;\t\t// prints 5\t\tcout &lt;&lt; x;&#125;int main()&#123;\t\tint x = 3;\t\tfun(x);\t\t// prints 5，与上面不同\t\tcout &lt;&lt; x;&#125;\n类类同样是相似的，但也是非常不同。\n\n译者注：这里原文就写到这。\n\n指针指针对你来说可能是陌生的，我们在这里将简要地提一下 —— 它们所需要的篇幅远远超过我们在这里所能投入的。在很多方面，指针是简单的，但它的简单也会让你陷入麻烦。指针只是一个持有内存地址的变量。在一个变量声明中，星号 * 表示该变量是一个指针，类型表示该指针中的地址所对应的对象的类型。&amp; 表示对象的地址。例如：\n1int A, *C = &amp;A;\n指针 C 存储着整型 A 的地址。下面是一个简单的 C++ 程序使用指针的例子。\n123456789101112131415161718192021#include &lt;iostream&gt;using namespace std;int main()&#123;\t\tint A = 15, B = 38, *C = &amp;A;\t\tcout &lt;&lt; endl;\t\tcout &lt;&lt; &amp;A &lt;&lt; &quot; &quot; &lt;&lt; A &lt;&lt; endl;\t\tcout &lt;&lt; &amp;B &lt;&lt; &quot; &quot; &lt;&lt; B &lt;&lt; endl;\t\tcout &lt;&lt; &amp;C &lt;&lt; &quot; &quot; &lt;&lt; C &lt;&lt; &quot; &quot; &lt;&lt; *C &lt;&lt; endl;\t\tA = 49;\t\tcout &lt;&lt; endl;\t\tcout &lt;&lt; &amp;A &lt;&lt; &quot; &quot; &lt;&lt; A &lt;&lt; endl;\t\tcout &lt;&lt; &amp;B &lt;&lt; &quot; &quot; &lt;&lt; B &lt;&lt; endl;\t\tcout &lt;&lt; &amp;C &lt;&lt; &quot; &quot; &lt;&lt; C &lt;&lt; &quot; &quot; &lt;&lt; *C &lt;&lt; endl;\t\tC = &amp;B;\t\tcout &lt;&lt; endl;\t\tcout &lt;&lt; &amp;A &lt;&lt; &quot; &quot; &lt;&lt; A &lt;&lt; endl;\t\tcout &lt;&lt; &amp;B &lt;&lt; &quot; &quot; &lt;&lt; B &lt;&lt; endl;\t\tcout &lt;&lt; &amp;C &lt;&lt; &quot; &quot; &lt;&lt; C &lt;&lt; &quot; &quot; &lt;&lt; *C &lt;&lt; endl;\t\treturn 0;&#125;\n下面是在一个 64 位机器上的输出，注意每次运行得到的地址可能是不同的。\n1234567890x7ffe6212b6cc 150x7ffe6212b6c8 380x7ffe6212b6c0 0x7ffe6212b6cc 150x7ffe6212b6cc 490x7ffe6212b6c8 380x7ffe6212b6c0 0x7ffe6212b6cc 490x7ffe6212b6cc 490x7ffe6212b6c8 380x7ffe6212b6c0 0x7ffe6212b6c8 38\n异常Try/except 也是相当相似的。\n\n译者注：这里原文就写到这。\n\nEND","dateCreated":"2020-11-22T19:37:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2020-11-22T19:37:00+08:00","description":"本文改编自 Michigan State University 的 Rich Enbody 和 Bill Punch 的一篇文档，结合和 Python 的对比，带你走进 C++ 的世界。","headline":"给 Python 程序员的 C++ 简易入门","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2020/11/22/c++-for-python-programmers/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2020/11/22/c++-for-python-programmers/","keywords":"Python, Translation, C++"}</script>
+    <meta name="description" content="本文改编自 Michigan State University 的 Rich Enbody 和 Bill Punch 的一篇文档，结合和 Python 的对比，带你走进 C++ 的世界。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="给 Python 程序员的 C++ 简易入门">
+<meta property="og:url" content="https://alanlee.fun/2020/11/22/c++-for-python-programmers/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文改编自 Michigan State University 的 Rich Enbody 和 Bill Punch 的一篇文档，结合和 Python 的对比，带你走进 C++ 的世界。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/11/22/dIu9QpCeJsWFZjc.png">
+<meta property="article:published_time" content="2020-11-22T11:37:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.192Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Translation">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/11/22/dIu9QpCeJsWFZjc.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            给 Python 程序员的 C++ 简易入门
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-11-22T19:37:00+08:00">
+	
+		    2020 年 11 月 22 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AC%E6%96%87%E7%9B%AE%E7%9A%84"><span class="toc-text">本文目的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-C-%EF%BC%9F"><span class="toc-text">为什么是 C++？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hello-World%EF%BC%81"><span class="toc-text">Hello World！</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="toc-text">运行程序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E6%98%AF%E5%BC%BA%E7%B1%BB%E5%9E%8B%E7%9A%84"><span class="toc-text">C++ 是强类型的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E7%B1%BB%E5%9E%8B"><span class="toc-text">C++ 类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B5%8B%E5%80%BC"><span class="toc-text">赋值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%98%E9%87%8F%E6%98%AF%E4%B8%8D%E5%90%8C%E7%9A%84"><span class="toc-text">变量是不同的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%9C%AF%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-text">算术运算符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E7%B3%BB%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-text">关系运算符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%A1%E4%BB%B6%EF%BC%9Aif"><span class="toc-text">条件：if</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Python-suites-%E5%B0%B1%E6%98%AF-C-blocks"><span class="toc-text">Python suites 就是 C++ blocks</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E9%87%8A"><span class="toc-text">注释</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#while-%E5%BE%AA%E7%8E%AF"><span class="toc-text">while 循环</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#for-%E5%BE%AA%E7%8E%AF"><span class="toc-text">for 循环</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E4%B8%AD-%E2%80%9Cfor-%E2%80%9C%E5%92%8C-%E2%80%9Cwhile-%E2%80%9C%E7%9A%84%E7%AD%89%E4%BB%B7%E5%85%B3%E7%B3%BB"><span class="toc-text">C++中 “for “和 “while “的等价关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BE%93%E5%87%BA"><span class="toc-text">输出</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E4%B8%8E%E8%BE%93%E5%87%BA"><span class="toc-text">文件输入与输出</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%BD%E6%95%B0"><span class="toc-text">函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%EF%BC%9A%E5%80%BC%E5%92%8C%E5%BC%95%E7%94%A8"><span class="toc-text">参数：值和引用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%A0%E5%80%BC"><span class="toc-text">传值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%A0%E5%BC%95%E7%94%A8"><span class="toc-text">传引用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB"><span class="toc-text">类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%87%E9%92%88"><span class="toc-text">指针</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8"><span class="toc-text">异常</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<blockquote>
+<p>译者注：本文<a href="http://blue.cs.sonoma.edu/~tiawatts/UsefulStuff/C++ForPythonProgrammers.pdf">原文</a>成文较早，里面一些语法可能已经不是最新的了，但是其大部分观点在我看来仍然具有点拨意义，帮助你快速对 C++ 有个认识。</p>
+</blockquote>
+<p>本文改编自 Michigan State University 的 Rich Enbody 和 Bill Punch 的一篇文档。</p>
+<h2 id="本文目的"><a href="#本文目的" class="headerlink" title="本文目的"></a>本文目的</h2><p>本文是给 Python 程序员的 C++ 简易入门，帮助你开始学习 C++。这不是一份完整的 C++ 入门。简洁优先于细节。</p>
+<h2 id="为什么是-C-？"><a href="#为什么是-C-？" class="headerlink" title="为什么是 C++？"></a>为什么是 C++？</h2><p>为什么 Python 程序员要在乎 C++ 呢？</p>
+<p>C++ 及其父语言 C 更接近于操作系统底层和硬件，所以 C++ 通常拥有更好的性能，但是也不一定。而且 C++ 也是一门通用和强大的语言，所以值得一学。如果你深入底层地去看的话，你会发现很多应用和系统使用的都是 C++ 或者 C。</p>
+<p>当你学习 C++ 的时候要记住的一件事是一定要留意 STL：the C++ Standard Template Library，C++ 标准模板库。教科书中经常会忽略 STL，但是这是一个非常强大的工具集，而且以后会成为你的好朋友。</p>
+<p>当然也有其他值得一学地语言，但是本文只关注从 Python 转到 C++。要注意的是 C++ 比 Java 和 C# 早，所以你可能会发现很多相似之处（和重大不同）。一旦你学会了 C++，再转到其他两门语言也相对容易。</p>
+<p>最后，选择语言这件事也不是一个非此即彼的情况（<em>either/or situation</em>）。你可以用 Python 编程，然后在需要速度或者调用系统底层组件的时候使用 C++。封装 C++ 库然后给 Python 调用是一件很容易的事情（许多有用的库已经帮你封装好了）。Python 和其他语言融合很容易，有许多工具比如 Bgen、PySTL（<em>译者注：貌似已经不怎么维护了</em>） 和 Sip。</p>
+<p>在 Michigan State University，我们 Computer Science and Computer Engineering 的第一个课程主要用的是 Python，第二个课程用的是 C++，Linux 环境。</p>
+<h2 id="Hello-World！"><a href="#Hello-World！" class="headerlink" title="Hello World！"></a>Hello World！</h2><p>传统的 C 编程以打印 “Hello World!” 为初学者的第一个程序。这也是第一本 C 编程书籍 —— 由 Kernighan 和 Ritchie 编写的《 The C Programming Language》的开始。由于 C++ 来自 C，我们也以这种方式开始。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;Hello World!&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Python 程序员注意到的第一件事可能就是打印一个字符串这么简单的事情，竟然需要这么多的代码量，significant overhead。<code>#include</code> 就像 Python 中的 <code>import</code>（不完全正确，但是这个类比暂时是可以的），将 input/output stream 库导进来，也就是 <code>cout</code> 定义的地方。<code>using namespace</code> 指定了 namespace，所以我们可以直接用 <code>cout</code> 而不用 <code>std::cout</code>。（<em>译者注：感觉类似于 `from a import </em>`*）</p>
+<p><code>int main()</code> 表示一个函数定义的开始，函数名叫 <code>main</code>，花括号 <code>&#123;</code> 和 <code>&#125;</code> 表示一个代码块的开始和结束，在这里就是 <code>main</code> 函数块的开始和结束。</p>
+<p><code>cout &lt;&lt; &quot;Hello World!&quot;;</code> 将字符串传给 <code>cout</code>，标准输出流，即在屏幕上显示该字符串。缩进在 C++ 中是可选的，但如果你不使用缩进，那么代码可读性就会很差。如果你像在 Python 中那样缩进，那么你的代码可读性就会好很多。</p>
+<p>Gotcha #1：C++ 语句以英文分号 <code>;</code> 结尾（尽管不是严格正确，但目前来说是的）。</p>
+<h2 id="运行程序"><a href="#运行程序" class="headerlink" title="运行程序"></a>运行程序</h2><p>C++ 是一个编译型语言，所以你在运行之前必须要编译（compile）。编译就是将 C++ 代码转成处理器能理解的机器语言。编译和运行 C++ 代码的方法根据平台不同而不同，此处我以 Linux 为例。</p>
+<p>在 Linux 上你可以使用 VI、EMACS 等编辑器写代码。C++ 代码文件的后缀是 <code>.cpp</code>，所以你可以将你的代码保存为 <code>hello.cpp</code>。</p>
+<p>GNU 编译器 g++ 是很常见的一种编译器，你可以简单一行命令编译你的 C++ 代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ hello.cpp</span><br></pre></td></tr></table></figure>
+<p>如果编译成功，就会默认生成一个名为 <code>a.out</code> 可执行程序，所以你可以在终端输入 <code>a.out</code> 回车执行。如果编译时发现了语法错误，屏幕上会输出错误信息。</p>
+<p>在 Windows 平台，你可以使用 Visual C++ 开发环境 Visual Studio 来写 C++ 代码，这是一个很好的软件，但是也比较复杂。编译、编辑代码都在这个软件内进行。在该软件内，编译称为 <code>build</code>，运行也只是其中的一个命令。</p>
+<h2 id="C-是强类型的"><a href="#C-是强类型的" class="headerlink" title="C++ 是强类型的"></a>C++ 是强类型的</h2><p>C++ 是一个强类型语言，虽然不是那么严谨，但是目前这样说是可以的。也就是说，所有对象都必须在使用之前进行声明。Python 可以根据值来得出对象的类型，而 C++ 必须先知道。Python 中可以允许赋不同类型的值给同一个对象，而 C++ 中必须保持一致，声明的时候就已经决定了这个对象的类型。</p>
+<p>例如，一个变量的类型必须在使用之前进行声明。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x; x = <span class="number">2</span>;</span><br></pre></td></tr></table></figure>
+<p>Gotcha #2：使用变量之前忘记声明。（不用担心，如果你真的忘了，编译器会提醒你的。）注意每一个语句都以分号结尾（Gotcha #1）。</p>
+<h2 id="C-类型"><a href="#C-类型" class="headerlink" title="C++ 类型"></a>C++ 类型</h2><p>一些 C++ 类型你可能比较熟悉：</p>
+<ul>
+<li>int</li>
+<li>float</li>
+<li>bool：和 Boolean 一样</li>
+<li>string：可能需要 <code>#include&lt;string&gt;</code></li>
+</ul>
+<p>其他一些你可能不太熟悉：</p>
+<ul>
+<li>char：单个字符，而不是一个长度为 1 的 string。</li>
+</ul>
+<p>一些区别：</p>
+<ul>
+<li><code>int</code> 没有扩展精度（<em>extended precision</em>）。一个 <code>int</code> 是由机器的字长（<em>word size</em>）限制的，通常是 32 位，但是以后 64 位的会越来越多（<em>译者注：限制已经是 64 位的天下了</em>），最大值约为 20 亿。</li>
+<li><code>int</code> 有很多变体：<code>short</code>，<code>long</code>，<code>unsigned</code> 和 <code>unsigned long</code> 等，但是目前你可以仅使用 <code>int</code>。</li>
+</ul>
+<h2 id="赋值"><a href="#赋值" class="headerlink" title="赋值"></a>赋值</h2><p>赋值的语法和 Python 类似：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = <span class="number">4</span>;</span><br></pre></td></tr></table></figure>
+<p>但是多重赋值（<em>multi-assignment</em>）是不允许的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x, y = y, x</span><br></pre></td></tr></table></figure>
+<h2 id="变量是不同的"><a href="#变量是不同的" class="headerlink" title="变量是不同的"></a>变量是不同的</h2><p>C++ 中，变量是一个有名字的内存地址。声明一个变量就是给一个内存地址起一个名字，并将变量类型与这个内存地址关联起来。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x, y; x = <span class="number">7</span>; y = x;</span><br></pre></td></tr></table></figure>
+<p>Python 中表达式 <code>y = x</code> 表示的是 <code>x</code> 和 <code>y</code> 指向同一个对象（<em>即同一个对象的两个名字</em>），而在 C++ 中，表示的是将 <code>x</code> 的值复制到那个名字为 <code>y</code> 的内存地址上。</p>
+<p>这个区别可以用下面这个例子来解释。在这个例子中我们可以看到改变两个指向相同对象的不同名称的变量中的一个，是否会影响到另一个变量的值。</p>
+<p>Python 中我们可以将一个 list 命名为 <code>A</code>，同时也将之命名为 <code>B</code>，<code>is</code> 操作符表明 <code>A</code> 和 <code>B</code> 指向同一个对象。如果你更改 <code>B</code> 的第一个元素，那么 <code>A</code> 也会跟着更改：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>A = [<span class="number">2</span>,<span class="number">3</span>] </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>B = A </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>B <span class="keyword">is</span> A </span><br><span class="line"><span class="literal">True</span> </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>B[<span class="number">0</span>]=<span class="number">100</span> </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>A</span><br><span class="line">[<span class="number">100</span>, <span class="number">3</span>]</span><br></pre></td></tr></table></figure>
+<p>在 C++ 中实现要相对复杂一点。我们将会使用和 Python list 比较相似的 C++ array，除了 array 的大小是固定的。C++ 中你不能将一个 array 直接赋值给另一个 array。你需要使用循环来依次赋值，输出也是。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// declare array A of length 2 and assign its elements</span></span><br><span class="line">    <span class="comment">// to have values 2 and 3</span></span><br><span class="line">    <span class="type">int</span> A[<span class="number">2</span>] = &#123;<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line">    <span class="comment">// declare array B of length 2, but don&#x27;t assign its</span></span><br><span class="line">    <span class="comment">// elements (yet)</span></span><br><span class="line">    <span class="type">int</span> B[<span class="number">2</span>];</span><br><span class="line">    <span class="comment">// loop through both arrays A and B assigning to each</span></span><br><span class="line">    <span class="comment">// element of B the corresponding value of A</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">2</span>; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        B[i] = A[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// change the first element of B</span></span><br><span class="line">    B[<span class="number">0</span>]= <span class="number">100</span>;</span><br><span class="line">    <span class="comment">// loop through A and B printing out each element</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">2</span>; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;A,B: &quot;</span> &lt;&lt; A[i] &lt;&lt; <span class="string">&quot;, &quot;</span> &lt;&lt; B[i] &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你会看到 <code>A</code> 的值不会随着 <code>B</code> 改变。</p>
+<h2 id="算术运算符"><a href="#算术运算符" class="headerlink" title="算术运算符"></a>算术运算符</h2><p>C++ 中的算术表达式和 Python 差不多：</p>
+<ul>
+<li><code>+, -, *, /, %</code></li>
+<li><code>+=, -=, *=, /=</code></li>
+<li>但是没有 <code>**</code></li>
+</ul>
+<p>自增和 Python 中不同：</p>
+<ul>
+<li><code>y = ++x;</code> 相当于 <code>x = x + 1; y = x;</code></li>
+<li><code>y = x++;</code> 相当于 <code>y = x; x = x + 1;</code></li>
+</ul>
+<p>自减类似。</p>
+<h2 id="关系运算符"><a href="#关系运算符" class="headerlink" title="关系运算符"></a>关系运算符</h2><p>关系运算符也是差不多的：</p>
+<ul>
+<li><code>==, !=, &lt;, &gt;, &lt;=, &gt;=</code></li>
+</ul>
+<p>但是</p>
+<ul>
+<li><code>&amp;&amp;</code> 意思是 与</li>
+<li><code>||</code> 意思是 或</li>
+</ul>
+<p>Gotcha #3：下面这个表达式在 C++ 中的值和在 Python 或者数学中是不一样的：假设 <code>x = 3</code>，那么这个表达式的值是什么：<code>5 &lt; x &lt; 10</code>？</p>
+<p>C++ 中，会先执行 <code>5 &lt; x</code>，值为 false，也就是 0，然后 0 替代 <code>5 &lt; x</code> 继续执行：<code>0 &lt; 10</code>，结果为 true，所以整个表达式的结果是 TRUE！（<em>这显然是和数学与 Python 中的结果是相反的。</em>）</p>
+<p>为了得到正确的结果，你必须写成这样：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(<span class="number">5</span> &lt; x) &amp;&amp; (x &lt; <span class="number">10</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="条件：if"><a href="#条件：if" class="headerlink" title="条件：if"></a>条件：if</h2><p>C++ 中的 if 和 Python 中也是相似的，除了</p>
+<ul>
+<li>表达式要用括号括住</li>
+<li>不用冒号</li>
+<li>缩进同样不是必须的，但是强烈推荐</li>
+</ul>
+<p>例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (x &gt; <span class="number">4</span>)</span><br><span class="line">    y = <span class="number">7</span>;</span><br></pre></td></tr></table></figure>
+<p>C++ 中也有 else：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (x &lt;= <span class="number">5</span>)</span><br><span class="line">    y = <span class="number">8</span>;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    z = <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+<p>然而 C++ 中没有 elif，你得使用 else if：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (y == <span class="number">7</span>)</span><br><span class="line">    x = <span class="number">2</span>;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (x != <span class="number">2</span>)</span><br><span class="line">    y = <span class="number">5</span>;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    z = <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+<h2 id="Python-suites-就是-C-blocks"><a href="#Python-suites-就是-C-blocks" class="headerlink" title="Python suites 就是 C++ blocks"></a>Python suites 就是 C++ blocks</h2><p>Python 使用缩进来表示 suites，C++ 使用花括号来分隔 blocks。但缩进是强烈推荐的。</p>
+<p>例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ((x &lt;= <span class="number">5</span>) &amp;&amp; (y != <span class="number">7</span>))</span><br><span class="line">&#123;</span><br><span class="line">    z = <span class="number">12</span>;</span><br><span class="line">    w = <span class="number">13</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h2><p>注释的用法也是相似的，只是不是以 # 开头：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这是单行注释</span></span><br><span class="line"><span class="comment">/* 这是</span></span><br><span class="line"><span class="comment">    多行注释 */</span></span><br></pre></td></tr></table></figure>
+<p>C++ 没有 docstring。</p>
+<h2 id="while-循环"><a href="#while-循环" class="headerlink" title="while 循环"></a>while 循环</h2><p>C++ 中 <code>while</code> 循环也是相似的，和 <code>if</code> 语句规则一样：</p>
+<ul>
+<li>需要用括号括住表达式</li>
+<li>花括号来标记 block</li>
+</ul>
+<p>例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (x &lt; <span class="number">5</span>) </span><br><span class="line">&#123;</span><br><span class="line">		y = z + x;</span><br><span class="line">		x = x + <span class="number">1</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>类似地，C++ 也有：</p>
+<ul>
+<li><code>continue</code></li>
+<li><code>break</code></li>
+</ul>
+<p>但是没有与 Python 中 while 对应的 <code>else</code>。</p>
+<h2 id="for-循环"><a href="#for-循环" class="headerlink" title="for 循环"></a>for 循环</h2><p>C++ 中的 for 循环与 Python 比较不同，有好的也有不好的。不好的地方是 C++ 没有 Python 中方便的 <code>for ... in ...</code> 循环。</p>
+<p>但是，好消息是 C++ 的 for 循环与 Python 中的 <code>for x in range(...)</code> 类似。</p>
+<p>例如，在 Python 中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> x <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>): <span class="built_in">print</span> x,</span><br></pre></td></tr></table></figure>
+<p>等价于 C++ 的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">int</span> x = <span class="number">0</span>; x &lt; <span class="number">5</span>; x++)</span><br><span class="line">    cout &lt;&lt; x;</span><br></pre></td></tr></table></figure>
+<p>C++ 的 for 由三部分：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">int</span> x = <span class="number">0</span>; x &lt; <span class="number">5</span>; x++)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>初始化表达式 <code>int x =0</code> 只在开始时执行一次</li>
+<li>条件表达式 <code>x &lt; 5</code> 在每次遍历开始之前执行，如果条件为 true，那么循环体就会执行</li>
+<li>最后的表达式 <code>x++</code> 在每次遍历的最后执行</li>
+</ul>
+<p>注意，如果条件表达式为 false，那么循环体一次也不会执行。</p>
+<p>像 <code>while</code> 一样，C++ 中的 <code>for</code> 也有：</p>
+<ul>
+<li><code>continue</code></li>
+<li><code>break</code></li>
+</ul>
+<p>但是也没有与 <code>for</code> 对应的 <code>else</code>。</p>
+<h2 id="C-中-“for-“和-“while-“的等价关系"><a href="#C-中-“for-“和-“while-“的等价关系" class="headerlink" title="C++中 “for “和 “while “的等价关系"></a>C++中 “for “和 “while “的等价关系</h2><p>C++ 中，for 是 while 的一种特殊形式。理解这一点对理解循环是如何工作的很重要。注意，这种等价关系在 Python 中不成立。</p>
+<p>我们用一个例子来解释：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">int</span> x = <span class="number">0</span>; x &lt; <span class="number">5</span>; x++)</span><br><span class="line">    cout &lt;&lt; x;</span><br></pre></td></tr></table></figure>
+<p>等价于</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">while</span> (x &lt; <span class="number">5</span>)</span><br><span class="line">&#123;</span><br><span class="line">    cout &lt;&lt; x;</span><br><span class="line">    x++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="输出"><a href="#输出" class="headerlink" title="输出"></a>输出</h2><p>C++ 的输出和 Python 相比看似相似，但是也有不同点。具体来说，Python 使用的是类似于 C 的输出表达式，这种表达式同样适用于 C++。</p>
+<p>例如，Python 中我们可以如下进行输出：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span> <span class="string">&quot;int %d and float %5.3f&quot;</span> % (<span class="number">45</span>, <span class="number">3.1416</span>)</span><br></pre></td></tr></table></figure>
+<p>C 中（也适用于 C++）也是类似的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;int %d and float %5.3f \n&quot;</span>, <span class="number">45</span>, <span class="number">3.1416</span>);</span><br><span class="line">Note</span><br></pre></td></tr></table></figure>
+<p>注意回车符 <code>\n</code>（<em>carriage return</em>），要想得到和 Python 一样的结果，那么在 C 中必须加这个字符。</p>
+<p>然而 C++ 标准与刚才的 C 语法有着很大的不同。</p>
+<p>首先，C++ 需要先在程序最开始的地方加上 <code>#include &lt;iomanip&gt;</code>（与 <code>#include &lt;iostream&gt;</code> 一起）。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cout&lt;&lt; <span class="built_in">setprecision</span>(<span class="number">4</span>);</span><br><span class="line"><span class="comment">// significant digits is 4</span></span><br><span class="line">cout&lt;&lt; <span class="string">&quot;int &quot;</span>&lt;&lt; <span class="number">45</span> &lt;&lt;<span class="string">&quot; and float &quot;</span>&lt;&lt; <span class="built_in">setw</span>(<span class="number">5</span>)&lt;&lt; <span class="number">3.1416</span>;</span><br><span class="line">cout &lt;&lt; endl;</span><br><span class="line"><span class="comment">// endl is an explicit carriage return</span></span><br></pre></td></tr></table></figure>
+<h2 id="文件输入与输出"><a href="#文件输入与输出" class="headerlink" title="文件输入与输出"></a>文件输入与输出</h2><p>此处有着非常大的不同。具体来说，对于文件输入，Python 的语法要比 C++ 短很多。</p>
+<p>例如，Python 中我们只简单地这么写就可以了：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> file(<span class="string">&quot;Data.txt&quot;</span>):</span><br><span class="line">		<span class="built_in">print</span> line</span><br></pre></td></tr></table></figure>
+<p>此外，我们也可以先显式地先打开文件 —— 一个与 C++ 更相似地流程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">inStream = <span class="built_in">open</span>(<span class="string">&quot;Data.txt&quot;</span>, <span class="string">&quot;r&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> inStream:</span><br><span class="line">		<span class="built_in">print</span> line</span><br></pre></td></tr></table></figure>
+<p>C++ 中，我们必须先导入文件流库，声明对象，显式地打开文件，显式地检查我们是否到了文件末尾：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="comment">// include library for file streams</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">		<span class="comment">// declare the input stream</span></span><br><span class="line">		ifstream InStream;</span><br><span class="line">		<span class="comment">// a string</span></span><br><span class="line">		string line;</span><br><span class="line">		<span class="comment">// open file</span></span><br><span class="line">		InStream.<span class="built_in">open</span>(<span class="string">&quot;Data.txt&quot;</span>);</span><br><span class="line">		<span class="comment">// read a line and check for end-of-file (eof)</span></span><br><span class="line">		<span class="keyword">while</span> (<span class="built_in">getline</span>(InStream, line))</span><br><span class="line">		&#123;</span><br><span class="line">				<span class="comment">// output the line</span></span><br><span class="line">				cout &lt;&lt; line &lt;&lt; endl;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Gotcha #4：注意 while 循环是如何工作的：我们先得到输入（使用 <code>getline</code> ），然后再检查是否到了文件末尾，再在循环体底部得到下一个输入。使用 while 循环时一个常见的错误是，把 <code>getline</code> 放到循环体的开头，从而导致循环次数过多。（这种情况也适用于 Python，不过相比 C++，在 Python 中你可能更少使用 while。）</p>
+<h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p>函数的使用也是相似的，但是有一些非常重要的区别，<strong>你必须非常小心！</strong></p>
+<p>让我们先从熟悉的地方开始。</p>
+<p>Python 中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">fun</span>(<span class="params">x</span>):</span><br><span class="line">		<span class="keyword">return</span> x + <span class="number">2</span></span><br></pre></td></tr></table></figure>
+<p>C++ 中，情况也是类似的，只不过最值得注意的地方是，需要声明参数 <code>x</code> 的类型。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">		<span class="keyword">return</span> x + <span class="number">2</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>C++ 和 Python 中的函数都是只返回一个对象。然而 Python 中有内置的可以包含多个值的对象，比如元组 tuples。虽然在 C++ 中也可以构建类似的对象，但更倾向于使用参数来“返回”多个值 —— 类似于在 Python 中改变可变参数的方式。</p>
+<h2 id="参数：值和引用"><a href="#参数：值和引用" class="headerlink" title="参数：值和引用"></a>参数：值和引用</h2><p>C++ 中默认的传参方式是传值 —— 类似于 Python 中传不可变对象。即，在函数中改变相应的对象，并不会改变原始对象。换言之，改变 parameter 并不会改变 argument。</p>
+<blockquote>
+<p>译者注：关于 parameter 和 argument，中文比较普遍的翻译分别是“形参”和“实参”。两者区别见下图，一图胜千言：</p>
+</blockquote>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.loli.net/2020/11/22/dIu9QpCeJsWFZjc.png" title="parameter vs argument" data-caption="parameter vs argument" data-fancybox="default"><img class="fig-img" src="https://i.loli.net/2020/11/22/dIu9QpCeJsWFZjc.png" alt="parameter vs argument"></a><span class="caption">parameter vs argument</span></div>
+<p><em>parameter vs argument，来自 <a href="https://getkt.com/blog/types-of-function-arguments-in-python/">https://getkt.com/blog/types-of-function-arguments-in-python/</a></em></p>
+<h3 id="传值"><a href="#传值" class="headerlink" title="传值"></a>传值</h3><p>让我们先来看下 C++ 中的传值示例。输出在注释中。特别地，注意在函数中改变 <code>x</code> 并不会改变 <code>main</code> 中的 <code>x</code> ：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">		x = x + <span class="number">2</span>;</span><br><span class="line">		<span class="comment">// prints 5</span></span><br><span class="line">		cout &lt;&lt; x;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">		<span class="type">int</span> x = <span class="number">3</span>;</span><br><span class="line">		<span class="built_in">fun</span>(x);</span><br><span class="line">		<span class="comment">// prints 3，即仍然保持不变</span></span><br><span class="line">		cout &lt;&lt; x;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="传引用"><a href="#传引用" class="headerlink" title="传引用"></a>传引用</h3><p>C++ 中传引用是有一个特殊标记的：<code>&amp;</code>，将这个符号加在需要传引用的参数名前。在这个例子中，函数中的 <code>x</code> 和 <code>main</code> 函数中的 <code>x</code> 指向同一个对象，所以改变函数中的 <code>x</code> 也会改变 <code>main</code> 函数中的 <code>x</code> （因为指向的是同一个对象）。值得注意的是，如果函数的 parameter name 是 <code>y</code> 而不是 <code>x</code> ，那么上述结论仍然是不变的。</p>
+<p>例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">(<span class="type">int</span>&amp; x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">		x = x + <span class="number">2</span>;</span><br><span class="line">		<span class="comment">// prints 5</span></span><br><span class="line">		cout &lt;&lt; x;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">		<span class="type">int</span> x = <span class="number">3</span>;</span><br><span class="line">		<span class="built_in">fun</span>(x);</span><br><span class="line">		<span class="comment">// prints 5，与上面不同</span></span><br><span class="line">		cout &lt;&lt; x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="类"><a href="#类" class="headerlink" title="类"></a>类</h2><p>类同样是相似的，但也是非常不同。</p>
+<blockquote>
+<p><em>译者注：这里原文就写到这。</em></p>
+</blockquote>
+<h2 id="指针"><a href="#指针" class="headerlink" title="指针"></a>指针</h2><p>指针对你来说可能是陌生的，我们在这里将简要地提一下 —— 它们所需要的篇幅远远超过我们在这里所能投入的。在很多方面，指针是简单的，但它的简单也会让你陷入麻烦。指针只是一个持有内存地址的变量。在一个变量声明中，星号 <code>*</code> 表示该变量是一个指针，类型表示该指针中的地址所对应的对象的类型。<code>&amp;</code> 表示对象的地址。例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> A, *C = &amp;A;</span><br></pre></td></tr></table></figure>
+<p>指针 <code>C</code> 存储着整型 <code>A</code> 的地址。下面是一个简单的 C++ 程序使用指针的例子。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">		<span class="type">int</span> A = <span class="number">15</span>, B = <span class="number">38</span>, *C = &amp;A;</span><br><span class="line">		cout &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;A &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; A &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;B &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; B &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;C &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; C &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; *C &lt;&lt; endl;</span><br><span class="line">		A = <span class="number">49</span>;</span><br><span class="line">		cout &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;A &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; A &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;B &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; B &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;C &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; C &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; *C &lt;&lt; endl;</span><br><span class="line">		C = &amp;B;</span><br><span class="line">		cout &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;A &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; A &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;B &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; B &lt;&lt; endl;</span><br><span class="line">		cout &lt;&lt; &amp;C &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; C &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; *C &lt;&lt; endl;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面是在一个 64 位机器上的输出，注意每次运行得到的地址可能是不同的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">0x7ffe6212b6cc 15</span><br><span class="line">0x7ffe6212b6c8 38</span><br><span class="line">0x7ffe6212b6c0 0x7ffe6212b6cc 15</span><br><span class="line">0x7ffe6212b6cc 49</span><br><span class="line">0x7ffe6212b6c8 38</span><br><span class="line">0x7ffe6212b6c0 0x7ffe6212b6cc 49</span><br><span class="line">0x7ffe6212b6cc 49</span><br><span class="line">0x7ffe6212b6c8 38</span><br><span class="line">0x7ffe6212b6c0 0x7ffe6212b6c8 38</span><br></pre></td></tr></table></figure>
+<h2 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h2><p>Try/except 也是相当相似的。</p>
+<blockquote>
+<p><em>译者注：这里原文就写到这。</em></p>
+</blockquote>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/C/" rel="tag">C++</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Translation/" rel="tag">Translation</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/25/install-nvtop-ubuntu/"
+                    data-tooltip="Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi"
+                    aria-label="上一篇: Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/16/self-attentive-parser-paper/"
+                    data-tooltip="Constituency Parsing with a Self-Attensive Encoder 论文解读"
+                    aria-label="下一篇: Constituency Parsing with a Self-Attensive Encoder 论文解读"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/25/install-nvtop-ubuntu/"
+                    data-tooltip="Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi"
+                    aria-label="上一篇: Ubuntu 18.04 安装 nvtop：一个高颜值的 nvidia-smi"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/11/16/self-attentive-parser-paper/"
+                    data-tooltip="Constituency Parsing with a Self-Attensive Encoder 论文解读"
+                    aria-label="下一篇: Constituency Parsing with a Self-Attensive Encoder 论文解读"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2020/11/22/c++-for-python-programmers/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2020/11/22/c++-for-python-programmers/';
+              
+            this.page.identifier = '2020/11/22/c++-for-python-programmers/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

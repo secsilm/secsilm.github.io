@@ -1,0 +1,806 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>2017 Python 问卷调查结果初步分析 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n更新\n\n2019-4-10：我将各年份的 Python 开发者调查结果分析文章或 repo 汇总到一篇文章里，并会更新链接，见此文\n\n前言2017 年末，PSF（Python Software Foundation，Python 软件基金会）和 JetBrains 一起进行了一次全球范围内的关于 Python 使用情况的问卷调查，共有来自 153 个国家的 9506 名开发者参与了这次调查，官方也发布了一份调查报告分析。\n这次我从我自己感兴趣的角度来尝试做一些简单的分析，也是一次练手。这个过程断断续续持续了很长时间，中间也是被种种事情打断，现在终于基本完成了，然而还有很多东西可以分析，等以后有时间了再来接着分析。\n我个人认为调查报告的分析主要有两点：\n\n验证一些常理\n发现一些现象\n\n本文基本只做到了前者，而且侧重于直接展现分析结果（大多数为图），具体的代码实现见：\n\nJupyter nbviewer：analyzing-python-survey-2017.ipynb\nGitHub：secsilm/analyzing-python-survey-2017，包括问卷调查的内容（PDF）和调查结果原始数据（CSV）\nColab：analyzing-python-survey-2017.ipynb - Colaboratory\n\n数据我认为拿到数据的第一步就是先看下数据长什么样，这样才能着手分析。先来看下我们的调查结果数据：\n\n数据总大小是 9506×162，即 9506 行 162 列，上图是前 5 行，每行代表一个样本，即一个参与调查的开发者。可以看到已经将一道选择题的答案拆分成多列，这一般是用于处理多选题，例如上图中的「What other language(s) do you use?」，而单选题则不用拆分，可以直接写答案，例如上图第一列。\n问题分析前，我们需要首先提出一些问题，基于这些问题来作分析。本文提出了以下几个问题：\n\n开发者中使用 Python 2 和 Python 3 的情况\n做数据分析和机器学习的人中分别有多少人使用的是 Python 3？\n常用框架中使用 Python 2 和 Python 3 的比例\n做数据分析和机器学习的人常用的框架？\n团队规模大小和是否使用 Python 3 的关系？\n开发者年龄和是否使用 Python 3 的关系？\n使用 Python 3 和 Python 2 的开发者的国别分布？\n\n下面我们依次看下这几个问题。\n开发者中使用 Python 2 和 Python 3 的情况这个问题比较好解决，调查问卷中的问题 5 是「Which version of Python do you use the most?」，而且是单选题，那么我们直接那么对这列使用 value_counts() 进行处理，然后使用 plt.pie() 绘制饼图：\npython version\n可以看到 Python 开发者中已经有 $\\frac{3}{4}$ 的人在使用 Python 3 了。\n\nNote：2020 年 Python 2 就会停止维护，如果你还在纠结使用 Python 2 还是 Python 3，毋庸置疑 Python 3！\n\n做数据分析和机器学习的人中分别有多少人使用的是 Python 3调查问卷中问题 4 是「What do you use Python for the most?」，这是一道单选题，选项中有「Data analysis」和「Machine learning」两项，因此我们可以直接将这列与「Which version of Python do you use the most?」列进行交叉，就可以得到数据分析和机器学习中使用 Python 3 的比例，而交叉可以使用 pd.crosstab() 来做，然后绘制出条形图：\ndata analysis and machine learning VS python version\n可以看到其实相差无几，Python 3 似乎在机器学习中更为流行。数据分析和机器学习中涉及到的字符串处理比较多，而 Python 3 在这方面显然更具有优势。\n机器学习尤其是深度学习中最常用的库就是 TensorFlow 了，但是这个库官方只支持 Python 3，可以说这也是机器学习中 Python 3 的比例略微高于数据分析的一个原因。\n常用框架中使用 Python 2 和 Python 3 的比例如果我们将开发者常用的框架（库）与所使用的 Python 版本进行交叉，那么将得到各框架中的 Python 2 和 Python 3 使用情况。\n在这之前，让我们先来看下框架使用排行（Just for curious 😆）：\nframeworks\n统治 Python 的两大阵营（Web 开发和数据科学）的框架果然占据了前两名 👍\n好了回到正题，让我们来看下各框架中的 Python 2 和 Python 3 使用情况：\nframeworks in python version\n上图是按照 Python 3 的使用比例由高到低排序的，可以看到排名前五的都是网络和 UI 相关的库，排名第一的 aiohttp Python 2 与 Python 3 的比例甚至达到了 1:9 🙀 由于我本人对这方面不太了解，就不做过多评价了，如有懂得同学可以留言解释下为何网络和 UI 方面的库中 Python 3 的占比如此高。\n不过总体上来说，各大框架中 Python 3 的使用比例都已经超过甚至远超 Python 2 👍\n做数据分析和机器学习的人常用的框架接着上面，我们可以将框架使用情况与 Python 在数据分析和机器学习方面的应用进行交叉，得到数据分析和机器学习开发者最常用的框架：\nframeworks in data analysis and machine learning\n可以看到数据分析和机器学习开发者所用的框架大体相同，数据分析开发者人数要多于机器学习开发者，但是由于机器学习开发者更常用 Keras、scikit-learn 和 TensorFlow 等框架，反而使用这些框架上的机器学习和数据分析开发者人数基本一致。\n乍一看让我有点意外的是 Django 和 Flask 的位置，相对来说这两个用于构建网站的框架排名还是很靠前的，但是仔细一想，我见过很多数据分析和机器学习开发者做一个网站来展示自己的作品，这样一来也不足为奇了。又或者是 Web 开发者兼职数据分析和机器学习？细思极恐……\n团队规模大小和是否使用 Python 3 的关系一般来说，团队规模越大，由 Python 2 转型 Python 3 所花费的代价就越大，所以团队规模越大使用 Python 3 的比例可能就会越低，而下图也印证了这一点。\nteam scale and python 3\n但是需要注意的是，有将近 62% 的人是独立开发或者是外部顾问（external consultant）和培训讲师（trainer），也就是说不在一个团队中进行工作。上图就是基于剩下的约 38% 的开发者来绘制的。\n开发者年龄和是否使用 Python 3 的关系同上，越年轻使用 Python 3 的比例就越高，毕竟年轻人「情怀」比较少 😆\nBUT，物极必反，60 岁以上的开发者使用 Python 3 的比例陡然提升了 10%……难道回光返照？\nage python 3\n60 岁以上还在 coding 的人应该不多，我们来统计下每个国家内 60 岁以上的开发者人数，然后排名取前十名：\ntop10\n几乎是美国一家独大，后面的几乎可以忽略不计，所有 153 个国家的 60 岁以上开发者人数为 111，而美国为 56，占到了一半，而这 56 个人中有 41 个人使用的是 Python 3，占比约为 73%，so，上面的疑问也就不是疑问了。\n此外，我们来看下开发者人数最多的三个国家（美国、印度和中国）的开发者年龄构成：\nage distribution\n结合国内程序圈的情况，大家都想着 30 以后要不转要不升，上图也不足为奇，美国的年龄分布相对来说要好很多。\n使用 Python 3 和 Python 2 的开发者的国别分布首先来看下所有开发者的国别分布：\ncountry counts\n美国、印度和中国排名前三，上一节的年龄分布图选取的三个国家就是就是根据这个排名取的。\n再来看下上图排名前十的国家中的 Python 2 和 Python 3 的使用比例：\ncountry python version\n其实使用比例是差不多的，都是 Python 3 远超 Python 2，这一点也可以用下图佐证：\nuse-ratio-of-python3-in-the-world\n我们有了国家信息，那么自然而然就会想到直接在地图上显示数据：\npython3-in-the-world\n在这里查看有更好的交互式体验\n\n总结可以看到的趋势是：\n\nPython 3 已经被大多数人使用，无论是 Web 开发还是数据科学（数据分析和机器学习），无论是美国还是中国还是其他国家\nWeb 开发和数据科学是 Python 开发的两大统治者\n数据分析和机器学习开发者使用的 Python 框架有很大的相似性，只是在 TensorFlow 等机器学习框架上的使用有一定区别\n年龄和团队规模和使用 Python 3 的比例有一定关系\n美国的开发者年龄分布要好于中国\n\n总的来说，本文所分析的内容只能说是冰山一角，还有大量内容可以分析，但是时间精力有限，后续可能的话再在此基础上加以分析。\nEND","dateCreated":"2018-04-28T15:37:04+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2018-04-28T15:37:04+08:00","description":"\n更新","headline":"2017 Python 问卷调查结果初步分析","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/","keywords":"Python, Data Science"}</script>
+    <meta name="description" content="更新">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="2017 Python 问卷调查结果初步分析">
+<meta property="og:url" content="https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="更新">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.imgur.com/MBIZmzA.png">
+<meta property="og:image" content="https://i.imgur.com/VmC9haP.png">
+<meta property="og:image" content="https://i.imgur.com/xq8WUst.png">
+<meta property="og:image" content="https://i.imgur.com/YvMez30.png">
+<meta property="og:image" content="https://i.imgur.com/nwzwRi3.png">
+<meta property="og:image" content="https://i.imgur.com/RvW9Yyp.png">
+<meta property="og:image" content="https://i.imgur.com/3Ksk5JQ.png">
+<meta property="og:image" content="https://i.imgur.com/HezUSFH.png">
+<meta property="og:image" content="https://i.imgur.com/fUDmC8a.png">
+<meta property="og:image" content="https://i.imgur.com/0r7bQR3.png">
+<meta property="og:image" content="https://i.imgur.com/QHllwyy.png">
+<meta property="og:image" content="https://i.imgur.com/rXuzRKi.png">
+<meta property="og:image" content="https://i.imgur.com/IpKZCq3.png">
+<meta property="og:image" content="https://i.imgur.com/TAJV1LT.png">
+<meta property="article:published_time" content="2018-04-28T07:37:04.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.191Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Data Science">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/MBIZmzA.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            2017 Python 问卷调查结果初步分析
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2018-04-28T15:37:04+08:00">
+	
+		    2018 年 4 月 28 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0"><span class="toc-text">更新</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE"><span class="toc-text">数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E8%80%85%E4%B8%AD%E4%BD%BF%E7%94%A8-Python-2-%E5%92%8C-Python-3-%E7%9A%84%E6%83%85%E5%86%B5"><span class="toc-text">开发者中使用 Python 2 和 Python 3 的情况</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%9A%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%92%8C%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E4%BA%BA%E4%B8%AD%E5%88%86%E5%88%AB%E6%9C%89%E5%A4%9A%E5%B0%91%E4%BA%BA%E4%BD%BF%E7%94%A8%E7%9A%84%E6%98%AF-Python-3"><span class="toc-text">做数据分析和机器学习的人中分别有多少人使用的是 Python 3</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6%E4%B8%AD%E4%BD%BF%E7%94%A8-Python-2-%E5%92%8C-Python-3-%E7%9A%84%E6%AF%94%E4%BE%8B"><span class="toc-text">常用框架中使用 Python 2 和 Python 3 的比例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%9A%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%92%8C%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E4%BA%BA%E5%B8%B8%E7%94%A8%E7%9A%84%E6%A1%86%E6%9E%B6"><span class="toc-text">做数据分析和机器学习的人常用的框架</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%A2%E9%98%9F%E8%A7%84%E6%A8%A1%E5%A4%A7%E5%B0%8F%E5%92%8C%E6%98%AF%E5%90%A6%E4%BD%BF%E7%94%A8-Python-3-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">团队规模大小和是否使用 Python 3 的关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E8%80%85%E5%B9%B4%E9%BE%84%E5%92%8C%E6%98%AF%E5%90%A6%E4%BD%BF%E7%94%A8-Python-3-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">开发者年龄和是否使用 Python 3 的关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Python-3-%E5%92%8C-Python-2-%E7%9A%84%E5%BC%80%E5%8F%91%E8%80%85%E7%9A%84%E5%9B%BD%E5%88%AB%E5%88%86%E5%B8%83"><span class="toc-text">使用 Python 3 和 Python 2 的开发者的国别分布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><span id="more"></span>
+<ul>
+<li>2019-4-10：我将各年份的 Python 开发者调查结果分析文章或 repo 汇总到一篇文章里，并会更新链接，见<a href="https://alanlee.fun/2019/04/10/analyzing-python-servey/">此文</a></li>
+</ul>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>2017 年末，PSF（Python Software Foundation，Python 软件基金会）和 JetBrains 一起进行了一次全球范围内的关于 Python 使用情况的问卷调查，共有来自 153 个国家的 9506 名开发者参与了这次调查，<a href="https://www.jetbrains.com/research/python-developers-survey-2017/">官方</a>也发布了一份调查报告分析。</p>
+<p>这次我从我自己感兴趣的角度来尝试做一些简单的分析，也是一次练手。这个过程断断续续持续了很长时间，中间也是被种种事情打断，现在终于基本完成了，然而还有很多东西可以分析，等以后有时间了再来接着分析。</p>
+<p>我个人认为调查报告的分析主要有两点：</p>
+<ul>
+<li>验证一些常理</li>
+<li>发现一些现象</li>
+</ul>
+<p>本文基本只做到了前者，而且侧重于直接展现分析结果（大多数为图），具体的代码实现见：</p>
+<ul>
+<li>Jupyter nbviewer：<a href="https://nbviewer.jupyter.org/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb">analyzing-python-survey-2017.ipynb</a></li>
+<li>GitHub：<a href="https://github.com/secsilm/analyzing-python-survey-2017">secsilm/analyzing-python-survey-2017</a>，包括问卷调查的内容（PDF）和调查结果原始数据（CSV）</li>
+<li>Colab：<a href="https://colab.research.google.com/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb">analyzing-python-survey-2017.ipynb - Colaboratory</a></li>
+</ul>
+<h2 id="数据"><a href="#数据" class="headerlink" title="数据"></a>数据</h2><p>我认为拿到数据的第一步就是先看下数据长什么样，这样才能着手分析。先来看下我们的调查结果数据：</p>
+<p><img src="https://i.imgur.com/MBIZmzA.png" alt=""></p>
+<p>数据总大小是 9506×162，即 9506 行 162 列，上图是前 5 行，每行代表一个样本，即一个参与调查的开发者。可以看到已经将一道选择题的答案拆分成多列，这一般是用于处理多选题，例如上图中的「What other language(s) do you use?」，而单选题则不用拆分，可以直接写答案，例如上图第一列。</p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>分析前，我们需要首先提出一些问题，基于这些问题来作分析。本文提出了以下几个问题：</p>
+<ul>
+<li>开发者中使用 Python 2 和 Python 3 的情况</li>
+<li>做数据分析和机器学习的人中分别有多少人使用的是 Python 3？</li>
+<li>常用框架中使用 Python 2 和 Python 3 的比例</li>
+<li>做数据分析和机器学习的人常用的框架？</li>
+<li>团队规模大小和是否使用 Python 3 的关系？</li>
+<li>开发者年龄和是否使用 Python 3 的关系？</li>
+<li>使用 Python 3 和 Python 2 的开发者的国别分布？</li>
+</ul>
+<p>下面我们依次看下这几个问题。</p>
+<h2 id="开发者中使用-Python-2-和-Python-3-的情况"><a href="#开发者中使用-Python-2-和-Python-3-的情况" class="headerlink" title="开发者中使用 Python 2 和 Python 3 的情况"></a>开发者中使用 Python 2 和 Python 3 的情况</h2><p>这个问题比较好解决，调查问卷中的问题 5 是「Which version of Python do you use the most?」，而且是单选题，那么我们直接那么对这列使用 <code>value_counts()</code> 进行处理，然后使用 <code>plt.pie()</code> 绘制饼图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/VmC9haP.png" title="python version" data-caption="python version" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/VmC9haP.png" alt="python version"></a><span class="caption">python version</span></div>
+<p>可以看到 Python 开发者中已经有 $\frac{3}{4}$ 的人在使用 Python 3 了。</p>
+<blockquote>
+<p>Note：2020 年 Python 2 就会停止维护，如果你还在纠结使用 Python 2 还是 Python 3，毋庸置疑 Python 3！</p>
+</blockquote>
+<h2 id="做数据分析和机器学习的人中分别有多少人使用的是-Python-3"><a href="#做数据分析和机器学习的人中分别有多少人使用的是-Python-3" class="headerlink" title="做数据分析和机器学习的人中分别有多少人使用的是 Python 3"></a>做数据分析和机器学习的人中分别有多少人使用的是 Python 3</h2><p>调查问卷中问题 4 是「What do you use Python for the most?」，这是一道单选题，选项中有「Data analysis」和「Machine learning」两项，因此我们可以直接将这列与「Which version of Python do you use the most?」列进行交叉，就可以得到数据分析和机器学习中使用 Python 3 的比例，而交叉可以使用 <code>pd.crosstab()</code> 来做，然后绘制出条形图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/xq8WUst.png" title="data analysis and machine learning VS python version" data-caption="data analysis and machine learning VS python version" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/xq8WUst.png" alt="data analysis and machine learning VS python version"></a><span class="caption">data analysis and machine learning VS python version</span></div>
+<p>可以看到其实相差无几，Python 3 似乎在机器学习中更为流行。数据分析和机器学习中涉及到的字符串处理比较多，而 Python 3 在这方面显然更具有优势。</p>
+<p>机器学习尤其是深度学习中最常用的库就是 <a href="https://www.tensorflow.org/">TensorFlow</a> 了，但是这个库官方只支持 Python 3，可以说这也是机器学习中 Python 3 的比例略微高于数据分析的一个原因。</p>
+<h2 id="常用框架中使用-Python-2-和-Python-3-的比例"><a href="#常用框架中使用-Python-2-和-Python-3-的比例" class="headerlink" title="常用框架中使用 Python 2 和 Python 3 的比例"></a>常用框架中使用 Python 2 和 Python 3 的比例</h2><p>如果我们将开发者常用的框架（库）与所使用的 Python 版本进行交叉，那么将得到各框架中的 Python 2 和 Python 3 使用情况。</p>
+<p>在这之前，让我们先来看下框架使用排行（Just for curious 😆）：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/YvMez30.png" title="frameworks" data-caption="frameworks" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/YvMez30.png" alt="frameworks"></a><span class="caption">frameworks</span></div>
+<p>统治 Python 的两大阵营（Web 开发和数据科学）的框架果然占据了前两名 👍</p>
+<p>好了回到正题，让我们来看下各框架中的 Python 2 和 Python 3 使用情况：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/nwzwRi3.png" title="frameworks in python version" data-caption="frameworks in python version" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/nwzwRi3.png" alt="frameworks in python version"></a><span class="caption">frameworks in python version</span></div>
+<p>上图是按照 Python 3 的使用比例由高到低排序的，可以看到排名前五的都是网络和 UI 相关的库，排名第一的 aiohttp Python 2 与 Python 3 的比例甚至达到了 1:9 🙀 由于我本人对这方面不太了解，就不做过多评价了，如有懂得同学可以留言解释下为何网络和 UI 方面的库中 Python 3 的占比如此高。</p>
+<p>不过总体上来说，各大框架中 Python 3 的使用比例都已经超过甚至远超 Python 2 👍</p>
+<h2 id="做数据分析和机器学习的人常用的框架"><a href="#做数据分析和机器学习的人常用的框架" class="headerlink" title="做数据分析和机器学习的人常用的框架"></a>做数据分析和机器学习的人常用的框架</h2><p>接着上面，我们可以将框架使用情况与 Python 在数据分析和机器学习方面的应用进行交叉，得到数据分析和机器学习开发者最常用的框架：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/RvW9Yyp.png" title="frameworks in data analysis and machine learning" data-caption="frameworks in data analysis and machine learning" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/RvW9Yyp.png" alt="frameworks in data analysis and machine learning"></a><span class="caption">frameworks in data analysis and machine learning</span></div>
+<p>可以看到数据分析和机器学习开发者所用的框架大体相同，数据分析开发者人数要多于机器学习开发者，但是由于机器学习开发者更常用 Keras、scikit-learn 和 TensorFlow 等框架，反而使用这些框架上的机器学习和数据分析开发者人数基本一致。</p>
+<p>乍一看让我有点意外的是 Django 和 Flask 的位置，相对来说这两个用于构建网站的框架排名还是很靠前的，但是仔细一想，我见过很多数据分析和机器学习开发者做一个网站来展示自己的作品，这样一来也不足为奇了。又或者是 Web 开发者兼职数据分析和机器学习？细思极恐……</p>
+<h2 id="团队规模大小和是否使用-Python-3-的关系"><a href="#团队规模大小和是否使用-Python-3-的关系" class="headerlink" title="团队规模大小和是否使用 Python 3 的关系"></a>团队规模大小和是否使用 Python 3 的关系</h2><p>一般来说，团队规模越大，由 Python 2 转型 Python 3 所花费的代价就越大，所以团队规模越大使用 Python 3 的比例可能就会越低，而下图也印证了这一点。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/3Ksk5JQ.png" title="team scale and python 3" data-caption="team scale and python 3" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/3Ksk5JQ.png" alt="team scale and python 3"></a><span class="caption">team scale and python 3</span></div>
+<p>但是需要注意的是，有将近 62% 的人是独立开发或者是外部顾问（external consultant）和培训讲师（trainer），也就是说不在一个团队中进行工作。上图就是基于剩下的约 38% 的开发者来绘制的。</p>
+<h2 id="开发者年龄和是否使用-Python-3-的关系"><a href="#开发者年龄和是否使用-Python-3-的关系" class="headerlink" title="开发者年龄和是否使用 Python 3 的关系"></a>开发者年龄和是否使用 Python 3 的关系</h2><p>同上，越年轻使用 Python 3 的比例就越高，毕竟年轻人「情怀」比较少 😆</p>
+<p>BUT，物极必反，60 岁以上的开发者使用 Python 3 的比例陡然提升了 10%……难道回光返照？</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/HezUSFH.png" title="age python 3" data-caption="age python 3" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/HezUSFH.png" alt="age python 3"></a><span class="caption">age python 3</span></div>
+<p>60 岁以上还在 coding 的人应该不多，我们来统计下每个国家内 60 岁以上的开发者人数，然后排名取前十名：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/fUDmC8a.png" title="top10" data-caption="top10" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/fUDmC8a.png" alt="top10"></a><span class="caption">top10</span></div>
+<p>几乎是美国一家独大，后面的几乎可以忽略不计，所有 153 个国家的 60 岁以上开发者人数为 111，而美国为 56，占到了一半，而这 56 个人中有 41 个人使用的是 Python 3，占比约为 73%，so，上面的疑问也就不是疑问了。</p>
+<p>此外，我们来看下开发者人数最多的三个国家（美国、印度和中国）的开发者年龄构成：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/0r7bQR3.png" title="age distribution" data-caption="age distribution" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/0r7bQR3.png" alt="age distribution"></a><span class="caption">age distribution</span></div>
+<p>结合国内程序圈的情况，大家都想着 30 以后要不转要不升，上图也不足为奇，美国的年龄分布相对来说要好很多。</p>
+<h2 id="使用-Python-3-和-Python-2-的开发者的国别分布"><a href="#使用-Python-3-和-Python-2-的开发者的国别分布" class="headerlink" title="使用 Python 3 和 Python 2 的开发者的国别分布"></a>使用 Python 3 和 Python 2 的开发者的国别分布</h2><p>首先来看下所有开发者的国别分布：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/QHllwyy.png" title="country counts" data-caption="country counts" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/QHllwyy.png" alt="country counts"></a><span class="caption">country counts</span></div>
+<p>美国、印度和中国排名前三，上一节的年龄分布图选取的三个国家就是就是根据这个排名取的。</p>
+<p>再来看下上图排名前十的国家中的 Python 2 和 Python 3 的使用比例：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/rXuzRKi.png" title="country python version" data-caption="country python version" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/rXuzRKi.png" alt="country python version"></a><span class="caption">country python version</span></div>
+<p>其实使用比例是差不多的，都是 Python 3 远超 Python 2，这一点也可以用下图佐证：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/IpKZCq3.png" title="use-ratio-of-python3-in-the-world" data-caption="use-ratio-of-python3-in-the-world" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/IpKZCq3.png" alt="use-ratio-of-python3-in-the-world"></a><span class="caption">use-ratio-of-python3-in-the-world</span></div>
+<p>我们有了国家信息，那么自然而然就会想到直接在地图上显示数据：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://i.imgur.com/TAJV1LT.png" title="python3-in-the-world" data-caption="python3-in-the-world" data-fancybox="default"><img class="fig-img" src="https://i.imgur.com/TAJV1LT.png" alt="python3-in-the-world"></a><span class="caption">python3-in-the-world</span></div>
+<center><i>在<a href="https://nbviewer.jupyter.org/github/secsilm/analyzing-python-survey-2017/blob/master/analyzing-python-survey-2017.ipynb#%E4%BD%BF%E7%94%A8-Python-3-%E5%92%8C-Python-2-%E7%9A%84%E5%BC%80%E5%8F%91%E8%80%85%E7%9A%84%E5%9B%BD%E5%88%AB%E5%88%86%E5%B8%83%EF%BC%9F">这里</a>查看有更好的交互式体验</i></center>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>可以看到的趋势是：</p>
+<ul>
+<li>Python 3 已经被大多数人使用，无论是 Web 开发还是数据科学（数据分析和机器学习），无论是美国还是中国还是其他国家</li>
+<li>Web 开发和数据科学是 Python 开发的两大统治者</li>
+<li>数据分析和机器学习开发者使用的 Python 框架有很大的相似性，只是在 TensorFlow 等机器学习框架上的使用有一定区别</li>
+<li>年龄和团队规模和使用 Python 3 的比例有一定关系</li>
+<li>美国的开发者年龄分布要好于中国</li>
+</ul>
+<p>总的来说，本文所分析的内容只能说是冰山一角，还有大量内容可以分析，但是时间精力有限，后续可能的话再在此基础上加以分析。</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Data-Science/" rel="tag">Data Science</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/05/18/ubuntu-ssr/"
+                    data-tooltip="在 Ubuntu 上使用 SSR 梯子"
+                    aria-label="上一篇: 在 Ubuntu 上使用 SSR 梯子"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/03/15/embed-bokeh-plot/"
+                    data-tooltip="嵌入 bokeh 绘图到 hexo 博客中"
+                    aria-label="下一篇: 嵌入 bokeh 绘图到 hexo 博客中"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/05/18/ubuntu-ssr/"
+                    data-tooltip="在 Ubuntu 上使用 SSR 梯子"
+                    aria-label="上一篇: 在 Ubuntu 上使用 SSR 梯子"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2018/03/15/embed-bokeh-plot/"
+                    data-tooltip="嵌入 bokeh 绘图到 hexo 博客中"
+                    aria-label="下一篇: 嵌入 bokeh 绘图到 hexo 博客中"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2018/04/28/analyzing-python-survey-2017/';
+              
+            this.page.identifier = '2018/04/28/analyzing-python-survey-2017/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

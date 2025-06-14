@@ -1,0 +1,800 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>TensorBoard Projector 简易指南 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\nTensorBoard（TB）是一个非常棒的模型可视化工具，早期我也写过一篇文章来详细介绍各个面板。\n不过士别三日，当刮目相待。现在的 TB 和那时相比变化太多了，增加了许多功能面板，绝大部分我都还没怎么用过。其中最吸引我的面板之一就是 Projector，虽然我现在工作中并不怎么用到。\n现在终于抽出时间，来完整体验并写一篇 TensorBoard Projector（TBP）的简易教程。\n本文将会从原始文本出发（中文），经过训练 embedding、生成所需文件等步骤，一步一步，最终使用 TBP 来可视化 embedding，并解决中文标签不能显示的问题。\n我们先来看下最终效果：\nEmbedding Projector\n\n虽然说现在 BERT 等预训练模型大行其道，但我还是想从更“复古”的词向量出发。当然如果你想使用 BERT 来生成 embedding，也是完全没有问题的，框架是相同的。\n\n此外，这个过程和你所使用的库无关，无论你是 Numpy、Scipy 还是 TensorFlow、PyTorch，只要能够得到 embedding 向量，那就都没有问题。\n使用 TBP 可视化 embedding 的基本逻辑是很简单的：\n\n得到一些词及其 embedding。\n将他们按照 TBP 认可的对应关系放到文件中。\nTBP 读取文件并可视化。\n\n相应的我们需要下列文件：\n\n原始文本和 embedding 模型：用以得到词及其 embedding。\nmetadata.tsv、 tensor.tsv 和 sprite.jpg：分别用于存放词、embedding 和词对应的图片（当然也可以是 PNG），最后一个用于解决中文标签不能显示的问题。\nprojector_config.pbtxt：用于告诉 TBP 上述文件的位置以及其他配置。\n\n下面我们就来一步一步看如何得到这些文件。\n词及词向量原始文本来自习大大的讲话数据库，使用 spacy 分句，共得到约 38 万句子。然后使用 jieba 和自定义词典进行分词，得到 tokenized_sents.txt，该文件格式是一行一个分词后的句子，词之间空格分隔。词向量使用 gensim 的 fasttext 模型训练得到，维度 300。为减少词的数量，去掉停用词。\n12345# Train embeddingsmodel = FastText(vector_size=300, window=5, min_count=10)model.build_vocab(corpus_file=&#x27;tokenized_sents.txt&#x27;)model.train(corpus_file=&#x27;tokenized_sents.txt&#x27;, total_examples=model.corpus_count, epochs=10, total_words=model.corpus_total_words)model.save(&#x27;fasttext.model&#x27;)\nmetadata.tsv 和 tensor.tsvmetadata.tsv 的常见格式有两种：没有表头，只有一列；有表头，有两列。前者（格式 1）就是 NLP 中常见的 vocab.txt 的格式，一行一个词。后者（格式 2）的两列一般表示 index 和 label。label 就表示该样本所属的标签，一般多见于分类数据集。实际上格式 1 是格式 2 的特例，相当于默认认为其行号就是 index，行内容就是 label。\n\nmetadata.tsv 也可以有多列，多出来的列可以用来表示其他属性信息。\n\ntensor.tsv 用于存储与 metadata.tsv 对应的 embeddings。顺序必须一致，即 metadata.tsv 中第 i 行的词，其 embedding 也必须是 tensor.tsv 中的第 i 行。embedding 中数字用 \\t 分隔。\n接上，我们得到模型后，使用其得到的 vocab 及对应的 embedding 来生成这两个文件：\n1234567891011121314stopwords = Path(&quot;hit_stopwords.txt&quot;).read_text(encoding=&quot;utf8&quot;).splitlines()model = FastText.load(&quot;fasttext.model&quot;)words = [word for word in model.wv.key_to_index.keys() if word not in stopwords]  # 排除掉停用词logdir = Path(&#x27;projector/&#x27;)  # 文件存储目录metadata_filename = &#x27;metadata.tsv&#x27;lines = [&quot;index\\tlable&quot;]  # 此处我们存成两列，你也可以不要表头，只存词for i, word in enumerate(words):    lines.append(f&quot;&#123;i&#125;\\t&#123;word&#125;&quot;)logdir.joinpath(metadata_filename).write_text(&quot;\\n&quot;.join(lines), encoding=&quot;utf8&quot;)tensor_filename = &#x27;tensor.tsv&#x27;lines = [&quot;\\t&quot;.join(map(str, model.wv[word])) for word in words]logdir.joinpath(tensor_filename).write_text(&quot;\\n&quot;.join(lines), encoding=&quot;utf8&quot;)\nsprite.jpg正如开头给出的效果图一样，图中每个点都是有一个 label 的，这个 label 就是词。如果我们直接这样启动 tensorboard，会看到如下页面：\nProjector 默认页面，不显示 3D 标签\n但启用 3D 标签模式的话，我们将会看到下图所示的样子：\n点击左上角的“A”开启 3D 标签模式后\n我们可以看到所有的中文词都不见了，只剩下了数字字母等标签。\n这是因为 tensorboard 目前还不支持所有 Unicode 字符标签，只支持 ascii 字符。\n\nBUT！关闭 3D 标签模式后，如果你点击其中一个点，你会惊奇地发现又能显示中文标签了：中文标签又回来了\n\n一个 workaround 是将汉字转成图片，用图片来作为 label，就像官方给出的 mnist 例子一样：\n官方 Mnist 例子\n但是由于每个词所含字的数量都不同，同时又需要尽量让词铺满整个图片，所以不同图片中字的 fontsize 都是不同的，需要视情况调整，这是一个迭代的过程。而转图片我们可以借助 PIL 来完成：\n123456789101112131415161718192021222324def text2image(text, imgfile):    image = Image.new(&quot;RGB&quot;, (50, 50), color=(255, 255, 255))    draw = ImageDraw.Draw(image)    fontsize = 1  # starting font size    fontpath = &quot;simhei.ttf&quot;    # portion of image width you want text width to be    img_fraction = 0.9    font = ImageFont.truetype(fontpath, fontsize)    while (font.getsize(text)[0] &lt; img_fraction * image.size[0]) and (        font.getsize(text)[1] &lt; img_fraction * image.size[1]    ):        # iterate until the text size is just larger than the criteria        fontsize += 1        font = ImageFont.truetype(fontpath, fontsize)    # optionally de-increment to be sure it is less than criteria    fontsize -= 1    font = ImageFont.truetype(fontpath, fontsize)    # print(&#x27;final font size&#x27;,fontsize)    draw.text((0, 0), text, font=font, fill=(0, 0, 0))  # put the text on the image    image.save(imgfile)  # save it\n当我们把所有词都转成图片后，再将这些图片，按照一定规则拼接到一起，最终形成的这么一个大图，就是所谓的 sprite.jpg。\nSprite Image\nMnist 例子中的 sprite image\n那么按照什么规则来拼接呢？\nsprite.jpg 必须是正方形，每个小图也最好是正方形，意味着行列上的小图数量必须是相等的，而且 tensorboard 读这个 sprite 的时候是按照行优先的顺序读的。所以假设你有 8 张小图，那么最终的摆放顺序就是下面这样：\n8 张小图时的摆放顺序\n最后那一格是空白的，也就是全白。\n当然也有可能最后一行都是空白的，例如你有 5 张小图，那么要想每行每列上的小图数量是一样的，那么每行每列上就得有 3 张小图：\n5 张小图时的摆放顺序\n这样不仅第二行最后一格是空白的，就连第三行整行都是空白的。\n所以总结来说，假设你有 $n$ 张小图，那么每行每列上小图的数量就是 $\\lceil \\sqrt n \\rceil$，即根号 $n$ 然后上取整。\n具体代码如下：\n123456789101112131415161718192021222324def text2image(text, imgfile):    image = Image.new(&quot;RGB&quot;, (50, 50), color=(255, 255, 255))    draw = ImageDraw.Draw(image)    fontsize = 1  # starting font size    fontpath = &quot;simhei.ttf&quot;    # portion of image width you want text width to be    img_fraction = 0.9    font = ImageFont.truetype(fontpath, fontsize)    while (font.getsize(text)[0] &lt; img_fraction * image.size[0]) and (        font.getsize(text)[1] &lt; img_fraction * image.size[1]    ):  # 保证词在行列上均不超出图片范围        # iterate until the text size is just larger than the criteria        fontsize += 1        font = ImageFont.truetype(fontpath, fontsize)    # optionally de-increment to be sure it is less than criteria    fontsize -= 1    font = ImageFont.truetype(fontpath, fontsize)    # print(&#x27;final font size&#x27;,fontsize)    draw.text((0, 0), text, font=font, fill=(0, 0, 0))  # put the text on the image    image.save(imgfile)  # save it\nprojector_config.pbtxt在得到了 metadata.tsv 、 tensor.tsv 和 sprite.jpg 后，我们还需要告诉 tensorboard 这些文件的位置和每个小图的维度，所以我们需要一个 .pbtxt 文件来指定这些信息。\n我们可以用以下程序来生成该文件：\n123456789from tensorboard.plugins import projectorconfig = projector.ProjectorConfig()embedding = config.embeddings.add()embedding.metadata_path = metadata_filenameembedding.tensor_path = tensor_filenameembedding.sprite.image_path = sprite_filenameembedding.sprite.single_image_dim.extend([unit_dim, unit_dim])  # unit_dim 就是小图维度projector.visualize_embeddings(logdir, config)\n然后就会得到一个名为 projector_config.pbtxt 的文件，文件内容如下：\n123456789embeddings &#123;  metadata_path: &quot;metadata.tsv&quot;  sprite &#123;    image_path: &quot;sprite.jpg&quot;    single_image_dim: 50    single_image_dim: 50  &#125;  tensor_path: &quot;tensor.tsv&quot;&#125;\n当然你也可以按照这个格式直接手动创建这个文件。\n启动万事俱备，只欠东风。\n现在我们终于可以启动 tensorboard 了：\n1$ tensorboard --logdir=projector/\n\nprojector/ 就是你上面指定的 logdir 。\n\n然后根据提示在浏览器打开 http://localhost:6006/#projector 就可以看到页面了，你可以在这里尝试不同降维算法的效果，也可以点击或搜索图上的词来查看其相似词，大致评估下 embedding 的效果。\n“捷克共和国”的近义词\n扩展Embedding Projector 中的点不仅仅可以是图像、词，理论上只要是可以 embedding 的东西，就可以显示。而且你懂的，万物皆可 embedding……😂\nReference\nTaking the TensorBoard Embedding Projector to the Next Level | Towards Data Science\nVisualizing Image Feature Vectors through TensorBoard | by Takuma Yamaguchi (Kumon) | Medium\nTensorBoard: Embedding Visualization · tfdocs\nProjector plugin hangs with “Fetching sprite image…” · Issue #3840 · tensorflow/tensorboard\n[projector] unicode not supported for 3D mode labels · Issue #386 · tensorflow/tensorboard\npython - PIL how to scale text size in relation to the size of the image - Stack Overflow\n\nEND","dateCreated":"2021-12-17T17:44:19+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2021-12-17T17:44:19+08:00","description":"本文将会从原始文本出发（中文），经过训练 embedding、生成所需文件等步骤，一步一步，最终使用 TBP 来可视化 embedding，并解决不能使用中文标签的问题。","headline":"TensorBoard Projector 简易指南","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/","keywords":"Python, NLP, TensorBoard"}</script>
+    <meta name="description" content="本文将会从原始文本出发（中文），经过训练 embedding、生成所需文件等步骤，一步一步，最终使用 TBP 来可视化 embedding，并解决不能使用中文标签的问题。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="TensorBoard Projector 简易指南">
+<meta property="og:url" content="https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文将会从原始文本出发（中文），经过训练 embedding、生成所需文件等步骤，一步一步，最终使用 TBP 来可视化 embedding，并解决不能使用中文标签的问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2021/12/17/lGOjs8Ch3SE2qce.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/18/R8WcIGvPYSosjZC.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/18/YBnylzsQNOeArTd.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/18/ft6WZmqrhuUdXTP.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/17/g3iG7TmNpZkDYRq.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/17/PjedLVwymCa84GZ.png">
+<meta property="og:image" content="https://www.tensorflow.org/images/mnist_10k_sprite.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/17/gemcN2hIt6sWZOQ.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/17/cE3dkBmSgHnXAjb.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/17/6sxGNA2ZlkdQnB5.png">
+<meta property="article:published_time" content="2021-12-17T09:44:19.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.198Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="TensorBoard">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2021/12/17/lGOjs8Ch3SE2qce.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            TensorBoard Projector 简易指南
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-12-17T17:44:19+08:00">
+	
+		    2021 年 12 月 17 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%8D%E5%8F%8A%E8%AF%8D%E5%90%91%E9%87%8F"><span class="toc-text">词及词向量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#metadata-tsv-%E5%92%8C-tensor-tsv"><span class="toc-text">metadata.tsv 和 tensor.tsv</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sprite-jpg"><span class="toc-text">sprite.jpg</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#projector-config-pbtxt"><span class="toc-text">projector_config.pbtxt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8"><span class="toc-text">启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%B1%95"><span class="toc-text">扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p>TensorBoard（TB）是一个非常棒的模型可视化工具，早期我也写过<a href="https://alanlee.fun/2017/08/20/understanding-tensorboard/">一篇文章</a>来详细介绍各个面板。</p>
+<p>不过士别三日，当刮目相待。现在的 TB 和那时相比变化太多了，增加了许多功能面板，绝大部分我都还没怎么用过。其中最吸引我的面板之一就是 Projector，虽然我现在工作中并不怎么用到。</p>
+<p>现在终于抽出时间，来完整体验并写一篇 TensorBoard Projector（TBP）的简易教程。</p>
+<p>本文将会从原始文本出发（中文），经过训练 embedding、生成所需文件等步骤，一步一步，最终使用 TBP 来可视化 embedding，并解决中文标签不能显示的问题。</p>
+<p>我们先来看下最终效果：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/17/lGOjs8Ch3SE2qce.png" title="Embedding Projector" data-caption="Embedding Projector" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/17/lGOjs8Ch3SE2qce.png" alt="Embedding Projector"></a><span class="caption">Embedding Projector</span></div>
+<blockquote>
+<p>虽然说现在 BERT 等预训练模型大行其道，但我还是想从更“复古”的词向量出发。当然如果你想使用 BERT 来生成 embedding，也是完全没有问题的，框架是相同的。</p>
+</blockquote>
+<p>此外，这个过程和你所使用的库无关，无论你是 Numpy、Scipy 还是 TensorFlow、PyTorch，只要能够得到 embedding 向量，那就都没有问题。</p>
+<p>使用 TBP 可视化 embedding 的基本逻辑是很简单的：</p>
+<ol>
+<li>得到一些词及其 embedding。</li>
+<li>将他们按照 TBP 认可的对应关系放到文件中。</li>
+<li>TBP 读取文件并可视化。</li>
+</ol>
+<p>相应的我们需要下列文件：</p>
+<ol>
+<li>原始文本和 embedding 模型：用以得到词及其 embedding。</li>
+<li><code>metadata.tsv</code>、 <code>tensor.tsv</code> 和 <code>sprite.jpg</code>：分别用于存放词、embedding 和词对应的图片（当然也可以是 PNG），最后一个用于解决中文标签不能显示的问题。</li>
+<li><code>projector_config.pbtxt</code>：用于告诉 TBP 上述文件的位置以及其他配置。</li>
+</ol>
+<p>下面我们就来一步一步看如何得到这些文件。</p>
+<h2 id="词及词向量"><a href="#词及词向量" class="headerlink" title="词及词向量"></a>词及词向量</h2><p>原始文本来自<a href="http://jhsjk.people.cn/">习大大的讲话数据库</a>，使用 spacy 分句，共得到约 38 万句子。然后使用 jieba 和自定义词典进行分词，得到 <code>tokenized_sents.txt</code>，该文件格式是一行一个分词后的句子，词之间空格分隔。词向量使用 gensim 的 fasttext 模型训练得到，维度 300。为减少词的数量，去掉停用词。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Train embeddings</span></span><br><span class="line">model = FastText(vector_size=<span class="number">300</span>, window=<span class="number">5</span>, min_count=<span class="number">10</span>)</span><br><span class="line">model.build_vocab(corpus_file=<span class="string">&#x27;tokenized_sents.txt&#x27;</span>)</span><br><span class="line">model.train(corpus_file=<span class="string">&#x27;tokenized_sents.txt&#x27;</span>, total_examples=model.corpus_count, epochs=<span class="number">10</span>, total_words=model.corpus_total_words)</span><br><span class="line">model.save(<span class="string">&#x27;fasttext.model&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="metadata-tsv-和-tensor-tsv"><a href="#metadata-tsv-和-tensor-tsv" class="headerlink" title="metadata.tsv 和 tensor.tsv"></a>metadata.tsv 和 tensor.tsv</h2><p><code>metadata.tsv</code> 的常见格式有两种：没有表头，只有一列；有表头，有两列。前者（格式 1）就是 NLP 中常见的 <code>vocab.txt</code> 的格式，一行一个词。后者（格式 2）的两列一般表示 index 和 label。label 就表示该样本所属的标签，一般多见于分类数据集。实际上格式 1 是格式 2 的特例，相当于默认认为其行号就是 index，行内容就是 label。</p>
+<blockquote>
+<p><code>metadata.tsv</code> 也可以有多列，多出来的列可以用来表示其他属性信息。</p>
+</blockquote>
+<p><code>tensor.tsv</code> 用于存储与 <code>metadata.tsv</code> 对应的 embeddings。顺序必须一致，即 <code>metadata.tsv</code> 中第 i 行的词，其 embedding 也必须是 <code>tensor.tsv</code> 中的第 i 行。embedding 中数字用 <code>\t</code> 分隔。</p>
+<p>接上，我们得到模型后，使用其得到的 vocab 及对应的 embedding 来生成这两个文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">stopwords = Path(<span class="string">&quot;hit_stopwords.txt&quot;</span>).read_text(encoding=<span class="string">&quot;utf8&quot;</span>).splitlines()</span><br><span class="line">model = FastText.load(<span class="string">&quot;fasttext.model&quot;</span>)</span><br><span class="line">words = [word <span class="keyword">for</span> word <span class="keyword">in</span> model.wv.key_to_index.keys() <span class="keyword">if</span> word <span class="keyword">not</span> <span class="keyword">in</span> stopwords]  <span class="comment"># 排除掉停用词</span></span><br><span class="line">logdir = Path(<span class="string">&#x27;projector/&#x27;</span>)  <span class="comment"># 文件存储目录</span></span><br><span class="line"></span><br><span class="line">metadata_filename = <span class="string">&#x27;metadata.tsv&#x27;</span></span><br><span class="line">lines = [<span class="string">&quot;index\tlable&quot;</span>]  <span class="comment"># 此处我们存成两列，你也可以不要表头，只存词</span></span><br><span class="line"><span class="keyword">for</span> i, word <span class="keyword">in</span> <span class="built_in">enumerate</span>(words):</span><br><span class="line">    lines.append(<span class="string">f&quot;<span class="subst">&#123;i&#125;</span>\t<span class="subst">&#123;word&#125;</span>&quot;</span>)</span><br><span class="line">logdir.joinpath(metadata_filename).write_text(<span class="string">&quot;\n&quot;</span>.join(lines), encoding=<span class="string">&quot;utf8&quot;</span>)</span><br><span class="line"></span><br><span class="line">tensor_filename = <span class="string">&#x27;tensor.tsv&#x27;</span></span><br><span class="line">lines = [<span class="string">&quot;\t&quot;</span>.join(<span class="built_in">map</span>(<span class="built_in">str</span>, model.wv[word])) <span class="keyword">for</span> word <span class="keyword">in</span> words]</span><br><span class="line">logdir.joinpath(tensor_filename).write_text(<span class="string">&quot;\n&quot;</span>.join(lines), encoding=<span class="string">&quot;utf8&quot;</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="sprite-jpg"><a href="#sprite-jpg" class="headerlink" title="sprite.jpg"></a>sprite.jpg</h2><p>正如开头给出的效果图一样，图中每个点都是有一个 label 的，这个 label 就是词。如果我们直接这样启动 tensorboard，会看到如下页面：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/18/R8WcIGvPYSosjZC.png" title="Projector 默认页面，不显示 3D 标签" data-caption="Projector 默认页面，不显示 3D 标签" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/18/R8WcIGvPYSosjZC.png" alt="Projector 默认页面，不显示 3D 标签"></a><span class="caption">Projector 默认页面，不显示 3D 标签</span></div>
+<p>但启用 3D 标签模式的话，我们将会看到下图所示的样子：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/18/YBnylzsQNOeArTd.png" title="点击左上角的“A”开启 3D 标签模式后" data-caption="点击左上角的“A”开启 3D 标签模式后" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/18/YBnylzsQNOeArTd.png" alt="点击左上角的“A”开启 3D 标签模式后"></a><span class="caption">点击左上角的“A”开启 3D 标签模式后</span></div>
+<p>我们可以看到所有的中文词都不见了，只剩下了数字字母等标签。</p>
+<p>这是因为 tensorboard 目前还不支持所有 Unicode 字符标签，只支持 ascii 字符。</p>
+<blockquote>
+<p>BUT！关闭 3D 标签模式后，如果你点击其中一个点，你会惊奇地发现又能显示中文标签了：<br><div class="figure " style="width:;"><img class="fig-img" src="https://s2.loli.net/2021/12/18/ft6WZmqrhuUdXTP.png" alt="中文标签又回来了"><span class="caption">中文标签又回来了</span></div></p>
+</blockquote>
+<p>一个 workaround 是将汉字转成图片，用图片来作为 label，就像官方给出的 <a href="https://projector.tensorflow.org/">mnist 例子</a>一样：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/17/g3iG7TmNpZkDYRq.png" title="官方 Mnist 例子" data-caption="官方 Mnist 例子" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/17/g3iG7TmNpZkDYRq.png" alt="官方 Mnist 例子"></a><span class="caption">官方 Mnist 例子</span></div>
+<p>但是由于每个词所含字的数量都不同，同时又需要尽量让词铺满整个图片，所以不同图片中字的 fontsize 都是不同的，需要视情况调整，这是一个迭代的过程。而转图片我们可以借助 PIL 来完成：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">text2image</span>(<span class="params">text, imgfile</span>):</span><br><span class="line">    image = Image.new(<span class="string">&quot;RGB&quot;</span>, (<span class="number">50</span>, <span class="number">50</span>), color=(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>))</span><br><span class="line">    draw = ImageDraw.Draw(image)</span><br><span class="line">    fontsize = <span class="number">1</span>  <span class="comment"># starting font size</span></span><br><span class="line">    fontpath = <span class="string">&quot;simhei.ttf&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># portion of image width you want text width to be</span></span><br><span class="line">    img_fraction = <span class="number">0.9</span></span><br><span class="line"></span><br><span class="line">    font = ImageFont.truetype(fontpath, fontsize)</span><br><span class="line">    <span class="keyword">while</span> (font.getsize(text)[<span class="number">0</span>] &lt; img_fraction * image.size[<span class="number">0</span>]) <span class="keyword">and</span> (</span><br><span class="line">        font.getsize(text)[<span class="number">1</span>] &lt; img_fraction * image.size[<span class="number">1</span>]</span><br><span class="line">    ):</span><br><span class="line">        <span class="comment"># iterate until the text size is just larger than the criteria</span></span><br><span class="line">        fontsize += <span class="number">1</span></span><br><span class="line">        font = ImageFont.truetype(fontpath, fontsize)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># optionally de-increment to be sure it is less than criteria</span></span><br><span class="line">    fontsize -= <span class="number">1</span></span><br><span class="line">    font = ImageFont.truetype(fontpath, fontsize)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># print(&#x27;final font size&#x27;,fontsize)</span></span><br><span class="line">    draw.text((<span class="number">0</span>, <span class="number">0</span>), text, font=font, fill=(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>))  <span class="comment"># put the text on the image</span></span><br><span class="line">    image.save(imgfile)  <span class="comment"># save it</span></span><br></pre></td></tr></table></figure>
+<p>当我们把所有词都转成图片后，再将这些图片，按照一定规则拼接到一起，最终形成的这么一个大图，就是所谓的 <code>sprite.jpg</code>。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/17/PjedLVwymCa84GZ.png" title="Sprite Image" data-caption="Sprite Image" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/17/PjedLVwymCa84GZ.png" alt="Sprite Image"></a><span class="caption">Sprite Image</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://www.tensorflow.org/images/mnist_10k_sprite.png" title="Mnist 例子中的 sprite image" data-caption="Mnist 例子中的 sprite image" data-fancybox="default"><img class="fig-img" src="https://www.tensorflow.org/images/mnist_10k_sprite.png" alt="Mnist 例子中的 sprite image"></a><span class="caption">Mnist 例子中的 sprite image</span></div>
+<p>那么按照什么规则来拼接呢？</p>
+<p><code>sprite.jpg</code> 必须是正方形，每个小图也最好是正方形，意味着行列上的小图数量必须是相等的，而且 tensorboard 读这个 sprite 的时候是按照行优先的顺序读的。所以假设你有 8 张小图，那么最终的摆放顺序就是下面这样：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/17/gemcN2hIt6sWZOQ.png" title="8 张小图时的摆放顺序" data-caption="8 张小图时的摆放顺序" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/17/gemcN2hIt6sWZOQ.png" alt="8 张小图时的摆放顺序"></a><span class="caption">8 张小图时的摆放顺序</span></div>
+<p>最后那一格是空白的，也就是全白。</p>
+<p>当然也有可能最后一行都是空白的，例如你有 5 张小图，那么要想每行每列上的小图数量是一样的，那么每行每列上就得有 3 张小图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/17/cE3dkBmSgHnXAjb.png" title="5 张小图时的摆放顺序" data-caption="5 张小图时的摆放顺序" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/17/cE3dkBmSgHnXAjb.png" alt="5 张小图时的摆放顺序"></a><span class="caption">5 张小图时的摆放顺序</span></div>
+<p>这样不仅第二行最后一格是空白的，就连第三行整行都是空白的。</p>
+<p>所以总结来说，假设你有 $n$ 张小图，那么每行每列上小图的数量就是 $\lceil \sqrt n \rceil$，即根号 $n$ 然后上取整。</p>
+<p>具体代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">text2image</span>(<span class="params">text, imgfile</span>):</span><br><span class="line">    image = Image.new(<span class="string">&quot;RGB&quot;</span>, (<span class="number">50</span>, <span class="number">50</span>), color=(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>))</span><br><span class="line">    draw = ImageDraw.Draw(image)</span><br><span class="line">    fontsize = <span class="number">1</span>  <span class="comment"># starting font size</span></span><br><span class="line">    fontpath = <span class="string">&quot;simhei.ttf&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># portion of image width you want text width to be</span></span><br><span class="line">    img_fraction = <span class="number">0.9</span></span><br><span class="line"></span><br><span class="line">    font = ImageFont.truetype(fontpath, fontsize)</span><br><span class="line">    <span class="keyword">while</span> (font.getsize(text)[<span class="number">0</span>] &lt; img_fraction * image.size[<span class="number">0</span>]) <span class="keyword">and</span> (</span><br><span class="line">        font.getsize(text)[<span class="number">1</span>] &lt; img_fraction * image.size[<span class="number">1</span>]</span><br><span class="line">    ):  <span class="comment"># 保证词在行列上均不超出图片范围</span></span><br><span class="line">        <span class="comment"># iterate until the text size is just larger than the criteria</span></span><br><span class="line">        fontsize += <span class="number">1</span></span><br><span class="line">        font = ImageFont.truetype(fontpath, fontsize)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># optionally de-increment to be sure it is less than criteria</span></span><br><span class="line">    fontsize -= <span class="number">1</span></span><br><span class="line">    font = ImageFont.truetype(fontpath, fontsize)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># print(&#x27;final font size&#x27;,fontsize)</span></span><br><span class="line">    draw.text((<span class="number">0</span>, <span class="number">0</span>), text, font=font, fill=(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>))  <span class="comment"># put the text on the image</span></span><br><span class="line">    image.save(imgfile)  <span class="comment"># save it</span></span><br></pre></td></tr></table></figure>
+<h2 id="projector-config-pbtxt"><a href="#projector-config-pbtxt" class="headerlink" title="projector_config.pbtxt"></a>projector_config.pbtxt</h2><p>在得到了 <code>metadata.tsv</code> 、 <code>tensor.tsv</code> 和 <code>sprite.jpg</code> 后，我们还需要告诉 tensorboard 这些文件的位置和每个小图的维度，所以我们需要一个 <code>.pbtxt</code> 文件来指定这些信息。</p>
+<p>我们可以用以下程序来生成该文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tensorboard.plugins <span class="keyword">import</span> projector</span><br><span class="line"></span><br><span class="line">config = projector.ProjectorConfig()</span><br><span class="line">embedding = config.embeddings.add()</span><br><span class="line">embedding.metadata_path = metadata_filename</span><br><span class="line">embedding.tensor_path = tensor_filename</span><br><span class="line">embedding.sprite.image_path = sprite_filename</span><br><span class="line">embedding.sprite.single_image_dim.extend([unit_dim, unit_dim])  <span class="comment"># unit_dim 就是小图维度</span></span><br><span class="line">projector.visualize_embeddings(logdir, config)</span><br></pre></td></tr></table></figure>
+<p>然后就会得到一个名为 <code>projector_config.pbtxt</code> 的文件，文件内容如下：</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">embeddings &#123;</span><br><span class="line">  metadata_path: <span class="string">&quot;metadata.tsv&quot;</span></span><br><span class="line">  sprite &#123;</span><br><span class="line">    image_path: <span class="string">&quot;sprite.jpg&quot;</span></span><br><span class="line">    single_image_dim: <span class="number">50</span></span><br><span class="line">    single_image_dim: <span class="number">50</span></span><br><span class="line">  &#125;</span><br><span class="line">  tensor_path: <span class="string">&quot;tensor.tsv&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当然你也可以按照这个格式直接手动创建这个文件。</p>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p>万事俱备，只欠东风。</p>
+<p>现在我们终于可以启动 tensorboard 了：</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ tensorboard --logdir=projector/</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><code>projector/</code> 就是你上面指定的 <code>logdir</code> 。</p>
+</blockquote>
+<p>然后根据提示在浏览器打开 <code>http://localhost:6006/#projector</code> 就可以看到页面了，你可以在这里尝试不同降维算法的效果，也可以点击或搜索图上的词来查看其相似词，大致评估下 embedding 的效果。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2021/12/17/6sxGNA2ZlkdQnB5.png" title="“捷克共和国”的近义词" data-caption="“捷克共和国”的近义词" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2021/12/17/6sxGNA2ZlkdQnB5.png" alt="“捷克共和国”的近义词"></a><span class="caption">“捷克共和国”的近义词</span></div>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><p>Embedding Projector 中的点不仅仅可以是图像、词，理论上只要是可以 embedding 的东西，就可以显示。而且你懂的，万物皆可 embedding……😂</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://towardsdatascience.com/taking-the-tensorboard-embedding-projector-to-the-next-level-bde53deb6bb7">Taking the TensorBoard Embedding Projector to the Next Level | Towards Data Science</a></li>
+<li><a href="https://medium.com/@kumon/visualizing-image-feature-vectors-through-tensorboard-b850ce1be7f1">Visualizing Image Feature Vectors through TensorBoard | by Takuma Yamaguchi (Kumon) | Medium</a></li>
+<li><a href="https://branyang.gitbooks.io/tfdocs/content/get_started/embedding_viz.html">TensorBoard: Embedding Visualization · tfdocs</a></li>
+<li><a href="https://github.com/tensorflow/tensorboard/issues/3840">Projector plugin hangs with “Fetching sprite image…” · Issue #3840 · tensorflow/tensorboard</a></li>
+<li><a href="https://github.com/tensorflow/tensorboard/issues/386">[projector] unicode not supported for 3D mode labels · Issue #386 · tensorflow/tensorboard</a></li>
+<li><a href="https://stackoverflow.com/questions/4902198/pil-how-to-scale-text-size-in-relation-to-the-size-of-the-image">python - PIL how to scale text size in relation to the size of the image - Stack Overflow</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorBoard/" rel="tag">TensorBoard</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/08/introducing-upsetplot/"
+                    data-tooltip="UpSet Plot 简易指南（一）"
+                    aria-label="上一篇: UpSet Plot 简易指南（一）"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/11/07/transformers-classification-custom-dataset/"
+                    data-tooltip="使用 Transformers 在你自己的数据集上训练文本分类模型"
+                    aria-label="下一篇: 使用 Transformers 在你自己的数据集上训练文本分类模型"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/08/introducing-upsetplot/"
+                    data-tooltip="UpSet Plot 简易指南（一）"
+                    aria-label="上一篇: UpSet Plot 简易指南（一）"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/11/07/transformers-classification-custom-dataset/"
+                    data-tooltip="使用 Transformers 在你自己的数据集上训练文本分类模型"
+                    aria-label="下一篇: 使用 Transformers 在你自己的数据集上训练文本分类模型"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2021/12/17/tensorboard-embedding-projector/';
+              
+            this.page.identifier = '2021/12/17/tensorboard-embedding-projector/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

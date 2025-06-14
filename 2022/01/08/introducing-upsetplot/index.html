@@ -1,0 +1,791 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>UpSet Plot 简易指南（一） - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n我们都知道在展示几个集合的交集情况时，应该使用维恩图，非常直观。但是当集合数大于 3 的时候，维恩图就很难绘制了，或者说即使绘制出来，可读性也非常差，让人看得云里雾里。\n最近 The Illustrated Transformer 的作者 Jay Alammar 发了个推提到了这个问题：\nWhat symptoms do covid patients report?Visualized via a ven diagram and by an https://t.co/ba5KTcXKDK plot in Altair https://t.co/SOc8qPyOZ2The two bar charts provide great slices of the data. pic.twitter.com/fDxUMlJoi6&mdash; Jay Alammar (@JayAlammar) December 24, 2021 \n说的是两幅图的比较。看下面这个展示不同新冠症状报告人数的维恩图。哪个圆圈代表什么，交集代表什么，已经很难看出来了。\n杂乱的维恩图\n再看下面这幅图：\n瞬间清晰多了是不是\n我们不仅可以很直观地看出来疲劳 Fatigue 的报告人数最多，还可以知道同时报告疲劳和嗅觉丧失 Anosmia 的人最多。\n再比如，下面这张出自发表在 Nature 上的《The banana (Musa acuminata) genome and the evolution of monocotyledonous plants》，该图意图是展现香蕉和其他五个物种的基因组之间的交叉重合关系，每个颜色的大圈代表一个物种的基因组：\n香蕉和其他五个物种的基因组之间的交叉关系\n一眼看起来还挺好看，但是仔细看你就会发现很容易乱，交叉实在是太多了。那绘制成上面说的那种图会是什么样呢？\n瞬间清晰多了是不是\n这样看就舒服多了。很明显可以看出来这六个物种的基因组大部分都是相同的。\n这种图就叫 UpSet。我后来具体查了查，发现这种图实在是太有用了，所以决定写一个简易教程，帮助更多人入门。\nUpSet 是一种用于可视化多个集合的交叉情况的图形，可以看做是增强的维恩图，专门用来应付这种情况，非常适合集合数多于 3 个时交集情况的展示，由哈佛医学院视觉计算组于 2014 年的论文《UpSet: Visualization of Intersecting Sets》中提出，算是比较新的了。\nUpSet 由三部分组成，分别解释如下：\n其中蓝色部分也可以看作是绿色部分的 xtick label。底图源自 r-graph-gallery.com。\n看起来挺复杂？没关系，你没必要自己 plot it from scratch。upsetplot 是这方面的能手。\n和其他 Python 包一样，首先需要使用 pip 安装：\n1$ pip install upsetplot\n主要方法upsetplot 的主要 API 是 plot() 方法。主要参数如下：\n\ndata ： pd.Series 或者 pd.DataFrame ，一般来说是 MultiIndex 的，用来表示 object 的归属情况（归属于哪个集合），其值为 0/1 或者 True/False。这个参数一般是由内置函数生成的，不用自己创建，包括 from_contents、 from_indicators、 from_memberships，可以根据你的源数据的格式选择合适的函数。具体用法下面介绍。\nfig ： plt.figure() 对象，可以指定绘制在哪个 figure 上。保存图时有用，如果你不传此参数，直接使用 plt.savefig() 保存，会得到一个空图。\n\n你也可以传入其他参数，这些参数同时也是 UpSet() 的参数，主要有：\n\nsort_by：subset（即绿色部分）的排序依据，可选的有 cardinality、degree（默认值）和 None。cardinality 表示根据 subset 的大小排序。degree 表示 subset 中包含的 set 的数量（即蓝色部分每列黑色圆圈的数量，自由度），会根据这个数量进行排序。set，或者叫 category，就是图中的红色部分。None 表示根据数据原本的出现顺序排序。\nsubset_size：如何计算 subset 大小（即绿色部分的柱高），可选的有 auto（默认值）、count 和 sum。auto 表示当 data 是 DataFrame 时，使用 count，除非另一个默认为 None 的参数 sum_over 被指定为非 None。count 表示用 group（subset）的行数作为 subset 大小。sum 就表示对 data 进行求和，或者在 sum_over 指定的列上进行求和。\nmin_subset_size：最小 subset 大小。有时候 subset 过多，需要用此参数来限制 subset 数量。\nmax_subset_size：最大 subset 大小。有时候 subset 过多，需要用此参数来限制 subset 数量。\nmin_degree：最小 degree。有时候不想显示 degree 为 0（即某列中全是灰色圆圈，没有黑色圆圈）或 1 的情况，可以用此参数来限制。\nmax_degree：最大 degree。类上。\n\n基本框架绘图的基本框架非常简单：\n123456plot(    data=data,    sort_by=&#x27;cardinality&#x27;,    subset_size=&#x27;count&#x27;,    **kwargs)\nkwargs 就是 UpSet() 的其他参数。\n准备数据绘图的核心就是 data 参数，因此如何准备你的数据是至关重要的。\n前面我们提到过生成 data 的函数主要有三个：from_contents、from_indicators和from_memberships，下面我们分别来看下传给这三种函数的数据是什么样子的。\nfrom_contentsfrom_contents 期望的数据格式是一个 dict，key 为 category name（或者叫集合名称），value 为集合中包含的对象列表，这些对象必须是 int 或者 str 格式，即 value 必须是 list of int 或者 list of str。\n例如下面这样：\n12345contents = &#123;    &quot;set1&quot;: [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;],  # set1 包含 a、b、c 三个对象    &quot;set2&quot;: [&quot;b&quot;, &quot;d&quot;],       # set2 包含 b、d 两个对象    &quot;set3&quot;: [&quot;e&quot;]             # set3 包含 e 一个对象&#125;\n传给 from_contents 后生成的数据如下：\n12345678&gt;&gt;&gt; from_contents(contents)  # DataFrame                  idset1  set2  set3    True  False False  a      True  False  b      False False  cFalse True  False  d      False True   e\n这返回的数据就是一个 MultiIndex DataFrame，将之传给 plot() 即可绘图，如下图左边：\n\n其等效的维恩图如下：\n与上图等效的维恩图\nfrom_indicatorsindicator 是“指示符”的意思，类似指示函数 indicator function 返回的是 0 和 1，from_indictors 也期望输入是一个只包含 bool 类型的数据。可以是一个 dict、一个 DataFrame，但总归是一个表格类型数据。列名是集合名称，value 是 True/False，表示某个对象属不属于该集合，所以 value  list 的长度或者 DataFrame 的长度就是对象数量。\n例如：\n1234567891011121314151617# dict 类型的输入indicators_dict = &#123;    &quot;set1&quot;: [True, True, True, False, False],    &quot;set2&quot;: [False, True, False, True, False],    &quot;set3&quot;: [False, False, False, False, True]&#125;# DataFrame 类型的输入indicators_df = pd.DataFrame(indicators)#     set1   set2   set3# 0   True  False   True# 1  False   True   True# 2   True  False  False# 3  False  False  Falseplot(from_indicators(indicators), subset_size=&#x27;count&#x27;)# or plot(from_indicators(indicators_df), subset_size=&#x27;count&#x27;)，效果相同\n结果图同上。\nfrom_membershipsfrom_memberships 就比较直接了，是一个嵌套 list，每个 item 也是一个 list，表示一个对象的归属情况，里面的每个 item 是 str 类型的集合名称，即每个对象的”会员关系“ memberships，它们都是哪家的会员。\n我们还是沿用上面的例子：\n1234567memberships = [    [&#x27;set1&#x27;],          # a 归属于 set1    [&#x27;set1&#x27;, &#x27;set2&#x27;],  # b 归属于 set1 和 set2    [&#x27;set1&#x27;],          # c 归属于 set1    [&#x27;set2&#x27;],          # d 归属于 set2    [&#x27;set3&#x27;]           # e 归属于 set3]\n传给 from_memberships 后生成的数据如下：\n123456789&gt;&gt;&gt; from_memberships(memberships)  # Seriesset1   set2   set3 True   False  False    1       True   False    1       False  False    1False  True   False    1       False  True     1Name: ones, dtype: int64&gt;&gt;&gt; plot(from_memberships(memberships), subset_size=&#x27;count&#x27;)  # 绘图\n最后的结果图和上面一致。\n复现现在我们来尝试复现一下本文开头提到的 Jay Alammar 的推特中的图。\n\n我们这里使用的是最新数据，所以最终结果可能和原图有所不同。\n\n原图中的数据来自 https://ndownloader.figshare.com/files/22339791，我们可以直接使用 pd.read_csv() 来读取，\n12345678910&gt;&gt;&gt; df = pd.read_csv(&quot;https://ndownloader.figshare.com/files/22339791&quot;)&gt;&gt;&gt; df.shape(1764, 6)&gt;&gt;&gt; df.head()   id  Shortness of Breath  Diarrhea  Fever  Cough  Anosmia  Fatigue0   1                    0         0      0      0        1        11   2                    0         0      0      0        1        12   3                    0         0      0      0        1        13   4                    0         0      0      0        1        14   5                    0         0      0      0        1        1\n我们可以看到输出的 dataframe 非常符合 from_indicators() 的情况，所以我们用之来绘制 UpSet。但是在这之前，我们需要先删掉 id 列并把数据类型转成 bool ：\n12345678&gt;&gt;&gt; df = df.drop(&#x27;id&#x27;, axis=1).astype(bool)&gt;&gt;&gt; df.head()   Shortness of Breath  Diarrhea  Fever  Cough  Anosmia  Fatigue0                False     False  False  False     True     True1                False     False  False  False     True     True2                False     False  False  False     True     True3                False     False  False  False     True     True4                False     False  False  False     True     True\n然后我们就使用 from_indicators() 来绘图了：\n1plot(from_indicators(df), subset_size=&#x27;count&#x27;, sort_by=&#x27;cardinality&#x27;)\n和原图的结论基本相同。\n和原图的结论基本相同。\n下一篇，我们将看到更多的实际例子以及如何解决一个棘手的问题。\nENDReference\nUpSetPlot documentation — upsetplot 0.6.0 documentation\nUpSet Home\n","dateCreated":"2022-01-08T10:05:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2022-01-08T10:05:00+08:00","description":"使用 UpSet 清晰展示集合交叉关系，弥补维恩图在展示多集合时的不足。","headline":"UpSet Plot 简易指南（一）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2022/01/08/introducing-upsetplot/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2022/01/08/introducing-upsetplot/","keywords":"Python, Data Science, DataViz"}</script>
+    <meta name="description" content="使用 UpSet 清晰展示集合交叉关系，弥补维恩图在展示多集合时的不足。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="UpSet Plot 简易指南（一）">
+<meta property="og:url" content="https://alanlee.fun/2022/01/08/introducing-upsetplot/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="使用 UpSet 清晰展示集合交叉关系，弥补维恩图在展示多集合时的不足。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/SJtEpK4VN6WhAqI.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/Hm5uxZ12rXAek76.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/eY5w8CtHA2a4RNg.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/KykHvViWmJrRb6S.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/nkcseqDEvYgwmdJ.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/TQiMhxmF65RfPLd.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/rw1b2BdHTh6EP5a.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/08/3HbLMtY1WyNUSkn.png">
+<meta property="article:published_time" content="2022-01-08T02:05:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.195Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Data Science">
+<meta property="article:tag" content="DataViz">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2022/01/08/SJtEpK4VN6WhAqI.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            UpSet Plot 简易指南（一）
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2022-01-08T10:05:00+08:00">
+	
+		    2022 年 1 月 8 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt -->
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E6%96%B9%E6%B3%95"><span class="toc-text">主要方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A1%86%E6%9E%B6"><span class="toc-text">基本框架</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E6%95%B0%E6%8D%AE"><span class="toc-text">准备数据</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#from-contents"><span class="toc-text">from_contents</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#from-indicators"><span class="toc-text">from_indicators</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#from-memberships"><span class="toc-text">from_memberships</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%8E%B0"><span class="toc-text">复现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+<p>我们都知道在展示几个集合的交集情况时，应该使用<a href="https://zh.wikipedia.org/wiki/%E6%96%87%E6%B0%8F%E5%9B%BE">维恩图</a>，非常直观。但是当集合数大于 3 的时候，维恩图就很难绘制了，或者说即使绘制出来，可读性也非常差，让人看得云里雾里。</p>
+<p>最近 <a href="http://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a> 的作者 Jay Alammar 发了个推提到了这个问题：</p>
+<p><blockquote class="twitter-tweet" data-theme="light"><p lang="en" dir="ltr">What symptoms do covid patients report?<br><br>Visualized via a ven diagram and by an <a href="https://t.co/ba5KTcXKDK">https://t.co/ba5KTcXKDK</a> plot in Altair <a href="https://t.co/SOc8qPyOZ2">https://t.co/SOc8qPyOZ2</a><br><br>The two bar charts provide great slices of the data. <a href="https://t.co/fDxUMlJoi6">pic.twitter.com/fDxUMlJoi6</a></p>&mdash; Jay Alammar (@JayAlammar) <a href="https://twitter.com/JayAlammar/status/1474318402890219528?ref_src=twsrc%5Etfw">December 24, 2021</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+<p>说的是两幅图的比较。看下面这个展示不同新冠症状报告人数的维恩图。哪个圆圈代表什么，交集代表什么，已经很难看出来了。</p>
+<div class="figure center" style="width:70%;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/SJtEpK4VN6WhAqI.png" title="杂乱的维恩图" data-caption="杂乱的维恩图" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/SJtEpK4VN6WhAqI.png" style="width:70%;"alt="杂乱的维恩图"></a><span class="caption">杂乱的维恩图</span></div>
+<p>再看下面这幅图：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/Hm5uxZ12rXAek76.png" title="瞬间清晰多了是不是" data-caption="瞬间清晰多了是不是" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/Hm5uxZ12rXAek76.png" alt="瞬间清晰多了是不是"></a><span class="caption">瞬间清晰多了是不是</span></div>
+<p>我们不仅可以很直观地看出来疲劳 Fatigue 的报告人数最多，还可以知道同时报告疲劳和嗅觉丧失 Anosmia 的人最多。</p>
+<p>再比如，下面这张出自发表在 Nature 上的《<a href="https://www.nature.com/articles/nature11241">The banana (Musa acuminata) genome and the evolution of monocotyledonous plants</a>》，该图意图是展现香蕉和其他五个物种的基因组之间的交叉重合关系，每个颜色的大圈代表一个物种的基因组：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/eY5w8CtHA2a4RNg.png" title="香蕉和其他五个物种的基因组之间的交叉关系" data-caption="香蕉和其他五个物种的基因组之间的交叉关系" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/eY5w8CtHA2a4RNg.png" alt="香蕉和其他五个物种的基因组之间的交叉关系"></a><span class="caption">香蕉和其他五个物种的基因组之间的交叉关系</span></div>
+<p>一眼看起来还挺好看，但是仔细看你就会发现很容易乱，交叉实在是太多了。那绘制成上面说的那种图会是什么样呢？</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/KykHvViWmJrRb6S.png" title="瞬间清晰多了是不是" data-caption="瞬间清晰多了是不是" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/KykHvViWmJrRb6S.png" alt="瞬间清晰多了是不是"></a><span class="caption">瞬间清晰多了是不是</span></div>
+<p>这样看就舒服多了。很明显可以看出来这六个物种的基因组大部分都是相同的。</p>
+<p>这种图就叫 <strong>UpSet</strong>。我后来具体查了查，发现这种图实在是太有用了，所以决定写一个简易教程，帮助更多人入门。</p>
+<p>UpSet 是一种用于可视化<strong>多个集合的交叉情况</strong>的图形，可以看做是增强的维恩图，专门用来应付这种情况，非常适合集合数多于 3 个时交集情况的展示，由哈佛医学院视觉计算组于 2014 年的论文《<a href="https://ieeexplore.ieee.org/document/6876017">UpSet: Visualization of Intersecting Sets</a>》中提出，算是比较新的了。</p>
+<p>UpSet 由三部分组成，分别解释如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/nkcseqDEvYgwmdJ.png" title="其中蓝色部分也可以看作是绿色部分的 xtick label。底图源自 r-graph-gallery.com。" data-caption="其中蓝色部分也可以看作是绿色部分的 xtick label。底图源自 r-graph-gallery.com。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/nkcseqDEvYgwmdJ.png" alt="其中蓝色部分也可以看作是绿色部分的 xtick label。底图源自 r-graph-gallery.com。"></a><span class="caption">其中蓝色部分也可以看作是绿色部分的 xtick label。底图源自 r-graph-gallery.com。</span></div>
+<p>看起来挺复杂？没关系，你没必要自己 plot it from scratch。<a href="https://github.com/jnothman/UpSetPlot">upsetplot</a> 是这方面的能手。</p>
+<p>和其他 Python 包一样，首先需要使用 pip 安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pip install upsetplot</span><br></pre></td></tr></table></figure>
+<h2 id="主要方法"><a href="#主要方法" class="headerlink" title="主要方法"></a>主要方法</h2><p><code>upsetplot</code> 的主要 API 是 <a href="https://upsetplot.readthedocs.io/en/stable/api.html#upsetplot.plot"><code>plot()</code></a> 方法。主要参数如下：</p>
+<ul>
+<li><code>data</code> ： <code>pd.Series</code> 或者 <code>pd.DataFrame</code> ，一般来说是 MultiIndex 的，用来表示 object 的归属情况（归属于哪个集合），其值为 0/1 或者 True/False。这个参数一般是由内置函数生成的，不用自己创建，包括 <code>from_contents</code>、 <code>from_indicators</code>、 <code>from_memberships</code>，可以根据你的源数据的格式选择合适的函数。具体用法下面介绍。</li>
+<li><code>fig</code> ： <code>plt.figure()</code> 对象，可以指定绘制在哪个 figure 上。保存图时有用，如果你不传此参数，直接使用 <code>plt.savefig()</code> 保存，会得到一个空图。</li>
+</ul>
+<p>你也可以传入其他参数，这些参数同时也是 <a href="https://upsetplot.readthedocs.io/en/stable/api.html#upsetplot.UpSet"><code>UpSet()</code></a> 的参数，主要有：</p>
+<ul>
+<li><code>sort_by</code>：subset（即绿色部分）的排序依据，可选的有 <code>cardinality</code>、<code>degree</code>（默认值）和 <code>None</code>。<code>cardinality</code> 表示根据 subset 的大小排序。<code>degree</code> 表示 subset 中包含的 set 的数量（即蓝色部分每列黑色圆圈的数量，自由度），会根据这个数量进行排序。set，或者叫 category，就是图中的红色部分。<code>None</code> 表示根据数据原本的出现顺序排序。</li>
+<li><code>subset_size</code>：如何计算 subset 大小（即绿色部分的柱高），可选的有 <code>auto</code>（默认值）、<code>count</code> 和 <code>sum</code>。<code>auto</code> 表示当 <code>data</code> 是 DataFrame 时，使用 <code>count</code>，除非另一个默认为 <code>None</code> 的参数 <code>sum_over</code> 被指定为非 <code>None</code>。<code>count</code> 表示用 group（subset）的行数作为 subset 大小。<code>sum</code> 就表示对 <code>data</code> 进行求和，或者在 <code>sum_over</code> 指定的列上进行求和。</li>
+<li><code>min_subset_size</code>：最小 subset 大小。有时候 subset 过多，需要用此参数来限制 subset 数量。</li>
+<li><code>max_subset_size</code>：最大 subset 大小。有时候 subset 过多，需要用此参数来限制 subset 数量。</li>
+<li><code>min_degree</code>：最小 degree。有时候不想显示 degree 为 0（即某列中全是灰色圆圈，没有黑色圆圈）或 1 的情况，可以用此参数来限制。</li>
+<li><code>max_degree</code>：最大 degree。类上。</li>
+</ul>
+<h2 id="基本框架"><a href="#基本框架" class="headerlink" title="基本框架"></a>基本框架</h2><p>绘图的基本框架非常简单：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">plot(</span><br><span class="line">    data=data,</span><br><span class="line">    sort_by=<span class="string">&#x27;cardinality&#x27;</span>,</span><br><span class="line">    subset_size=<span class="string">&#x27;count&#x27;</span>,</span><br><span class="line">    **kwargs</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p><code>kwargs</code> 就是 <a href="https://upsetplot.readthedocs.io/en/stable/api.html#upsetplot.UpSet"><code>UpSet()</code></a> 的其他参数。</p>
+<h2 id="准备数据"><a href="#准备数据" class="headerlink" title="准备数据"></a>准备数据</h2><p>绘图的核心就是 <code>data</code> 参数，因此如何准备你的数据是至关重要的。</p>
+<p>前面我们提到过生成 data 的函数主要有三个：<code>from_contents</code>、<code>from_indicators</code>和<code>from_memberships</code>，下面我们分别来看下传给这三种函数的数据是什么样子的。</p>
+<h3 id="from-contents"><a href="#from-contents" class="headerlink" title="from_contents"></a>from_contents</h3><p><code>from_contents</code> 期望的数据格式是一个 dict，key 为 category name（或者叫集合名称），value 为集合中包含的对象列表，这些对象必须是 <code>int</code> 或者 <code>str</code> 格式，即 value 必须是 list of int 或者 list of str。</p>
+<p>例如下面这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">contents = &#123;</span><br><span class="line">    <span class="string">&quot;set1&quot;</span>: [<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>],  <span class="comment"># set1 包含 a、b、c 三个对象</span></span><br><span class="line">    <span class="string">&quot;set2&quot;</span>: [<span class="string">&quot;b&quot;</span>, <span class="string">&quot;d&quot;</span>],       <span class="comment"># set2 包含 b、d 两个对象</span></span><br><span class="line">    <span class="string">&quot;set3&quot;</span>: [<span class="string">&quot;e&quot;</span>]             <span class="comment"># set3 包含 e 一个对象</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>传给 <code>from_contents</code> 后生成的数据如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>from_contents(contents)  <span class="comment"># DataFrame</span></span><br><span class="line">                  <span class="built_in">id</span></span><br><span class="line">set1  set2  set3    </span><br><span class="line"><span class="literal">True</span>  <span class="literal">False</span> <span class="literal">False</span>  a</span><br><span class="line">      <span class="literal">True</span>  <span class="literal">False</span>  b</span><br><span class="line">      <span class="literal">False</span> <span class="literal">False</span>  c</span><br><span class="line"><span class="literal">False</span> <span class="literal">True</span>  <span class="literal">False</span>  d</span><br><span class="line">      <span class="literal">False</span> <span class="literal">True</span>   e</span><br></pre></td></tr></table></figure>
+<p>这返回的数据就是一个 MultiIndex DataFrame，将之传给 <code>plot()</code> 即可绘图，如下图左边：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/TQiMhxmF65RfPLd.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/TQiMhxmF65RfPLd.png" alt=""></a></div>
+<p>其等效的维恩图如下：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/rw1b2BdHTh6EP5a.png" title="与上图等效的维恩图" data-caption="与上图等效的维恩图" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/rw1b2BdHTh6EP5a.png" alt="与上图等效的维恩图"></a><span class="caption">与上图等效的维恩图</span></div>
+<h3 id="from-indicators"><a href="#from-indicators" class="headerlink" title="from_indicators"></a>from_indicators</h3><p>indicator 是“指示符”的意思，类似指示函数 indicator function 返回的是 0 和 1，<code>from_indictors</code> 也期望输入是一个只包含 <code>bool</code> 类型的数据。可以是一个 <code>dict</code>、一个 <code>DataFrame</code>，但总归是一个表格类型数据。列名是集合名称，value 是 <code>True/False</code>，表示某个对象属不属于该集合，所以 value  list 的长度或者 <code>DataFrame</code> 的长度就是对象数量。</p>
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># dict 类型的输入</span></span><br><span class="line">indicators_dict = &#123;</span><br><span class="line">    <span class="string">&quot;set1&quot;</span>: [<span class="literal">True</span>, <span class="literal">True</span>, <span class="literal">True</span>, <span class="literal">False</span>, <span class="literal">False</span>],</span><br><span class="line">    <span class="string">&quot;set2&quot;</span>: [<span class="literal">False</span>, <span class="literal">True</span>, <span class="literal">False</span>, <span class="literal">True</span>, <span class="literal">False</span>],</span><br><span class="line">    <span class="string">&quot;set3&quot;</span>: [<span class="literal">False</span>, <span class="literal">False</span>, <span class="literal">False</span>, <span class="literal">False</span>, <span class="literal">True</span>]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># DataFrame 类型的输入</span></span><br><span class="line">indicators_df = pd.DataFrame(indicators)</span><br><span class="line"><span class="comment">#     set1   set2   set3</span></span><br><span class="line"><span class="comment"># 0   True  False   True</span></span><br><span class="line"><span class="comment"># 1  False   True   True</span></span><br><span class="line"><span class="comment"># 2   True  False  False</span></span><br><span class="line"><span class="comment"># 3  False  False  False</span></span><br><span class="line"></span><br><span class="line">plot(from_indicators(indicators), subset_size=<span class="string">&#x27;count&#x27;</span>)</span><br><span class="line"><span class="comment"># or plot(from_indicators(indicators_df), subset_size=&#x27;count&#x27;)，效果相同</span></span><br></pre></td></tr></table></figure>
+<p>结果图同上。</p>
+<h3 id="from-memberships"><a href="#from-memberships" class="headerlink" title="from_memberships"></a>from_memberships</h3><p><code>from_memberships</code> 就比较直接了，是一个嵌套 list，每个 item 也是一个 list，表示一个对象的归属情况，里面的每个 item 是 <code>str</code> 类型的集合名称，即每个对象的”会员关系“ memberships，它们都是哪家的会员。</p>
+<p>我们还是沿用上面的例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">memberships = [</span><br><span class="line">    [<span class="string">&#x27;set1&#x27;</span>],          <span class="comment"># a 归属于 set1</span></span><br><span class="line">    [<span class="string">&#x27;set1&#x27;</span>, <span class="string">&#x27;set2&#x27;</span>],  <span class="comment"># b 归属于 set1 和 set2</span></span><br><span class="line">    [<span class="string">&#x27;set1&#x27;</span>],          <span class="comment"># c 归属于 set1</span></span><br><span class="line">    [<span class="string">&#x27;set2&#x27;</span>],          <span class="comment"># d 归属于 set2</span></span><br><span class="line">    [<span class="string">&#x27;set3&#x27;</span>]           <span class="comment"># e 归属于 set3</span></span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>传给 <code>from_memberships</code> 后生成的数据如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>from_memberships(memberships)  <span class="comment"># Series</span></span><br><span class="line">set1   set2   set3 </span><br><span class="line"><span class="literal">True</span>   <span class="literal">False</span>  <span class="literal">False</span>    <span class="number">1</span></span><br><span class="line">       <span class="literal">True</span>   <span class="literal">False</span>    <span class="number">1</span></span><br><span class="line">       <span class="literal">False</span>  <span class="literal">False</span>    <span class="number">1</span></span><br><span class="line"><span class="literal">False</span>  <span class="literal">True</span>   <span class="literal">False</span>    <span class="number">1</span></span><br><span class="line">       <span class="literal">False</span>  <span class="literal">True</span>     <span class="number">1</span></span><br><span class="line">Name: ones, dtype: int64</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>plot(from_memberships(memberships), subset_size=<span class="string">&#x27;count&#x27;</span>)  <span class="comment"># 绘图</span></span><br></pre></td></tr></table></figure>
+<p>最后的结果图和上面一致。</p>
+<h2 id="复现"><a href="#复现" class="headerlink" title="复现"></a>复现</h2><p>现在我们来尝试复现一下本文开头提到的 Jay Alammar 的推特中的图。</p>
+<blockquote>
+<p>我们这里使用的是最新数据，所以最终结果可能和原图有所不同。</p>
+</blockquote>
+<p>原图中的数据来自 <a href="https://ndownloader.figshare.com/files/22339791">https://ndownloader.figshare.com/files/22339791</a>，我们可以直接使用 <code>pd.read_csv()</code> 来读取，</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>df = pd.read_csv(<span class="string">&quot;https://ndownloader.figshare.com/files/22339791&quot;</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>df.shape</span><br><span class="line">(<span class="number">1764</span>, <span class="number">6</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>df.head()</span><br><span class="line">   <span class="built_in">id</span>  Shortness of Breath  Diarrhea  Fever  Cough  Anosmia  Fatigue</span><br><span class="line"><span class="number">0</span>   <span class="number">1</span>                    <span class="number">0</span>         <span class="number">0</span>      <span class="number">0</span>      <span class="number">0</span>        <span class="number">1</span>        <span class="number">1</span></span><br><span class="line"><span class="number">1</span>   <span class="number">2</span>                    <span class="number">0</span>         <span class="number">0</span>      <span class="number">0</span>      <span class="number">0</span>        <span class="number">1</span>        <span class="number">1</span></span><br><span class="line"><span class="number">2</span>   <span class="number">3</span>                    <span class="number">0</span>         <span class="number">0</span>      <span class="number">0</span>      <span class="number">0</span>        <span class="number">1</span>        <span class="number">1</span></span><br><span class="line"><span class="number">3</span>   <span class="number">4</span>                    <span class="number">0</span>         <span class="number">0</span>      <span class="number">0</span>      <span class="number">0</span>        <span class="number">1</span>        <span class="number">1</span></span><br><span class="line"><span class="number">4</span>   <span class="number">5</span>                    <span class="number">0</span>         <span class="number">0</span>      <span class="number">0</span>      <span class="number">0</span>        <span class="number">1</span>        <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>我们可以看到输出的 dataframe 非常符合 <code>from_indicators()</code> 的情况，所以我们用之来绘制 UpSet。但是在这之前，我们需要先删掉 <code>id</code> 列并把数据类型转成 <code>bool</code> ：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>df = df.drop(<span class="string">&#x27;id&#x27;</span>, axis=<span class="number">1</span>).astype(<span class="built_in">bool</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>df.head()</span><br><span class="line">   Shortness of Breath  Diarrhea  Fever  Cough  Anosmia  Fatigue</span><br><span class="line"><span class="number">0</span>                <span class="literal">False</span>     <span class="literal">False</span>  <span class="literal">False</span>  <span class="literal">False</span>     <span class="literal">True</span>     <span class="literal">True</span></span><br><span class="line"><span class="number">1</span>                <span class="literal">False</span>     <span class="literal">False</span>  <span class="literal">False</span>  <span class="literal">False</span>     <span class="literal">True</span>     <span class="literal">True</span></span><br><span class="line"><span class="number">2</span>                <span class="literal">False</span>     <span class="literal">False</span>  <span class="literal">False</span>  <span class="literal">False</span>     <span class="literal">True</span>     <span class="literal">True</span></span><br><span class="line"><span class="number">3</span>                <span class="literal">False</span>     <span class="literal">False</span>  <span class="literal">False</span>  <span class="literal">False</span>     <span class="literal">True</span>     <span class="literal">True</span></span><br><span class="line"><span class="number">4</span>                <span class="literal">False</span>     <span class="literal">False</span>  <span class="literal">False</span>  <span class="literal">False</span>     <span class="literal">True</span>     <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+<p>然后我们就使用 <code>from_indicators()</code> 来绘图了：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">plot(from_indicators(df), subset_size=<span class="string">&#x27;count&#x27;</span>, sort_by=<span class="string">&#x27;cardinality&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2022/01/08/3HbLMtY1WyNUSkn.png" title="和原图的结论基本相同。" data-caption="和原图的结论基本相同。" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2022/01/08/3HbLMtY1WyNUSkn.png" alt="和原图的结论基本相同。"></a><span class="caption">和原图的结论基本相同。</span></div>
+<p>和原图的结论基本相同。</p>
+<p>下一篇，我们将看到更多的实际例子以及如何解决一个棘手的问题。</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://upsetplot.readthedocs.io/en/stable/index.html">UpSetPlot documentation — upsetplot 0.6.0 documentation</a></li>
+<li><a href="https://upset.app/">UpSet Home</a></li>
+</ul>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Data-Science/" rel="tag">Data Science</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/DataViz/" rel="tag">DataViz</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/17/python-unboundlocalerror/"
+                    data-tooltip="一个 UnboundLocalError 引发的神奇问题"
+                    aria-label="上一篇: 一个 UnboundLocalError 引发的神奇问题"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/12/17/tensorboard-embedding-projector/"
+                    data-tooltip="TensorBoard Projector 简易指南"
+                    aria-label="下一篇: TensorBoard Projector 简易指南"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2022/01/17/python-unboundlocalerror/"
+                    data-tooltip="一个 UnboundLocalError 引发的神奇问题"
+                    aria-label="上一篇: 一个 UnboundLocalError 引发的神奇问题"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/12/17/tensorboard-embedding-projector/"
+                    data-tooltip="TensorBoard Projector 简易指南"
+                    aria-label="下一篇: TensorBoard Projector 简易指南"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2022/01/08/introducing-upsetplot/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2022/01/08/introducing-upsetplot/';
+              
+            this.page.identifier = '2022/01/08/introducing-upsetplot/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

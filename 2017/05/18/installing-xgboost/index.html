@@ -1,0 +1,738 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>XGBoost 在 Windows 10 和 Ubuntu 上的安装 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。\n\n\nWindows 10官网官网 介绍的方法是从 GitHub 编译安装，但是在我的机器上没有成功，pip 同样不成功。有兴趣的话可以参考官网和 2016 年的一篇文章 Installing XGBoost For Anaconda on Windows 来试试。\nUnofficial Windows Binaries for Python Extension Packages这个 是加州大学提供的一个非官方包列表，提供了很多 Python 包的 whl 文件下载，XGBoost 的在 这里，我自己下好了一份放在里 这里。根据你的环境下载对应的包，比如我的是 Python 3.5，Windows 10 64 位，那就选下面红框这个：\n这里写图片描述 \n然后再命令行中使用下面的语句安装：\n1pip install xgboost-0.6-cp35-cp35m-win_amd64.whl\n安装完成后使用 import xgboost 导入即可。导入完成后可能会有警告提示：\n这里写图片描述\n不过暂时不影响，这个问题已经在 GitHub 版本修复了，但是这个 whl 文件并不是最新的。\n\nUbuntupip我在 Ubuntu 上使用 pip 方式安装成功，\n12345678910111213$ pip install xgboostCollecting xgboost  Downloading xgboost-0.6a2.tar.gz (1.2MB)    100% |████████████████████████████████| 1.2MB 1.0MB/s Requirement already satisfied: numpy in /home/alan/.local/lib/python3.5/site-packages (from xgboost)Requirement already satisfied: scipy in /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)Requirement already satisfied: scikit-learn in /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)Building wheels for collected packages: xgboostRunning setup.py bdist_wheel for xgboost ... doneStored in directory: /home/alan/.cache/pip/wheels/5e/c1/d6/522af54e5cc001fad4dd855117f8bf61b11d56443e06672e26Successfully built xgboostInstalling collected packages: xgboostSuccessfully installed xgboost-0.6a2\n安装后的版本为 0.6a2。\n编译安装同样参照 官网 的安装方法：\n123git clone --recursive https://github.com/dmlc/xgboostcd xgboostmake -j4\n然后再进入 python-package 目录，使用 sudo python setup.py install 安装 Python 包。\n\nIssues#1 OSError: version &#39;GLIBCXX_3.4.20&#39; not foundUbuntu 下，在安装完成后用 import xgboost 导入的时候你可能遇到这样的问题：\n这里写图片描述\n右键在新标签页打开查看大图\n这时你可以使用 conda 安装 libgcc：\n1conda install libgcc\n然后再导入问题就应该解决了。\n其他问题可以参考 Installing XGBoost on Ubuntu 。\n\n\nEND\n","dateCreated":"2017-05-18T10:58:00+08:00","dateModified":"2025-06-14T20:46:16+08:00","datePublished":"2017-05-18T10:58:00+08:00","description":"关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。","headline":"XGBoost 在 Windows 10 和 Ubuntu 上的安装","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2017/05/18/installing-xgboost/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2017/05/18/installing-xgboost/","keywords":"Data Science, Machine Learning"}</script>
+    <meta name="description" content="关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="XGBoost 在 Windows 10 和 Ubuntu 上的安装">
+<meta property="og:url" content="https://alanlee.fun/2017/05/18/installing-xgboost/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="关于什么是 XGBoost，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 XGBoost: A Scalable Tree Boosting System ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 XGBoost 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.blog.csdn.net/20170518105305496?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://img.blog.csdn.net/20170518105542912?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://img.blog.csdn.net/20170522102222313?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="article:published_time" content="2017-05-18T02:58:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T12:46:16.195Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Data Science">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20170518105305496?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-7psn7jtnqx8dcatt1chsgye58vhpeeqkf8gzcb5iijzope7gwcvezy8gigh2.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            XGBoost 在 Windows 10 和 Ubuntu 上的安装
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2017-05-18T10:58:00+08:00">
+	
+		    2017 年 5 月 18 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>关于什么是 <code>XGBoost</code>，我在这里不再解释，如果有时间的话再写一篇文章来解释，在数据科学里非常有用。大家可以参考 Tianqi Chen 的论文 <a href="https://arxiv.org/abs/1603.02754">XGBoost: A Scalable Tree Boosting System</a> ，本篇文章只是在 Windows 10 和 Ubuntu 上安装 <code>XGBoost</code> 的 Python 包的方法，Ubuntu 版本为 16.04 LTS，Python 版本均为 3.5，Anaconda。</p>
+<span id="more"></span>
+<hr>
+<h2 id="Windows-10"><a href="#Windows-10" class="headerlink" title="Windows 10"></a>Windows 10</h2><h3 id="官网"><a href="#官网" class="headerlink" title="官网"></a>官网</h3><p><a href="https://xgboost.readthedocs.io/en/latest/build.html">官网</a> 介绍的方法是从 <a href="https://github.com/dmlc/xgboost/">GitHub</a> 编译安装，但是在我的机器上没有成功，<code>pip</code> 同样不成功。有兴趣的话可以参考官网和 2016 年的一篇文章 <a href="https://www.ibm.com/developerworks/community/blogs/jfp/entry/Installing_XGBoost_For_Anaconda_on_Windows?lang=zh"><br>Installing XGBoost For Anaconda on Windows</a> 来试试。</p>
+<h3 id="Unofficial-Windows-Binaries-for-Python-Extension-Packages"><a href="#Unofficial-Windows-Binaries-for-Python-Extension-Packages" class="headerlink" title="Unofficial Windows Binaries for Python Extension Packages"></a>Unofficial Windows Binaries for Python Extension Packages</h3><p><a href="http://www.lfd.uci.edu/~gohlke/pythonlibs/">这个</a> 是加州大学提供的一个非官方包列表，提供了很多 Python 包的 <code>whl</code> 文件下载，<code>XGBoost</code> 的在 <a href="http://www.lfd.uci.edu/~gohlke/pythonlibs/#xgboost">这里</a>，我自己下好了一份放在里 <a href="http://download.csdn.net/download/u010099080/9845455">这里</a>。根据你的环境下载对应的包，比如我的是 Python 3.5，Windows 10 64 位，那就选下面红框这个：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20170518105305496?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20170518105305496?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div> 
+<p>然后再命令行中使用下面的语句安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install xgboost-0.6-cp35-cp35m-win_amd64.whl</span><br></pre></td></tr></table></figure>
+<p>安装完成后使用 <code>import xgboost</code> 导入即可。导入完成后可能会有警告提示：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20170518105542912?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20170518105542912?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p>不过暂时不影响，这个问题已经在 GitHub 版本修复了，但是这个 <code>whl</code> 文件并不是最新的。</p>
+<hr>
+<h2 id="Ubuntu"><a href="#Ubuntu" class="headerlink" title="Ubuntu"></a>Ubuntu</h2><h3 id="pip"><a href="#pip" class="headerlink" title="pip"></a>pip</h3><p>我在 Ubuntu 上使用 pip 方式安装成功，</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ pip install xgboost</span><br><span class="line">Collecting xgboost</span><br><span class="line">  Downloading xgboost-0.6a2.tar.gz (1.2MB)</span><br><span class="line">    100% |████████████████████████████████| 1.2MB 1.0MB/s </span><br><span class="line">Requirement already satisfied: numpy <span class="keyword">in</span> /home/alan/.local/lib/python3.5/site-packages (from xgboost)</span><br><span class="line">Requirement already satisfied: scipy <span class="keyword">in</span> /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)</span><br><span class="line">Requirement already satisfied: scikit-learn <span class="keyword">in</span> /home/alan/anaconda3/lib/python3.5/site-packages (from xgboost)</span><br><span class="line">Building wheels <span class="keyword">for</span> collected packages: xgboost</span><br><span class="line">Running setup.py bdist_wheel <span class="keyword">for</span> xgboost ... <span class="keyword">done</span></span><br><span class="line">Stored <span class="keyword">in</span> directory: /home/alan/.cache/pip/wheels/5e/c1/d6/522af54e5cc001fad4dd855117f8bf61b11d56443e06672e26</span><br><span class="line">Successfully built xgboost</span><br><span class="line">Installing collected packages: xgboost</span><br><span class="line">Successfully installed xgboost-0.6a2</span><br></pre></td></tr></table></figure>
+<p>安装后的版本为 <code>0.6a2</code>。</p>
+<h3 id="编译安装"><a href="#编译安装" class="headerlink" title="编译安装"></a>编译安装</h3><p>同样参照 <a href="http://xgboost.readthedocs.io/en/latest/build.html#building-on-ubuntu-debian">官网</a> 的安装方法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> --recursive https://github.com/dmlc/xgboost</span><br><span class="line"><span class="built_in">cd</span> xgboost</span><br><span class="line">make -j4</span><br></pre></td></tr></table></figure>
+<p>然后再进入 <code>python-package</code> 目录，使用 <code>sudo python setup.py install</code> 安装 Python 包。</p>
+<hr>
+<h2 id="Issues"><a href="#Issues" class="headerlink" title="Issues"></a>Issues</h2><h3 id="1-OSError-version-39-GLIBCXX-3-4-20-39-not-found"><a href="#1-OSError-version-39-GLIBCXX-3-4-20-39-not-found" class="headerlink" title="#1 OSError: version &#39;GLIBCXX_3.4.20&#39; not found"></a>#1 <code>OSError: version &#39;GLIBCXX_3.4.20&#39; not found</code></h3><p>Ubuntu 下，在安装完成后用 <code>import xgboost</code> 导入的时候你可能遇到这样的问题：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="http://img.blog.csdn.net/20170522102222313?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title="这里写图片描述" data-caption="这里写图片描述" data-fancybox="default"><img class="fig-img" src="http://img.blog.csdn.net/20170522102222313?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDA5OTA4MA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"></a><span class="caption">这里写图片描述</span></div>
+<p><em>右键在新标签页打开查看大图</em></p>
+<p>这时你可以使用 <code>conda</code> 安装 <code>libgcc</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">conda install libgcc</span><br></pre></td></tr></table></figure>
+<p>然后再导入问题就应该解决了。</p>
+<p>其他问题可以参考 <a href="http://www.exegetic.biz/blog/2015/12/installing-xgboost-ubuntu/">Installing XGBoost on Ubuntu</a> 。</p>
+<hr>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Windows-10"><span class="toc-text">Windows 10</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%98%E7%BD%91"><span class="toc-text">官网</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Unofficial-Windows-Binaries-for-Python-Extension-Packages"><span class="toc-text">Unofficial Windows Binaries for Python Extension Packages</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ubuntu"><span class="toc-text">Ubuntu</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pip"><span class="toc-text">pip</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85"><span class="toc-text">编译安装</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Issues"><span class="toc-text">Issues</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-OSError-version-39-GLIBCXX-3-4-20-39-not-found"><span class="toc-text">#1 OSError: version &#39;GLIBCXX_3.4.20&#39; not found</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2><!-- more -->
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Data-Science/" rel="tag">Data Science</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/06/02/tensorflow-DNNRegressor/"
+                    data-tooltip="TensorFlow DNNRegressor 的简单使用"
+                    aria-label="上一篇: TensorFlow DNNRegressor 的简单使用"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/03/29/understanding-svd/"
+                    data-tooltip="奇异值分解 SVD 的数学解释"
+                    aria-label="下一篇: 奇异值分解 SVD 的数学解释"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2025 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/06/02/tensorflow-DNNRegressor/"
+                    data-tooltip="TensorFlow DNNRegressor 的简单使用"
+                    aria-label="上一篇: TensorFlow DNNRegressor 的简单使用"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2017/03/29/understanding-svd/"
+                    data-tooltip="奇异值分解 SVD 的数学解释"
+                    aria-label="下一篇: 奇异值分解 SVD 的数学解释"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2017/05/18/installing-xgboost/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-bzxavs3xgrmr4dhl4zkhmrmrloaxiygxfjiarsltzu6y5bjgj5wpgsicnjdf.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2017/05/18/installing-xgboost/';
+              
+            this.page.identifier = '2017/05/18/installing-xgboost/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

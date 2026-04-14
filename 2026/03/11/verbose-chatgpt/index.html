@@ -1,0 +1,753 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>chatgpt 还是太啰嗦 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n问题最近要上一个用到 clickhouse 的服务，我没有这方面经验，之前仅仅在部署 langfuse 时遇到过，但是也只是跟着 chatgpt 设置了一些表的 ttl。所以这次还是高度依赖 chatgpt 帮我设计表、写初步代码、部署和进行其他优化讨论。\n刚开始进行挺顺利，帮我简单入门了下 clickhouse，经过一系列讨论，写了 sql 和插入查询代码。终于该部署了。我在本地测试时这一步也很顺利，然后在发布到线上后，容器死活起不来，一直在 restarting，通过日志可以看到如下错误（我手动进行了 wrap 以更方便查看）：\n123456&#123;&#125; &lt;Error&gt; Application: Caught exception while loading metadata:Code: 722. DB::Exception: Waited job failed: Code: 695.DB::Exception: Load job &#x27;load table system.latency_log&#x27; failed:Code: 74. DB::ErrnoException: Cannot read from file 28: ,errno: 1, strerror: Operation not permitted: Cannot attach tablesystem.latency_log from metadata file ...\n后面还有很长我就不贴了，看起来像是 sql 语句。\n啰嗦的 chatgpt没经验的我第一眼看起来像是权限问题，可能是挂载的目录权限有问题，问了 chatgpt 5.4 thinking，也说是这个问题：\n\n后面给我的详细原因也是这个：\n\n解决方案也是删除挂载目录，重新来：\n\n我现在本地复现，复现不了。然后我尝试按照它提供的方向进行调试。我当前的持久化方式是显式挂载到本地目录，类似这样：\n12volumes:  - ./data/clickhouse:/var/lib/clickhouse\n于是我进行了如下尝试：\n\n挂载到 docker 管理的 volume：\n 12345678services:\t...\tvolumes:\t  - clickhouse_data:/var/lib/clickhouse\t...\tvolumes:  clickhouse_data:\n 这样数据完全由 docker 管理，而且也是全新的 volume，应该不会再存在权限问题。\n\n删除该目录。\n\n不再挂载该目录。\n\n以上均无效，仍然报之前的错误。由于我无法登录线上机器，所以哪怕查看 docker 日志这么小的操作也是比较麻烦。再加上其中各种问题，其中还需要找运维帮忙，以及过程中和 chatgpt 的多次交流，昨天一下午都在搞这个事情。\n当我尝试完 1 无效后，去把结果丢给 chatgpt，它认为可能是我指定的那个 volume 是一个旧的 volume，里面有残存数据；或者 clickhouse 镜像版本太高；或者镜像的 seccomp 触发了容器内文件异步读取的 Operation not permitted ，由此它推荐我进行如下操作：\n\n从事后诸葛亮来看，其实它在这里已经提到了正确的解决方案：就是这里的 3。只是到这里，我的耐心已经被消耗大半，它的回复每次又非常啰嗦（尽管我已经在个性化中对此进行了限制，比之前有好转，但是仍然不够精炼），导致我没有再进行测试的耐心了。而且由于我无法登录线上机器，所以 1 我实现不了，要实现就得找运维，又得来回好一会儿。对于 2，那也很麻烦，降级就意味着要下载新镜像，还要再推送到我们自己的仓库中，改 compose 文件，鉴于我们的网速和这个流程，我也就放弃了。而且我也不赞成 1 和 2 是潜在的原因。这就导致正确方案被我忽略了，我已经没有耐心听它的意见了。\n接下来更是偏离了方向。由于我在配置中禁用了很多系统表，所以我问它是不是这些配置导致的。它回答有可能：\n\n然后建议我先不要挂载配置。我接着问它有无可能是我的挂载方式覆盖了原本的配置导致的：\n\n我对这个完全不懂，所以才会怀疑是不是覆盖了配置文件。然后我又对这个挂载方式进行了一些调试，无果。事后证明这个目录就是用来存放额外的配置的，默认是空的，所以不存在我怀疑的这个问题。理想情况是此时 chatgpt 应该要指出来这点，直接告诉我这个不是原因。\n现在来看上面这些，就让我想到了 llm 的“大海捞针” The Needle In a Haystack 测试，这就像 llm 反过来测试我的大海捞针能力一样，测试我能不能在一堆啰嗦的废话中找到那个 needle。关于废话这点，5.3 instant 说是有所改进，当初我的测试也是似乎比之前好点，不过这个改进是不是没用到 5.4 上啊：\n5.3 instant 的改进\n然后这个问题我就先搁置了，交给运维，我先下班了，被这玩意儿折腾得不行。哦对了，我后来还想到这个大海捞针的问题，担心 context 可能太大了，模型性能下降了。所以我又开了一个新会话，把报错、当前的 compose 文件、当前的 clickhouse 配置文件给它：\n回答的一部分\n相对来说要比之前的好点，但是之前那个啰嗦的问题仍在。它的这种表达方式和我当时的心情，成功让我错过了正确方案。\n精准的 claude第二天上班后，我想着用 claude 试一试，虽然我没有 opus 可用，sonnet 试试也可以。于是我把相同的内容发给 sonnet 4.6，结果一针见血，直击要害：\n\n修复 2 无效，1 是正确方案。简明扼要，直击要害。sonnet 4.6 完美诠释了这点。要不是 anthropic 封号和 ip 封的厉害，我也很想开他们家会员。\n结语不过回过头来，chatgpt 大部分时间还是不错的。虽然看起来我是在表扬 sonnet 批评 chatgpt，但是我最后想说的是，当你被一个 bot 气得不行的时候，不要着急，歇一歇，换另一个 bot 试试，众人拾柴火焰高，在座的各位都发表发表意见，头脑风暴一下，说不定解决方案就来了。\n但总之，说话不要太啰嗦！\nEND","dateCreated":"2026-03-11T19:03:00+08:00","dateModified":"2026-04-14T10:51:14+08:00","datePublished":"2026-03-11T19:03:00+08:00","description":"本文对比了我在解决 ClickHouse 部署问题时使用 ChatGPT 和 Claude 的体验。ChatGPT 的回复过于啰嗦，错过了关键的解决方案，导致了挫败感。而 Claude 提供了简洁明了的解答，帮助我迅速解决了问题。[ChatGPT 5.4 Thinking]","headline":"chatgpt 还是太啰嗦","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2026/03/11/verbose-chatgpt/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2026/03/11/verbose-chatgpt/","keywords":"LLM, ChatGPT, Claude"}</script>
+    <meta name="description" content="本文对比了我在解决 ClickHouse 部署问题时使用 ChatGPT 和 Claude 的体验。ChatGPT 的回复过于啰嗦，错过了关键的解决方案，导致了挫败感。而 Claude 提供了简洁明了的解答，帮助我迅速解决了问题。[ChatGPT 5.4 Thinking]">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="chatgpt 还是太啰嗦">
+<meta property="og:url" content="https://alanlee.fun/2026/03/11/verbose-chatgpt/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="本文对比了我在解决 ClickHouse 部署问题时使用 ChatGPT 和 Claude 的体验。ChatGPT 的回复过于啰嗦，错过了关键的解决方案，导致了挫败感。而 Claude 提供了简洁明了的解答，帮助我迅速解决了问题。[ChatGPT 5.4 Thinking]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/8Iwz/image.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/bw6L/image-1.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/J2zj/image-2.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/xw2R/image-3.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/s5Oq/image-4.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/dL5z/image-5.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/9kwO/00c99fc7615a77b68bd479a076d44d66.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/9Iqw/image-6.png">
+<meta property="og:image" content="https://files.seeusercontent.com/2026/03/11/Qwv5/image-7.png">
+<meta property="article:published_time" content="2026-03-11T11:03:00.000Z">
+<meta property="article:modified_time" content="2026-04-14T02:51:14.909Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="ChatGPT">
+<meta property="article:tag" content="Claude">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://files.seeusercontent.com/2026/03/11/8Iwz/image.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-9ffshn8defourjhhqoj2aofpvqicqp04wqkmv8thcuvxjkulhv2bfaes1rml.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            chatgpt 还是太啰嗦
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2026-03-11T19:03:00+08:00">
+	
+		    2026 年 3 月 11 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%95%B0%E5%97%A6%E7%9A%84-chatgpt"><span class="toc-text">啰嗦的 chatgpt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B2%BE%E5%87%86%E7%9A%84-claude"><span class="toc-text">精准的 claude</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>最近要上一个用到 clickhouse 的服务，我没有这方面经验，之前仅仅在部署 langfuse 时遇到过，但是也只是跟着 chatgpt 设置了一些表的 ttl。所以这次还是高度依赖 chatgpt 帮我设计表、写初步代码、部署和进行其他优化讨论。</p>
+<p>刚开始进行挺顺利，帮我简单入门了下 clickhouse，经过一系列讨论，写了 sql 和插入查询代码。终于该部署了。我在本地测试时这一步也很顺利，然后在发布到线上后，容器死活起不来，一直在 restarting，通过日志可以看到如下错误（我手动进行了 wrap 以更方便查看）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#125; &lt;Error&gt; Application: Caught exception while loading metadata:</span><br><span class="line">Code: 722. DB::Exception: Waited job failed: Code: 695.</span><br><span class="line">DB::Exception: Load job &#x27;load table system.latency_log&#x27; failed:</span><br><span class="line">Code: 74. DB::ErrnoException: Cannot read from file 28: ,</span><br><span class="line">errno: 1, strerror: Operation not permitted: Cannot attach table</span><br><span class="line">system.latency_log from metadata file ...</span><br></pre></td></tr></table></figure>
+<p>后面还有很长我就不贴了，看起来像是 sql 语句。</p>
+<h2 id="啰嗦的-chatgpt"><a href="#啰嗦的-chatgpt" class="headerlink" title="啰嗦的 chatgpt"></a>啰嗦的 chatgpt</h2><p>没经验的我第一眼看起来像是权限问题，可能是挂载的目录权限有问题，问了 chatgpt 5.4 thinking，也说是这个问题：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/8Iwz/image.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/8Iwz/image.png" alt=""></a></div>
+<p>后面给我的详细原因也是这个：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/bw6L/image-1.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/bw6L/image-1.png" alt=""></a></div>
+<p>解决方案也是删除挂载目录，重新来：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/J2zj/image-2.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/J2zj/image-2.png" alt=""></a></div>
+<p>我现在本地复现，复现不了。然后我尝试按照它提供的方向进行调试。我当前的持久化方式是显式挂载到本地目录，类似这样：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">volumes:</span><br><span class="line">  <span class="operator">-</span> .<span class="operator">/</span>data<span class="operator">/</span>clickhouse:<span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>clickhouse</span><br></pre></td></tr></table></figure>
+<p>于是我进行了如下尝试：</p>
+<ol>
+<li><p>挂载到 docker 管理的 volume：</p>
+ <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">services:</span><br><span class="line">	...</span><br><span class="line">	volumes:</span><br><span class="line">	  <span class="operator">-</span> clickhouse_data:<span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>clickhouse</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">volumes:</span><br><span class="line">  clickhouse_data:</span><br></pre></td></tr></table></figure>
+<p> 这样数据完全由 docker 管理，而且也是全新的 volume，应该不会再存在权限问题。</p>
+</li>
+<li><p>删除该目录。</p>
+</li>
+<li>不再挂载该目录。</li>
+</ol>
+<p>以上均无效，仍然报之前的错误。由于我无法登录线上机器，所以哪怕查看 docker 日志这么小的操作也是比较麻烦。再加上其中各种问题，其中还需要找运维帮忙，以及过程中和 chatgpt 的多次交流，昨天一下午都在搞这个事情。</p>
+<p>当我尝试完 1 无效后，去把结果丢给 chatgpt，它认为可能是我指定的那个 volume 是一个旧的 volume，里面有残存数据；或者 clickhouse 镜像版本太高；或者镜像的 seccomp 触发了容器内文件异步读取的 <code>Operation not permitted</code> ，由此它推荐我进行如下操作：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/xw2R/image-3.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/xw2R/image-3.png" alt=""></a></div>
+<p>从事后诸葛亮来看，其实它在这里已经提到了正确的解决方案：就是这里的 3。只是到这里，我的耐心已经被消耗大半，它的回复每次又非常啰嗦（尽管我已经在个性化中对此进行了限制，比之前有好转，但是仍然不够精炼），导致我没有再进行测试的耐心了。而且由于我无法登录线上机器，所以 1 我实现不了，要实现就得找运维，又得来回好一会儿。对于 2，那也很麻烦，降级就意味着要下载新镜像，还要再推送到我们自己的仓库中，改 compose 文件，鉴于我们的网速和这个流程，我也就放弃了。而且我也不赞成 1 和 2 是潜在的原因。这就导致正确方案被我忽略了，我已经没有耐心听它的意见了。</p>
+<p>接下来更是偏离了方向。由于我在配置中禁用了很多系统表，所以我问它是不是这些配置导致的。它回答有可能：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/s5Oq/image-4.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/s5Oq/image-4.png" alt=""></a></div>
+<p>然后建议我先不要挂载配置。我接着问它有无可能是我的挂载方式覆盖了原本的配置导致的：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/dL5z/image-5.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/dL5z/image-5.png" alt=""></a></div>
+<p>我对这个完全不懂，所以才会怀疑是不是覆盖了配置文件。然后我又对这个挂载方式进行了一些调试，无果。事后证明这个目录就是用来存放额外的配置的，默认是空的，所以不存在我怀疑的这个问题。理想情况是此时 chatgpt 应该要指出来这点，直接告诉我这个不是原因。</p>
+<p>现在来看上面这些，就让我想到了 llm 的“大海捞针” The Needle In a Haystack 测试，这就像 llm 反过来测试我的大海捞针能力一样，测试我能不能在一堆啰嗦的废话中找到那个 needle。关于废话这点，5.3 instant <a href="https://openai.com/zh-Hans-CN/index/gpt-5-3-instant/">说是有所改进</a>，当初我的测试也是似乎比之前好点，不过这个改进是不是没用到 5.4 上啊：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/9kwO/00c99fc7615a77b68bd479a076d44d66.png" title="5.3 instant 的改进" data-caption="5.3 instant 的改进" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/9kwO/00c99fc7615a77b68bd479a076d44d66.png" alt="5.3 instant 的改进"></a><span class="caption">5.3 instant 的改进</span></div>
+<p>然后这个问题我就先搁置了，交给运维，我先下班了，被这玩意儿折腾得不行。哦对了，我后来还想到这个大海捞针的问题，担心 context 可能太大了，模型性能下降了。所以我又开了一个新会话，把报错、当前的 compose 文件、当前的 clickhouse 配置文件给它：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/9Iqw/image-6.png" title="回答的一部分" data-caption="回答的一部分" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/9Iqw/image-6.png" alt="回答的一部分"></a><span class="caption">回答的一部分</span></div>
+<p>相对来说要比之前的好点，但是之前那个啰嗦的问题仍在。它的这种表达方式和我当时的心情，成功让我错过了正确方案。</p>
+<h2 id="精准的-claude"><a href="#精准的-claude" class="headerlink" title="精准的 claude"></a>精准的 claude</h2><p>第二天上班后，我想着用 claude 试一试，虽然我没有 opus 可用，sonnet 试试也可以。于是我把相同的内容发给 sonnet 4.6，结果一针见血，直击要害：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://files.seeusercontent.com/2026/03/11/Qwv5/image-7.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://files.seeusercontent.com/2026/03/11/Qwv5/image-7.png" alt=""></a></div>
+<p>修复 2 无效，1 是正确方案。简明扼要，直击要害。sonnet 4.6 完美诠释了这点。要不是 anthropic 封号和 ip 封的厉害，我也很想开他们家会员。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>不过回过头来，chatgpt 大部分时间还是不错的。虽然看起来我是在表扬 sonnet 批评 chatgpt，但是我最后想说的是，当你被一个 bot 气得不行的时候，不要着急，歇一歇，换另一个 bot 试试，众人拾柴火焰高，在座的各位都发表发表意见，头脑风暴一下，说不定解决方案就来了。</p>
+<p>但总之，说话不要太啰嗦！</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/ChatGPT/" rel="tag">ChatGPT</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Claude/" rel="tag">Claude</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/LLM/" rel="tag">LLM</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/14/introducing-mcp-part-2/"
+                    data-tooltip="MCP 简易指南（二）：概念"
+                    aria-label="下一篇: MCP 简易指南（二）：概念"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2026 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/14/introducing-mcp-part-2/"
+                    data-tooltip="MCP 简易指南（二）：概念"
+                    aria-label="下一篇: MCP 简易指南（二）：概念"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2026/03/11/verbose-chatgpt/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-lyk6icmf5pmthztu7s7cuqz82e4zvrhczxadurhfil1hhx0hrjastx6uyequ.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2026/03/11/verbose-chatgpt/';
+              
+            this.page.identifier = '2026/03/11/verbose-chatgpt/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

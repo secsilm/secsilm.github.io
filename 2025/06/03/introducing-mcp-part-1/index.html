@@ -1,0 +1,779 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>MCP 简易指南（一）：实践 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\n\n什么是 MCP根据官方文档，mcp 是一种开放协议，用于标准化应用程序向 llm 提供上下文的方式。可以将 mcp 想象成 AI 应用程序的 usb-c 接口。正如 usb-c 提供了一种标准化的方式将设备连接到各种外设和配件，mcp 也提供了一种标准化的方式将 ai 模型连接到不同的数据源和工具。\n总之来说，如果把 llm 比喻成大脑，各种各样的 tools 就是手和脚，mcp 就是让 llm 更方便的获取和切换这些手脚，就像冬兵的枕巾手臂一样，随时可插拔。\n为什么我们需要 MCP刚才提到，手和脚是工具。我们可以给一个 llm 编写很多工具给其调用，比如我们可以通过 openai 的 function calling 来赋予 llm 调用工具的能力（虽然本质上执行还是在我们这边，而不是 llm）。此外，我们有很多 llm 提供商，他们的 llm 使用工具的方式或许有所不同。极端情况下，假如我们有 M 个 llm，N 个工具，那么我们就要编写 M×N 个 connector 来让所有 llm 都可以使用这 N 个工具。\n但是如果我们在中间加一层抽象，所有 llm 都通过这层抽象与工具进行交流，那么就只需编写 M+N 个 connector。尤其是对于我们比较终端的开发者来说，我们只需写 N 个，即只写工具即可，M 是在 mcp client 端实现的，我们无需关心如何调用不同的 llm（这就让我想到支持不同的 llm 提供商是多么的繁琐，不过现在已经有了很多库来解决这个事情了）。\n结合下图，如果没有 mcp，即 2，那么每新增一个 llm，我们都需要重新编写 connector 来适配这 3 个工具。\n所以 mcp 的最大作用，就是减少重复工作量。但是另一方面，如果全部 llm 都支持 openai 的 function calling 格式，那么确实我们无需 mcp，也没有重复工作。这就是标准之争了。\n\n核心概念\n\nmcp host：host 就是用户与 mcp 的交互界面，任何支持调用 mcp server 的 app 都是 host。比如 github copilot for vscode、claude desktop。\nmcp client：client 是真正与 server 交互的部分，一般在 host 中实现。可能大多数情况并不自己实现。\nmcp server：这就是真正实现 mcp 逻辑的地方，在这里你会实现你需要的 tools，供 host 和 client 调用。\n\n安装 mcp python sdk官方文档推荐使用 uv 安装环境和依赖：\n12345678910# 1. 初始化项目，这会自动创建目录，并生成一些必要文件。uv init project_namecd project_name# 2. 安装依赖，这会将环境安装在当前目录的 .venv/ 下，# 并将依赖写入 pyproject.toml。uv add &quot;mcp[cli]&quot;# 3. 激活环境，这会让 python 命令指向当前环境的 python 版本。source .venv/bin/activate\n如果你对 uv 不熟，或者想要使用 conda/pip，那么你仍然可以使用 pip 安装：\n1pip install &quot;mcp[cli]&quot;\n如何编写和使用 mcp server\n这里以编写 mcp tools 为例，大部分情况我们写的都是 tools。\n\n下面是一个简单的用于获取当前时间的 mcp server 例子：\n1234567891011121314151617181920212223from datetime import datetimefrom zoneinfo import ZoneInfofrom mcp.server.fastmcp import FastMCP# Create an MCP servermcp = FastMCP(&quot;Demo MCP Server&quot;)mcp.settings.host = &quot;0.0.0.0&quot;mcp.settings.port = 7011@mcp.tool()def get_current_time():    &quot;&quot;&quot;    Returns the current date and time in the &#x27;Asia/Shanghai&#x27; timezone.    Returns:        datetime: The current datetime object localized to &#x27;Asia/Shanghai&#x27; timezone.    &quot;&quot;&quot;    return datetime.now(tz=ZoneInfo(&quot;Asia/Shanghai&quot;))if __name__ == &quot;__main__&quot;:    # Start the server    mcp.run(transport=&quot;streamable-http&quot;)\n语法是不是看起来很熟悉，基本和 flask、fastapi 一致。整体流程就这么三步：\n\n创建 mcp 对象：mcp = FastMCP(&quot;Demo MCP Server&quot;) ；\n编写 tools 函数，用 @mcp.tool() 进行装饰；\n启动 server：mcp.run(transport=&quot;streamable-http&quot;) ，这里的 transport 先不用关心，下面会再说，暂时你就认为这是一个 http 服务即可。\n\n运行后，你的 mcp 地址就是 http://localhost:7011/mcp ，将这个地址添加到你的 host 中即可。下面我以 github copilot in vscode 为例，演示下如何添加 mcp server：\n\ncommand + shift + p 调出命令中心，输入 mcp add ，选择添加服务器 → http：\n \n \n\n按照提示填入 url（就是刚才的地址，但是要记得在后面以斜杠结尾，详见下面的 gotcha）、name，然后就可以看到添加好的 json 配置，已经正常启动了，也已经发现了 1 个工具，就是刚才的获取当前时间的工具：\n \n\n打开 gc，切换到 agent 模式，因为只有在 agent 模式下才能使用 mcp：\n \n\n你可以询问“现在几点了”等和时间有关的问题，gc 会提示可以运行 mcp tools 来获取时间，你选择“继续”即可：\n \n\n\n另外点击扳手图标可以看到可用的工具，包含我们刚才添加的 mcp server：\n\n调试当你写好一个 server 和 tools 之后，你需要测试一下是否能正常跑通。mcp 官方提供了 mcp inspector 用于调试，此外也有很多其他的测试工具。我现在常用的是 postman，对，就是那个调试接口的 postman，它现在也支持 mcp 了，甚至还支持直接调用 llm 😂：\n\npostman\nmcp inspector\n用起来比 inspector 方便点，inspector 还得启动一下浏览器里打开，而且界面有点乱的感觉：\nok，以上基本就是使用层面，如果你的目的是编写一个 mcp server 来提供 tools，那么基本已经够了。如果你还想了解更多一点，可以看下一期，为了保持文章简短集中，我就不放在这里了。\nGotchas\n在 vscode 中添加 server 时，streamable http（http）类型的 server 的 URL 必须以斜杠 / 结尾，否则会报错：Error sending message to http://localhost:7011/mcp: TypeError: fetch failed ，server 日志显示：INFO:     ip:40226 - &quot;POST /mcp HTTP/1.1&quot; 307 Temporary Redirect ，通过 curl -v -X POST http://your-server/mcp 可以看到，重定向到了斜杠结尾的路由。但是使用 inspector 或者 postman 时，仍然可以直接使用非斜杠结尾的 URL。\n\nReferences\nThe Model Context Protocol (MCP) by Anthropic: Origins, functionality, and impact | mcp – Weights &amp; Biases\nModel Context Protocol (MCP), clearly explained (why it matters) - YouTube\nMCP 101: An Introduction to Model Context Protocol | DigitalOcean\n\nEND","dateCreated":"2025-06-03T20:00:00+08:00","dateModified":"2026-04-14T10:51:14+08:00","datePublished":"2025-06-03T20:00:00+08:00","description":"什么是 mcp？为什么我们需要 mcp？如何使用？本期更多关注实践，而非概念。","headline":"MCP 简易指南（一）：实践","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2025/06/03/introducing-mcp-part-1/","keywords":"LLM, MCP"}</script>
+    <meta name="description" content="什么是 mcp？为什么我们需要 mcp？如何使用？本期更多关注实践，而非概念。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="MCP 简易指南（一）：实践">
+<meta property="og:url" content="https://alanlee.fun/2025/06/03/introducing-mcp-part-1/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="什么是 mcp？为什么我们需要 mcp？如何使用？本期更多关注实践，而非概念。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/ZMt6VbwiA2B831v.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/GhYTJo59fbMeHtS.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/UdJX4sQVvhMaA1i.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/Onx5wLmyRSX62zb.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/FnpLkrOb7wmsv51.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/kO6wFGA4MqLuK5c.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/EdiZxbqGO3yIDFz.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/mSD4UrPol23LRJV.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/OhTkonNrf3piEl6.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/QhJYXqIFPRvs3GB.png">
+<meta property="og:image" content="https://s2.loli.net/2025/06/03/o34ezQSTih5vNHG.png">
+<meta property="article:published_time" content="2025-06-03T12:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-14T02:51:14.902Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="MCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2025/06/03/ZMt6VbwiA2B831v.png">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-9ffshn8defourjhhqoj2aofpvqicqp04wqkmv8thcuvxjkulhv2bfaes1rml.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-center">
+    
+        <h1 class="post-title">
+            MCP 简易指南（一）：实践
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2025-06-03T20:00:00+08:00">
+	
+		    2025 年 6 月 3 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <!-- excerpt --></p>
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-MCP"><span class="toc-text">什么是 MCP</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E9%9C%80%E8%A6%81-MCP"><span class="toc-text">为什么我们需要 MCP</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="toc-text">核心概念</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-mcp-python-sdk"><span class="toc-text">安装 mcp python sdk</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%BC%96%E5%86%99%E5%92%8C%E4%BD%BF%E7%94%A8-mcp-server"><span class="toc-text">如何编写和使用 mcp server</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E8%AF%95"><span class="toc-text">调试</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Gotchas"><span class="toc-text">Gotchas</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#References"><span class="toc-text">References</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<h1 id="什么是-MCP"><a href="#什么是-MCP" class="headerlink" title="什么是 MCP"></a>什么是 MCP</h1><p>根据<a href="https://modelcontextprotocol.io/introduction">官方文档</a>，mcp 是一种开放协议，用于标准化应用程序向 llm 提供上下文的方式。可以将 mcp 想象成 AI 应用程序的 usb-c 接口。正如 usb-c 提供了一种标准化的方式将设备连接到各种外设和配件，mcp 也提供了一种标准化的方式将 ai 模型连接到不同的数据源和工具。</p>
+<p>总之来说，如果把 llm 比喻成大脑，各种各样的 tools 就是手和脚，mcp 就是让 llm 更方便的获取和切换这些手脚，就像冬兵的枕巾手臂一样，随时可插拔。</p>
+<h1 id="为什么我们需要-MCP"><a href="#为什么我们需要-MCP" class="headerlink" title="为什么我们需要 MCP"></a>为什么我们需要 MCP</h1><p>刚才提到，手和脚是工具。我们可以给一个 llm 编写很多工具给其调用，比如我们可以通过 openai 的 function calling 来赋予 llm 调用工具的能力（虽然本质上执行还是在我们这边，而不是 llm）。此外，我们有很多 llm 提供商，他们的 llm 使用工具的方式或许有所不同。极端情况下，假如我们有 M 个 llm，N 个工具，那么我们就要编写 M×N 个 connector 来让所有 llm 都可以使用这 N 个工具。</p>
+<p>但是如果我们在中间加一层抽象，所有 llm 都通过这层抽象与工具进行交流，那么就只需编写 M+N 个 connector。尤其是对于我们比较终端的开发者来说，我们只需写 N 个，即只写工具即可，M 是在 mcp client 端实现的，我们无需关心如何调用不同的 llm（这就让我想到支持不同的 llm 提供商是多么的繁琐，不过现在已经有了很多库来解决这个事情了）。</p>
+<p>结合下图，如果没有 mcp，即 2，那么每新增一个 llm，我们都需要重新编写 connector 来适配这 3 个工具。</p>
+<p>所以 mcp 的最大作用，就是减少重复工作量。但是另一方面，如果全部 llm 都支持 openai 的 function calling 格式，那么确实我们无需 mcp，也没有重复工作。这就是标准之争了。</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/ZMt6VbwiA2B831v.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/ZMt6VbwiA2B831v.png" alt=""></a></div>
+<h1 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h1><div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/GhYTJo59fbMeHtS.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/GhYTJo59fbMeHtS.png" alt=""></a></div>
+<ul>
+<li>mcp host：host 就是用户与 mcp 的交互界面，任何支持调用 mcp server 的 app 都是 host。比如 github copilot for vscode、claude desktop。</li>
+<li>mcp client：client 是真正与 server 交互的部分，一般在 host 中实现。可能大多数情况并不自己实现。</li>
+<li>mcp server：这就是真正实现 mcp 逻辑的地方，在这里你会实现你需要的 tools，供 host 和 client 调用。</li>
+</ul>
+<h1 id="安装-mcp-python-sdk"><a href="#安装-mcp-python-sdk" class="headerlink" title="安装 mcp python sdk"></a>安装 mcp python sdk</h1><p><a href="https://modelcontextprotocol.io/quickstart/server#set-up-your-environment">官方文档</a>推荐使用 <code>uv</code> 安装环境和依赖：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 初始化项目，这会自动创建目录，并生成一些必要文件。</span></span><br><span class="line">uv init project_name</span><br><span class="line">cd project_name</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 安装依赖，这会将环境安装在当前目录的 .venv/ 下，</span></span><br><span class="line"><span class="comment"># 并将依赖写入 pyproject.toml。</span></span><br><span class="line">uv add <span class="string">&quot;mcp[cli]&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 激活环境，这会让 python 命令指向当前环境的 python 版本。</span></span><br><span class="line">source .venv/<span class="built_in">bin</span>/activate</span><br></pre></td></tr></table></figure>
+<p>如果你对 <code>uv</code> 不熟，或者想要使用 conda/pip，那么你仍然可以使用 pip 安装：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install <span class="string">&quot;mcp[cli]&quot;</span></span><br></pre></td></tr></table></figure>
+<h1 id="如何编写和使用-mcp-server"><a href="#如何编写和使用-mcp-server" class="headerlink" title="如何编写和使用 mcp server"></a>如何编写和使用 mcp server</h1><blockquote>
+<p>这里以编写 mcp tools 为例，大部分情况我们写的都是 tools。</p>
+</blockquote>
+<p>下面是一个简单的用于获取当前时间的 mcp server 例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">from</span> zoneinfo <span class="keyword">import</span> ZoneInfo</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> mcp.server.fastmcp <span class="keyword">import</span> FastMCP</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create an MCP server</span></span><br><span class="line">mcp = FastMCP(<span class="string">&quot;Demo MCP Server&quot;</span>)</span><br><span class="line">mcp.settings.host = <span class="string">&quot;0.0.0.0&quot;</span></span><br><span class="line">mcp.settings.port = <span class="number">7011</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_current_time</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Returns the current date and time in the &#x27;Asia/Shanghai&#x27; timezone.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns:</span></span><br><span class="line"><span class="string">        datetime: The current datetime object localized to &#x27;Asia/Shanghai&#x27; timezone.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> datetime.now(tz=ZoneInfo(<span class="string">&quot;Asia/Shanghai&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    <span class="comment"># Start the server</span></span><br><span class="line">    mcp.run(transport=<span class="string">&quot;streamable-http&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>语法是不是看起来很熟悉，基本和 flask、fastapi 一致。整体流程就这么三步：</p>
+<ol>
+<li>创建 mcp 对象：<code>mcp = FastMCP(&quot;Demo MCP Server&quot;)</code> ；</li>
+<li>编写 tools 函数，用 <code>@mcp.tool()</code> 进行装饰；</li>
+<li>启动 server：<code>mcp.run(transport=&quot;streamable-http&quot;)</code> ，这里的 transport 先不用关心，下面会再说，暂时你就认为这是一个 http 服务即可。</li>
+</ol>
+<p>运行后，你的 mcp 地址就是 <code>http://localhost:7011/mcp</code> ，将这个地址添加到你的 host 中即可。下面我以 github copilot in vscode 为例，演示下如何添加 mcp server：</p>
+<ol>
+<li><p>command + shift + p 调出命令中心，输入 <code>mcp add</code> ，选择添加服务器 → http：</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/UdJX4sQVvhMaA1i.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/UdJX4sQVvhMaA1i.png" alt=""></a></div>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/Onx5wLmyRSX62zb.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/Onx5wLmyRSX62zb.png" alt=""></a></div>
+</li>
+<li><p>按照提示填入 url（就是刚才的地址，但是要记得在后面以斜杠结尾，详见下面的 gotcha）、name，然后就可以看到添加好的 json 配置，已经正常启动了，也已经发现了 1 个工具，就是刚才的获取当前时间的工具：</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/FnpLkrOb7wmsv51.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/FnpLkrOb7wmsv51.png" alt=""></a></div>
+</li>
+<li><p>打开 gc，切换到 agent 模式，因为只有在 <code>agent</code> 模式下才能使用 mcp：</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/kO6wFGA4MqLuK5c.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/kO6wFGA4MqLuK5c.png" alt=""></a></div>
+</li>
+<li><p>你可以询问“现在几点了”等和时间有关的问题，gc 会提示可以运行 mcp tools 来获取时间，你选择“继续”即可：</p>
+ <div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/EdiZxbqGO3yIDFz.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/EdiZxbqGO3yIDFz.png" alt=""></a></div>
+</li>
+</ol>
+<p>另外点击扳手图标可以看到可用的工具，包含我们刚才添加的 mcp server：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/mSD4UrPol23LRJV.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/mSD4UrPol23LRJV.png" alt=""></a></div>
+<h2 id="调试"><a href="#调试" class="headerlink" title="调试"></a>调试</h2><p>当你写好一个 server 和 tools 之后，你需要测试一下是否能正常跑通。mcp 官方提供了 <a href="https://github.com/modelcontextprotocol/inspector">mcp inspector</a> 用于调试，此外也有很多其他的测试工具。我现在常用的是 postman，对，就是那个调试接口的 postman，它现在也支持 mcp 了，甚至还支持直接调用 llm 😂：</p>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/OhTkonNrf3piEl6.png" title="" data-caption="" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/OhTkonNrf3piEl6.png" alt=""></a></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/QhJYXqIFPRvs3GB.png" title="postman" data-caption="postman" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/QhJYXqIFPRvs3GB.png" alt="postman"></a><span class="caption">postman</span></div>
+<div class="figure center" style="width:;"><a class="fancybox" href="https://s2.loli.net/2025/06/03/o34ezQSTih5vNHG.png" title="mcp inspector" data-caption="mcp inspector" data-fancybox="default"><img class="fig-img" src="https://s2.loli.net/2025/06/03/o34ezQSTih5vNHG.png" alt="mcp inspector"></a><span class="caption">mcp inspector</span></div>
+<p>用起来比 inspector 方便点，inspector 还得启动一下浏览器里打开，而且界面有点乱的感觉：</p>
+<p>ok，以上基本就是使用层面，如果你的目的是编写一个 mcp server 来提供 tools，那么基本已经够了。如果你还想了解更多一点，可以看下一期，为了保持文章简短集中，我就不放在这里了。</p>
+<h1 id="Gotchas"><a href="#Gotchas" class="headerlink" title="Gotchas"></a>Gotchas</h1><ol>
+<li>在 vscode 中添加 server 时，streamable http（<code>http</code>）类型的 server 的 URL 必须以斜杠 <code>/</code> 结尾，否则会报错：<code>Error sending message to http://localhost:7011/mcp: TypeError: fetch failed</code> ，server 日志显示：<code>INFO:     ip:40226 - &quot;POST /mcp HTTP/1.1&quot; 307 Temporary Redirect</code> ，通过 <code>curl -v -X POST http://your-server/mcp</code> 可以看到，重定向到了斜杠结尾的路由。但是使用 inspector 或者 postman 时，仍然可以直接使用非斜杠结尾的 URL。</li>
+</ol>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><ul>
+<li><a href="https://wandb.ai/onlineinference/mcp/reports/The-Model-Context-Protocol-MCP-by-Anthropic-Origins-functionality-and-impact--VmlldzoxMTY5NDI4MQ#mcp-vs.-existing-context-management-methods">The Model Context Protocol (MCP) by Anthropic: Origins, functionality, and impact | mcp – Weights &amp; Biases</a></li>
+<li><a href="https://www.youtube.com/watch?v=7j_NE6Pjv-E">Model Context Protocol (MCP), clearly explained (why it matters) - YouTube</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/model-context-protocol">MCP 101: An Introduction to Model Context Protocol | DigitalOcean</a></li>
+</ul>
+<h1 id="END"><a href="#END" class="headerlink" title="END"></a>END</h1>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/LLM/" rel="tag">LLM</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/MCP/" rel="tag">MCP</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/14/introducing-mcp-part-2/"
+                    data-tooltip="MCP 简易指南（二）：概念"
+                    aria-label="上一篇: MCP 简易指南（二）：概念"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/12/28/my-2024/"
+                    data-tooltip="我的 2024"
+                    aria-label="下一篇: 我的 2024"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2026 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2025/06/14/introducing-mcp-part-2/"
+                    data-tooltip="MCP 简易指南（二）：概念"
+                    aria-label="上一篇: MCP 简易指南（二）：概念"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/12/28/my-2024/"
+                    data-tooltip="我的 2024"
+                    aria-label="下一篇: 我的 2024"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2025/06/03/introducing-mcp-part-1/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-lyk6icmf5pmthztu7s7cuqz82e4zvrhczxadurhfil1hhx0hrjastx6uyequ.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2025/06/03/introducing-mcp-part-1/';
+              
+            this.page.identifier = '2025/06/03/introducing-mcp-part-1/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

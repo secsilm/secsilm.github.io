@@ -1,0 +1,856 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Alan Lee">
+    <title>BERT 是如何分词的 - Alan Lee</title>
+    <meta name="author" content="Alan Lee">
+    
+        <meta name="keywords" content="hexo,python,tensorflow,pytorch,nlp,natural language processing,deep learning,machine learning,large language models,llms,">
+    
+    
+        <link rel="icon" href="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png">
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"},"articleBody":"\nBERT 表示 Bidirectional Encoder Representations from Transformers，是 Google 于 2018 年发布的一种语言表示模型。该模型一经发布便成为争相效仿的对象，相信大家也都多少听说过研究过了。本文主要聚焦于 BERT 的分词方法，模型实现细节解读见 BERT 是如何构建模型的。\nBERT 源码中 tokenization.py 就是预处理进行分词的程序，主要有两个分词器：BasicTokenizer 和 WordpieceTokenizer，另外一个 FullTokenizer 是这两个的结合：先进行 BasicTokenizer 得到一个分得比较粗的 token 列表，然后再对每个 token 进行一次 WordpieceTokenizer，得到最终的分词结果。\n为了能直观看到每一步处理效果，我会用下面这个贯穿始终的例子来说明，该句修改自 Keras 的维基百科介绍：\n1example = &quot;Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。\\r\\n&quot;\n\n对于中文来说，一句话概括：BERT 采取的是「分字」，即每一个汉字都切开。\n\nBasicTokenizerBasicTokenizer（以下简称 BT）是一个初步的分词器。对于一个待分词字符串，流程大致就是转成 unicode -&gt; 去除各种奇怪字符 -&gt; 处理中文 -&gt; 空格分词 -&gt; 去除多余字符和标点分词 -&gt; 再次空格分词，结束。\n大致流程就是这样，还有很多细节，下面我依次说下。\n转成 unicode转成 unicode 这步对应于 convert_to_unicode(text) 函数，很好理解，就是将输入转成 unicode 字符串，如果你用的 Python 3 而且输入是 str 类型，那么这点无需担心，输入和输出一样；如果是 Python 3 而且输入类型是 bytes，那么该函数会使用 text.decode(&quot;utf-8&quot;, &quot;ignore&quot;) 来转成 unicode 类型。如果你用的是 Python 2，那么请看 Sunsetting Python 2 support\n 和 Python 2.7 Countdown\n，Just drop it。\n经过这步后，example 和原来相同：\n123&gt;&gt;&gt; example = convert_to_unicode(example)&gt;&gt;&gt; example&#x27;Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。\\r\\n&#x27;\n去除各种奇怪字符去除各种奇怪字符对应于 BT 类的 _clean_text(text) 方法，通过 Unicode 码位（Unicode code point，以下码位均指 Unicode 码位）来去除各种不合法字符和多余空格，包括：\n\nPython 中可以通过 ord(c) 来获取字符 c 的码位，使用 chr(i) 来获取码位为 i 的 Unicode 字符，$0 \\leq i \\leq \\text{0x10ffff}$，即十进制的 $[0, 1114111]$。\n\n\n码位为 0 的 \\x00，即空字符（Null character），或叫结束符，肉眼不可见，属于控制字符，一般在字符串末尾。注意不是空格，空格的码位是 32。\n码位为 0xfffd（十进制 65533）的 �，即替换字符)（REPLACEMENT CHARACTER），通常用来替换未知、无法识别或者无法表示的字符。\n除 \\t、\\r 和 \\n 以外的控制字符（Control character），即 Unicode 类别是 Cc 和 Cf 的字符。可以使用 unicodedata.category(c) 来查看 c 的 Unicode 类别。代码中用 _is_control(char) 来判断 char 是不是控制字符。\n将所有空白字符转换为一个空格，包括标准空格、\\t、\\r、\\n 以及 Unicode 类别为 Zs 的字符。代码中用 _is_whitespace(char) 来判断 char 是不是空白字符。\n\n经过这步后，example 中的 \\r\\n 被替换成两个空格：\n123&gt;&gt;&gt; example = _clean_text(example)&gt;&gt;&gt; example&#x27;Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。  &#x27;\n处理中文处理中文对应于 BT 类的 _tokenize_chinese_chars(text) 方法。对于 text 中的字符，首先判断其是不是「中文字符」（关于中文字符的说明见下方引用块说明），是的话在其前后加上一个空格，否则原样输出。那么有一个问题，如何判断一个字符是不是「中文」呢？\n_is_chinese_char(cp) 方法，cp 就是刚才说的码位，通过码位来判断，总共有 81520 个字，详细的码位范围如下（都是闭区间）：\n\n[0x4E00, 0x9FFF]：十进制 [19968, 40959]\n[0x3400, 0x4DBF]：十进制 [13312, 19903]\n[0x20000, 0x2A6DF]：十进制 [131072, 173791]\n[0x2A700, 0x2B73F]：十进制 [173824, 177983]\n[0x2B740, 0x2B81F]：十进制 [177984, 178207]\n[0x2B820, 0x2CEAF]：十进制 [178208, 183983]\n[0xF900, 0xFAFF]：十进制 [63744, 64255]\n[0x2F800, 0x2FA1F]：十进制 [194560, 195103]\n\n其实我觉得这个范围可以再精简下，因为有几个区间是相邻的，下面三个区间：\n\n[0x2A700, 0x2B73F]：十进制 [173824, 177983]\n[0x2B740, 0x2B81F]：十进制 [177984, 178207]\n[0x2B820, 0x2CEAF]：十进制 [178208, 183983]\n\n可以精简成一个：\n\n[0x2A700, 0x2CEAF]：十进制 [173824, 183983]\n\n原来的 8 个区间精简成 6 个，至于原来为什么写成 8 个，I don’t know 啊 😂\n\n关于「中文字符」的说明：按照代码中的定义，这里说的「中文字符」指的是 CJK Unicode block) 中的字符，包括现代汉语、部分日语、部分韩语和越南语。但是根据 CJK Unicode block) 中的定义，这些字符只包括第一个码位区间（[0x4E00, 0x9FFF]）内的字符，也就是说代码中的字符要远远多于 CJK Unicode block 中包括的字符，这一点暂时有些疑问。我把源码关于这块的注释引用过来如下：\n\n123456789101112def _is_chinese_char(self, cp):    &quot;&quot;&quot;Checks whether CP is the codepoint of a CJK character.&quot;&quot;&quot;    # This defines a &quot;chinese character&quot; as anything in the CJK Unicode block:    #   https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)    #    # Note that the CJK Unicode block is NOT all Japanese and Korean characters,    # despite its name. The modern Korean Hangul alphabet is a different block,    # as is Japanese Hiragana and Katakana. Those alphabets are used to write    # space-separated words, so they are not treated specially and handled    # like the all of the other languages.    pass\n经过这步后，中文被按字分开，用空格分隔，但英文数字等仍然保持原状：\n123&gt;&gt;&gt; example = _tokenize_chinese_chars(example)&gt;&gt;&gt; example&#x27;Keras 是 ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System， 开  放  式  神  经  电  子  智  能  机  器  人  操  作  系  统 ） 项  目  研  究  工  作  的  部  分  产  物 [3]， 主  要  作  者  和  维  护  者  是 Google 工  程  师 François Chollet。  &#x27;\n空格分词空格分词对应于 whitespace_tokenize(text) 函数。首先对 text 进行 strip() 操作，去掉两边多余空白字符，然后如果剩下的是一个空字符串，则直接返回空列表，否则进行 split() 操作，得到最初的分词结果 orig_tokens。\n经过这步后，example 变成一个列表：\n123&gt;&gt;&gt; example = whitespace_tokenize(example)&gt;&gt;&gt; example[&#x27;Keras&#x27;, &#x27;是&#x27;, &#x27;ONEIROS（Open-ended&#x27;, &#x27;Neuro-Electronic&#x27;, &#x27;Intelligent&#x27;, &#x27;Robot&#x27;, &#x27;Operating&#x27;, &#x27;System，&#x27;, &#x27;开&#x27;, &#x27;放&#x27;, &#x27;式&#x27;, &#x27;神&#x27;, &#x27;经&#x27;, &#x27;电&#x27;, &#x27;子&#x27;, &#x27;智&#x27;, &#x27;能&#x27;, &#x27;机&#x27;, &#x27;器&#x27;, &#x27;人&#x27;, &#x27;操&#x27;, &#x27;作&#x27;, &#x27;系&#x27;, &#x27;统&#x27;, &#x27;）&#x27;, &#x27;项&#x27;, &#x27;目&#x27;, &#x27;研&#x27;, &#x27;究&#x27;, &#x27;工&#x27;, &#x27;作&#x27;, &#x27;的&#x27;, &#x27;部&#x27;, &#x27;分&#x27;, &#x27;产&#x27;, &#x27;物&#x27;, &#x27;[3]，&#x27;, &#x27;主&#x27;, &#x27;要&#x27;, &#x27;作&#x27;, &#x27;者&#x27;, &#x27;和&#x27;, &#x27;维&#x27;, &#x27;护&#x27;, &#x27;者&#x27;, &#x27;是&#x27;, &#x27;Google&#x27;, &#x27;工&#x27;, &#x27;程&#x27;, &#x27;师&#x27;, &#x27;François&#x27;, &#x27;Chollet。&#x27;]\n去除多余字符和标点分词接下来是针对 orig_tokens 的分词结果进一步处理，代码如下：\n12345for token in orig_tokens:      if self.do_lower_case:        token = token.lower()        token = self._run_strip_accents(token)      split_tokens.extend(self._run_split_on_punc(token))\n逻辑不复杂，我在这里主要说下 _run_strip_accents 和 _run_split_on_punc。\n_run_strip_accents(text) 方法用于去除 accents，即变音符号，那么什么是变音符号呢？像 Keras 作者 François Chollet 名字中些许奇怪的字符 ç、简历的英文 résumé 中的 é 和中文拼音声调 á 等，这些都是变音符号 accents，维基百科中描述如下：\n\n附加符号或称变音符号（diacritic、diacritical mark、diacritical point、diacritical sign），是指添加在字母上面的符号，以更改字母的发音或者以区分拼写相似词语。例如汉语拼音字母“ü”上面的两个小点，或“á”、“à”字母上面的标调符。\n\n常见 accents 可参见 Common accented characters。\n_run_strip_accents(text) 方法就是要把这些 accents 去掉，例如 François Chollet 变成 Francois Chollet，résumé 变成 resume，á 变成 a。该方法代码不长，如下：\n12345678910def _run_strip_accents(self, text):    &quot;&quot;&quot;Strips accents from a piece of text.&quot;&quot;&quot;    text = unicodedata.normalize(&quot;NFD&quot;, text)    output = []    for char in text:      cat = unicodedata.category(char)      if cat == &quot;Mn&quot;:        continue      output.append(char)    return &quot;&quot;.join(output)\n使用列表推导式代码还可以进一步精简为：\n12345def _run_strip_accents(self, text):    &quot;&quot;&quot;Strips accents from a piece of text.&quot;&quot;&quot;    text = unicodedata.normalize(&quot;NFD&quot;, text)    output = [char for char in text if unicodedata.category(char) != &#x27;Mn&#x27;]    return &quot;&quot;.join(output)\n这段代码核心就是 unicodedata.normalize 和 unicodedata.category 两个函数。前者返回输入字符串 text 的规范分解形式（Unicode 字符有多种规范形式，本文默认指 NFD 形式，即规范分解），后者返回输入字符 char 的 Unicode 类别。下面我举例说明一下两个函数的作用。\n假如我们要处理 āóǔè，其中含有变音符号，这种字符其实是由两个字符组成的，比如 ā（码位 0x101）是由 a（码位 0x61）和 上面那一横（码位 0x304）组成的，通过 unicodedata.normalize 就可以把这两者拆分出来：\n12345&gt;&gt;&gt; import unicodedata  # unicodedata 是内置库&gt;&gt;&gt; s = &#x27;āóǔè&#x27;&gt;&gt;&gt; s_norm = unicodedata.normalize(&#x27;NFD&#x27;, s)&gt;&gt;&gt; s_norm, len(s_norm)(&#x27;āóǔè&#x27;, 8)  # 看起来和原来的一摸一样，但是长度已经变了\nunicodedata.category 用来返回各个字符的类别：\n12&gt;&gt;&gt; &#x27; &#x27;.join(unicodedata.category(c) for c in s_norm)&#x27;Ll Mn Ll Mn Ll Mn Ll Mn&#x27;\nLl 类别 表示 Lowercase Letter，小写字母。Mn 类别 表示的是 Nonspacing Mark，非间距标记，变音字符就属于这类，所以我们可以根据类别直接去掉变音字符：\n12&gt;&gt;&gt; &#x27;&#x27;.join(c for c in s_norm if unicodedata.category(c) != &#x27;Mn&#x27;)&#x27;aoue&#x27;\n_run_split_on_punc(text) 是标点分词，按照标点符号分词。\n\n_run_split_on_punc(text) 方法是针对上一步空格分词后的每个 token 的。\n\n在说这个方法之前，先说一下判断一个字符是否是标点符号的函数：_is_punctuation(char)。该函数代码不长，我放到下面：\n12345678910def _is_punctuation(char):  &quot;&quot;&quot;Checks whether `chars` is a punctuation character.&quot;&quot;&quot;  cp = ord(char)  if ((cp &gt;= 33 and cp &lt;= 47) or (cp &gt;= 58 and cp &lt;= 64) or      (cp &gt;= 91 and cp &lt;= 96) or (cp &gt;= 123 and cp &lt;= 126)):    return True  cat = unicodedata.category(char)  if cat.startswith(&quot;P&quot;):    return True  return False\n通常我们会用一个类似词库的文件来存放所有的标点符号，而 _is_punctuation 函数是通过码位来判断的，这样更灵活，也不必保留一个额外的词库文件。具体是有两种情况会视为标点：ASCII 中除了字母和数字意外的字符和以 P 开头的 Unicode 类别中的字符。第一种情况总共有 32 个字符，如下：\n1!&quot;#$%&amp;&#x27;()*+,-./:;&lt;=&gt;?@[\\]^_`&#123;|&#125;~\n_run_split_on_punc 的总体过程就是：\n\n首先设置 start_new_word=True 和 output=[]，output 就是最终的输出\n对 text 中每个字符进行判断，如果该字符是标点，则 output.append([char])，并设置 start_new_word=True\n如果不是标点且 start_new_word=True，那么意味着这是新一段的开始，直接 output.append([])，然后再设置 start_new_word = False，并在刚才 append 的空列表上加上当前字符：output[-1].append(char)\n\n现在得到的 output 是一个嵌套列表，其中每一个列表都是被标点分开的一段，最后把每个列表 join 拼接一下，拉平 output 即可。\n经过这步后，原先没有被分开的字词标点（例如 ONEIROS（Open-ended）、没有去掉的变音符号（例如 ç）都被相应处理：\n12&gt;&gt;&gt; example[&#x27;keras&#x27;, &#x27;是&#x27;, &#x27;oneiros&#x27;, &#x27;（&#x27;, &#x27;open&#x27;, &#x27;-&#x27;, &#x27;ended&#x27;, &#x27;neuro&#x27;, &#x27;-&#x27;, &#x27;electronic&#x27;, &#x27;intelligent&#x27;, &#x27;robot&#x27;, &#x27;operating&#x27;, &#x27;system&#x27;, &#x27;，&#x27;, &#x27;开&#x27;, &#x27;放&#x27;, &#x27;式&#x27;, &#x27;神&#x27;, &#x27;经&#x27;, &#x27;电&#x27;, &#x27;子&#x27;, &#x27;智&#x27;, &#x27;能&#x27;, &#x27;机&#x27;, &#x27;器&#x27;, &#x27;人&#x27;, &#x27;操&#x27;, &#x27;作&#x27;, &#x27;系&#x27;, &#x27;统&#x27;, &#x27;）&#x27;, &#x27;项&#x27;, &#x27;目&#x27;, &#x27;研&#x27;, &#x27;究&#x27;, &#x27;工&#x27;, &#x27;作&#x27;, &#x27;的&#x27;, &#x27;部&#x27;, &#x27;分&#x27;, &#x27;产&#x27;, &#x27;物&#x27;, &#x27;[&#x27;, &#x27;3&#x27;, &#x27;]&#x27;, &#x27;，&#x27;, &#x27;主&#x27;, &#x27;要&#x27;, &#x27;作&#x27;, &#x27;者&#x27;, &#x27;和&#x27;, &#x27;维&#x27;, &#x27;护&#x27;, &#x27;者&#x27;, &#x27;是&#x27;, &#x27;google&#x27;, &#x27;工&#x27;, &#x27;程&#x27;, &#x27;师&#x27;, &#x27;francois&#x27;, &#x27;chollet&#x27;, &#x27;。&#x27;]\n再次空格分词这句对应于如下代码：\n1output_tokens = whitespace_tokenize(&quot; &quot;.join(split_tokens))\n很简单，就是先用标准空格拼接上一步的处理结果，再执行空格分词。（But WHY?）\n经过这步后，和上步结果一样：\n12&gt;&gt;&gt; example[&#x27;keras&#x27;, &#x27;是&#x27;, &#x27;oneiros&#x27;, &#x27;（&#x27;, &#x27;open&#x27;, &#x27;-&#x27;, &#x27;ended&#x27;, &#x27;neuro&#x27;, &#x27;-&#x27;, &#x27;electronic&#x27;, &#x27;intelligent&#x27;, &#x27;robot&#x27;, &#x27;operating&#x27;, &#x27;system&#x27;, &#x27;，&#x27;, &#x27;开&#x27;, &#x27;放&#x27;, &#x27;式&#x27;, &#x27;神&#x27;, &#x27;经&#x27;, &#x27;电&#x27;, &#x27;子&#x27;, &#x27;智&#x27;, &#x27;能&#x27;, &#x27;机&#x27;, &#x27;器&#x27;, &#x27;人&#x27;, &#x27;操&#x27;, &#x27;作&#x27;, &#x27;系&#x27;, &#x27;统&#x27;, &#x27;）&#x27;, &#x27;项&#x27;, &#x27;目&#x27;, &#x27;研&#x27;, &#x27;究&#x27;, &#x27;工&#x27;, &#x27;作&#x27;, &#x27;的&#x27;, &#x27;部&#x27;, &#x27;分&#x27;, &#x27;产&#x27;, &#x27;物&#x27;, &#x27;[&#x27;, &#x27;3&#x27;, &#x27;]&#x27;, &#x27;，&#x27;, &#x27;主&#x27;, &#x27;要&#x27;, &#x27;作&#x27;, &#x27;者&#x27;, &#x27;和&#x27;, &#x27;维&#x27;, &#x27;护&#x27;, &#x27;者&#x27;, &#x27;是&#x27;, &#x27;google&#x27;, &#x27;工&#x27;, &#x27;程&#x27;, &#x27;师&#x27;, &#x27;francois&#x27;, &#x27;chollet&#x27;, &#x27;。&#x27;]\n这就是 BT 最终的输出了。\nWordpieceTokenizerWordpieceTokenizer（以下简称 WPT）是在 BT 结果的基础上进行再一次切分，得到子词（subword，以 ## 开头），词汇表就是在此时引入的。该类只有两个方法：一个初始化方法 __init__(self, vocab, unk_token=&quot;[UNK]&quot;, max_input_chars_per_word=200)，一个分词方法 tokenize(self, text)。\n\n对于中文来说，使不使用 WPT 都一样，因为中文经过 BasicTokenizer 后已经变成一个字一个字了，没法再「子」了 😂\n\n__init__(self, vocab, unk_token=&quot;[UNK]&quot;, max_input_chars_per_word=200)：vocab 就是词汇表，collections.OrderedDict() 类型，由 load_vocab(vocab_file) 读入，key 为词汇，value 为对应索引，顺序依照 vocab_file 中的顺序。有一点需要注意的是，词汇表中已包含所有可能的子词。unk_token 为未登录词的标记，默认为 [UNK]。max_input_chars_per_word 为单个词的最大长度，如果一个词的长度超过这个最大长度，那么直接将其设为 unk_token。\ntokenize(self, text)：该方法就是主要的分词方法了，大致分词思路是按照从左到右的顺序，将一个词拆分成多个子词，每个子词尽可能长。按照源码中的说法，该方法称之为 greedy longest-match-first algorithm，贪婪最长优先匹配算法。\n开始时首先将 text 转成 unicode，并进行空格分词，然后依次遍历每个词。为了能够清楚直观地理解遍历流程，我特地制作了一个 GIF 来解释，以 unaffable 为例：\n\n注：\n\n蓝色底色表示当前子字符串，对应于代码中的 cur_substr\n当从第一个位置开始遍历时，不需要在当前字串前面加 ##，否则需要\n\n大致流程说明（虽然我相信上面那个 GIF 够清楚了）：\n\n从第一个位置开始，由于是最长匹配，结束位置需要从最右端依次递减，所以遍历的第一个子词是其本身 unaffable，该子词不在词汇表中\n结束位置左移一位得到子词 unaffabl，同样不在词汇表中\n重复这个操作，直到 un，该子词在词汇表中，将其加入 output_tokens，以第一个位置开始的遍历结束\n跳过 un，从其后的 a 开始新一轮遍历，结束位置依然是从最右端依次递减，但此时需要在前面加上 ## 标记，得到 ##affable 不在词汇表中\n结束位置左移一位得到子词 ##affabl，同样不在词汇表中\n重复这个操作，直到 ##aff，该字词在词汇表中，将其加入 output_tokens，此轮遍历结束\n跳过 aff，从其后的 a 开始新一轮遍历，结束位置依然是从最右端依次递减。##able 在词汇表中，将其加入 output_tokens\nable 后没有字符了，整个遍历结束\n\n将 BT 的结果输入给 WPT，那么 example 的最终分词结果就是\n1[&#x27;keras&#x27;, &#x27;是&#x27;, &#x27;one&#x27;, &#x27;##iros&#x27;, &#x27;（&#x27;, &#x27;open&#x27;, &#x27;-&#x27;, &#x27;ended&#x27;, &#x27;neu&#x27;, &#x27;##ro&#x27;, &#x27;-&#x27;, &#x27;electronic&#x27;, &#x27;intelligent&#x27;, &#x27;robot&#x27;, &#x27;operating&#x27;, &#x27;system&#x27;, &#x27;，&#x27;, &#x27;开&#x27;, &#x27;放&#x27;, &#x27;式&#x27;, &#x27;神&#x27;, &#x27;经&#x27;, &#x27;电&#x27;, &#x27;子&#x27;, &#x27;智&#x27;, &#x27;能&#x27;, &#x27;机&#x27;, &#x27;器&#x27;, &#x27;人&#x27;, &#x27;操&#x27;, &#x27;作&#x27;, &#x27;系&#x27;, &#x27;统&#x27;, &#x27;）&#x27;, &#x27;项&#x27;, &#x27;目&#x27;, &#x27;研&#x27;, &#x27;究&#x27;, &#x27;工&#x27;, &#x27;作&#x27;, &#x27;的&#x27;, &#x27;部&#x27;, &#x27;分&#x27;, &#x27;产&#x27;, &#x27;物&#x27;, &#x27;[&#x27;, &#x27;3&#x27;, &#x27;]&#x27;, &#x27;，&#x27;, &#x27;主&#x27;, &#x27;要&#x27;, &#x27;作&#x27;, &#x27;者&#x27;, &#x27;和&#x27;, &#x27;维&#x27;, &#x27;护&#x27;, &#x27;者&#x27;, &#x27;是&#x27;, &#x27;google&#x27;, &#x27;工&#x27;, &#x27;程&#x27;, &#x27;师&#x27;, &#x27;franco&#x27;, &#x27;##is&#x27;, &#x27;cho&#x27;, &#x27;##llet&#x27;, &#x27;。&#x27;]\n至此，BERT 分词部分结束。\nReference\n[1810.04805] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding\nbert/tokenization.py at master · google-research/bert\nHow to replace accented characters in python? - Stack Overflow\nWhat is the best way to remove accents in a Python unicode string? - Stack Overflow\nAccents &amp; Accented Characters - Fonts.com | Fonts.com\nCommon accented characters | Butterick’s Practical Typography\n\nEND","dateCreated":"2019-10-16T20:39:00+08:00","dateModified":"2026-04-14T10:51:14+08:00","datePublished":"2019-10-16T20:39:00+08:00","description":"\nBERT 表示 Bidirectional Encoder Representations from Transformers，是 Google 于 2018 年发布的一种语言表示模型。该模型一经发布便成为争相效仿的对象，相信大家也都多少听说过研究过了。本文主要聚焦于 BERT 的分词方法，模型实现细节解读见 BERT 是如何构建模型的。","headline":"BERT 是如何分词的","image":[null,"https://i.loli.net/2019/10/16/VPXxydw9st2eoYR.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://alanlee.fun/2019/10/16/bert-tokenizer/"},"publisher":{"@type":"Organization","name":"Alan Lee","sameAs":["https://github.com/secsilm","https://twitter.com/bluekirin93","mailto:secsilm@outlook.com"],"image":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png","logo":{"@type":"ImageObject","url":"https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"}},"url":"https://alanlee.fun/2019/10/16/bert-tokenizer/","keywords":"Python, NLP, TensorFlow, Machine Learning","thumbnailUrl":"https://i.loli.net/2019/10/16/VPXxydw9st2eoYR.jpg"}</script>
+    <meta name="description" content="BERT 表示 Bidirectional Encoder Representations from Transformers，是 Google 于 2018 年发布的一种语言表示模型。该模型一经发布便成为争相效仿的对象，相信大家也都多少听说过研究过了。本文主要聚焦于 BERT 的分词方法，模型实现细节解读见 BERT 是如何构建模型的。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="BERT 是如何分词的">
+<meta property="og:url" content="https://alanlee.fun/2019/10/16/bert-tokenizer/index.html">
+<meta property="og:site_name" content="Alan Lee">
+<meta property="og:description" content="BERT 表示 Bidirectional Encoder Representations from Transformers，是 Google 于 2018 年发布的一种语言表示模型。该模型一经发布便成为争相效仿的对象，相信大家也都多少听说过研究过了。本文主要聚焦于 BERT 的分词方法，模型实现细节解读见 BERT 是如何构建模型的。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2019/10/16/tXSKJZloFuHLOvw.gif">
+<meta property="article:published_time" content="2019-10-16T12:39:00.000Z">
+<meta property="article:modified_time" content="2026-04-14T02:51:14.899Z">
+<meta property="article:author" content="Alan Lee">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="TensorFlow">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2019/10/16/tXSKJZloFuHLOvw.gif">
+<meta name="twitter:creator" content="@bluekirin93">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png"/>
+    
+    
+    
+        <meta property="og:image" content="https://i.loli.net/2019/10/16/VPXxydw9st2eoYR.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://i.loli.net/2019/10/16/VPXxydw9st2eoYR.jpg"/>
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-9ffshn8defourjhhqoj2aofpvqicqp04wqkmv8thcuvxjkulhv2bfaes1rml.min.css">
+
+    <!--STYLES END-->
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111553531-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111553531-1');
+    </script>
+
+
+    
+    <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?6e8b0c627bf164f809ee4346796b1952";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+    
+        
+    
+    <style>
+        ::-moz-selection { /* Code for Firefox */
+          background: #FFBFBF;
+        }
+        
+        ::selection {
+          background: #FFBFBF;
+        }
+    </style><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+</head>
+
+    <body>
+        <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            Alan Lee
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="打开链接: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">Alan Lee</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/secsilm"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://twitter.com/bluekirin93"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="mailto:secsilm@outlook.com"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="邮箱"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">邮箱</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+        <div class="post-header-cover
+                    text-left
+                    "
+             style="background-image:url('https://i.loli.net/2019/10/16/VPXxydw9st2eoYR.jpg');"
+             data-behavior="4">
+            
+        </div>
+
+            <div id="main" data-behavior="4"
+                 class="hasCover
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            BERT 是如何分词的
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-10-16T20:39:00+08:00">
+	
+		    2019 年 10 月 16 日
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#BasicTokenizer"><span class="toc-text">BasicTokenizer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BD%AC%E6%88%90-unicode"><span class="toc-text">转成 unicode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%BB%E9%99%A4%E5%90%84%E7%A7%8D%E5%A5%87%E6%80%AA%E5%AD%97%E7%AC%A6"><span class="toc-text">去除各种奇怪字符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E4%B8%AD%E6%96%87"><span class="toc-text">处理中文</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A9%BA%E6%A0%BC%E5%88%86%E8%AF%8D"><span class="toc-text">空格分词</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%BB%E9%99%A4%E5%A4%9A%E4%BD%99%E5%AD%97%E7%AC%A6%E5%92%8C%E6%A0%87%E7%82%B9%E5%88%86%E8%AF%8D"><span class="toc-text">去除多余字符和标点分词</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%8D%E6%AC%A1%E7%A9%BA%E6%A0%BC%E5%88%86%E8%AF%8D"><span class="toc-text">再次空格分词</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WordpieceTokenizer"><span class="toc-text">WordpieceTokenizer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#END"><span class="toc-text">END</span></a></li></ol>
+<p><a href="https://arxiv.org/abs/1810.04805">BERT</a> 表示 Bidirectional Encoder Representations from Transformers，是 Google 于 2018 年发布的一种语言表示模型。该模型一经发布便成为争相效仿的对象，相信大家也都多少听说过研究过了。本文主要聚焦于 BERT 的分词方法，模型实现细节解读见 <a href="https://alanlee.fun/2020/05/08/bert-model/">BERT 是如何构建模型的</a>。<br><span id="more"></span></p>
+<p><a href="https://github.com/google-research/bert">BERT 源码</a>中 <code>tokenization.py</code> 就是预处理进行分词的程序，主要有两个分词器：<code>BasicTokenizer</code> 和 <code>WordpieceTokenizer</code>，另外一个 <code>FullTokenizer</code> 是这两个的结合：先进行 <code>BasicTokenizer</code> 得到一个分得比较粗的 token 列表，然后再对每个 token 进行一次 <code>WordpieceTokenizer</code>，得到最终的分词结果。</p>
+<p>为了能直观看到每一步处理效果，我会用下面这个贯穿始终的例子来说明，该句修改自 <a href="https://zh.wikipedia.org/wiki/Keras">Keras 的维基百科</a>介绍：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">example = <span class="string">&quot;Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。\r\n&quot;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>对于中文来说，一句话概括：BERT 采取的是「分字」，即每一个汉字都切开。</p>
+</blockquote>
+<h2 id="BasicTokenizer"><a href="#BasicTokenizer" class="headerlink" title="BasicTokenizer"></a>BasicTokenizer</h2><p><code>BasicTokenizer</code>（以下简称 BT）是一个初步的分词器。对于一个待分词字符串，流程大致就是转成 unicode -&gt; 去除各种奇怪字符 -&gt; 处理中文 -&gt; 空格分词 -&gt; 去除多余字符和标点分词 -&gt; 再次空格分词，结束。</p>
+<p>大致流程就是这样，还有很多细节，下面我依次说下。</p>
+<h3 id="转成-unicode"><a href="#转成-unicode" class="headerlink" title="转成 unicode"></a>转成 unicode</h3><p><strong>转成 unicode</strong> 这步对应于 <code>convert_to_unicode(text)</code> 函数，很好理解，就是将输入转成 unicode 字符串，如果你用的 Python 3 而且输入是 <code>str</code> 类型，那么这点无需担心，输入和输出一样；如果是 Python 3 而且输入类型是 <code>bytes</code>，那么该函数会使用 <code>text.decode(&quot;utf-8&quot;, &quot;ignore&quot;)</code> 来转成 unicode 类型。如果你用的是 Python 2，那么请看 <a href="https://python3statement.org/">Sunsetting Python 2 support
+</a> 和 <a href="https://pythonclock.org/">Python 2.7 Countdown
+</a>，Just drop it。</p>
+<p>经过这步后，<code>example</code> 和原来相同：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = convert_to_unicode(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line"><span class="string">&#x27;Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。\r\n&#x27;</span></span><br></pre></td></tr></table></figure>
+<h3 id="去除各种奇怪字符"><a href="#去除各种奇怪字符" class="headerlink" title="去除各种奇怪字符"></a>去除各种奇怪字符</h3><p><strong>去除各种奇怪字符</strong>对应于 BT 类的 <code>_clean_text(text)</code> 方法，通过 Unicode <a href="https://en.wikipedia.org/wiki/Code_point">码位</a>（Unicode code point，以下码位均指 Unicode 码位）来去除各种不合法字符和多余空格，包括：</p>
+<blockquote>
+<p>Python 中可以通过 <code>ord(c)</code> 来获取字符 <code>c</code> 的码位，使用 <code>chr(i)</code> 来获取码位为 <code>i</code> 的 Unicode 字符，$0 \leq i \leq \text{0x10ffff}$，即十进制的 $[0, 1114111]$。</p>
+</blockquote>
+<ul>
+<li>码位为 0 的 <code>\x00</code>，即<a href="https://en.wikipedia.org/wiki/Null_character">空字符</a>（Null character），或叫结束符，肉眼不可见，属于<a href="https://en.wikipedia.org/wiki/Control_character">控制字符</a>，一般在字符串末尾。注意不是空格，空格的码位是 32。</li>
+<li>码位为 0xfffd（十进制 65533）的 <code>�</code>，即<a href="https://en.wikipedia.org/wiki/Specials_(Unicode_block">替换字符</a>)（REPLACEMENT CHARACTER），通常用来替换未知、无法识别或者无法表示的字符。</li>
+<li>除 <code>\t</code>、<code>\r</code> 和 <code>\n</code> 以外的控制字符（Control character），即 Unicode 类别是 <code>Cc</code> 和 <code>Cf</code> 的字符。可以使用 <code>unicodedata.category(c)</code> 来查看 <code>c</code> 的 Unicode 类别。代码中用 <code>_is_control(char)</code> 来判断 <code>char</code> 是不是控制字符。</li>
+<li>将所有空白字符转换为一个空格，包括标准空格、<code>\t</code>、<code>\r</code>、<code>\n</code> 以及 Unicode 类别为 <code>Zs</code> 的字符。代码中用 <code>_is_whitespace(char)</code> 来判断 <code>char</code> 是不是空白字符。</li>
+</ul>
+<p>经过这步后，<code>example</code> 中的 <code>\r\n</code> 被替换成两个空格：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = _clean_text(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line"><span class="string">&#x27;Keras是ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System，开放式神经电子智能机器人操作系统）项目研究工作的部分产物[3]，主要作者和维护者是Google工程师François Chollet。  &#x27;</span></span><br></pre></td></tr></table></figure>
+<h3 id="处理中文"><a href="#处理中文" class="headerlink" title="处理中文"></a>处理中文</h3><p><strong>处理中文</strong>对应于 BT 类的 <code>_tokenize_chinese_chars(text)</code> 方法。对于 <code>text</code> 中的字符，首先判断其是不是「中文字符」（关于中文字符的说明见下方引用块说明），是的话在其前后加上一个空格，否则原样输出。那么有一个问题，如何判断一个字符是不是「中文」呢？</p>
+<p><code>_is_chinese_char(cp)</code> 方法，<code>cp</code> 就是刚才说的码位，通过码位来判断，总共有 81520 个字，详细的码位范围如下（都是闭区间）：</p>
+<ul>
+<li>[0x4E00, 0x9FFF]：十进制 [19968, 40959]</li>
+<li>[0x3400, 0x4DBF]：十进制 [13312, 19903]</li>
+<li>[0x20000, 0x2A6DF]：十进制 [131072, 173791]</li>
+<li>[0x2A700, 0x2B73F]：十进制 [173824, 177983]</li>
+<li>[0x2B740, 0x2B81F]：十进制 [177984, 178207]</li>
+<li>[0x2B820, 0x2CEAF]：十进制 [178208, 183983]</li>
+<li>[0xF900, 0xFAFF]：十进制 [63744, 64255]</li>
+<li>[0x2F800, 0x2FA1F]：十进制 [194560, 195103]</li>
+</ul>
+<p>其实我觉得这个范围可以再精简下，因为有几个区间是相邻的，下面三个区间：</p>
+<ul>
+<li>[0x2A700, 0x2B73F]：十进制 [173824, <strong>177983</strong>]</li>
+<li>[0x2B740, 0x2B81F]：十进制 [<strong>177984</strong>, <strong>178207</strong>]</li>
+<li>[0x2B820, 0x2CEAF]：十进制 [<strong>178208</strong>, 183983]</li>
+</ul>
+<p>可以精简成一个：</p>
+<ul>
+<li>[0x2A700, 0x2CEAF]：十进制 [173824, 183983]</li>
+</ul>
+<p>原来的 8 个区间精简成 6 个，至于原来为什么写成 8 个，I don’t know 啊 😂</p>
+<blockquote>
+<p>关于「中文字符」的说明：按照代码中的定义，这里说的「中文字符」指的是 <a href="https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block">CJK Unicode block</a>) 中的字符，包括现代汉语、部分日语、部分韩语和越南语。但是根据 <a href="https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block">CJK Unicode block</a>) 中的定义，这些字符只包括第一个码位区间（[0x4E00, 0x9FFF]）内的字符，也就是说<strong>代码中的字符要远远多于 CJK Unicode block 中包括的字符</strong>，这一点暂时有些疑问。我把源码关于这块的注释引用过来如下：</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">_is_chinese_char</span>(<span class="params">self, cp</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Checks whether CP is the codepoint of a CJK character.&quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># This defines a &quot;chinese character&quot; as anything in the CJK Unicode block:</span></span><br><span class="line">    <span class="comment">#   https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)</span></span><br><span class="line">    <span class="comment">#</span></span><br><span class="line">    <span class="comment"># Note that the CJK Unicode block is NOT all Japanese and Korean characters,</span></span><br><span class="line">    <span class="comment"># despite its name. The modern Korean Hangul alphabet is a different block,</span></span><br><span class="line">    <span class="comment"># as is Japanese Hiragana and Katakana. Those alphabets are used to write</span></span><br><span class="line">    <span class="comment"># space-separated words, so they are not treated specially and handled</span></span><br><span class="line">    <span class="comment"># like the all of the other languages.</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+<p>经过这步后，中文被按字分开，用空格分隔，但英文数字等仍然保持原状：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = _tokenize_chinese_chars(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line"><span class="string">&#x27;Keras 是 ONEIROS（Open-ended Neuro-Electronic Intelligent Robot Operating System， 开  放  式  神  经  电  子  智  能  机  器  人  操  作  系  统 ） 项  目  研  究  工  作  的  部  分  产  物 [3]， 主  要  作  者  和  维  护  者  是 Google 工  程  师 François Chollet。  &#x27;</span></span><br></pre></td></tr></table></figure>
+<h3 id="空格分词"><a href="#空格分词" class="headerlink" title="空格分词"></a>空格分词</h3><p><strong>空格分词</strong>对应于 <code>whitespace_tokenize(text)</code> 函数。首先对 <code>text</code> 进行 <code>strip()</code> 操作，去掉两边多余空白字符，然后如果剩下的是一个空字符串，则直接返回空列表，否则进行 <code>split()</code> 操作，得到最初的分词结果 <code>orig_tokens</code>。</p>
+<p>经过这步后，<code>example</code> 变成一个列表：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example = whitespace_tokenize(example)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line">[<span class="string">&#x27;Keras&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;ONEIROS（Open-ended&#x27;</span>, <span class="string">&#x27;Neuro-Electronic&#x27;</span>, <span class="string">&#x27;Intelligent&#x27;</span>, <span class="string">&#x27;Robot&#x27;</span>, <span class="string">&#x27;Operating&#x27;</span>, <span class="string">&#x27;System，&#x27;</span>, <span class="string">&#x27;开&#x27;</span>, <span class="string">&#x27;放&#x27;</span>, <span class="string">&#x27;式&#x27;</span>, <span class="string">&#x27;神&#x27;</span>, <span class="string">&#x27;经&#x27;</span>, <span class="string">&#x27;电&#x27;</span>, <span class="string">&#x27;子&#x27;</span>, <span class="string">&#x27;智&#x27;</span>, <span class="string">&#x27;能&#x27;</span>, <span class="string">&#x27;机&#x27;</span>, <span class="string">&#x27;器&#x27;</span>, <span class="string">&#x27;人&#x27;</span>, <span class="string">&#x27;操&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;系&#x27;</span>, <span class="string">&#x27;统&#x27;</span>, <span class="string">&#x27;）&#x27;</span>, <span class="string">&#x27;项&#x27;</span>, <span class="string">&#x27;目&#x27;</span>, <span class="string">&#x27;研&#x27;</span>, <span class="string">&#x27;究&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;的&#x27;</span>, <span class="string">&#x27;部&#x27;</span>, <span class="string">&#x27;分&#x27;</span>, <span class="string">&#x27;产&#x27;</span>, <span class="string">&#x27;物&#x27;</span>, <span class="string">&#x27;[3]，&#x27;</span>, <span class="string">&#x27;主&#x27;</span>, <span class="string">&#x27;要&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;和&#x27;</span>, <span class="string">&#x27;维&#x27;</span>, <span class="string">&#x27;护&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;Google&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;程&#x27;</span>, <span class="string">&#x27;师&#x27;</span>, <span class="string">&#x27;François&#x27;</span>, <span class="string">&#x27;Chollet。&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="去除多余字符和标点分词"><a href="#去除多余字符和标点分词" class="headerlink" title="去除多余字符和标点分词"></a>去除多余字符和标点分词</h3><p>接下来是针对 <code>orig_tokens</code> 的分词结果进一步处理，代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> token <span class="keyword">in</span> orig_tokens:</span><br><span class="line">      <span class="keyword">if</span> self.do_lower_case:</span><br><span class="line">        token = token.lower()</span><br><span class="line">        token = self._run_strip_accents(token)</span><br><span class="line">      split_tokens.extend(self._run_split_on_punc(token))</span><br></pre></td></tr></table></figure>
+<p>逻辑不复杂，我在这里主要说下 <code>_run_strip_accents</code> 和 <code>_run_split_on_punc</code>。</p>
+<p><strong><code>_run_strip_accents(text)</code></strong> 方法用于去除 <a href="https://en.wikipedia.org/wiki/Diacritic">accents</a>，即变音符号，那么什么是变音符号呢？像 Keras 作者 François Chollet 名字中些许奇怪的字符 <code>ç</code>、简历的英文 résumé 中的 <code>é</code> 和中文拼音声调 <code>á</code> 等，这些都是变音符号 accents，维基百科中描述如下：</p>
+<blockquote>
+<p>附加符号或称变音符号（diacritic、diacritical mark、diacritical point、diacritical sign），是指添加在字母上面的符号，以更改字母的发音或者以区分拼写相似词语。例如汉语拼音字母“ü”上面的两个小点，或“á”、“à”字母上面的标调符。</p>
+</blockquote>
+<p>常见 accents 可参见 <a href="https://practicaltypography.com/common-accented-characters.html">Common accented characters</a>。</p>
+<p><code>_run_strip_accents(text)</code> 方法就是要把这些 accents 去掉，例如 <code>François Chollet</code> 变成 <code>Francois Chollet</code>，<code>résumé</code> 变成 <code>resume</code>，<code>á</code> 变成 <code>a</code>。该方法代码不长，如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">_run_strip_accents</span>(<span class="params">self, text</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Strips accents from a piece of text.&quot;&quot;&quot;</span></span><br><span class="line">    text = unicodedata.normalize(<span class="string">&quot;NFD&quot;</span>, text)</span><br><span class="line">    output = []</span><br><span class="line">    <span class="keyword">for</span> char <span class="keyword">in</span> text:</span><br><span class="line">      cat = unicodedata.category(char)</span><br><span class="line">      <span class="keyword">if</span> cat == <span class="string">&quot;Mn&quot;</span>:</span><br><span class="line">        <span class="keyword">continue</span></span><br><span class="line">      output.append(char)</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>.join(output)</span><br></pre></td></tr></table></figure>
+<p>使用列表推导式代码还可以进一步精简为：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">_run_strip_accents</span>(<span class="params">self, text</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Strips accents from a piece of text.&quot;&quot;&quot;</span></span><br><span class="line">    text = unicodedata.normalize(<span class="string">&quot;NFD&quot;</span>, text)</span><br><span class="line">    output = [char <span class="keyword">for</span> char <span class="keyword">in</span> text <span class="keyword">if</span> unicodedata.category(char) != <span class="string">&#x27;Mn&#x27;</span>]</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>.join(output)</span><br></pre></td></tr></table></figure>
+<p>这段代码核心就是 <a href="https://docs.python.org/zh-cn/3.7/library/unicodedata.html#unicodedata.normalize"><code>unicodedata.normalize</code></a> 和 <a href="https://docs.python.org/zh-cn/3.7/library/unicodedata.html#unicodedata.category"><code>unicodedata.category</code></a> 两个函数。前者返回输入字符串 <code>text</code> 的规范分解形式（Unicode 字符有多种规范形式，本文默认指 <code>NFD</code> 形式，即规范分解），后者返回输入字符 <code>char</code> 的 <a href="https://www.compart.com/en/unicode/category">Unicode 类别</a>。下面我举例说明一下两个函数的作用。</p>
+<p>假如我们要处理 <code>āóǔè</code>，其中含有变音符号，这种字符其实是由两个字符组成的，比如 <code>ā</code>（码位 0x101）是由 <code>a</code>（码位 0x61）和 上面那一横（码位 0x304）组成的，通过 <code>unicodedata.normalize</code> 就可以把这两者拆分出来：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> unicodedata  <span class="comment"># unicodedata 是内置库</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>s = <span class="string">&#x27;āóǔè&#x27;</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>s_norm = unicodedata.normalize(<span class="string">&#x27;NFD&#x27;</span>, s)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>s_norm, <span class="built_in">len</span>(s_norm)</span><br><span class="line">(<span class="string">&#x27;āóǔè&#x27;</span>, <span class="number">8</span>)  <span class="comment"># 看起来和原来的一摸一样，但是长度已经变了</span></span><br></pre></td></tr></table></figure>
+<p><code>unicodedata.category</code> 用来返回各个字符的类别：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="string">&#x27; &#x27;</span>.join(unicodedata.category(c) <span class="keyword">for</span> c <span class="keyword">in</span> s_norm)</span><br><span class="line"><span class="string">&#x27;Ll Mn Ll Mn Ll Mn Ll Mn&#x27;</span></span><br></pre></td></tr></table></figure>
+<p><a href="https://www.compart.com/en/unicode/category/Ll"><code>Ll</code> 类别</a> 表示 Lowercase Letter，小写字母。<a href="https://www.compart.com/en/unicode/category/Mn"><code>Mn</code> 类别</a> 表示的是 Nonspacing Mark，非间距标记，变音字符就属于这类，所以我们可以根据类别直接去掉变音字符：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="string">&#x27;&#x27;</span>.join(c <span class="keyword">for</span> c <span class="keyword">in</span> s_norm <span class="keyword">if</span> unicodedata.category(c) != <span class="string">&#x27;Mn&#x27;</span>)</span><br><span class="line"><span class="string">&#x27;aoue&#x27;</span></span><br></pre></td></tr></table></figure>
+<p><strong><code>_run_split_on_punc(text)</code></strong> 是标点分词，按照标点符号分词。</p>
+<blockquote>
+<p><code>_run_split_on_punc(text)</code> 方法是针对上一步空格分词后的每个 token 的。</p>
+</blockquote>
+<p>在说这个方法之前，先说一下判断一个字符是否是标点符号的函数：<code>_is_punctuation(char)</code>。该函数代码不长，我放到下面：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">_is_punctuation</span>(<span class="params">char</span>):</span><br><span class="line">  <span class="string">&quot;&quot;&quot;Checks whether `chars` is a punctuation character.&quot;&quot;&quot;</span></span><br><span class="line">  cp = <span class="built_in">ord</span>(char)</span><br><span class="line">  <span class="keyword">if</span> ((cp &gt;= <span class="number">33</span> <span class="keyword">and</span> cp &lt;= <span class="number">47</span>) <span class="keyword">or</span> (cp &gt;= <span class="number">58</span> <span class="keyword">and</span> cp &lt;= <span class="number">64</span>) <span class="keyword">or</span></span><br><span class="line">      (cp &gt;= <span class="number">91</span> <span class="keyword">and</span> cp &lt;= <span class="number">96</span>) <span class="keyword">or</span> (cp &gt;= <span class="number">123</span> <span class="keyword">and</span> cp &lt;= <span class="number">126</span>)):</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">  cat = unicodedata.category(char)</span><br><span class="line">  <span class="keyword">if</span> cat.startswith(<span class="string">&quot;P&quot;</span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">False</span></span><br></pre></td></tr></table></figure>
+<p>通常我们会用一个类似词库的文件来存放所有的标点符号，而 <code>_is_punctuation</code> 函数是通过码位来判断的，这样更灵活，也不必保留一个额外的词库文件。具体是有两种情况会视为标点：<a href="https://en.wikipedia.org/wiki/ASCII">ASCII</a> 中除了字母和数字意外的字符和以 P 开头的 Unicode 类别中的字符。第一种情况总共有 32 个字符，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">!&quot;#$%&amp;&#x27;()*+,-./:;&lt;=&gt;?@[\]^_`&#123;|&#125;~</span><br></pre></td></tr></table></figure>
+<p><code>_run_split_on_punc</code> 的总体过程就是：</p>
+<ol>
+<li>首先设置 <code>start_new_word=True</code> 和 <code>output=[]</code>，<code>output</code> 就是最终的输出</li>
+<li>对 <code>text</code> 中每个字符进行判断，如果该字符是标点，则 <code>output.append([char])</code>，并设置 <code>start_new_word=True</code></li>
+<li>如果不是标点且 <code>start_new_word=True</code>，那么意味着这是新一段的开始，直接 <code>output.append([])</code>，然后再设置 <code>start_new_word = False</code>，并在刚才 append 的空列表上加上当前字符：<code>output[-1].append(char)</code></li>
+</ol>
+<p>现在得到的 <code>output</code> 是一个嵌套列表，其中每一个列表都是被标点分开的一段，最后把每个列表 join 拼接一下，拉平 <code>output</code> 即可。</p>
+<p>经过这步后，原先没有被分开的字词标点（例如 <code>ONEIROS（Open-ended</code>）、没有去掉的变音符号（例如 <code>ç</code>）都被相应处理：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line">[<span class="string">&#x27;keras&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;oneiros&#x27;</span>, <span class="string">&#x27;（&#x27;</span>, <span class="string">&#x27;open&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;ended&#x27;</span>, <span class="string">&#x27;neuro&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;electronic&#x27;</span>, <span class="string">&#x27;intelligent&#x27;</span>, <span class="string">&#x27;robot&#x27;</span>, <span class="string">&#x27;operating&#x27;</span>, <span class="string">&#x27;system&#x27;</span>, <span class="string">&#x27;，&#x27;</span>, <span class="string">&#x27;开&#x27;</span>, <span class="string">&#x27;放&#x27;</span>, <span class="string">&#x27;式&#x27;</span>, <span class="string">&#x27;神&#x27;</span>, <span class="string">&#x27;经&#x27;</span>, <span class="string">&#x27;电&#x27;</span>, <span class="string">&#x27;子&#x27;</span>, <span class="string">&#x27;智&#x27;</span>, <span class="string">&#x27;能&#x27;</span>, <span class="string">&#x27;机&#x27;</span>, <span class="string">&#x27;器&#x27;</span>, <span class="string">&#x27;人&#x27;</span>, <span class="string">&#x27;操&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;系&#x27;</span>, <span class="string">&#x27;统&#x27;</span>, <span class="string">&#x27;）&#x27;</span>, <span class="string">&#x27;项&#x27;</span>, <span class="string">&#x27;目&#x27;</span>, <span class="string">&#x27;研&#x27;</span>, <span class="string">&#x27;究&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;的&#x27;</span>, <span class="string">&#x27;部&#x27;</span>, <span class="string">&#x27;分&#x27;</span>, <span class="string">&#x27;产&#x27;</span>, <span class="string">&#x27;物&#x27;</span>, <span class="string">&#x27;[&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;]&#x27;</span>, <span class="string">&#x27;，&#x27;</span>, <span class="string">&#x27;主&#x27;</span>, <span class="string">&#x27;要&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;和&#x27;</span>, <span class="string">&#x27;维&#x27;</span>, <span class="string">&#x27;护&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;google&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;程&#x27;</span>, <span class="string">&#x27;师&#x27;</span>, <span class="string">&#x27;francois&#x27;</span>, <span class="string">&#x27;chollet&#x27;</span>, <span class="string">&#x27;。&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="再次空格分词"><a href="#再次空格分词" class="headerlink" title="再次空格分词"></a>再次空格分词</h3><p>这句对应于如下代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">output_tokens = whitespace_tokenize(<span class="string">&quot; &quot;</span>.join(split_tokens))</span><br></pre></td></tr></table></figure>
+<p>很简单，就是先用标准空格拼接上一步的处理结果，再执行空格分词。（But WHY?）</p>
+<p>经过这步后，和上步结果一样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>example</span><br><span class="line">[<span class="string">&#x27;keras&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;oneiros&#x27;</span>, <span class="string">&#x27;（&#x27;</span>, <span class="string">&#x27;open&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;ended&#x27;</span>, <span class="string">&#x27;neuro&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;electronic&#x27;</span>, <span class="string">&#x27;intelligent&#x27;</span>, <span class="string">&#x27;robot&#x27;</span>, <span class="string">&#x27;operating&#x27;</span>, <span class="string">&#x27;system&#x27;</span>, <span class="string">&#x27;，&#x27;</span>, <span class="string">&#x27;开&#x27;</span>, <span class="string">&#x27;放&#x27;</span>, <span class="string">&#x27;式&#x27;</span>, <span class="string">&#x27;神&#x27;</span>, <span class="string">&#x27;经&#x27;</span>, <span class="string">&#x27;电&#x27;</span>, <span class="string">&#x27;子&#x27;</span>, <span class="string">&#x27;智&#x27;</span>, <span class="string">&#x27;能&#x27;</span>, <span class="string">&#x27;机&#x27;</span>, <span class="string">&#x27;器&#x27;</span>, <span class="string">&#x27;人&#x27;</span>, <span class="string">&#x27;操&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;系&#x27;</span>, <span class="string">&#x27;统&#x27;</span>, <span class="string">&#x27;）&#x27;</span>, <span class="string">&#x27;项&#x27;</span>, <span class="string">&#x27;目&#x27;</span>, <span class="string">&#x27;研&#x27;</span>, <span class="string">&#x27;究&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;的&#x27;</span>, <span class="string">&#x27;部&#x27;</span>, <span class="string">&#x27;分&#x27;</span>, <span class="string">&#x27;产&#x27;</span>, <span class="string">&#x27;物&#x27;</span>, <span class="string">&#x27;[&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;]&#x27;</span>, <span class="string">&#x27;，&#x27;</span>, <span class="string">&#x27;主&#x27;</span>, <span class="string">&#x27;要&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;和&#x27;</span>, <span class="string">&#x27;维&#x27;</span>, <span class="string">&#x27;护&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;google&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;程&#x27;</span>, <span class="string">&#x27;师&#x27;</span>, <span class="string">&#x27;francois&#x27;</span>, <span class="string">&#x27;chollet&#x27;</span>, <span class="string">&#x27;。&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<p>这就是 BT 最终的输出了。</p>
+<h2 id="WordpieceTokenizer"><a href="#WordpieceTokenizer" class="headerlink" title="WordpieceTokenizer"></a>WordpieceTokenizer</h2><p><code>WordpieceTokenizer</code>（以下简称 WPT）是在 BT 结果的基础上进行再一次切分，得到子词（subword，以 <code>##</code> 开头），词汇表就是在此时引入的。该类只有两个方法：一个初始化方法 <code>__init__(self, vocab, unk_token=&quot;[UNK]&quot;, max_input_chars_per_word=200)</code>，一个分词方法 <code>tokenize(self, text)</code>。</p>
+<blockquote>
+<p>对于中文来说，使不使用 WPT 都一样，因为中文经过 BasicTokenizer 后已经变成一个字一个字了，没法再「子」了 😂</p>
+</blockquote>
+<p><code>__init__(self, vocab, unk_token=&quot;[UNK]&quot;, max_input_chars_per_word=200)</code>：<code>vocab</code> 就是词汇表，<code>collections.OrderedDict()</code> 类型，由 <code>load_vocab(vocab_file)</code> 读入，key 为词汇，value 为对应索引，顺序依照 <code>vocab_file</code> 中的顺序。有一点需要注意的是，词汇表中已包含所有可能的子词。<code>unk_token</code> 为未登录词的标记，默认为 <code>[UNK]</code>。<code>max_input_chars_per_word</code> 为单个词的最大长度，如果一个词的长度超过这个最大长度，那么直接将其设为 <code>unk_token</code>。</p>
+<p><code>tokenize(self, text)</code>：该方法就是主要的分词方法了，大致分词思路是<strong>按照从左到右的顺序，将一个词拆分成多个子词，每个子词尽可能长。</strong>按照<a href="https://github.com/google-research/bert/blob/master/tokenization.py#L311-L312">源码</a>中的说法，该方法称之为 greedy longest-match-first algorithm，贪婪最长优先匹配算法。</p>
+<p>开始时首先将 <code>text</code> 转成 unicode，并进行空格分词，然后依次遍历每个词。为了能够清楚直观地理解遍历流程，我特地制作了一个 GIF 来解释，以 <code>unaffable</code> 为例：</p>
+<p><img src="https://i.loli.net/2019/10/16/tXSKJZloFuHLOvw.gif" alt="longest-match-first"></p>
+<p>注：</p>
+<ul>
+<li>蓝色底色表示当前子字符串，对应于代码中的 <code>cur_substr</code></li>
+<li>当从第一个位置开始遍历时，不需要在当前字串前面加 <code>##</code>，否则需要</li>
+</ul>
+<p>大致流程说明（虽然我相信上面那个 GIF 够清楚了）：</p>
+<ol>
+<li>从第一个位置开始，由于是最长匹配，结束位置需要从最右端依次递减，所以遍历的第一个子词是其本身 <code>unaffable</code>，该子词不在词汇表中</li>
+<li>结束位置左移一位得到子词 <code>unaffabl</code>，同样不在词汇表中</li>
+<li>重复这个操作，直到 <code>un</code>，该子词在词汇表中，将其加入 <code>output_tokens</code>，以第一个位置开始的遍历结束</li>
+<li>跳过 <code>un</code>，从其后的 <code>a</code> 开始新一轮遍历，结束位置依然是从最右端依次递减，但此时需要在前面加上 <code>##</code> 标记，得到 <code>##affable</code> 不在词汇表中</li>
+<li>结束位置左移一位得到子词 <code>##affabl</code>，同样不在词汇表中</li>
+<li>重复这个操作，直到 <code>##aff</code>，该字词在词汇表中，将其加入 <code>output_tokens</code>，此轮遍历结束</li>
+<li>跳过 <code>aff</code>，从其后的 <code>a</code> 开始新一轮遍历，结束位置依然是从最右端依次递减。<code>##able</code> 在词汇表中，将其加入 <code>output_tokens</code></li>
+<li><code>able</code> 后没有字符了，整个遍历结束</li>
+</ol>
+<p>将 BT 的结果输入给 WPT，那么 <code>example</code> 的最终分词结果就是</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="string">&#x27;keras&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;one&#x27;</span>, <span class="string">&#x27;##iros&#x27;</span>, <span class="string">&#x27;（&#x27;</span>, <span class="string">&#x27;open&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;ended&#x27;</span>, <span class="string">&#x27;neu&#x27;</span>, <span class="string">&#x27;##ro&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;electronic&#x27;</span>, <span class="string">&#x27;intelligent&#x27;</span>, <span class="string">&#x27;robot&#x27;</span>, <span class="string">&#x27;operating&#x27;</span>, <span class="string">&#x27;system&#x27;</span>, <span class="string">&#x27;，&#x27;</span>, <span class="string">&#x27;开&#x27;</span>, <span class="string">&#x27;放&#x27;</span>, <span class="string">&#x27;式&#x27;</span>, <span class="string">&#x27;神&#x27;</span>, <span class="string">&#x27;经&#x27;</span>, <span class="string">&#x27;电&#x27;</span>, <span class="string">&#x27;子&#x27;</span>, <span class="string">&#x27;智&#x27;</span>, <span class="string">&#x27;能&#x27;</span>, <span class="string">&#x27;机&#x27;</span>, <span class="string">&#x27;器&#x27;</span>, <span class="string">&#x27;人&#x27;</span>, <span class="string">&#x27;操&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;系&#x27;</span>, <span class="string">&#x27;统&#x27;</span>, <span class="string">&#x27;）&#x27;</span>, <span class="string">&#x27;项&#x27;</span>, <span class="string">&#x27;目&#x27;</span>, <span class="string">&#x27;研&#x27;</span>, <span class="string">&#x27;究&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;的&#x27;</span>, <span class="string">&#x27;部&#x27;</span>, <span class="string">&#x27;分&#x27;</span>, <span class="string">&#x27;产&#x27;</span>, <span class="string">&#x27;物&#x27;</span>, <span class="string">&#x27;[&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;]&#x27;</span>, <span class="string">&#x27;，&#x27;</span>, <span class="string">&#x27;主&#x27;</span>, <span class="string">&#x27;要&#x27;</span>, <span class="string">&#x27;作&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;和&#x27;</span>, <span class="string">&#x27;维&#x27;</span>, <span class="string">&#x27;护&#x27;</span>, <span class="string">&#x27;者&#x27;</span>, <span class="string">&#x27;是&#x27;</span>, <span class="string">&#x27;google&#x27;</span>, <span class="string">&#x27;工&#x27;</span>, <span class="string">&#x27;程&#x27;</span>, <span class="string">&#x27;师&#x27;</span>, <span class="string">&#x27;franco&#x27;</span>, <span class="string">&#x27;##is&#x27;</span>, <span class="string">&#x27;cho&#x27;</span>, <span class="string">&#x27;##llet&#x27;</span>, <span class="string">&#x27;。&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<p>至此，BERT 分词部分结束。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://arxiv.org/abs/1810.04805">[1810.04805] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</a></li>
+<li><a href="https://github.com/google-research/bert/blob/master/tokenization.py">bert/tokenization.py at master · google-research/bert</a></li>
+<li><a href="https://stackoverflow.com/questions/44431730/how-to-replace-accented-characters-in-python">How to replace accented characters in python? - Stack Overflow</a></li>
+<li><a href="https://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-in-a-python-unicode-string">What is the best way to remove accents in a Python unicode string? - Stack Overflow</a></li>
+<li><a href="https://www.fonts.com/content/learning/fontology/level-3/signs-and-symbols/accents">Accents &amp; Accented Characters - Fonts.com | Fonts.com</a></li>
+<li><a href="https://practicaltypography.com/common-accented-characters.html">Common accented characters | Butterick’s Practical Typography</a></li>
+</ul>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a>END</h2>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/NLP/" rel="tag">NLP</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/Python/" rel="tag">Python</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/TensorFlow/" rel="tag">TensorFlow</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/28/bisect-speed/"
+                    data-tooltip="二分查找真的很快吗"
+                    aria-label="上一篇: 二分查找真的很快吗"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/09/19/install-ghost/"
+                    data-tooltip="Ghost 博客平台安装和配置"
+                    aria-label="下一篇: Ghost 博客平台安装和配置"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2026 Alan Lee. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/10/28/bisect-speed/"
+                    data-tooltip="二分查找真的很快吗"
+                    aria-label="上一篇: 二分查找真的很快吗"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/09/19/install-ghost/"
+                    data-tooltip="Ghost 博客平台安装和配置"
+                    aria-label="下一篇: Ghost 博客平台安装和配置"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                    title="分享到 Facebook"
+                    aria-label="分享到 Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                    title="分享到 Twitter"
+                    aria-label="分享到 Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Kommentieren"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                        aria-label="分享到 Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>分享到 Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                        aria-label="分享到 Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>分享到 Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=https://alanlee.fun/2019/10/16/bert-tokenizer/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://s2.loli.net/2021/12/19/Cri1WMHedxFm3pv.png" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">Alan Lee</h4>
+        
+            <div id="about-card-bio"><p>NLP and Python developer, sometimes datavis, he/him. Stick to what you believe.</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                北京
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s2.loli.net/2021/12/16/5nuJTFWg2QACLDf.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-lyk6icmf5pmthztu7s7cuqz82e4zvrhczxadurhfil1hhx0hrjastx6uyequ.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://alanlee.fun/2019/10/16/bert-tokenizer/';
+              
+            this.page.identifier = '2019/10/16/bert-tokenizer/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'secsilm';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

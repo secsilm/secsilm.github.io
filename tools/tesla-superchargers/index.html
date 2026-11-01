@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>中国特斯拉超充站地图 · Alan Lee</title>
+  <meta name="description" content="每日更新中国大陆特斯拉超级充电站的位置、状态、充电桩数量与功率。">
+  <link rel="stylesheet" href="./vendor/leaflet.css"><link rel="stylesheet" href="./vendor/MarkerCluster.css">
+  <link rel="stylesheet" href="../tools.css">
+  <script defer src="./vendor/leaflet.js"></script><script defer src="./vendor/leaflet.markercluster.js"></script><script defer src="./filters.js"></script><script defer src="./map.js"></script>
+</head>
+<body class="tesla-map">
+  <header class="topbar map-header"><div class="map-title"><a class="breadcrumb" href="../">← 工具</a><h1>中国特斯拉超充站地图</h1></div><p class="updated" id="updated">更新时间：加载中</p></header>
+  <main class="workspace">
+    <aside class="panel" aria-label="站点筛选与详情">
+      <p class="numbers" id="summary" aria-live="polite">正在加载站点…</p>
+      <div class="filters">
+        <label class="field">搜索站点<input id="search" type="search" placeholder="名称、城市或地址" autocomplete="off"></label>
+        <div class="filter-row">
+          <label class="field">省<select id="province"><option value="">全部</option></select></label>
+          <label class="field">市<select id="city"><option value="">全部</option></select></label>
+        </div>
+        <div class="filter-row">
+          <label class="field">版本<select id="version"><option value="">全部</option></select></label>
+          <label class="field">车位位置<select id="parking"><option value="">全部</option><option value="above">地上</option><option value="below">地下</option><option value="unknown">未知</option></select></label>
+        </div>
+        <label class="field">选择站点<select id="station"><option value="">在地图上点选或从这里选择</option></select></label>
+      </div>
+      <div class="actions"><button type="button" id="reset">重置筛选</button><button type="button" id="fit">显示全部结果</button></div>
+      <p class="empty-message" id="result-hint" aria-live="polite" hidden></p>
+      <details class="data-notes"><summary>关于数据</summary><p>站点数据来自 <a href="https://supercharge.info/" target="_blank" rel="noopener noreferrer">supercharge.info</a>，每天北京时间 0 点同步，仅显示中国大陆开放的站点。</p><p>名称与地址按站点编号匹配<a href="https://www.tesla.cn/findus/list/superchargers/China%2BMainland" target="_blank" rel="noopener noreferrer">特斯拉官方中文目录</a>；匹配成功使用官方中文名和中文地址，否则保留来源原文。服务时间取自特斯拉官方站点详情，未提供时显示“未知”。每个点代表一座充电站。</p><p>同一站点可包含多个版本，符合所选版本即会显示。车位位置根据地址预先分类，无法判断的归为“未知”。</p><p>街道底图 © OpenStreetMap contributors；行政区底图来自阿里云 DataV GeoAtlas（随网站发布）；站点定位以来源坐标为准。</p><p><a href="/">返回博客</a></p></details>
+    </aside>
+    <section class="map-area" aria-label="特斯拉超级充电站地图"><div id="map"></div><p class="tile-warning" id="tile-warning" hidden>街道底图暂时无法加载，当前使用行政区底图。站点查询与筛选不受影响。</p></section>
+  </main>
+  <noscript><p>请启用 JavaScript 查看地图。</p></noscript>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>工具 · Alan Lee</title>
+  <meta name="description" content="Alan Lee 的在线工具，包括中国特斯拉超充站地图。">
+  <link rel="stylesheet" href="./index.css">
+  <script defer src="./index.js"></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">Alan Lee</a>
+    <a class="back" href="/">博客
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true" focusable="false"><path d="M4 12h16m-7-7 7 7-7 7"/></svg>
+    </a>
+  </header>
+  <main>
+    <div class="mast">
+      <div class="mast-copy">
+        <p class="eyebrow">THE TOOL INDEX</p>
+        <h1>工具索引</h1>
+      </div>
+    </div>
+    <div class="toolbar" hidden>
+      <nav class="filters" aria-label="工具分类"></nav>
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+        <input type="search" aria-label="搜索工具" placeholder="搜索工具" autocomplete="off">
+      </label>
+    </div>
+    <ul class="catalog" aria-label="工具目录">
+      <li data-category="地图">
+        <a class="tool" href="./tesla-superchargers/">
+          <span class="tool-top"><span class="number" aria-hidden="true">01</span><span class="category">地图</span></span>
+          <h2>特斯拉超充地图</h2>
+          <p class="description">查询中国大陆站点、功率、桩数与服务时间</p>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true" focusable="false"><path d="M4 12h16m-7-7 7 7-7 7"/></svg>
+        </a>
+      </li>
+    </ul>
+    <p class="empty" role="status" hidden>没有匹配的工具</p>
+    <footer>ALAN LEE</footer>
+  </main>
+</body>
+</html>

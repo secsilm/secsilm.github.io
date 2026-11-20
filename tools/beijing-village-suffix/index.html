@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>北京村名后缀分布 · Alan Lee</title>
+  <meta name="description" content="探索北京村与社区名称后缀的空间分布，对比村、庄、园、里等地名。">
+  <link rel="stylesheet" href="../tesla-superchargers/vendor/leaflet.css">
+  <link rel="stylesheet" href="./map.css">
+  <script defer src="../tesla-superchargers/vendor/leaflet.js"></script>
+  <script defer src="./filters.js"></script>
+  <script defer src="./map.js"></script>
+</head>
+<body>
+  <header><a href="../" class="back">← 工具索引</a><span class="brand">Alan Lee</span></header>
+  <main>
+    <section class="intro">
+      <h1>北京村名后缀分布</h1>
+      <p class="intro-description">大兴几乎都是 XX 村，XX 庄主要集中在北部，XX 园／里主要在城六区，尤其是东西城。</p>
+    </section>
+    <div class="workspace">
+      <aside class="panel" aria-label="地名筛选">
+        <p class="section-label">探索后缀</p>
+        <div class="selects">
+          <label>后缀一<select id="suffix-one" disabled><option value="all">全部</option></select></label>
+          <label>后缀二<select id="suffix-two" disabled><option value="">无</option></select></label>
+        </div>
+        <label class="search-label">搜索地名<input id="search" type="search" placeholder="输入村名" autocomplete="off" disabled></label>
+        <div class="quick-section"><p class="section-label">常见后缀</p><div id="quick-suffixes" class="quick" aria-label="快速选择后缀"></div></div>
+        <div id="summary" class="summary" role="status" aria-live="polite">正在加载地名…</div>
+        <div id="legend" class="legend" aria-label="地图图例"></div>
+        <p id="empty" class="hint" hidden>没有匹配的地名，请调整后缀或搜索词。</p>
+        <div class="actions"><button id="reset" type="button" disabled>重置筛选</button><button id="fit" type="button" disabled>定位筛选结果 ↗</button></div>
+        <details class="notes">
+          <summary>关于这张地图</summary>
+          <p>每个点代表一条原始记录，包含村、社区等村级行政单位。后缀取清洗后名称的最后一个字；同名或同坐标记录予以保留。</p>
+        </details>
+      </aside>
+      <section class="map-area" aria-label="北京村名后缀分布地图">
+        <div class="map-toolbar"><label><input id="streets" type="checkbox" disabled> 街道底图</label></div>
+        <div id="map"></div>
+        <p id="map-message" class="map-message" role="status" hidden></p>
+      </section>
+    </div>
+    <footer><span>ALAN LEE</span><a href="/">返回博客 ↗</a></footer>
+  </main>
+  <noscript><p>请启用 JavaScript 查看交互地图。</p></noscript>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>GitHub Star 助手 · Alan Lee</title>
+  <meta name="description" content="搜索、整理和探索 GitHub 公开收藏，查看语言、作者、主题与收藏时间分布。">
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./core.js"></script>
+  <script defer src="./vendor/plotly-4.1.1.min.js"></script>
+  <script defer src="./charts.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header><a href="../">← 工具索引</a><a class="brand" href="/">Alan Lee</a></header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">YOUR OPEN SOURCE BOOKSHELF</p>
+      <h1>GitHub Star 助手<span aria-hidden="true">✧</span></h1>
+      <p>那些点过的星，值得再翻一翻。搜索收藏，发现你的开源兴趣。</p>
+    </section>
+    <section class="query-panel" aria-label="查询 GitHub 收藏">
+      <form id="query-form">
+        <label class="username-label" for="username">GitHub 用户名</label>
+        <div class="query-row"><span class="prefix" aria-hidden="true">github.com /</span><input id="username" name="username" placeholder="例如 secsilm" required maxlength="39" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="primary" id="submit" type="submit">查看收藏 ↗</button><button id="cancel" type="button" hidden>取消</button></div>
+        <details class="token-options"><summary>可选：使用 Token 提高额度 / 查看 Issue 与 PR</summary>
+          <label for="token">GitHub Personal Access Token</label>
+          <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="仅发送至 api.github.com，不保存">
+          <p>只查询公开仓库，不需要授予写权限。Token 仅用于当前页面，关闭或离开页面后清除。</p>
+          <label class="checkbox"><input id="details" type="checkbox"> 同时获取 Issue / PR 数量并绘制桑基图（需要可访问 GraphQL 的 Token）</label>
+        </details>
+      </form>
+      <div class="status-row"><p id="status" role="status" aria-live="polite">输入任意 GitHub 用户名，探索公开收藏。</p><button id="refresh" type="button" hidden>刷新数据</button></div>
+      <progress id="progress" aria-label="加载收藏进度" hidden></progress>
+    </section>
+    <section id="results" hidden aria-label="收藏结果">
+      <div class="result-heading"><h2 id="account"></h2><div class="result-actions"><button id="export" type="button">导出 JSON ↓</button><button id="clear-cache" type="button">清除本地缓存</button></div></div>
+      <div class="metrics">
+        <div><span>公开收藏</span><strong id="total">0</strong></div>
+        <div><span>编程语言</span><strong id="languages-total">0</strong></div>
+        <div><span>仓库作者</span><strong id="owners-total">0</strong></div>
+        <div><span>已归档仓库</span><strong id="archived-total">0</strong></div>
+      </div>
+      <div class="section-heading"><h2>收藏一览</h2><p>统计基于本次完整加载的公开收藏</p></div>
+      <div class="charts">
+        <section class="chart-panel full-width"><div class="section-heading"><h3>收藏时间线 <small>STAR TIMELINE · UTC</small></h3><label class="period-label" for="period">粒度 <select id="period"><option value="day">日</option><option value="month">月</option><option value="year">年</option></select></label></div><div id="timeline" class="plot" role="region" aria-label="完整收藏时间散点图"></div><p id="timeline-note" class="hint"></p></section>
+        <section class="chart-panel"><h3>常见作者 <small>TOP 5 OWNERS</small></h3><div id="owner-chart" class="plot" role="region" aria-label="Top 5 作者柱状图"></div></section>
+        <section class="chart-panel"><h3>常用语言 <small>TOP 5 LANGUAGES</small></h3><div id="language-chart" class="plot" role="region" aria-label="Top 5 语言柱状图"></div></section>
+        <section class="chart-panel full-width"><h3>兴趣主题 <small>TOP 10 TOPICS</small></h3><div id="topic-chart" class="plot" role="region" aria-label="Top 10 主题柱状图"></div></section>
+        <section class="chart-panel full-width"><div class="section-heading"><h3>Issue 和 PR 分布 <small>SANKEY</small></h3><button id="load-details" type="button">加载图表详情</button></div><p id="sankey-note" class="hint"></p><div id="sankey-scroll" class="sankey-scroll" role="region" tabindex="0" aria-label="作者到仓库到 Issue 和 PR 的桑基图，可横向滚动"><div id="sankey-chart" class="plot"></div></div></section>
+      </div>
+      <div class="section-heading list-heading"><h2>翻阅收藏</h2><p id="match-count" role="status"></p></div>
+      <div class="filters">
+        <label class="search-field">搜索<input id="search" type="search" placeholder="仓库、描述、作者或主题" autocomplete="off"></label>
+        <label>语言<select id="language"><option value="">全部语言</option></select></label>
+        <label>状态<select id="state"><option value="">全部状态</option><option value="active">未归档</option><option value="archived">已归档</option></select></label>
+        <label>排序<select id="sort"><option value="starred">最近收藏</option><option value="oldest">最早收藏</option><option value="stars">Star 最多</option><option value="updated">最近更新</option><option value="name">仓库名称</option></select></label>
+        <button id="reset" type="button">重置</button>
+      </div>
+      <div id="repos" class="repos"></div><p id="empty" class="empty" hidden>没有匹配的收藏，试试其他筛选条件。</p>
+      <nav class="pagination" aria-label="收藏分页"><button id="previous" type="button">← 上一页</button><span id="page" aria-live="polite"></span><button id="next" type="button">下一页 →</button></nav>
+    </section>
+    <section id="welcome" class="welcome"><span aria-hidden="true">✧</span><h2>从一颗星开始</h2><p>输入用户名，找回收藏过的好项目。</p><p class="hint">无需登录 · 只读查询 · 数据直接来自 GitHub</p></section>
+    <details class="notes"><summary>数据与隐私说明</summary><p>默认匿名请求，额度通常为每个 IP 每小时 60 次，每次最多读取 100 个收藏。大量收藏建议使用自己的 Token。请求失败或取消时不会覆盖上次完整结果。</p><p>只缓存最后一次查询的公开仓库，1 小时内可复用；缓存仅在本机浏览器中保存，可随时清除。Token 不写入缓存或导出文件。GitHub 返回的仓库未关闭事项数包含 Issue 和 PR；桑基图需要 Token 分别读取两项数量，不能使用合计数推断。已加载的收藏可直接补充详情，无需重新抓取列表。</p><p>图表保留原项目的时间散点图、作者／语言与主题柱状图及桑基图。时间图覆盖完整历史，按 UTC 的日／月／年统计，可拖动缩放；语言排行排除未标注语言。桑基图取收藏仓库数最多的 3 位作者，同数按未关闭事项数排序，流宽表示未关闭的 Issue / PR 数量；零事项仓库不绘制流线。主题最多统计每个仓库返回的前 20 个。此工具用于浏览和分析，不修改收藏。源自 <a href="https://github.com/secsilm/github-star-manager" target="_blank" rel="noopener noreferrer">github-star-manager ↗</a>。<a href="https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api" target="_blank" rel="noopener noreferrer">GitHub 请求限额说明 ↗</a></p></details>
+    <footer><span>ALAN LEE</span><a href="/">返回博客 ↗</a></footer>
+  </main>
+  <noscript><p>请启用 JavaScript 查询 GitHub 收藏。</p></noscript>
+</body>
+</html>
